@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>학부모 문자 만들기 · 선생님 도구 모음</title>
+<!-- 학생 이름은 화면에서 문구에 들어갈 뿐 저장되지 않습니다. "보내는 사람" 표기만 이 기기에 기억합니다(tt_parent_sig). -->
+<style>
+  main{flex-direction:column;gap:10px}
+  .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  textarea.tt-out{flex:1;min-height:0;resize:none;line-height:1.6}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  @media (max-width:640px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr))} .seg.wide button{font-size:12.5px;padding:7px 2px} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 도구 모음</a>
+    <h1>✉️ 학부모 문자 만들기</h1>
+  </div>
+  <div class="bar">
+    <select id="clsSel" aria-label="학급 선택"></select>
+  </div>
+</header>
+<main class="panel">
+  <div class="seg wide" role="group" aria-label="문자 종류" id="kinds"></div>
+  <div class="grid">
+    <label class="field">학생<select id="stu"></select></label>
+    <label class="field">날짜<input id="dt" type="date"></label>
+    <label class="field"><span id="xl">내용</span><input id="x" autocomplete="off"></label>
+    <label class="field">보내는 사람<input id="me" autocomplete="off"></label>
+  </div>
+  <textarea class="tt-out" id="out" aria-label="완성된 문자"></textarea>
+  <div class="row">
+    <button type="button" class="btn primary" id="cp">📋 복사</button>
+    <span class="sm" id="len"></span>
+  </div>
+</main>
+<footer>
+  <span>문구는 아래 칸에서 바로 고쳐 쓸 수 있습니다</span>
+  <span class="priv">🔒 학생 이름은 저장되지 않습니다</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  /* 문구 (0.2.0 원본 그대로) */
+  var K = [
+ {id:'late',n:'지각',xl:'지각 시각·횟수 (선택)',x:'',f:function(s,d,x,me){return '안녕하세요. '+me+'입니다.\n'+d+' '+s+' 학생이 지각하였습니다.'+(x?' ('+x+')':'')+'\n등교 시간 준수를 위해 가정에서도 지도 부탁드립니다. 지각 사유나 어려운 점이 있으시면 편하게 말씀해 주세요.'}},
+ {id:'abs',n:'결석 확인',xl:'확인할 내용 (선택)',x:'',f:function(s,d,x,me){return '안녕하세요. '+me+'입니다.\n'+d+' '+s+' 학생이 등교하지 않아 연락드립니다.'+(x?' '+x:'')+'\n결석 사유를 알려 주시면 출결 처리에 반영하겠습니다. 증빙 서류가 필요한 경우 따로 안내드리겠습니다.'}},
+ {id:'cons',n:'상담 요청',xl:'상담 주제',x:'학교생활',f:function(s,d,x,me){return '안녕하세요. '+me+'입니다.\n'+s+' 학생의 '+(x||'학교생활')+'에 관해 상담을 드리고 싶습니다. 편하신 날짜와 시간을 알려 주시면 일정을 맞추겠습니다. 통화나 방문 중 편한 방법으로 진행하겠습니다.'}},
+ {id:'sub',n:'제출·준비물',xl:'제출/준비할 것',x:'',f:function(s,d,x,me){return '안녕하세요. '+me+'입니다.\n'+s+' 학생이 아직 '+(x||'제출물')+'을(를) 내지 않았습니다. '+d+'까지 준비해 보내 주시면 감사하겠습니다.'}},
+ {id:'praise',n:'칭찬',xl:'칭찬할 내용',x:'',f:function(s,d,x,me){return '안녕하세요. '+me+'입니다.\n'+s+' 학생이 '+(x||'학교생활에 성실히 참여하여')+' 기쁜 소식을 전합니다. 가정에서도 격려해 주시면 큰 힘이 될 것 같습니다. 감사합니다.'}},
+ {id:'ntc',n:'일반 안내',xl:'안내할 내용',x:'',f:function(s,d,x,me){return '안녕하세요. '+me+'입니다.\n'+(x||'안내 내용을 적어 주세요.')+'\n('+d+') 확인 부탁드립니다. 감사합니다.'}}
+];
+  var kind = "late", SIG = "tt_parent_sig";
+  function fmtDate(v){ if(!v) return "오늘"; var p = v.split("-"); return +p[1] + "월 " + +p[2] + "일"; }
+  function cur(){ return K.filter(function(k){ return k.id === kind; })[0]; }
+  var me = $("me"); me.value = TT.store.raw(SIG) || "";
+  var home = TT.roster.home();
+  me.placeholder = home ? "예: " + home.name + " 담임 ○○○" : "예: 3학년 2반 담임 ○○○";
+  var t = new Date(); $("dt").value = t.getFullYear() + "-" + ("0" + (t.getMonth()+1)).slice(-2) + "-" + ("0" + t.getDate()).slice(-2);
+
+  function kinds(){
+    var box = $("kinds"); box.textContent = "";
+    K.forEach(function(k){
+      var b = document.createElement("button"); b.type = "button"; b.textContent = k.n; b.setAttribute("aria-pressed", k.id === kind);
+      b.onclick = function(){ kind = k.id; $("xl").textContent = k.xl; $("x").value = k.x; kinds(); build(); };
+      box.appendChild(b);
+    });
+  }
+  function build(){
+    var k = cur(), s = $("stu").value || "(학생)";
+    $("out").value = k.f(s, fmtDate($("dt").value), $("x").value.trim(), me.value.trim() || "담임교사");
+    $("len").textContent = $("out").value.length + "자";
+  }
+  ["stu","dt","x","me"].forEach(function(i){
+    $(i).addEventListener("input", function(){ if(i === "me") TT.store.setRaw(SIG, me.value); build(); });
+  });
+  $("out").addEventListener("input", function(){ $("len").textContent = $("out").value.length + "자"; });
+  $("cp").onclick = function(){
+    var text = $("out").value;
+    function done(ok){ TT.ui.toast(ok ? "복사했습니다. 문자 앱에 붙여넣으세요." : "복사하지 못했습니다. 글을 길게 눌러 직접 복사하세요."); }
+    if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(text).then(function(){ done(true); }, function(){ done(false); }); return; }
+    $("out").select(); var ok = false; try{ ok = document.execCommand("copy"); }catch(e){} done(ok);
+  };
+  TT.ui.classSelect($("clsSel"), "parent", function(c){
+    var sel = $("stu"); sel.textContent = "";
+    if(!c){ var o = document.createElement("option"); o.value = ""; o.textContent = "명단 없음"; sel.appendChild(o); }
+    else c.students.forEach(function(s){ var o = document.createElement("option"); o.value = s.name; o.textContent = s.no + "번 " + s.name; sel.appendChild(o); });
+    build();
+  });
+  $("xl").textContent = cur().xl;
+  kinds(); build();
+})();
+</script>
+</body>
+</html>

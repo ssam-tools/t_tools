@@ -2,73 +2,63 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
 <title>선생님 도구 모음</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon-192.png">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="stylesheet" href="shared/tt.css">
 <style>
-  :root{
-    --bg:#f3f6f9; --card:#ffffff; --ink:#1d2733; --sub:#5b6773; --line:#dde3ea;
-    --accent:#2f6fb5; --accent-soft:#e6f0fa; --ok:#2e7d4f; --ok-soft:#e3f3ea; --wait:#7a6a3a; --wait-soft:#f6efd9;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{
-    font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
-    background:var(--bg); color:var(--ink);
-    height:100dvh; display:flex; flex-direction:column; overflow:hidden;
-    padding:clamp(10px,2vh,22px) clamp(12px,3vw,32px);
-    gap:clamp(8px,1.6vh,16px);
-  }
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  h1{font-size:clamp(20px,3.4vh,28px);font-weight:800;letter-spacing:-.02em}
-  .lead{font-size:clamp(12px,1.9vh,14px);color:var(--sub);margin-top:2px}
-  .home{display:inline-block;font-weight:700;font-size:12.5px;padding:2px 10px;border-radius:999px;margin-left:6px;background:#fff6d6;color:#7a5a00}
+  header{align-items:center}
+  .home{display:inline-block;font-weight:700;font-size:12.5px;padding:2px 10px;border-radius:999px;margin-left:6px;background:var(--star-soft);color:#7a5a00;text-decoration:none}
   .home.none{background:#eceff3;color:#4a5560}
-  .seg{display:inline-flex;background:#e4eaf0;border-radius:12px;padding:3px}
-  .seg button{
-    border:0;background:transparent;font:inherit;font-size:clamp(13px,2vh,15px);font-weight:700;
-    color:var(--sub);padding:8px 16px;border-radius:9px;cursor:pointer
-  }
-  .seg button[aria-pressed="true"]{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
-  .seg button:focus-visible,.card:focus-visible{outline:3px solid #7fb0e6;outline-offset:2px}
+  .card:focus-visible{outline:3px solid #7fb0e6;outline-offset:2px}
 
+  /* 도구 카드: 칸 수(--cols)와 줄 수(--rows)를 화면에 맞춰 정해, 스크롤 없이 한눈에 보이게 합니다. */
   main{
-    flex:1; min-height:0; display:grid; gap:clamp(8px,1.6vh,14px);
-    grid-template-columns:repeat(4,minmax(0,1fr));
-    grid-auto-rows:minmax(0,230px); align-content:center;
+    display:grid;gap:clamp(8px,1.6vh,14px);
+    grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));
+    grid-template-rows:repeat(var(--rows,3),minmax(0,200px));align-content:center;
   }
   .card{
-    background:var(--card); border:1px solid var(--line); border-radius:16px;
-    padding:clamp(10px,2vh,18px); display:flex; flex-direction:column; gap:6px;
-    text-decoration:none; color:inherit; min-height:0; overflow:hidden;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:clamp(8px,1.8vh,16px);display:flex;flex-direction:column;gap:5px;
+    text-decoration:none;color:inherit;min-height:0;overflow:hidden;
   }
   a.card{cursor:pointer;transition:transform .12s,box-shadow .12s}
   a.card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(30,60,100,.12)}
   .card.wait{background:#fafbfc}
-  .ico{font-size:clamp(24px,4.4vh,34px);line-height:1}
-  .name{font-size:clamp(15px,2.4vh,18px);font-weight:800;letter-spacing:-.01em}
+  .card.wait .ico,.card.wait .name{opacity:.55}
+  .ico{font-size:clamp(22px,4vh,32px);line-height:1}
+  .name{font-size:clamp(14px,2.3vh,18px);font-weight:800;letter-spacing:-.01em}
   .desc{font-size:clamp(12px,1.8vh,13.5px);color:var(--sub);line-height:1.45;flex:1;min-height:0;overflow:hidden}
-  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
   .chip{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px}
   .t-home{background:var(--accent-soft);color:var(--accent)}
   .t-all{background:#eceff3;color:#4a5560}
   .s-ready{background:var(--ok-soft);color:var(--ok)}
   .s-wait{background:var(--wait-soft);color:var(--wait)}
-
-  footer{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
-    font-size:clamp(11.5px,1.8vh,13px);color:var(--sub)
-  }
-  .priv{background:var(--ok-soft);color:var(--ok);font-weight:700;padding:7px 12px;border-radius:10px}
-
+  .s-pc{background:#ece8f7;color:#5a3ea6}
+  button.card{font:inherit;text-align:left;cursor:pointer;transition:transform .12s,box-shadow .12s}
+  button.card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(30,60,100,.12)}
   body[data-mode="subject"] .card[data-for="home"]{display:none}
+  .bk{font:inherit;font-size:12px;font-weight:700;border:0;border-radius:999px;padding:4px 10px;cursor:pointer;background:#eceff3;color:#4a5560}
+  .bk.due{background:var(--star-soft);color:#7a5a00}
 
-  @media (max-width:760px){
-    header{flex-direction:column;align-items:flex-start;gap:8px}
-    .seg{width:100%}.seg button{flex:1;padding:7px 8px}
-    main{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,118px)}
+  @media (max-width:760px), (max-height:560px){
     .desc{display:none}
-    .card{padding:12px;gap:6px;justify-content:space-between}
-    .chip{font-size:10.5px;padding:2px 7px}
+    .card{padding:9px 8px;gap:4px;align-items:center;text-align:center;justify-content:center;border-radius:14px}
+    .name{font-size:13px;word-break:keep-all;line-height:1.25}
+    .chips{margin-top:0;justify-content:center}
+    .chip{font-size:10px;padding:2px 6px}
+    .chip.t-home,.chip.t-all{display:none}
+  }
+  @media (max-width:760px){
+    header{flex-direction:column;align-items:stretch;gap:8px}
+    .bar .seg{flex:1}.seg button{flex:1;padding:7px 8px}
   }
 </style>
 </head>
@@ -76,11 +66,25 @@
 <header>
   <div>
     <h1>🧰 선생님 도구 모음</h1>
-    <p class="lead">학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다. <span class="home" id="homeChip"></span></p>
+    <p class="lead">학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다. <a class="home" id="homeChip" href="apps/roster/"></a></p>
   </div>
-  <div class="seg" role="group" aria-label="교사 유형">
-    <button type="button" id="b-home" aria-pressed="true">담임 + 교과</button>
-    <button type="button" id="b-subject" aria-pressed="false">교과만</button>
+  <div class="bar">
+    <div class="seg" role="group" aria-label="교사 유형">
+      <button type="button" id="b-home" aria-pressed="true">담임 + 교과</button>
+      <button type="button" id="b-subject" aria-pressed="false">교과만</button>
+    </div>
+    <details class="more" id="more">
+      <summary aria-label="더 보기">⋯</summary>
+      <div class="menu">
+        <button type="button" id="mHelp">처음 사용 안내</button>
+        <button type="button" id="mInstall" hidden>앱으로 설치</button>
+        <hr>
+        <button type="button" id="mBackup">전체 백업 저장</button>
+        <button type="button" id="mRestore">백업 불러오기</button>
+        <hr>
+        <button type="button" id="mNewYear" class="danger">새 학년 시작</button>
+      </div>
+    </details>
   </div>
 </header>
 
@@ -88,66 +92,113 @@
 
 <footer>
   <span class="priv">🔒 입력한 자료는 이 기기의 브라우저에만 저장되며, 밖으로 전송되지 않습니다.</span>
-  <span id="count"></span>
+  <span><button type="button" class="bk" id="bkChip" hidden></button> <span id="count"></span></span>
 </footer>
 
-<script>
-  // 도구 목록. 도구가 완성되면 href에 폴더 주소를 적고 ready를 true로 바꾸세요.
-  var TOOLS = [
-    {icon:"👥", name:"학급 명렬표",     desc:"한 번 입력해 두면 다른 도구에서 함께 불러 씁니다.", scope:"all",  href:"roster.html", ready:true},
-    {icon:"⏰", name:"지각 관리 노트",   desc:"출결을 입력하고 연속·주간 지각 학생에게 상담일지를 남깁니다.", scope:"home", href:"tardy.html", ready:true},
-    {icon:"🏅", name:"가산점 자동 입력", desc:"수상경력·창체 파일을 올리면 가산점 양식을 자동으로 채웁니다.", scope:"home", href:"bonus.html", ready:true},
-    {icon:"🎓", name:"고교 진학 추천",   desc:"성적을 분석해 지원 가능한 고등학교를 살펴봅니다.", scope:"home", href:"", ready:false},
-    {icon:"🧩", name:"조 편성",         desc:"조건에 맞게 모둠과 자리를 편성합니다.",           scope:"all",  href:"", ready:false},
-    {icon:"📷", name:"나이스 사진 이름", desc:"반별 사진 파일명을 한꺼번에 바꿉니다.",           scope:"home", href:"", ready:false},
-    {icon:"📎", name:"파일 합치기",     desc:"여러 파일을 하나로 합칩니다.",                   scope:"all",  href:"", ready:false},
-    {icon:"📒", name:"수업 기록장",     desc:"수업 진도와 학생 활동을 반별로 기록합니다.",      scope:"all",  href:"", ready:false}
-  ];
+<dialog id="dlgHelp">
+  <form method="dialog">
+    <h2>처음 사용 안내</h2>
+    <ol>
+      <li><b>학급 명렬표</b>에서 나이스 학생 명단 파일(엑셀)을 올립니다. 학년·반이 자동으로 등록됩니다.</li>
+      <li>담임이라면 ★ 버튼으로 <b>우리 반</b>을 지정합니다.</li>
+      <li>이제 모든 도구가 같은 명단을 씁니다. 필요한 도구를 눌러 쓰면 됩니다.</li>
+    </ol>
+    <p style="margin-top:10px">🔒 학생 자료는 이 기기의 브라우저에만 저장됩니다. 기기를 바꾸거나 학년이 끝날 때는 ⋯ 메뉴의 <b>전체 백업 저장</b>으로 파일 하나에 담아 옮기세요. 백업 파일에는 학생 이름이 들어 있으니 다른 사람에게 보내지 마세요.</p>
+    <p style="margin-top:6px">📱 휴대폰은 브라우저 메뉴의 "홈 화면에 추가", 컴퓨터는 주소창의 설치 아이콘을 누르면 앱처럼 쓸 수 있고, 인터넷이 끊겨도 열립니다.</p>
+    <div class="acts"><span></span><div class="r"><button type="submit" class="btn primary">확인</button></div></div>
+  </form>
+</dialog>
 
-  var grid = document.getElementById("grid");
-  TOOLS.forEach(function(t){
-    var el = document.createElement(t.ready && t.href ? "a" : "div");
+<script src="shared/tools.js"></script>
+<script src="shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var grid = $("grid");
+
+  TT_TOOLS.forEach(function(t){
+    var el = document.createElement(t.ready ? (t.file ? "button" : "a") : "div");
     el.className = "card" + (t.ready ? "" : " wait");
     el.setAttribute("data-for", t.scope);
-    if(t.ready && t.href){ el.href = t.href; }
-    el.innerHTML =
-      '<div class="ico">'+t.icon+'</div>'+
-      '<div class="name">'+t.name+'</div>'+
-      '<div class="desc">'+t.desc+'</div>'+
-      '<div class="chips">'+
-        '<span class="chip '+(t.scope==="home"?"t-home":"t-all")+'">'+(t.scope==="home"?"담임":"공통")+'</span>'+
-        '<span class="chip '+(t.ready?"s-ready":"s-wait")+'">'+(t.ready?"사용 가능":"준비 중")+'</span>'+
-      '</div>';
+    if(t.ready && t.file){ el.type = "button"; el.onclick = function(){ askDownload(t); }; }
+    else if(t.ready) el.href = t.href;
+    function add(cls, text){ var d = document.createElement("div"); d.className = cls; d.textContent = text; el.appendChild(d); return d; }
+    add("ico", t.icon); add("name", t.name); add("desc", t.desc);
+    var chips = add("chips", "");
+    function chip(cls, text){ var s = document.createElement("span"); s.className = "chip " + cls; s.textContent = text; chips.appendChild(s); }
+    chip(t.scope === "home" ? "t-home" : "t-all", t.scope === "home" ? "담임" : "공통");
+    chip(t.ready ? (t.file ? "s-pc" : "s-ready") : "s-wait", t.ready ? (t.file ? "PC 프로그램" : "사용 가능") : "준비 중");
     grid.appendChild(el);
   });
 
-  function setMode(m){
-    document.body.setAttribute("data-mode", m);
-    document.getElementById("b-home").setAttribute("aria-pressed", m==="home");
-    document.getElementById("b-subject").setAttribute("aria-pressed", m==="subject");
-    var n = TOOLS.filter(function(t){ return m==="home" || t.scope==="all"; }).length;
-    document.getElementById("count").textContent = "도구 " + n + "개";
-    try{ localStorage.setItem("tt_mode", m); }catch(e){}
+  /* PC 프로그램(실행파일) 내려받기: 무엇인지 먼저 알려 주고 받습니다. */
+  function askDownload(t){
+    TT.ui.confirm(t.icon + " " + t.name + " 내려받기",
+      "윈도우 컴퓨터에서 쓰는 프로그램(실행파일)입니다. 한글 파일을 합치려면 한컴오피스 한글이 설치되어 있어야 합니다. 내려받거나 처음 실행할 때 윈도우나 학교 보안 프로그램이 경고를 띄울 수 있습니다. 휴대폰에서는 쓸 수 없습니다.",
+      "내려받기", function(){
+        var a = document.createElement("a"); a.href = t.file; a.download = ""; document.body.appendChild(a); a.click(); a.remove();
+        TT.ui.toast("내려받기를 시작했습니다. 다운로드 폴더의 " + t.file.split("/").pop() + " 를 실행하세요.");
+      });
   }
-  document.getElementById("b-home").onclick = function(){ setMode("home"); };
-  document.getElementById("b-subject").onclick = function(){ setMode("subject"); };
 
-  // 명렬표에서 지정한 우리 반(담임)을 보여 줍니다.
-  (function(){
-    var chip = document.getElementById("homeChip"), name = "";
-    try{
-      var d = JSON.parse(localStorage.getItem("tt_roster_v1") || "null");
-      if(d && d.home && Array.isArray(d.classes)){
-        d.classes.forEach(function(c){ if(c && c.id === d.home) name = String(c.name); });
-      }
-    }catch(e){}
-    if(name){ chip.textContent = "★ 우리 반: " + name; }
-    else{ chip.textContent = "우리 반 미지정 · 명렬표에서 나이스 파일을 올려 주세요"; chip.className = "home none"; }
-  })();
+  /* 화면 크기와 도구 수에 맞춰 칸·줄 수를 정합니다(스크롤 없이 한눈에). */
+  var mode = "home";
+  function layout(){
+    var n = TT_TOOLS.filter(function(t){ return mode === "home" || t.scope === "all"; }).length;
+    var w = window.innerWidth, cols = w <= 760 ? 3 : (n > 12 ? 5 : 4);
+    if(w > 760 && n <= 6) cols = 3;
+    grid.style.setProperty("--cols", cols);
+    grid.style.setProperty("--rows", Math.ceil(n / cols));
+    $("count").textContent = "도구 " + n + "개 · v" + TT.VERSION;
+  }
+  function setMode(m){
+    mode = m;
+    document.body.setAttribute("data-mode", m);
+    $("b-home").setAttribute("aria-pressed", m === "home");
+    $("b-subject").setAttribute("aria-pressed", m === "subject");
+    TT.store.setRaw("tt_mode", m);
+    layout();
+  }
+  $("b-home").onclick = function(){ setMode("home"); };
+  $("b-subject").onclick = function(){ setMode("subject"); };
+  window.addEventListener("resize", layout);
 
-  var saved = "home";
-  try{ saved = localStorage.getItem("tt_mode") || "home"; }catch(e){}
-  setMode(saved==="subject" ? "subject" : "home");
+  /* 명렬표에서 지정한 우리 반(담임)을 보여 줍니다. */
+  function showHome(){
+    var chip = $("homeChip"), d = TT.roster.load(), h = TT.roster.home(d);
+    if(h){ chip.textContent = "★ 우리 반: " + h.name; chip.className = "home"; }
+    else if(TT.roster.has(d)){ chip.textContent = "우리 반 미지정 · 명렬표에서 ★로 지정"; chip.className = "home none"; }
+    else{ chip.textContent = "① 먼저 명렬표에 나이스 파일을 올려 주세요 →"; chip.className = "home none"; }
+  }
+
+  /* 백업 알림: 마지막 백업 날짜를 보여 주고, 30일이 지나면(또는 한 번도 안 했으면) 눌러서 바로 백업하게 합니다. */
+  function showBackup(){
+    var b = $("bkChip"), d = TT.backup.daysSince();
+    if(!TT.backup.hasData()){ b.hidden = true; return; }
+    b.hidden = false;
+    if(d === null){ b.textContent = "💾 아직 백업 안 함 · 눌러서 백업"; b.className = "bk due"; }
+    else if(d >= 30){ b.textContent = "💾 백업한 지 " + d + "일 · 눌러서 백업"; b.className = "bk due"; }
+    else{ b.textContent = "💾 백업 " + (d === 0 ? "오늘" : d + "일 전"); b.className = "bk"; }
+  }
+  $("bkChip").onclick = function(){ TT.backup.save(); showBackup(); };
+
+  /* 메뉴 */
+  function closeMenu(){ $("more").open = false; }
+  document.addEventListener("click", function(e){ if(!$("more").contains(e.target)) closeMenu(); });
+  $("mHelp").onclick = function(){ closeMenu(); $("dlgHelp").showModal(); };
+  $("mBackup").onclick = function(){ closeMenu(); TT.backup.save(); showBackup(); };
+  $("mNewYear").onclick = function(){ closeMenu(); TT.backup.newYear(function(){ showHome(); showBackup(); }); };
+  $("mRestore").onclick = function(){ closeMenu(); TT.backup.pick(function(){ showHome(); showBackup(); setMode(TT.store.raw("tt_mode") === "subject" ? "subject" : "home"); }); };
+  var installEvt = null;
+  window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); installEvt = e; $("mInstall").hidden = false; });
+  $("mInstall").onclick = function(){ closeMenu(); if(installEvt){ installEvt.prompt(); installEvt = null; $("mInstall").hidden = true; } };
+  window.addEventListener("storage", showHome);
+  window.addEventListener("pageshow", function(){ showHome(); showBackup(); });
+
+  showHome(); showBackup();
+  setMode(TT.store.raw("tt_mode") === "subject" ? "subject" : "home");
+})();
 </script>
 </body>
 </html>

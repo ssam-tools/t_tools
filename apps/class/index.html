@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>수업 시간 도구함 · 선생님 도구 모음</title>
+<!-- 발표자 뽑기, 타이머, 모둠 점수. 명단은 학급 명렬표(TT.roster)에서 가져오고, 이 도구는 아무것도 저장하지 않습니다. -->
+<style>
+  main{flex-direction:column;gap:10px}
+  .big{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;text-align:center;
+       font-size:clamp(40px,13vw,130px);font-weight:800;letter-spacing:-.02em;background:#fbfcfd;border:1px solid var(--line);border-radius:14px;padding:8px;word-break:keep-all}
+  .big.end{color:var(--danger);background:var(--danger-soft)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .row .btn{padding:10px 16px;font-size:15px}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;max-height:22vh;overflow:auto}
+  .chipb{font:inherit;font-size:12.5px;padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:#fff;cursor:pointer;color:var(--ink)}
+  .chipb.off{opacity:.4;text-decoration:line-through}
+  .chipb.done{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent)}
+  .grp{flex:1;min-height:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;grid-auto-rows:minmax(0,1fr)}
+  .g{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px;min-height:0;overflow:hidden}
+  .g input{border:0;text-align:center;font:inherit;font-weight:700;width:100%;background:none;color:var(--ink)}
+  .g .sc{font-size:clamp(28px,7vw,64px);font-weight:800;line-height:1}
+  .g .pm{display:flex;gap:6px}
+  .on{background:var(--accent-soft)!important;border-color:var(--accent)!important;color:var(--accent)!important}
+  @media (max-width:640px){ .grp{grid-template-columns:repeat(2,minmax(0,1fr))} .row .btn{padding:8px 12px} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 도구 모음</a>
+    <h1>🎲 수업 시간 도구함</h1>
+  </div>
+  <div class="bar">
+    <select id="clsSel" aria-label="학급 선택"></select>
+    <div class="seg" role="group" aria-label="도구 고르기" id="tabs">
+      <button type="button" data-t="pick" aria-pressed="true">뽑기</button>
+      <button type="button" data-t="timer" aria-pressed="false">타이머</button>
+      <button type="button" data-t="score" aria-pressed="false">모둠 점수</button>
+    </div>
+  </div>
+</header>
+<main class="panel" id="m"></main>
+<footer>
+  <span id="info"></span>
+  <span class="priv">🔒 이 도구는 아무것도 저장하지 않습니다</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var m = document.getElementById("m"), info = document.getElementById("info");
+  var cls = null, tab = "pick", off = {}, used = {}, last = "", numOnly = false;
+  var tim = {left:300, total:300, run:null}, groups = [], ng = 4;
+  function h(tag, cls, text){ var e = document.createElement(tag); if(cls) e.className = cls; if(text != null) e.textContent = text; return e; }
+  function btn(text, cls, fn){ var b = h("button", "btn" + (cls ? " " + cls : ""), text); b.type = "button"; b.onclick = fn; return b; }
+
+  document.getElementById("tabs").onclick = function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    tab = b.dataset.t;
+    Array.prototype.forEach.call(this.children, function(x){ x.setAttribute("aria-pressed", x === b); });
+    render();
+  };
+  function label(s){ return numOnly ? s.no + "번" : s.no + "번 " + s.name; }
+
+  function renderPick(){
+    if(!cls){ TT.ui.needRoster(m); info.textContent = ""; return; }
+    var pool = cls.students.filter(function(s){ return !off[s.no] && !used[s.no]; });
+    m.appendChild(h("div", "big", last || "?"));
+    var row = h("div", "row");
+    row.appendChild(btn("뽑기", "primary", function(){
+      if(!pool.length){ last = "모두 뽑았어요"; render(); return; }
+      var s = pool[Math.floor(Math.random() * pool.length)]; used[s.no] = 1; last = label(s); render();
+    }));
+    row.appendChild(btn("처음부터", "", function(){ used = {}; last = ""; render(); }));
+    var lab = h("label", "sm"), cb = h("input"); cb.type = "checkbox"; cb.checked = numOnly;
+    cb.onchange = function(){ numOnly = cb.checked; last = ""; render(); };
+    lab.appendChild(cb); lab.appendChild(document.createTextNode(" 번호만 보이기")); row.appendChild(lab);
+    m.appendChild(row);
+    var chips = h("div", "chips");
+    cls.students.forEach(function(s){
+      var c = h("button", "chipb" + (off[s.no] ? " off" : "") + (used[s.no] ? " done" : ""), numOnly ? String(s.no) : s.no + " " + s.name);
+      c.type = "button"; c.onclick = function(){ off[s.no] = !off[s.no]; render(); };
+      chips.appendChild(c);
+    });
+    m.appendChild(chips);
+    info.textContent = "남은 " + pool.length + "명 · 뽑힌 학생은 다시 안 나옵니다 · 이름을 누르면 결석 등으로 제외";
+  }
+
+  function stop(){ if(tim.run){ clearInterval(tim.run); tim.run = null; } }
+  function beep(){
+    try{ var a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator();
+      o.connect(a.destination); o.frequency.value = 880; o.start(); setTimeout(function(){ o.stop(); }, 700); }catch(e){}
+  }
+  function start(){
+    if(tim.left <= 0) tim.left = tim.total;
+    var end = Date.now() + tim.left * 1000;
+    tim.run = setInterval(function(){
+      tim.left = Math.max(0, Math.round((end - Date.now()) / 1000));
+      if(tim.left <= 0){ stop(); beep(); }
+      if(tab === "timer") render();
+    }, 250);
+    render();
+  }
+  function renderTimer(){
+    var mm = Math.floor(tim.left / 60), ss = tim.left % 60;
+    m.appendChild(h("div", "big" + (tim.left === 0 ? " end" : ""), mm + ":" + (ss < 10 ? "0" : "") + ss));
+    var row = h("div", "row");
+    [1,3,5,10,15].forEach(function(x){
+      row.appendChild(btn(x + "분", tim.total === x * 60 ? "on" : "", function(){ stop(); tim.total = tim.left = x * 60; render(); }));
+    });
+    row.appendChild(btn(tim.run ? "멈춤" : "시작", "primary", function(){ if(tim.run){ stop(); render(); } else start(); }));
+    row.appendChild(btn("다시", "", function(){ stop(); tim.left = tim.total; render(); }));
+    m.appendChild(row);
+    info.textContent = "시간이 끝나면 소리가 납니다";
+  }
+
+  function renderScore(){
+    while(groups.length < ng) groups.push({n:(groups.length + 1) + "모둠", s:0});
+    groups.length = ng;
+    var row = h("div", "row"); row.appendChild(h("span", "sm", "모둠 수"));
+    [2,3,4,5,6,7,8].forEach(function(x){ row.appendChild(btn(String(x), x === ng ? "on" : "", function(){ ng = x; render(); })); });
+    row.appendChild(btn("점수 지우기", "", function(){ groups.forEach(function(g){ g.s = 0; }); render(); }));
+    m.appendChild(row);
+    var grp = h("div", "grp");
+    groups.forEach(function(g){
+      var box = h("div", "g"), inp = h("input"); inp.value = g.n; inp.setAttribute("aria-label", "모둠 이름");
+      inp.onchange = function(){ g.n = inp.value; };
+      var pm = h("div", "pm");
+      pm.appendChild(btn("−1", "", function(){ g.s -= 1; render(); }));
+      pm.appendChild(btn("+1", "primary", function(){ g.s += 1; render(); }));
+      box.appendChild(inp); box.appendChild(h("div", "sc", String(g.s))); box.appendChild(pm); grp.appendChild(box);
+    });
+    m.appendChild(grp);
+    info.textContent = "모둠 이름은 눌러서 바꿀 수 있습니다";
+  }
+
+  function render(){
+    m.textContent = "";
+    if(tab === "pick") renderPick(); else if(tab === "timer") renderTimer(); else renderScore();
+  }
+  TT.ui.classSelect(document.getElementById("clsSel"), "class", function(c){ cls = c; off = {}; used = {}; last = ""; render(); });
+})();
+</script>
+</body>
+</html>

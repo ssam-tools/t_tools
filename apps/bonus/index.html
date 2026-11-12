@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>가산점 자동 입력 · 선생님 도구 모음</title>
+<!--
+  [가산점 자동 입력]
+  나이스 수상경력 + 창의적체험활동 + 가산점 양식 파일을 넣으면 가산점과 내역이 입력된 엑셀 파일을 만듭니다.
+  · 점수 계산·엑셀 입출력 코드는 기존 '가산점자동입력(최종).html'의 것을 그대로 옮겼습니다. (규칙 변경 없음)
+  · 이 페이지는 외부로 전송하지 않으며(CSP connect-src 'none'), 아무것도 저장하지 않습니다.
+  · 명렬표의 우리 반이 지정돼 있으면 결과에 이름을 함께 보여 주고 반이 맞는지 확인합니다. (이름은 이 화면에서만 표시)
+-->
+<style>
+  :root{
+    --bg:#f3f6f9; --card:#fff; --ink:#1d2733; --sub:#5b6773; --line:#dde3ea;
+    --accent:#2f6fb5; --accent-soft:#e6f0fa; --ok:#2e7d4f; --ok-soft:#e3f3ea;
+    --warn:#8a4f00; --warn-soft:#fff1dc; --danger:#b3261e; --danger-soft:#fdeceb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  [hidden]{display:none!important}
+  html,body{height:100%}
+  body{
+    font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+    background:var(--bg);color:var(--ink);
+    height:100dvh;display:flex;flex-direction:column;overflow:hidden;
+    padding:clamp(8px,1.6vh,18px) clamp(10px,3vw,28px);gap:clamp(6px,1.2vh,12px);
+  }
+  button{font:inherit;color:inherit}
+  header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .back{font-size:12.5px;color:var(--accent);text-decoration:none;font-weight:700}
+  h1{font-size:clamp(18px,3vh,24px);font-weight:800;letter-spacing:-.02em;line-height:1.2}
+  h1 small{font-size:12.5px;font-weight:700;color:var(--ok);background:var(--ok-soft);padding:2px 9px;border-radius:999px;margin-left:6px;vertical-align:middle}
+  h1 small.none{color:#4a5560;background:#eceff3}
+  .bar{display:flex;gap:6px;align-items:center;position:relative}
+  .btn,summary{
+    font-size:14px;font-weight:700;background:#fff;border:1px solid var(--line);border-radius:10px;
+    padding:8px 13px;cursor:pointer;list-style:none;white-space:nowrap
+  }
+  summary::-webkit-details-marker{display:none}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.big{padding:12px 16px;font-size:15px;width:100%}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn:focus-visible,summary:focus-visible,#drop:focus-visible{outline:3px solid #7fb0e6;outline-offset:2px}
+  details.more{position:relative}
+  .menu{position:absolute;right:0;top:calc(100% + 6px);z-index:10;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(30,60,100,.18);padding:6px;min-width:190px}
+  .menu button{display:block;width:100%;text-align:left;border:0;background:transparent;font-size:14px;padding:9px 12px;border-radius:8px;cursor:pointer}
+  .menu button:hover{background:var(--accent-soft)}
+
+  main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,390px) 1fr;gap:clamp(8px,1.4vw,14px)}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:clamp(10px,2vh,16px);min-height:0;display:flex;flex-direction:column;gap:10px;overflow:auto}
+  #drop{border:2px dashed #9fb3c8;border-radius:14px;padding:clamp(14px,3vh,26px) 12px;text-align:center;color:var(--sub);cursor:pointer;background:#fbfcfe;line-height:1.5}
+  #drop.over,body.drag #drop{border-color:var(--accent);background:var(--accent-soft)}
+  #drop b{color:var(--ink);font-size:clamp(14px,2.3vh,16px);display:block}
+  #drop span{font-size:12.5px}
+  .slots{display:flex;flex-direction:column;gap:6px}
+  .slot{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13.5px;min-width:0}
+  .slot .st{width:22px;height:22px;border-radius:50%;background:#eceff3;color:#8a96a3;display:grid;place-items:center;font-size:13px;font-weight:800;flex:none}
+  .slot .tx{flex:1;min-width:0}
+  .slot .tx b{display:block;font-size:13.5px}
+  .slot .tx span{display:block;font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .slot.ok{border-color:#b9dcc8;background:#f5fbf7}
+  .slot.ok .st{background:var(--ok);color:#fff}
+  .slot .opt{font-size:11.5px;font-weight:700;color:var(--sub);background:#eceff3;border-radius:999px;padding:1px 8px;flex:none}
+  .msg p{font-size:13.5px;line-height:1.5;margin:3px 0}
+  .msg .warn{color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:5px 9px}
+  .msg .good{color:var(--ok);font-weight:700}
+  .msg .err{color:var(--danger);background:var(--danger-soft);border-radius:8px;padding:6px 10px;font-weight:700}
+  .acts{display:flex;gap:8px;flex-wrap:wrap}
+
+  .ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .ctl .t{font-weight:800;font-size:clamp(14px,2.2vh,17px)}
+  .ctl .sp{flex:1}
+  .seg{display:inline-flex;background:#e4eaf0;border-radius:10px;padding:3px}
+  .seg button{border:0;background:transparent;font-size:13.5px;font-weight:800;color:var(--sub);padding:5px 12px;border-radius:8px;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  #pvBox{flex:1;min-height:0;display:flex;gap:14px;align-items:flex-start;overflow:auto}
+  table.tbl{border-collapse:collapse;flex:1;min-width:0;font-size:13.5px}
+  .tbl th{background:#eef2f6;font-weight:800;padding:0 6px;height:30px;font-size:12.5px;white-space:nowrap;position:sticky;top:0}
+  .tbl td{border-bottom:1px solid var(--line);padding:0 6px;height:var(--rh,30px);text-align:center;white-space:nowrap}
+  .tbl td.l{text-align:left;font-weight:800}
+  .tbl td.det{white-space:normal;text-align:left;font-size:12.5px;height:auto;padding:5px 6px;min-width:140px;word-break:keep-all}
+  .tbl td.hi{font-weight:800;color:var(--accent)}
+  .tbl td.mut{color:var(--sub)}
+  .hint{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--sub);font-size:14.5px;line-height:1.7;padding:12px}
+
+  dialog{margin:auto;border:0;border-radius:16px;padding:18px;width:min(620px,94vw);max-height:92dvh;box-shadow:0 10px 40px rgba(0,0,0,.25);color:var(--ink);overflow:auto}
+  dialog::backdrop{background:rgba(20,30,45,.45)}
+  dialog h2{font-size:18px;margin-bottom:8px}
+  dialog ol{margin:6px 0 0 18px;font-size:14px;line-height:1.7;color:var(--ink)}
+  dialog ol li{padding:2px 0}
+  dialog .note{font-size:13px;color:var(--sub);line-height:1.55}
+  dialog label{display:block;font-size:14px;font-weight:700;margin:12px 0 4px}
+  dialog input[type=file]{font:inherit;font-size:13px;max-width:100%}
+  .cmpres{margin-top:10px}
+  .cmpscroll{max-height:36vh;overflow:auto;margin-top:8px}
+  .cmpscroll td.da{background:#fff4f2}.cmpscroll td.db{background:#f1f8ff}
+  .cmpscroll td.v{word-break:break-all}
+  .cmpscroll th,.cmpscroll td{border:1px solid var(--line);padding:4px 6px;font-size:12.5px}
+  .cmpscroll table{border-collapse:collapse;width:100%}
+  .cmpscroll th{background:#f0f3f7}
+  .dacts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+
+  @media (max-width:860px){
+    body{overflow:auto;height:auto;min-height:100dvh}
+    main{grid-template-columns:1fr;grid-template-rows:auto minmax(260px,auto);flex:none}
+    #pvBox{overflow:auto}
+    .panel.left{overflow:visible}
+    #drop span.pc{display:none}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 도구 모음</a>
+    <h1>🏅 가산점 자동 입력 <small id="homeChip" hidden></small></h1>
+  </div>
+  <div class="bar">
+    <button type="button" class="btn" id="btnPick">📂 파일 선택</button>
+    <details class="more" id="more">
+      <summary aria-label="더 보기">⋯</summary>
+      <div class="menu">
+        <button type="button" id="mPaths">나이스에서 파일 받는 방법</button>
+        <button type="button" id="mRules">적용 규칙 보기</button>
+        <button type="button" id="mCmp">파일 일치 점검</button>
+      </div>
+    </details>
+  </div>
+</header>
+
+<main>
+  <section class="panel left">
+    <div id="drop" tabindex="0" role="button" aria-label="파일 선택">
+      <b>엑셀 파일 3개를 한꺼번에 끌어다 놓으세요</b>
+      <span class="pc">(또는 눌러서 선택 · 선택 창에서 Ctrl 키로 여러 개)</span>
+      <span class="phone" hidden></span>
+    </div>
+    <input id="file" type="file" accept=".xlsx" multiple hidden>
+    <div class="slots" id="slots">
+      <div class="slot" data-r="src"><span class="st">1</span><div class="tx"><b>수상경력 파일</b><span>필요</span></div></div>
+      <div class="slot" data-r="cre"><span class="st">2</span><div class="tx"><b>창의적체험활동 파일</b><span>필요 (임원 가산점용)</span></div></div>
+      <div class="slot" data-r="tpl"><span class="st">3</span><div class="tx"><b>가산점 양식 파일</b><span>필요</span></div></div>
+    </div>
+    <div class="acts">
+      <button type="button" class="btn big" id="runNoCre" hidden>창체 파일 없이 입력하기 (임원 가산점 제외)</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="acts">
+      <button type="button" class="btn primary big" id="dl" hidden>결과 파일 저장 (<span id="outname"></span>)</button>
+      <button type="button" class="btn" id="clear" hidden>처음부터 다시</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="ctl">
+      <span class="t" id="pvTitle">결과 확인</span>
+      <span class="sp"></span>
+      <div class="seg" id="seg" hidden>
+        <button type="button" data-v="score" aria-pressed="true">점수</button>
+        <button type="button" data-v="det" aria-pressed="false">내역</button>
+      </div>
+    </div>
+    <div class="hint" id="hint">파일 3개를 올리면 자동으로 입력되고,<br>결과가 여기에 표시됩니다.</div>
+    <div id="pvBox" hidden></div>
+  </section>
+</main>
+
+<dialog id="dlgPaths">
+  <h2>나이스에서 파일 받는 방법</h2>
+  <ol>
+    <li><b>가산점 양식 파일</b> : 나이스 고입 - 고입_내신관리[중] - 항목별점수관리 - 엑셀출력</li>
+    <li><b>수상경력 파일</b> : 나이스 학급담임 - 학생부 - 학교생활기록부 - 학생부 항목별 조회 - 수상경력 - 수상경력 - 저장 - XLS data</li>
+    <li><b>창의적체험활동 파일</b> : 나이스 학급담임 - 학생부 - 학교생활기록부 - 학생부 항목별 조회 - 창의적체험활동 - 창의적체험활동 - 저장 - XLS data</li>
+  </ol>
+  <p class="note" style="margin-top:10px">파일은 .xlsx 형식이어야 합니다. .xls로 받았다면 엑셀에서 열어 .xlsx로 저장해 주세요.</p>
+  <div class="dacts"><button type="button" class="btn" data-close>닫기</button></div>
+</dialog>
+
+<dialog id="dlgRules">
+  <h2>적용 규칙</h2>
+  <ol>
+    <li>학년별로 항목당 0.5점, 최대 2점 (공동수상은 0.3점, 교과우수상 제외)</li>
+    <li>임원·표창장을 제외한 나머지 수상은 학년별 최대 2개(최대 1점)</li>
+    <li>임원(학급 반장·부반장, 전교 학생자치회)은 내역 맨 앞, 다음 표창장, 그다음 나머지 수상</li>
+    <li>상한을 넘으면 임원 → 표창장 → 나머지 수상 순으로 남김</li>
+    <li>내역은 수상명을 띄어쓰기 없이(쉼표 뒤만 한 칸) 적고 항목마다 점수를 괄호로 표시</li>
+  </ol>
+  <div class="dacts"><button type="button" class="btn" data-close>닫기</button></div>
+</dialog>
+
+<dialog id="dlgCmp">
+  <h2>파일 일치 점검</h2>
+  <p class="note">1번 파일(이 프로그램이 만든 파일)과 2번 파일(나이스에 입력한 뒤 다시 내려받은 파일 등)이 같은지 비교합니다. 서식은 무시하고 셀의 값만 비교합니다.</p>
+  <label for="f1">1번 파일 <span style="font-weight:400;color:var(--sub)">- 방금 만들었다면 비워 두어도 됩니다</span></label>
+  <input id="f1" type="file" accept=".xlsx">
+  <label for="f2">2번 파일 (확인하려는 파일)</label>
+  <input id="f2" type="file" accept=".xlsx">
+  <div class="dacts" style="justify-content:flex-start"><button type="button" class="btn primary" id="cmp">비교하기</button></div>
+  <div class="cmpres msg" id="cmpres"></div>
+  <div class="cmpscroll" id="cmppv" hidden></div>
+  <div class="dacts"><button type="button" class="btn" data-close>닫기</button></div>
+</dialog>
+
+<script>
+const OUT_NAME = '학교활동_가산점입력.xlsx';
+const UNIT_NORMAL = 5, UNIT_JOINT = 3, UNIT_CAP = 20; // 0.1점 단위
+const MAX_OTHER_N = 2, MAX_OTHER_U = 10;             // 나머지 수상: 학년별 최대 2개, 최대 1점
+const ITEM_SEP = ', ';
+
+const norm = (s) => String(s == null ? '' : s).replace(/[\s​﻿]/g, '');
+const decodeEsc = (s) => s.replace(/_x([0-9A-Fa-f]{4})_/g, (m, h) => String.fromCharCode(parseInt(h, 16)));
+const unXml = (s) => s.replace(/&(#x[0-9A-Fa-f]+|#[0-9]+|amp|lt|gt|quot|apos);/g, (m, e) => {
+  if (e === 'amp') return '&'; if (e === 'lt') return '<'; if (e === 'gt') return '>';
+  if (e === 'quot') return '"'; if (e === 'apos') return "'";
+  return String.fromCodePoint(e[1] === 'x' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10));
+});
+const escXml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const colIdx = (L) => { let n = 0; for (const c of L) n = n * 26 + c.charCodeAt(0) - 64; return n - 1; };
+const colName = (c) => { let s = ''; for (let n = c + 1; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + (n - 1) % 26) + s; return s; };
+const atoi = (s) => { s = String(s == null ? '' : s).trim(); if (s === '') return null; const f = Number(s); return Number.isFinite(f) ? Math.trunc(f) : null; };
+const tenths = (u) => (u % 10 === 0 ? String(u / 10) : `${Math.floor(u / 10)}.${u % 10}`);
+
+// ---------- ZIP ----------
+const td = new TextDecoder('utf-8'), te = new TextEncoder();
+async function inflateRaw(data) {
+  const ds = new DecompressionStream('deflate-raw');
+  return new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(ds)).arrayBuffer());
+}
+async function readZip(buf) {
+  const u8 = new Uint8Array(buf), dv = new DataView(buf);
+  let e = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 70000); i--) { if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; } }
+  if (e < 0) throw new Error('엑셀(.xlsx) 파일이 아니거나 손상된 파일입니다');
+  const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true);
+  const files = new Map();
+  for (let i = 0; i < n; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) throw new Error('손상된 엑셀 파일입니다');
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true);
+    const off = dv.getUint32(p + 42, true);
+    const name = td.decode(u8.subarray(p + 46, p + 46 + nl));
+    const lnl = dv.getUint16(off + 26, true), lel = dv.getUint16(off + 28, true);
+    const raw = u8.subarray(off + 30 + lnl + lel, off + 30 + lnl + lel + csize);
+    files.set(name, method === 0 ? raw.slice() : await inflateRaw(raw));
+    p += 46 + nl + el + cl;
+  }
+  return files;
+}
+let CRC_T = null;
+function crc32(u8) {
+  if (!CRC_T) { CRC_T = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; CRC_T[n] = c >>> 0; } }
+  let c = 0xffffffff; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 255] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+function writeZip(entries) { // entries: [name, Uint8Array] (무압축 저장 방식 - 엑셀에서 정상적으로 열림)
+  const parts = [], central = []; let off = 0;
+  for (const [name, data] of entries) {
+    const nb = te.encode(name), crc = crc32(data);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true);
+    h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, nb.length, true);
+    parts.push(new Uint8Array(h.buffer), nb, data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, nb.length, true); c.setUint32(42, off, true);
+    central.push(new Uint8Array(c.buffer), nb);
+    off += 30 + nb.length + data.length;
+  }
+  const csz = central.reduce((a, b) => a + b.length, 0);
+  const e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, entries.length, true); e.setUint16(10, entries.length, true); e.setUint32(12, csz, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...central, new Uint8Array(e.buffer)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+
+// ---------- XLSX 읽기 ----------
+function parseSST(xml) {
+  const out = []; if (!xml) return out;
+  const re = /<si\b[^>]*>([\s\S]*?)<\/si>|<si\b[^>]*\/>/g; let m;
+  while ((m = re.exec(xml))) {
+    const body = (m[1] || '').replace(/<rPh\b[\s\S]*?<\/rPh>/g, '');
+    let t = ''; const tr = /<t\b[^>]*>([\s\S]*?)<\/t>|<t\b[^>]*\/>/g; let x;
+    while ((x = tr.exec(body))) t += x[1] || '';
+    out.push(decodeEsc(unXml(t)));
+  }
+  return out;
+}
+function parseSheet(xml, sst) {
+  const res = new Map(); const re = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g; let m;
+  while ((m = re.exec(xml))) {
+    const attrs = m[1], inner = m[2] || '';
+    const ref = (/\br="([A-Z]+)([0-9]+)"/.exec(attrs)); if (!ref) continue;
+    const typ = (/\bt="([^"]*)"/.exec(attrs) || [])[1] || '';
+    const vm = /<v\b[^>]*>([\s\S]*?)<\/v>/.exec(inner); const v = vm ? unXml(vm[1]) : '';
+    let text = '';
+    if (typ === 's') { const i = parseInt(v, 10); text = sst[i] || ''; }
+    else if (typ === 'inlineStr') { let t = ''; const tr = /<t\b[^>]*>([\s\S]*?)<\/t>/g; let x; while ((x = tr.exec(inner))) t += x[1]; text = decodeEsc(unXml(t)); }
+    else text = v;
+    if (text !== '') { const r = +ref[2], c = colIdx(ref[1]); if (!res.has(r)) res.set(r, new Map()); res.get(r).set(c, text); }
+  }
+  return res;
+}
+async function openWorkbook(name, buf) {
+  const files = await readZip(buf);
+  const wbx = files.get('xl/workbook.xml'); if (!wbx) throw new Error('엑셀(.xlsx) 형식이 아닙니다');
+  const wbXml = td.decode(wbx);
+  const sh = /<sheet\b[^>]*>/.exec(wbXml); const rid = sh && (/\br:id="([^"]*)"/.exec(sh[0]) || /\bid="([^"]*)"/.exec(sh[0]) || [])[1];
+  let sheetPath = 'xl/worksheets/sheet1.xml';
+  const rels = files.get('xl/_rels/workbook.xml.rels');
+  if (rels && rid) {
+    const rr = /<Relationship\b[^>]*>/g; let m;
+    while ((m = rr.exec(td.decode(rels)))) {
+      if ((/\bId="([^"]*)"/.exec(m[0]) || [])[1] === rid) { const t = (/\bTarget="([^"]*)"/.exec(m[0]) || [])[1] || ''; sheetPath = t.startsWith('/') ? t.slice(1) : 'xl/' + t; }
+    }
+  }
+  const sx = files.get(sheetPath); if (!sx) throw new Error('시트를 찾을 수 없습니다');
+  const sst = parseSST(files.has('xl/sharedStrings.xml') ? td.decode(files.get('xl/sharedStrings.xml')) : '');
+  return { name, files, sheetPath, sheet: parseSheet(td.decode(sx), sst) };
+}
+const get = (s, r, c) => (s.get(r) && s.get(r).get(c)) || '';
+const maxRow = (s) => { let m = 0; for (const r of s.keys()) if (r > m) m = r; return m; };
+const hasLabel = (s, label) => { for (const row of s.values()) for (const t of row.values()) if (norm(t) === label) return true; return false; };
+const rowHas = (row, label) => { if (!row) return false; for (const t of row.values()) if (norm(t) === label) return true; return false; };
+
+// ---------- 저장 (양식 서식은 그대로 두고 지정 셀만 교체) ----------
+async function saveWorkbook(wb, changes) {
+  let sx = td.decode(wb.files.get(wb.sheetPath)); const done = new Set();
+  const re = /<c r="([A-Z]+[0-9]+)"((?:\s+[A-Za-z:]+="[^"]*")*)\s*(?:\/>|>([\s\S]*?)<\/c>)/g;
+  sx = sx.replace(re, (m, ref, attrs) => {
+    const ch = changes.get(ref); if (!ch) return m; done.add(ref);
+    const sm = /\ss="([^"]*)"/.exec(attrs); const style = sm ? ` s="${sm[1]}"` : '';
+    if (ch.text === '') return `<c r="${ref}"${style}/>`;
+    if (ch.isStr) return `<c r="${ref}"${style} t="inlineStr"><is><t xml:space="preserve">${escXml(ch.text)}</t></is></c>`;
+    return `<c r="${ref}"${style}><v>${ch.text}</v></c>`;
+  });
+  const missing = [...changes.keys()].filter((k) => !done.has(k));
+  if (missing.length) throw new Error('양식의 구조가 예상과 달라 입력하지 못했습니다. (셀 없음: ' + missing.join(',') + ')');
+  const entries = [...wb.files.entries()].map(([n, d]) => [n, n === wb.sheetPath ? te.encode(sx) : d]);
+  return writeZip(entries);
+}
+
+// ---------- 나이스 수상경력 ----------
+const classRe = /([0-9]+)\s*학년\s*([0-9]+)\s*반/;
+function readSource(s) {
+  let cGrade = 0, cNo = 2, cAward = 4, cDate = 6, cls = 0, hdr = false;
+  for (let r = 1; r <= maxRow(s); r++) {
+    const row = s.get(r); if (!row) continue;
+    if (!cls && r <= 8) for (const t of row.values()) { const m = classRe.exec(t); if (m) cls = +m[2]; }
+    if (rowHas(row, '수상명')) {
+      for (const [c, t] of row) { switch (norm(t)) { case '학년(학기)': cGrade = c; break; case '번호': cNo = c; break; case '수상명': cAward = c; break; case '수상연월일': cDate = c; break; } }
+      hdr = true; break;
+    }
+  }
+  if (!hdr) throw new Error("수상경력 표의 제목 줄('수상명')을 찾지 못했습니다");
+  const out = new Map(), st = { total: 0, excluded: 0, dup: 0, noGrade: 0 }, seen = new Set();
+  let curNo = 0, curGrade = 0;
+  for (let r = 1; r <= maxRow(s); r++) {
+    const row = s.get(r); if (!row) continue;
+    const an = norm(row.get(cAward)); if (an === '' || an === '수상명') continue;
+    const n = atoi(row.get(cNo)), g = atoi(row.get(cGrade));
+    if (n !== null) { if (g !== null) curGrade = g; else if (n !== curNo) curGrade = 0; curNo = n; }
+    else if (g !== null) curGrade = g;
+    if (curNo === 0) continue;
+    st.total++;
+    if (an.includes('교과우수상')) { st.excluded++; continue; }
+    if (curGrade < 1 || curGrade > 3) { st.noGrade++; continue; }
+    const dk = `${curNo}|${curGrade}|${an}|${norm(row.get(cDate))}`;
+    if (seen.has(dk)) { st.dup++; continue; } seen.add(dk);
+    const k = `${curNo}|${curGrade}`; if (!out.has(k)) out.set(k, []);
+    out.get(k).push({ name: an.replace(/,/g, ', '), units: an.includes('공동수상') ? UNIT_JOINT : UNIT_NORMAL, leader: false });
+  }
+  return { cls, out, st };
+}
+
+// ---------- 창의적체험활동 특기사항에서 임원 찾기 ----------
+const leaderRe = /(학급\s*(?:부반장|반장)|전교\s*학생(?:자치)?회\s*[가-힣]*?(?:장|총무|서기|부원))\s*(?:\(|으로서|로서)/g;
+function readLeaders(s) {
+  let cNo = 0, cGrade = 2, cArea = 3, cText = 5;
+  for (let r = 1; r <= 8; r++) { const row = s.get(r); if (!row) continue; for (const [c, t] of row) { switch (norm(t)) { case '번호': cNo = c; break; case '학년': cGrade = c; break; case '창의적체험활동': cArea = c; break; case '특기사항': cText = c; break; } } }
+  const texts = new Map(); let no = 0, grade = 0, area = '';
+  for (let r = 1; r <= maxRow(s); r++) {
+    const row = s.get(r); if (!row || row.size === 0) continue;
+    if (norm(row.get(cNo)) === '번호' || norm(row.get(cArea)) === '영역' || rowHas(row, '/')) continue;
+    const n = atoi(row.get(cNo)); if (n !== null) no = n;
+    const g = atoi(row.get(cGrade)); if (g !== null) grade = g;
+    const a = norm(row.get(cArea)); if (a) area = a;
+    const t = row.get(cText) || ''; if (!no || grade < 1 || !t) continue;
+    const k = `${no}|${grade}|${area}`; texts.set(k, (texts.get(k) || '') + t);
+  }
+  const out = new Map(), seen = new Set();
+  for (const [k, txt] of texts) {
+    const [no, grade] = k.split('|'); leaderRe.lastIndex = 0; let m;
+    while ((m = leaderRe.exec(txt))) {
+      const name = norm(m[1]), id = `${no}|${grade}|${name}`; if (seen.has(id)) continue; seen.add(id);
+      const kk = `${no}|${grade}`; if (!out.has(kk)) out.set(kk, []); out.get(kk).push(name);
+    }
+  }
+  return out;
+}
+
+// 우선순위: 임원 -> 표창장 -> 나머지
+const rankOf = (a) => (a.leader ? 0 : a.name.startsWith('표창장') ? 1 : 2);
+function pick(list) {
+  const idx = list.map((_, i) => i);
+  idx.sort((a, b) => { const ra = rankOf(list[a]), rb = rankOf(list[b]); if (ra !== rb) return ra - rb; if (list[a].units !== list[b].units) return list[b].units - list[a].units; return a - b; });
+  let total = 0, otherN = 0, otherU = 0; const keep = new Set();
+  for (const i of idx) {
+    const a = list[i], other = rankOf(a) === 2;
+    if (total + a.units > UNIT_CAP) continue;                                  // 학년당 최대 2점
+    if (other && (otherN >= MAX_OTHER_N || otherU + a.units > MAX_OTHER_U)) continue; // 나머지 수상: 최대 2개, 1점
+    total += a.units; if (other) { otherN++; otherU += a.units; } keep.add(i);
+  }
+  return { chosen: list.filter((_, i) => keep.has(i)), dropped: list.length - keep.size };
+}
+
+function findTemplateCols(s) {
+  const c = { seq: 0, cls: 2, no: 3, base: 5, add: 6, sum: 9, det: 10 }; let hdr = 0;
+  for (let r = 1; r <= 6; r++) { const row = s.get(r); if (!row) continue;
+    for (const [col, t] of row) { const n = norm(t);
+      if (n === '연번') c.seq = col; else if (n === '반') c.cls = col; else if (n === '번호') c.no = col;
+      else if (n.startsWith('기본')) c.base = col; else if (n === '가산점수') { c.add = col; hdr = r; }
+      else if (n === '합계') c.sum = col; else if (n === '내역') c.det = col; } }
+  if (!hdr) throw new Error("양식에서 '가산점수' 제목을 찾지 못했습니다");
+  return { c, hdrRow: hdr + 1 };
+}
+
+// ---------- 전체 처리 ----------
+// files: [{name, buf}]
+async function processFiles(files) {
+  let src = null, tpl = null, cre = null; const roles = [];
+  for (const f of files) {
+    if (!/\.xlsx$/i.test(f.name)) throw new Error(`'${f.name}' : .xlsx 파일만 사용할 수 있습니다 (.xls는 엑셀에서 .xlsx로 저장 후 사용)`);
+    const wb = await openWorkbook(f.name, f.buf);
+    if (hasLabel(wb.sheet, '창의적체험활동')) { cre = wb; roles.push([f.name, '창의적체험활동 파일']); }
+    else if (hasLabel(wb.sheet, '수상명')) { src = wb; roles.push([f.name, '수상경력 파일']); }
+    else if (hasLabel(wb.sheet, '가산점수')) { tpl = wb; roles.push([f.name, '가산점 양식']); }
+    else throw new Error(`'${f.name}' 파일은 수상경력·창의적체험활동 파일도, 가산점 양식도 아닙니다.`);
+  }
+  if (!src || !tpl) throw new Error('나이스 수상경력 파일 1개와 가산점 양식 파일 1개가 필요합니다. (임원 가산점은 창의적체험활동 파일도 함께)');
+
+  const { cls, out: awards, st } = readSource(src.sheet);
+  let leaderCnt = 0;
+  if (cre) for (const [k, names] of readLeaders(cre.sheet)) { awards.set(k, [...names.map((n) => ({ name: n, units: UNIT_NORMAL, leader: true })), ...(awards.get(k) || [])]); leaderCnt += names.length; }
+
+  const res = new Map(); let trimmed = 0;
+  for (const [k, list] of awards) {
+    const [no, g] = k.split('|').map(Number); const { chosen, dropped } = pick(list); trimmed += dropped;
+    if (g < 1 || g > 3) continue;
+    chosen.sort((a, b) => rankOf(a) - rankOf(b)); // 안정 정렬
+    if (!res.has(no)) res.set(no, { units: [0, 0, 0, 0], items: [[], [], [], []] });
+    const r = res.get(no); for (const a of chosen) { r.units[g] += a.units; r.items[g].push(`${a.name}(${tenths(a.units)})`); }
+  }
+
+  const ts = tpl.sheet, { c: cols, hdrRow } = findTemplateCols(ts);
+  const changes = new Map(), used = new Set(), classDiff = [], preview = []; let rows = 0;
+  for (let r = hdrRow + 1; r <= maxRow(ts); r++) {
+    const no = atoi(get(ts, r, cols.no)); if (no === null) continue; rows++;
+    const cn = atoi(get(ts, r, cols.cls)); if (cn === null || (cls > 0 && cn !== cls)) classDiff.push(get(ts, r, cols.seq) + '번');
+    const base = parseFloat(get(ts, r, cols.base).trim()) || 0;
+    let rr = res.get(no); if (rr) used.add(no); else rr = { units: [0, 0, 0, 0], items: [[], [], [], []] };
+    const total = Math.round(base * 10) + rr.units[1] + rr.units[2] + rr.units[3];
+    for (let g = 1; g <= 3; g++) {
+      changes.set(colName(cols.add + g - 1) + r, { text: tenths(rr.units[g]) });
+      changes.set(colName(cols.det + g - 1) + r, { text: rr.items[g].join(ITEM_SEP), isStr: true });
+    }
+    changes.set(colName(cols.sum) + r, { text: tenths(total) });
+    preview.push({ no, add: [1, 2, 3].map((g) => tenths(rr.units[g])), total: tenths(total), det: [1, 2, 3].map((g) => rr.items[g].join(ITEM_SEP)) });
+  }
+  const blob = await saveWorkbook(tpl, changes);
+  const outName = tpl.name === OUT_NAME ? OUT_NAME.replace('.xlsx', '_완료.xlsx') : OUT_NAME;
+  let withScore = 0; for (const r of res.values()) if (r.units[1] + r.units[2] + r.units[3] > 0) withScore++;
+  const notFound = [...new Set([...awards.keys()].map((k) => +k.split('|')[0]))].filter((n) => !used.has(n)).sort((a, b) => a - b);
+  const lines = [`원본 수상 기록 ${st.total}건 확인 (교과우수상 ${st.excluded}건 제외, 중복 ${st.dup}건 제외)`, `가산점이 입력된 학생: ${withScore}명 / 양식의 전체 학생: ${rows}명`];
+  const warns = [];
+  if (cre) lines.push(`학급·전교 임원 활동 ${leaderCnt}건을 내역 맨 앞에 입력했습니다.`); else warns.push('창의적체험활동 파일이 선택되지 않아 임원(반장·부반장·전교 학생자치회) 가산점은 입력하지 않았습니다.');
+  if (trimmed > 0) warns.push(`학년별 상한(나머지 수상 2개·1점, 전체 2점)을 넘어 제외한 항목: ${trimmed}건 (임원 → 표창장 → 나머지 순으로 남김)`);
+  if (notFound.length) warns.push(`양식에 해당 번호가 없어 입력하지 못한 번호: ${notFound.join(', ')}`);
+  if (classDiff.length) warns.push(`양식의 '반'이 원본(${cls}반)과 다른 행(연번): ${classDiff.join(', ')} → 번호 기준으로 입력했으니 확인해 주세요.`);
+  if (st.noGrade) warns.push(`학년을 알 수 없어 제외한 기록: ${st.noGrade}건`);
+  return { blob, outName, roles, lines, warns, preview, cls };
+}
+
+// ---------- 두 엑셀 파일 비교 (첫 번째 시트의 값만 비교, 서식은 무시) ----------
+function sameCell(a, b) {
+  if (a === b) return true;
+  const x = String(a).replace(/\r/g, '').trim(), y = String(b).replace(/\r/g, '').trim();
+  if (x === y) return true;
+  if (x !== '' && y !== '') { const nx = Number(x), ny = Number(y); if (Number.isFinite(nx) && Number.isFinite(ny)) return Math.abs(nx - ny) < 1e-9; }
+  return false;
+}
+async function compareFiles(a, b) { // a, b: {name, buf}
+  const A = await openWorkbook(a.name, a.buf), B = await openWorkbook(b.name, b.buf);
+  const sa = A.sheet, sb = B.sheet;
+  // 열 이름 붙이기 (가산점 양식 형태일 때)
+  let labels = {};
+  try {
+    const { hdrRow } = findTemplateCols(sa); const r1 = hdrRow - 1, r2 = hdrRow;
+    let parent = '';
+    const maxC = Math.max(...[...sa.values()].flatMap((m) => [...m.keys()]), 0);
+    for (let c = 0; c <= maxC; c++) {
+      const t1 = norm(get(sa, r1, c)), t2 = norm(get(sa, r2, c));
+      if (t1) parent = t1;
+      labels[c] = t2 ? `${t1 || parent} ${t2}` : t1;
+      if (!t2 && t1) parent = '';
+    }
+  } catch (e) { labels = {}; }
+  const rows = new Set([...sa.keys(), ...sb.keys()]); const diffs = []; let cells = 0;
+  const noCol = (() => { try { return findTemplateCols(sa).c.no; } catch (e) { return 3; } })();
+  for (const r of [...rows].sort((x, y) => x - y)) {
+    const ca = sa.get(r) || new Map(), cb = sb.get(r) || new Map();
+    const cs = new Set([...ca.keys(), ...cb.keys()]);
+    for (const c of [...cs].sort((x, y) => x - y)) {
+      cells++;
+      const va = ca.get(c) || '', vb = cb.get(c) || '';
+      if (!sameCell(va, vb)) diffs.push({ ref: colName(c) + r, no: get(sa, r, noCol) || get(sb, r, noCol), label: labels[c] || '', a: va, b: vb });
+    }
+  }
+  return { same: diffs.length === 0, diffs, cells, rowsA: maxRow(sa), rowsB: maxRow(sb) };
+}
+
+
+/* =====================  화면 (첫 화면 스타일 · 우리 반 연동 · 자동 실행)  ===================== */
+(function(){
+  const $ = (id) => document.getElementById(id);
+  if (typeof DecompressionStream === 'undefined') {
+    $('drop').textContent = '이 브라우저는 지원되지 않습니다. 최신 Chrome 또는 Edge로 열어 주세요.'; return;
+  }
+
+  /* 우리 반(명렬표) - 이름 표시와 반 확인에만 사용, 저장하지 않음 */
+  let HOME = null;
+  (function loadHome(){
+    try {
+      const r = JSON.parse(localStorage.getItem('tt_roster_v1') || 'null');
+      if (!r || !r.home || !Array.isArray(r.classes)) return;
+      const h = r.classes.filter((c) => c && c.id === r.home)[0];
+      if (!h || !Array.isArray(h.students)) return;
+      const names = new Map(); h.students.forEach((s) => names.set(+s.no, String(s.name || '')));
+      HOME = { name: String(h.name || ''), cls: Number.isFinite(parseInt(h.cls, 10)) ? parseInt(h.cls, 10) : null, names };
+    } catch (e) {}
+  })();
+  const chip = $('homeChip'); chip.hidden = false;
+  if (HOME) chip.textContent = '★ ' + HOME.name;
+  else { chip.textContent = '우리 반 미지정'; chip.className = 'none'; }
+
+  const slots = { src: null, cre: null, tpl: null };
+  const ROLE_TXT = { src: '필요', cre: '필요 (임원 가산점용)', tpl: '필요' };
+  let outBlob = null, outName = '', last = null, view = 'score';
+
+  function say(box, cls, text) { const p = document.createElement('p'); if (cls) p.className = cls; p.textContent = text; box.appendChild(p); }
+
+  function renderSlots() {
+    document.querySelectorAll('#slots .slot').forEach((el) => {
+      const r = el.dataset.r, s = slots[r], sp = el.querySelector('.tx span'), st = el.querySelector('.st');
+      el.classList.toggle('ok', !!s);
+      sp.textContent = s ? s.name : ROLE_TXT[r];
+      st.textContent = s ? '✔' : ({ src: '1', cre: '2', tpl: '3' })[r];
+    });
+    $('runNoCre').hidden = !(slots.src && slots.tpl && !slots.cre);
+    $('clear').hidden = !(slots.src || slots.cre || slots.tpl);
+  }
+
+  async function addFiles(list) {
+    const msg = $('msg'); msg.textContent = '';
+    for (const f of list) {
+      if (!/\.xlsx$/i.test(f.name)) { say(msg, 'err', `'${f.name}' : .xlsx 파일만 사용할 수 있습니다. (.xls는 엑셀에서 .xlsx로 저장 후 사용)`); continue; }
+      try {
+        const buf = await f.arrayBuffer(), wb = await openWorkbook(f.name, buf);
+        const role = hasLabel(wb.sheet, '창의적체험활동') ? 'cre' : hasLabel(wb.sheet, '수상명') ? 'src' : hasLabel(wb.sheet, '가산점수') ? 'tpl' : null;
+        if (!role) { say(msg, 'err', `'${f.name}' 파일은 수상경력·창의적체험활동 파일도, 가산점 양식도 아닙니다.`); continue; }
+        slots[role] = { name: f.name, buf };
+      } catch (e) { say(msg, 'err', `'${f.name}' : ${e && e.message ? e.message : e}`); }
+    }
+    renderSlots();
+    if (slots.src && slots.cre && slots.tpl) await run();      // 3개가 모이면 자동 실행
+  }
+
+  async function run() {
+    const msg = $('msg'); msg.textContent = ''; outBlob = null; last = null;
+    $('dl').hidden = true; $('seg').hidden = true; $('pvBox').hidden = true; $('hint').hidden = false;
+    $('hint').textContent = '입력하는 중…';
+    try {
+      const inp = ['src', 'cre', 'tpl'].filter((k) => slots[k]).map((k) => ({ name: slots[k].name, buf: slots[k].buf }));
+      const r = await processFiles(inp);
+      last = r; outBlob = r.blob; outName = r.outName;
+      for (const l of r.lines) say(msg, '', l);
+      // 우리 반 확인
+      const nums = new Set(r.preview.map((p) => p.no));
+      if (HOME) {
+        if (HOME.cls != null && r.cls > 0 && HOME.cls !== r.cls) say(msg, 'warn', `※ 수상경력 파일의 반(${r.cls}반)이 우리 반(${HOME.name})과 다릅니다. 파일을 확인해 주세요.`);
+        else if (HOME.cls != null && r.cls > 0) say(msg, 'good', `✔ 우리 반(${HOME.name})과 같은 반입니다.`);
+        const missing = [...HOME.names.keys()].filter((n) => !nums.has(n)), extra = [...nums].filter((n) => !HOME.names.has(n));
+        if (missing.length) say(msg, 'warn', `※ 우리 반 명단에는 있으나 양식에 없는 번호: ${missing.join(', ')}`);
+        if (extra.length) say(msg, 'warn', `※ 양식에는 있으나 우리 반 명단에 없는 번호: ${extra.join(', ')}`);
+      }
+      for (const w of r.warns) say(msg, 'warn', '※ ' + w);
+      say(msg, 'good', '입력이 끝났습니다. 결과를 확인하고 저장해 주세요.');
+      $('outname').textContent = outName; $('dl').hidden = false;
+      $('hint').hidden = true; $('seg').hidden = false; renderPreview();
+    } catch (e) {
+      say(msg, 'err', '[오류] ' + (e && e.message ? e.message : e));
+      $('hint').textContent = '입력하지 못했습니다. 왼쪽의 안내를 확인해 주세요.';
+    }
+  }
+
+  /* ---------- 결과 표 (점수 / 내역) ---------- */
+  function renderPreview() {
+    const box = $('pvBox'); box.textContent = ''; box.hidden = false;
+    const rows = last.preview, hasName = !!HOME;
+    const nm = (no) => (HOME && HOME.names.get(no)) || '';
+    $('pvTitle').textContent = '결과 확인 · ' + rows.length + '명';
+    const mk = (head, body) => {
+      const t = document.createElement('table'); t.className = 'tbl';
+      const hr = document.createElement('tr'); head.forEach((h) => { const th = document.createElement('th'); th.textContent = h; hr.appendChild(th); });
+      const thd = document.createElement('thead'); thd.appendChild(hr); t.appendChild(thd);
+      const tb = document.createElement('tbody');
+      body.forEach((r) => { const tr = document.createElement('tr'); r.forEach((c) => { const cell = document.createElement('td'); cell.textContent = c.t; if (c.cls) cell.className = c.cls; tr.appendChild(cell); }); tb.appendChild(tr); });
+      t.appendChild(tb); return t;
+    };
+    if (view === 'score') {
+      const head = ['번호'].concat(hasName ? ['이름'] : [], ['1학년', '2학년', '3학년', '합계']);
+      const body = rows.map((p) => [{ t: p.no, cls: 'mut' }].concat(hasName ? [{ t: nm(p.no), cls: 'l' }] : [],
+        p.add.map((a) => ({ t: a === '0' ? '' : a })), [{ t: p.total, cls: 'hi' }]));
+      const two = box.clientWidth >= 820 && rows.length > 12, per = two ? Math.ceil(rows.length / 2) : rows.length;
+      const rh = Math.max(24, Math.min(38, Math.floor((box.clientHeight - 30) / Math.max(1, per))));
+      box.style.setProperty('--rh', rh + 'px');
+      for (let b = 0; b < (two ? 2 : 1); b++) box.appendChild(mk(head, body.slice(b * per, (b + 1) * per)));
+    } else {
+      const head = ['번호'].concat(hasName ? ['이름'] : [], ['1학년 내역', '2학년 내역', '3학년 내역']);
+      const body = rows.map((p) => [{ t: p.no, cls: 'mut' }].concat(hasName ? [{ t: nm(p.no), cls: 'l' }] : [], p.det.map((d) => ({ t: d, cls: 'det' }))));
+      box.appendChild(mk(head, body));
+    }
+  }
+  $('seg').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return; view = b.dataset.v;
+    Array.from($('seg').children).forEach((x) => x.setAttribute('aria-pressed', x === b));
+    if (last) renderPreview();
+  });
+  if (window.ResizeObserver) new ResizeObserver(() => { if (last && view === 'score') renderPreview(); }).observe($('pvBox'));
+
+  /* ---------- 파일 올리기 · 저장 · 초기화 ---------- */
+  const drop = $('drop'), input = $('file');
+  drop.addEventListener('click', () => input.click());
+  $('btnPick').addEventListener('click', () => input.click());
+  drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+  input.addEventListener('change', () => { addFiles(Array.from(input.files)); input.value = ''; });
+  ['dragenter', 'dragover'].forEach((t) => window.addEventListener(t, (e) => { e.preventDefault(); document.body.classList.add('drag'); }));
+  window.addEventListener('dragleave', (e) => { if (!e.relatedTarget) document.body.classList.remove('drag'); });
+  window.addEventListener('drop', (e) => { e.preventDefault(); document.body.classList.remove('drag'); if (e.dataTransfer && e.dataTransfer.files.length) addFiles(Array.from(e.dataTransfer.files)); });
+  $('runNoCre').addEventListener('click', run);
+  $('clear').addEventListener('click', () => {
+    slots.src = slots.cre = slots.tpl = null; outBlob = null; last = null;
+    $('msg').textContent = ''; $('dl').hidden = true; $('seg').hidden = true; $('pvBox').hidden = true;
+    $('hint').hidden = false; $('hint').innerHTML = '파일 3개를 올리면 자동으로 입력되고,<br>결과가 여기에 표시됩니다.'; $('pvTitle').textContent = '결과 확인';
+    renderSlots();
+  });
+  $('dl').addEventListener('click', () => {
+    if (!outBlob) return;
+    const a = document.createElement('a'); a.href = URL.createObjectURL(outBlob); a.download = outName;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  });
+
+  /* ---------- 메뉴 · 안내 창 ---------- */
+  const more = $('more');
+  document.addEventListener('click', (e) => { if (!more.contains(e.target)) more.open = false; });
+  const open = (id) => () => { more.open = false; $(id).showModal(); };
+  $('mPaths').onclick = open('dlgPaths'); $('mRules').onclick = open('dlgRules'); $('mCmp').onclick = open('dlgCmp');
+  document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
+
+  /* ---------- 파일 일치 점검 (기존 기능) ---------- */
+  $('cmp').addEventListener('click', async () => {
+    const res = $('cmpres'), pv = $('cmppv'); res.textContent = ''; pv.textContent = ''; pv.hidden = true;
+    try {
+      const f1 = $('f1').files[0], f2 = $('f2').files[0];
+      if (!f2) throw new Error('2번 파일(확인하려는 파일)을 선택해 주세요.');
+      let a;
+      if (f1) a = { name: f1.name, buf: await f1.arrayBuffer() };
+      else if (outBlob) a = { name: outName, buf: await outBlob.arrayBuffer() };
+      else throw new Error('1번 파일을 선택하거나, 먼저 가산점 입력을 실행해 주세요.');
+      const r = await compareFiles(a, { name: f2.name, buf: await f2.arrayBuffer() });
+      if (r.same) { say(res, 'good', '✔ 일치 — 두 파일의 내용이 모두 같습니다. (비교한 셀 ' + r.cells + '개)'); return; }
+      say(res, 'err', '✘ 불일치 — 다른 부분이 ' + r.diffs.length + '곳 있습니다.');
+      const shown = r.diffs.slice(0, 300); if (r.diffs.length > shown.length) say(res, 'warn', '※ 앞의 ' + shown.length + '곳만 표시합니다.');
+      const t = document.createElement('table'), h = document.createElement('tr');
+      for (const x of ['셀', '번호', '항목', '1번 파일', '2번 파일']) { const e = document.createElement('th'); e.textContent = x; h.appendChild(e); }
+      t.appendChild(h);
+      for (const d of shown) {
+        const tr = document.createElement('tr');
+        [[d.ref, 'c'], [d.no, 'c'], [d.label, ''], [d.a === '' ? '(빈칸)' : d.a, 'v da'], [d.b === '' ? '(빈칸)' : d.b, 'v db']].forEach(([v, c]) => { const cell = document.createElement('td'); cell.className = c; cell.textContent = v; tr.appendChild(cell); });
+        t.appendChild(tr);
+      }
+      pv.appendChild(t); pv.hidden = false;
+    } catch (e) { say(res, 'err', '[오류] ' + (e && e.message ? e.message : e)); }
+  });
+
+  window.TTBonus = { addFiles: addFiles, state: () => ({ slots, last }) };
+  renderSlots();
+})();
+</script>
+</body>
+</html>

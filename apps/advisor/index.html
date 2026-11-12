@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<title>고교 진학 추천 · 선생님 도구 모음</title>
+<!--
+  3학년 담임용: 성적 분석 + 마산지역 일반고 8개교 지망 우선순위 참고 자료.
+  · 분석·추천 규칙은 원래 프로그램(masan-highschool-advisor.html) 그대로입니다.
+  · 저장: "tt_advisor_v1" (이 기기 브라우저에만). 예전 저장 이름 "masanHS_v1" 자료가 있으면 자동으로 이어받습니다.
+  · 엑셀(xlsx) 파일은 공통 코드(TT.file)로 기기 안에서 읽습니다. 외부 라이브러리를 내려받지 않습니다.
+  · 학생 이름은 학급 명렬표(TT.roster)에 같은 반·번호가 있으면 자동으로 채웁니다(가림 설정을 따름).
+-->
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--sub:#6b7280;--line:#e5e7eb;--pri:#2457c5;--pri2:#e8effc;--good:#16794c;--bad:#b42318;--warn:#a15c07;font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5}
+header{background:var(--pri);color:#fff;padding:12px 16px}
+header h1{margin:0;font-size:18px}
+header p{margin:2px 0 0;font-size:12px;opacity:.9}
+nav{display:flex;gap:4px;overflow-x:auto;background:#fff;border-bottom:1px solid var(--line);padding:6px 10px;position:sticky;top:0;z-index:5}
+nav button{border:0;background:none;padding:8px 12px;border-radius:8px;font-size:14px;cursor:pointer;white-space:nowrap;color:var(--sub)}
+nav button.on{background:var(--pri2);color:var(--pri);font-weight:700}
+main{max-width:1100px;margin:0 auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.card h2{margin:0 0 10px;font-size:16px}
+.card h3{margin:14px 0 6px;font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.row>label{display:flex;flex-direction:column;font-size:12px;color:var(--sub);gap:3px}
+input,select,textarea,button{font:inherit}
+input[type=text],input[type=number],select,textarea{border:1px solid #cfd4dc;border-radius:8px;padding:6px 8px;background:#fff;color:var(--ink)}
+input[type=number]{width:84px}
+textarea{width:100%;min-height:70px}
+.btn{border:1px solid var(--pri);background:var(--pri);color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn.sec{background:#fff;color:var(--pri)}
+.btn.red{border-color:var(--bad);background:#fff;color:var(--bad)}
+.btn.sm{padding:3px 8px;font-size:12px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border:1px solid var(--line);padding:5px 7px;text-align:center}
+th{background:#f3f4f6}
+td.l,th.l{text-align:left}
+.tablewrap{overflow-x:auto}
+.grid2{display:grid;grid-template-columns:250px 1fr;gap:14px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+.slist button{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;padding:7px 10px;border-radius:8px;margin-bottom:5px;cursor:pointer}
+.slist button.on{border-color:var(--pri);background:var(--pri2)}
+.muted{color:var(--sub);font-size:12px}
+.up{color:var(--good);font-weight:700}.down{color:var(--bad);font-weight:700}
+.tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;background:#eef2f7;margin:1px}
+.tag.g{background:#e3f4ea;color:var(--good)}.tag.r{background:#fde8e6;color:var(--bad)}.tag.w{background:#fff1d6;color:var(--warn)}
+.bar{background:#eceff3;border-radius:4px;height:8px;width:70px;display:inline-block;vertical-align:middle;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--pri)}
+.notice{background:#fff8e5;border:1px solid #f1d58a;border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:10px}
+.priv{background:#e9f7ef;border:1px solid #b6e0c7;border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:10px}
+.tri{width:30px;height:26px;border:1px solid #cfd4dc;border-radius:6px;background:#fff;cursor:pointer}
+.tri.Y{background:#e3f4ea;color:var(--good);font-weight:700}.tri.N{background:#fde8e6;color:var(--bad);font-weight:700}
+.eleclist{display:flex;flex-wrap:wrap;gap:6px 14px}
+.eleclist span{display:inline-flex;align-items:center;gap:4px;font-size:13px}
+svg text{font-size:11px;fill:#4b5563}
+.rank1{background:#f1f6ff}
+.qgrid td,.qgrid th{padding:3px 4px}.qgrid input[type=text]{width:92px}.qgrid input[type=number]{width:62px}
+#printArea{display:none}
+@media print{body>*:not(#printArea){display:none!important}#printArea{display:block}body{background:#fff}}
+
+/* ---- 선생님 도구 모음 공통 틀에 맞춤: 색, 머리말, 화면 높이 고정(내용은 안쪽에서만 스크롤) ---- */
+:root{--bg:#f3f6f9;--ink:#1d2733;--sub:#5b6773;--line:#dde3ea;--pri:#2f6fb5;--pri2:#e6f0fa;--good:#2e7d4f;--bad:#b3261e}
+html,body{height:100%}
+body{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+header{background:none;color:var(--ink);padding:clamp(10px,2vh,18px) clamp(12px,3vw,28px) 2px;display:flex;align-items:flex-end;justify-content:space-between;gap:4px 12px;flex-wrap:wrap}
+header h1{font-size:clamp(19px,3.2vh,26px);font-weight:800;letter-spacing:-.02em}
+header p{color:var(--sub);opacity:1;font-size:12.5px}
+.back{font-size:13px;color:var(--pri);text-decoration:none;font-weight:700}
+nav{position:static;background:none;border:0;padding:6px clamp(12px,3vw,28px);flex:none}
+nav button{font-weight:700}
+nav button.on{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+main{flex:1;min-height:0;overflow:auto;width:100%;max-width:1100px;padding:6px clamp(12px,3vw,28px) 14px}
+.card{border-radius:16px}
+.priv{background:#e3f3ea;border:0;color:#2e7d4f;border-radius:10px}
+.btn{border-radius:10px;font-weight:700}
+@media print{html,body{height:auto;overflow:visible;display:block}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 도구 모음</a>
+    <h1>🎓 고교 진학 추천</h1>
+  </div>
+  <p>3학년 담임용 · 성적 분석 + 마산지역 일반고 8개교 지망 우선순위 참고 자료</p>
+</header>
+<nav id="nav"></nav>
+<main id="app"></main>
+<div id="printArea"></div>
+
+<script src="../../shared/tt.js"></script>
+<script>
+'use strict';
+/* =============== 상수·기본 데이터 =============== */
+const KEY='tt_advisor_v1', OLD_KEY='masanHS_v1';   // 예전 저장 이름의 자료는 load()에서 이어받습니다.
+const EXAM_PRESETS=['2학년 1학기 중간','2학년 1학기 기말','2학년 2학기 중간','2학년 2학기 기말','3학년 1학기 중간','3학년 1학기 기말','3학년 2학기 중간'];
+const TRACKS=['자연공학','의약','인문사회','상경','예체능','미정'];
+const ELECTIVES={
+ '수학':['대수','미적분Ⅰ','확률과 통계','기하','미적분Ⅱ','경제 수학','인공지능 수학'],
+ '과학':['물리학','화학','생명과학','지구과학','역학과 에너지','전자기와 양자','물질과 에너지','화학 반응의 세계','세포와 물질대사','생물의 유전','지구시스템과학','행성우주과학'],
+ '사회':['세계시민과 지리','세계사','사회와 문화','현대사회와 윤리','한국지리 탐구','정치','법과 사회','경제','윤리와 사상','국제 관계의 이해'],
+ '국어·영어':['화법과 언어','독서와 작문','문학','주제 탐구 독서','영어Ⅰ','영어Ⅱ','영어 독해와 작문','영어 발표와 토론'],
+ '기타':['정보','인공지능 기초','심리학','교육학']
+};
+const NEEDS={
+ '자연공학':{'미적분Ⅰ':2,'미적분Ⅱ':1,'기하':2,'확률과 통계':1,'물리학':2,'화학':2,'생명과학':1,'지구과학':1,'역학과 에너지':1,'전자기와 양자':1},
+ '의약':{'미적분Ⅰ':2,'확률과 통계':1,'화학':2,'생명과학':2,'물리학':1,'세포와 물질대사':2,'생물의 유전':2,'화학 반응의 세계':1,'물질과 에너지':1},
+ '인문사회':{'확률과 통계':2,'사회와 문화':2,'법과 사회':2,'정치':1,'경제':2,'세계시민과 지리':1,'세계사':1,'현대사회와 윤리':1,'윤리와 사상':1,'주제 탐구 독서':1,'영어 독해와 작문':1},
+ '상경':{'확률과 통계':2,'경제':2,'경제 수학':2,'미적분Ⅰ':1,'사회와 문화':1,'영어 독해와 작문':1}
+};
+const KEYWORDS={
+ '의약':['의사','의대','치과','치대','한의','약사','약대','간호','수의','의료','보건','물리치료','방사선','임상','병원'],
+ '자연공학':['공학','엔지니어','개발자','프로그래머','소프트웨어','인공지능','컴퓨터','반도체','전자','전기','기계','건축','토목','항공','우주','화학','물리','수학','과학자','연구원','생명','로봇','데이터','정보','ai'],
+ '상경':['경영','경제','회계','금융','마케팅','무역','세무','창업'],
+ '인문사회':['교사','교육','법','판사','검사','변호사','경찰','행정','공무원','외교','언론','기자','방송','심리','사회복지','국어','영어','역사','철학','통번역','작가','문헌'],
+ '예체능':['디자','음악','미술','체육','연기','영화','웹툰','만화','가수','작곡','운동선수','무용','스포츠']
+};
+const DEFAULT_SCHOOLS=[
+ {id:'masan',name:'마산고',type:'public',gender:'boys',kind:'자율형 공립고',addr:'마산합포구 심온길 33',rate4:86.43,level:3,top:'',note:'',electives:{}},
+ {id:'yongma',name:'용마고',type:'public',gender:'boys',kind:'일반고',addr:'마산합포구 허당로 51',rate4:91.78,level:2,top:'',note:'과학중점학교라는 재학생 후기가 있음(확인 필요)',electives:{}},
+ {id:'jungang',name:'중앙고',type:'private',gender:'boys',kind:'일반고',addr:'마산합포구 고운로 103',rate4:98.29,level:1,top:'',note:'',electives:{}},
+ {id:'jeil',name:'제일고',type:'private',gender:'boys',kind:'일반고',addr:'마산회원구 내서읍 함마대로 2610',rate4:100,level:1,top:'',note:'내서읍 위치, 교통 불편 후기 있음',electives:{}},
+ {id:'changshin',name:'창신고',type:'private',gender:'boys',kind:'일반고',addr:'마산회원구 봉덕2길 106',rate4:92.86,level:2,top:'',note:'',electives:{}},
+ {id:'gapo',name:'가포고',type:'public',gender:'co',kind:'일반고',addr:'마산합포구 가포로 262',rate4:81.08,level:3,top:'',note:'',electives:{}},
+ {id:'hapo',name:'합포고',type:'public',gender:'co',kind:'일반고',addr:'마산합포구 무학로 458',rate4:78.29,level:4,top:'',note:'',electives:{}},
+ {id:'guam',name:'구암고',type:'public',gender:'co',kind:'일반고',addr:'마산회원구 팔용로 220',rate4:90.40,level:2,top:'',note:'이동수업 비중이 높다는 후기가 있음',electives:{}}
+];
+const SCHOOL_COORDS={masan:[35.1900,128.5630],yongma:[35.1950,128.5850],jungang:[35.1925,128.5575],jeil:[35.2400,128.5120],changshin:[35.2300,128.6000],gapo:[35.1600,128.5600],hapo:[35.1980,128.5580],guam:[35.2270,128.5650]};
+DEFAULT_SCHOOLS.forEach(sc=>{const c=SCHOOL_COORDS[sc.id];sc.lat=c[0];sc.lng=c[1];sc.coordOk=false});
+const AREA_SEED=[['월영동',35.1790,128.5570],['해운동',35.1900,128.5600],['완월동',35.1960,128.5590],['교방동',35.2030,128.5560],['오동동',35.1990,128.5680],['창동·신포동·동성동(구도심)',35.1975,128.5700],['추산동',35.1930,128.5760],['산호동',35.1990,128.5810],['합포동',35.2020,128.5840],['가포동',35.1620,128.5620],['현동',35.1430,128.5580],['합성동',35.2150,128.5700],['석전동',35.2105,128.5700],['회원동',35.2130,128.5580],['회성동',35.2230,128.5700],['구암동',35.2260,128.5640],['양덕동',35.2270,128.5830],['봉암동',35.2290,128.6000],['내서읍 중리',35.2400,128.5120],['내서읍 삼계',35.2470,128.5150],['내서읍 호계',35.2300,128.5350],['내서읍 감천',35.2430,128.4950],['내서읍 안계',35.2350,128.5280],['구산면',35.0950,128.5700],['진동면',35.1250,128.5030],['진전면',35.1170,128.4300]];
+const DEFAULT_AREAS=AREA_SEED.map((a,i)=>({id:'a'+(i+1),name:a[0],lat:a[1],lng:a[2],coordOk:false}));
+const GROUP_RE=[['human',/국어|영어|사회|역사|도덕|지리|윤리|한국사/],['nat',/수학|과학|물리|화학|생명|지구|정보/],['arts',/체육|음악|미술|예술|스포츠/],['other',/.*/]];
+const GRADE_MAP={A:95,B:85,C:75,D:65,E:50};
+const LEVEL_EXPECT={1:85,2:75,3:65,4:55};
+
+/* =============== 상태 =============== */
+let S=defaultState();
+function defaultState(){return{v:1,qCls:1,qExam:'3학년 1학기 중간',qSubjects:['국어','영어','수학','사회','과학'],qRows:30,rankBasis:'cum',sortRank:false,detailOpen:false,students:[],exams:[],schools:JSON.parse(JSON.stringify(DEFAULT_SCHOOLS)),areas:JSON.parse(JSON.stringify(DEFAULT_AREAS)),roadFactor:1.3,weights:{elec:30,rate:20,dist:20,level:20,pref:10},strategy:'balanced',maskNames:true,includeAll:false,selected:null,tab:'input'}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function migrate(){
+  for(const d of DEFAULT_SCHOOLS){const sc=S.schools.find(x=>x.id===d.id);if(sc&&sc.lat==null){sc.lat=d.lat;sc.lng=d.lng;sc.coordOk=false}}
+  if(!Array.isArray(S.areas)||!S.areas.length)S.areas=JSON.parse(JSON.stringify(DEFAULT_AREAS));
+  if(!S.roadFactor)S.roadFactor=1.3;
+}
+function load(){try{const t=localStorage.getItem(KEY)||localStorage.getItem(OLD_KEY);if(t){const o=JSON.parse(t);S=Object.assign(defaultState(),o);migrate()}}catch(e){}}
+
+/* =============== 공통 유틸 =============== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const mean=a=>{a=a.filter(x=>typeof x==='number'&&!isNaN(x));return a.length?a.reduce((x,y)=>x+y,0)/a.length:null};
+const sd=a=>{a=a.filter(x=>typeof x==='number'&&!isNaN(x));if(a.length<2)return null;const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/a.length)};
+const clamp=(x,lo=0,hi=100)=>Math.max(lo,Math.min(hi,x));
+const f1=x=>x==null?'-':(Math.round(x*10)/10).toFixed(1);
+const uid=()=>'s'+Math.random().toString(36).slice(2,9);
+function maskName(n){n=String(n||'').trim();if(n.length<=1)return n;if(n.length===2)return n[0]+'○';return n[0]+'○'.repeat(n.length-2)+n[n.length-1]}
+function groupOf(n){for(const [g,re] of GROUP_RE)if(re.test(n))return g}
+function included(n){const g=groupOf(n);return S.includeAll?true:(g==='human'||g==='nat')}
+function sortedExams(){const idx=a=>{const i=EXAM_PRESETS.indexOf(a);return i<0?1000+S.exams.indexOf(a):i};return [...S.exams].sort((a,b)=>idx(a)-idx(b))}
+function schoolById(id){return S.schools.find(s=>s.id===id)}
+function dispName(st){return `${st.cls}-${st.no} ${st.name||'(이름 없음)'}`}
+
+/* =============== 성적 파싱(NEIS 일람표) =============== */
+function parseValue(v){
+  v=String(v==null?'':v).trim();if(!v)return null;
+  const m=v.match(/-?\d+(\.\d+)?/);
+  if(m){const x=parseFloat(m[0]);return (x>=0&&x<=100)?x:null}
+  const L=v.toUpperCase().match(/^[A-E]/);
+  return L?GRADE_MAP[L[0]]:null;
+}
+function parseGrid(grid){
+  const rows=grid.map(r=>r.map(c=>String(c==null?'':c).replace(/\s+/g,' ').trim()));
+  const h=rows.findIndex(r=>r.some(c=>/^(성명|이름)$/.test(c.replace(/ /g,''))));
+  if(h<0)return{error:'표에서 \'성명\'(또는 \'이름\') 칸이 있는 머리글 줄을 찾지 못했습니다. NEIS 일람표 전체를 복사했는지 확인해 주세요.'};
+  const head=rows[h];
+  const nameCol=head.findIndex(c=>/^(성명|이름)$/.test(c.replace(/ /g,'')));
+  const noCol=head.findIndex(c=>/^(번호|학번)$/.test(c));
+  const genCol=head.findIndex(c=>/^성별$/.test(c));
+  const next=rows[h+1]||[];
+  const hasSub=next.filter(c=>/원점수|성취도|점수|등급|석차/.test(c)).length>=2;
+  const EXCL=/^(번호|학번|성명|이름|성별|합계|총점|평균|석차|등수|비고|학년|반|순위|생년월일|출결.*|결석.*|지각.*|조퇴.*|결과.*)$/;
+  const cols={};let last='';
+  for(let c=nameCol+1;c<head.length;c++){
+    if(head[c])last=head[c];
+    const label=head[c]||last;
+    if(!label||EXCL.test(label))continue;
+    let type='raw';
+    if(hasSub){
+      const s=next[c]||'';
+      if(/성취도/.test(s))type='grade';
+      else if(/원점수|점수/.test(s)&&!/평균|표준/.test(s))type='raw';
+      else continue;
+    }
+    (cols[label]=cols[label]||{})[type]=c;
+  }
+  const subjects=Object.keys(cols);
+  if(!subjects.length)return{error:'교과(과목) 열을 찾지 못했습니다.'};
+  const start=h+1+(hasSub?1:0);
+  const students=[];let seq=0;
+  for(let r=start;r<rows.length;r++){
+    const row=rows[r];
+    const nm=row[nameCol]||'';
+    if(!nm&&!row.some(c=>c))continue;
+    if(row.slice(0,nameCol+1).some(c=>/^(평균|합계|계|전체|표준편차)/.test(c)))continue;
+    seq++;
+    const scores={};let cnt=0;
+    for(const s of subjects){
+      const c=cols[s];
+      let v=c.raw!=null?parseValue(row[c.raw]):null;
+      if(v==null&&c.grade!=null)v=parseValue(row[c.grade]);
+      if(v!=null){scores[s]=v;cnt++}
+    }
+    if(!cnt)continue;
+    let no=noCol>=0?parseInt(row[noCol],10):NaN;if(isNaN(no))no=seq;
+    let gender='';if(genCol>=0){gender=/남/.test(row[genCol])?'남':/여/.test(row[genCol])?'여':''}
+    students.push({no,name:nm,gender,scores});
+  }
+  if(!students.length)return{error:'학생 성적 행을 찾지 못했습니다.'};
+  return{students,subjects};
+}
+function parseText(text){
+  const lines=String(text).split(/\r?\n/).filter(l=>l.trim()!=='');
+  const tab=lines.some(l=>l.includes('\t'));
+  return lines.map(l=>{
+    if(tab)return l.split('\t');
+    const out=[];let cur='',q=false;
+    for(const ch of l){if(ch==='"')q=!q;else if(ch===','&&!q){out.push(cur);cur=''}else cur+=ch}
+    out.push(cur);return out;
+  });
+}
+function applyImport(parsed,exam,cls,pickedSubjects){
+  let added=0,updated=0;
+  if(!S.exams.includes(exam))S.exams.push(exam);
+  for(const p of parsed.students){
+    let st=S.students.find(s=>String(s.cls)===String(cls)&&s.no===p.no);
+    if(!st){st=newStudent(cls,p.no);S.students.push(st);added++}else updated++;
+    if(p.name)st.name=S.maskNames?maskName(p.name):p.name;
+    if(p.gender&&!st.gender)st.gender=p.gender;
+    const sc={};for(const k of pickedSubjects)if(p.scores[k]!=null)sc[k]=p.scores[k];
+    st.scores[exam]=Object.assign(st.scores[exam]||{},sc);
+  }
+  return{added,updated};
+}
+/* 학급 명렬표에 같은 반·번호가 있으면 그 이름 (학년은 우리 반의 학년, 없으면 3학년) */
+function rosterName(cls,no){
+  try{
+    if(typeof TT==='undefined')return '';
+    const d=TT.roster.load(),h=TT.roster.home(d),g=h&&h.grade!=null?h.grade:3;
+    const c=d.classes.find(x=>x.grade===g&&x.cls===Number(cls)),s=c&&c.students.find(x=>x.no===Number(no));
+    return s?(S.maskNames?maskName(s.name):s.name):'';
+  }catch(e){return ''}
+}
+function newStudent(cls,no){return{id:uid(),cls:cls||1,no:no||1,name:rosterName(cls||1,no||1),gender:'',area:'',job:'',univ:'',trackSel:'auto',genderPref:'any',typePref:'any',dist:{},scores:{}}}
+
+/* =============== 분석 =============== */
+function slopeOf(ser){
+  const pts=[];ser.forEach((v,i)=>{if(v!=null)pts.push([i,v])});
+  if(pts.length<2)return null;
+  const mx=mean(pts.map(p=>p[0])),my=mean(pts.map(p=>p[1]));
+  let nu=0,de=0;pts.forEach(([x,y])=>{nu+=(x-mx)*(y-my);de+=(x-mx)**2});
+  return de?nu/de:null;
+}
+function examAvg(st,e){const sc=st.scores[e];if(!sc)return null;return mean(Object.entries(sc).filter(([k])=>included(k)).map(([,v])=>v))}
+function subjectMeans(st){
+  const out={};
+  for(const e of sortedExams())for(const [k,v] of Object.entries(st.scores[e]||{}))if(included(k)&&typeof v==='number')(out[k]=out[k]||[]).push(v);
+  const r={};for(const k in out)r[k]=mean(out[k]);return r;
+}
+function classStats(){
+  const acc={};
+  for(const st of S.students){const m=subjectMeans(st);for(const k in m)(acc[k]=acc[k]||[]).push(m[k])}
+  const r={};for(const k in acc)r[k]={n:acc[k].length,mean:mean(acc[k]),sd:sd(acc[k])};return r;
+}
+function analyze(st,cs){
+  cs=cs||classStats();
+  const ex=sortedExams();
+  const examAvgs=ex.map(e=>({exam:e,avg:examAvg(st,e)})).filter(x=>x.avg!=null);
+  examAvgs.forEach((x,i)=>{x.delta=i?x.avg-examAvgs[i-1].avg:null});
+  const subs=new Set();ex.forEach(e=>Object.keys(st.scores[e]||{}).forEach(k=>included(k)&&subs.add(k)));
+  const own=mean(examAvgs.map(x=>x.avg));
+  const list=[...subs].map(n=>{
+    const ser=ex.map(e=>{const v=(st.scores[e]||{})[n];return typeof v==='number'?v:null});
+    const vals=ser.filter(v=>v!=null);
+    const m=mean(vals),slope=slopeOf(ser),c=cs[n];
+    const z=(c&&c.sd>0&&c.n>=5)?(m-c.mean)/c.sd:null;
+    const dev=own!=null?m-own:0;
+    const idx=z!=null?0.5*dev/10+0.5*z:dev/10;
+    return{name:n,group:groupOf(n),ser,mean:m,latest:vals[vals.length-1],slope,label:slope==null?'-':slope>=2?'상승':slope<=-2?'하락':'유지',dev,z,idx,n:vals.length};
+  });
+  const byIdx=[...list].sort((a,b)=>b.idx-a.idx);
+  const k=list.length>=6?3:list.length>=4?2:1;
+  const strengths=byIdx.slice(0,k);
+  const weaknesses=[...byIdx].reverse().slice(0,k).filter(x=>!strengths.includes(x));
+  let wsum=0,wtot=0;examAvgs.forEach((x,i)=>{wsum+=x.avg*(i+1);wtot+=i+1});
+  const level=wtot?wsum/wtot:null;
+  const gm=g=>mean(list.filter(x=>x.group===g).map(x=>x.mean));
+  const sl=slopeOf(examAvgs.map(x=>x.avg));
+  return{examAvgs,list,strengths,weaknesses,level,own,natAvg:gm('nat'),humAvg:gm('human'),slope:sl,
+    trendLabel:sl==null?'-':sl>=2?'상승':sl<=-2?'하락':'유지'};
+}
+function levelPercentile(st){
+  const lv=S.students.map(s=>analyze(s).level).filter(x=>x!=null);
+  const me=analyze(st).level;if(me==null||lv.length<2)return null;
+  return lv.filter(x=>x<me).length/(lv.length-1)*100;
+}
+function resolveTrack(st,an){
+  if(st.trackSel&&st.trackSel!=='auto')return{track:st.trackSel,reason:'교사가 직접 지정'};
+  const txt=((st.job||'')+' '+(st.univ||'')).toLowerCase();
+  let best=null,bc=0;
+  for(const t of ['의약','자연공학','상경','인문사회','예체능']){
+    let c=0;for(const w of KEYWORDS[t]){
+      if(w==='ai'){if(/(^|[^a-z])ai([^a-z]|$)/.test(txt))c++}
+      else if(txt.includes(w))c++;
+    }
+    if(c>bc){bc=c;best=t}
+  }
+  if(best)return{track:best,reason:'희망 직업·대학 키워드 기준'};
+  if(an&&an.natAvg!=null&&an.humAvg!=null)return{track:an.natAvg>=an.humAvg?'자연공학':'인문사회',reason:'희망 정보 없음 → 성적 경향 기준(참고용)'};
+  return{track:'미정',reason:'정보 부족'};
+}
+
+/* =============== 순위 =============== */
+function rankBasisOk(){return(S.rankBasis==='cum'||S.exams.includes(S.rankBasis))?S.rankBasis:'cum'}
+function basisLabel(b){b=b||rankBasisOk();return b==='cum'?'누적(최근 가중) 평균':b}
+function rankMap(basis){
+  const cs=classStats();
+  const items=S.students.map(s=>({s,v:basis==='cum'?analyze(s,cs).level:examAvg(s,basis)})).filter(x=>x.v!=null);
+  const rk=(arr,x)=>1+arr.filter(y=>Math.round(y.v*100)>Math.round(x.v*100)).length;
+  const out={};
+  items.forEach(x=>{const same=items.filter(y=>String(y.s.cls)===String(x.s.cls));out[x.s.id]={v:x.v,cr:rk(same,x),cn:same.length,ar:rk(items,x),an:items.length}});
+  return out;
+}
+
+/* =============== 거리 계산 =============== */
+function hav(a,b,c,d){const R=6371,r=x=>x*Math.PI/180;const dl=r(c-a),dn=r(d-b);const h=Math.sin(dl/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+function autoDist(st,sc){
+  const ar=S.areas.find(a=>a.id===st.area);
+  if(!ar||ar.lat==null||ar.lng==null||isNaN(ar.lat)||isNaN(ar.lng)||sc.lat==null||sc.lng==null||isNaN(sc.lat)||isNaN(sc.lng))return null;
+  const km=hav(ar.lat,ar.lng,sc.lat,sc.lng)*(S.roadFactor||1.3);
+  return{km:Math.round(km*10)/10,approx:!(ar.coordOk&&sc.coordOk)};
+}
+function effDist(st,sc){
+  const m=st.dist&&st.dist[sc.id];
+  if(m!==undefined&&m!==''&&m!==null&&!isNaN(m))return{km:+m,src:'manual',approx:false};
+  const a=autoDist(st,sc);
+  return a?{km:a.km,src:'auto',approx:a.approx}:{km:null,src:null,approx:false};
+}
+
+/* =============== 고교 추천 점수 =============== */
+function electiveScore(sc,track){
+  const need=NEEDS[track];
+  if(!need)return{score:50,known:0,total:0,offered:0,txt:'계열별 필수 선택과목 기준 없음'};
+  const total=Object.keys(need).length;let tw=0,kw=0,ow=0,known=0,offered=0;
+  for(const [k,w] of Object.entries(need)){tw+=w;const v=sc.electives[k];if(v==='Y'||v==='N'){kw+=w;known++;if(v==='Y'){ow+=w;offered++}}}
+  if(!kw)return{score:50,known:0,total,offered:0,txt:'선택과목 개설 정보 미입력'};
+  const cov=kw/tw;
+  return{score:clamp((ow/kw)*100*cov+50*(1-cov)),known,total,offered,txt:`필요 과목 ${known}/${total}개 확인 중 ${offered}개 개설`};
+}
+function rateScore(sc){
+  let s=clamp((sc.rate4-70)/30*100);
+  if(sc.top!==''&&sc.top!=null&&!isNaN(parseFloat(sc.top)))s=0.6*s+0.4*clamp(parseFloat(sc.top)/30*100);
+  return s;
+}
+function distScore(km){
+  if(km===''||km==null||isNaN(km))return{score:50,known:false};
+  km=+km;return{score:km<=2?100:km<=5?80:km<=8?60:km<=12?40:20,known:true};
+}
+function levelScore(sc,avg,strategy){
+  if(avg==null)return 50;
+  const exp=LEVEL_EXPECT[sc.level]||65;
+  const fit=clamp(100-Math.abs(avg-exp)*2.5);
+  const adv=clamp(50+(avg-exp)*2.5);
+  const lvl=({1:100,2:75,3:50,4:25})[sc.level]||50;
+  if(strategy==='naesin')return adv;
+  if(strategy==='jinhak')return 0.5*lvl+0.5*fit;
+  return fit;
+}
+function recommend(st){
+  const an=analyze(st);const tr=resolveTrack(st,an);
+  const W=S.weights;const sumW=W.elec+W.rate+W.dist+W.level+W.pref||1;
+  const out=S.schools.map(sc=>{
+    const warns=[];
+    let eligible=true;
+    if(st.gender==='여'&&sc.gender==='boys'){eligible=false;warns.push('남학교 — 지원 불가')}
+    if(st.gender==='남'&&sc.gender==='girls'){eligible=false;warns.push('여학교 — 지원 불가')}
+    if(!st.gender)warns.push('성별 미입력(남고 지원 가능 여부 확인 필요)');
+    const el=electiveScore(sc,tr.track);
+    if(el.known===0&&NEEDS[tr.track])warns.push('선택과목 개설 정보 미확인');
+    const rt=rateScore(sc);
+    const ed=effDist(st,sc);const ds=distScore(ed.km==null?'':ed.km);if(!ds.known)warns.push('거리 미입력(거주 구역 선택 또는 직접 입력)');else if(ed.approx)warns.push('거리: 대략 좌표 기준');
+    const lv=levelScore(sc,an.level,S.strategy);
+    let pf=100;
+    if(st.genderPref==='co'&&sc.gender!=='co')pf-=50;
+    if(st.genderPref==='single'&&sc.gender==='co')pf-=50;
+    if(st.typePref==='public'&&sc.type!=='public')pf-=50;
+    if(st.typePref==='private'&&sc.type!=='private')pf-=50;
+    const parts={elec:el.score,rate:rt,dist:ds.score,level:lv,pref:pf};
+    const total=(W.elec*parts.elec+W.rate*parts.rate+W.dist*parts.dist+W.level*parts.level+W.pref*parts.pref)/sumW;
+    const reasons=[];
+    if(NEEDS[tr.track])reasons.push(el.txt);
+    reasons.push(`4년제 진학률 ${sc.rate4}%`);
+    if(ds.known)reasons.push(`거리 ${ed.src==='auto'?'약 ':''}${ed.km}km`);
+    return{school:sc,eligible,total:eligible?total:null,parts,reasons,warns,el};
+  });
+  out.sort((a,b)=>(b.eligible-a.eligible)||((b.total||0)-(a.total||0)));
+  return{an,track:tr,list:out};
+}
+
+/* =============== 차트 =============== */
+function lineChart(labels,series){
+  const W=620,H=240,pl=34,pr=10,pt=10,pb=46;
+  const all=series.flatMap(s=>s.vals).filter(v=>v!=null);
+  if(!all.length||!labels.length)return '<p class="muted">그래프로 나타낼 성적이 없습니다.</p>';
+  const lo=Math.max(0,Math.floor((Math.min(...all)-5)/10)*10),hi=100;
+  const X=i=>pl+(labels.length===1?(W-pl-pr)/2:i*(W-pl-pr)/(labels.length-1));
+  const Y=v=>pt+(hi-v)/(hi-lo)*(H-pt-pb);
+  let g='';
+  for(let v=lo;v<=hi;v+=10)g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e5e7eb"/><text x="${pl-5}" y="${Y(v)+4}" text-anchor="end">${v}</text>`;
+  labels.forEach((l,i)=>{const t=l.replace('학년 ','-').replace('학기 ','');g+=`<text x="${X(i)}" y="${H-pb+14}" text-anchor="middle">${esc(t.slice(0,8))}</text>`});
+  series.forEach(s=>{
+    let d='';let pen=false;
+    s.vals.forEach((v,i)=>{if(v==null){pen=false;return}d+=(pen?'L':'M')+X(i)+' '+Y(v);pen=true});
+    g+=`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.bold?3:1.8}" ${s.bold?'':'stroke-dasharray="4 3"'}/>`;
+    s.vals.forEach((v,i)=>{if(v!=null)g+=`<circle cx="${X(i)}" cy="${Y(v)}" r="${s.bold?4:2.5}" fill="${s.color}"/>`});
+  });
+  let lg='',lx=pl;series.forEach(s=>{lg+=`<rect x="${lx}" y="${H-12}" width="10" height="10" fill="${s.color}"/><text x="${lx+13}" y="${H-3}">${esc(s.name)}</text>`;lx+=24+s.name.length*11});
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="성적 추이 그래프">${g}${lg}</svg>`;
+}
+const COLORS=['#2457c5','#d9480f','#2b8a3e','#862e9c','#c2255c'];
+
+/* =============== 화면 조각 =============== */
+function trendTag(l){return l==='상승'?'<span class="up">▲ 상승</span>':l==='하락'?'<span class="down">▼ 하락</span>':l==='유지'?'유지':'-'}
+function analysisHtml(st){
+  const cs=classStats();const an=analyze(st,cs);const ex=sortedExams();
+  if(!an.examAvgs.length)return '<p class="muted">이 학생의 성적이 아직 없습니다.</p>';
+  const pct=levelPercentile(st);
+  const tr=resolveTrack(st,an);
+  let h=`<h2>${esc(dispName(st))} — 성적 분석</h2>`;
+  h+=`<p>주요교과 평균(최근 시험에 가중) <b>${f1(an.level)}</b>점`+(pct!=null?` · 우리 반 상대 위치 상위 약 ${Math.round(100-pct)}%`:'')+` · 전체 추이 ${trendTag(an.trendLabel)} · 희망 계열 <span class="tag">${esc(tr.track)}</span> <span class="muted">(${esc(tr.reason)})</span></p>`;
+  const rmm=rankMap(rankBasisOk())[st.id];
+  if(rmm)h+=`<p>순위(${esc(basisLabel())}): <b>반 ${rmm.cr}등</b>/${rmm.cn}명 · <b>전체 ${rmm.ar}등</b>/${rmm.an}명 <span class="muted">(입력된 학생 기준)</span></p>`;
+  h+=`<p class="muted">자연계 교과 평균 ${f1(an.natAvg)} / 인문사회계 교과 평균 ${f1(an.humAvg)}</p>`;
+  h+=`<div class="tablewrap"><table><tr><th class="l">시험</th><th>평균</th><th>직전 대비</th></tr>`+an.examAvgs.map(x=>`<tr><td class="l">${esc(x.exam)}</td><td>${f1(x.avg)}</td><td>${x.delta==null?'-':(x.delta>0?'<span class="up">+':'<span class="down">')+f1(x.delta)+'</span>'}</td></tr>`).join('')+`</table></div>`;
+  const ser=[{name:'평균',color:'#111827',bold:true,vals:ex.map(e=>examAvg(st,e))}];
+  an.strengths.concat(an.weaknesses).slice(0,4).forEach((s,i)=>ser.push({name:s.name,color:COLORS[i],vals:s.ser}));
+  h+=lineChart(ex,ser);
+  h+=`<h3>강점·약점 (본인 평균 대비 + 학급 내 위치)</h3><p>`+an.strengths.map(s=>`<span class="tag g">강점 ${esc(s.name)} ${f1(s.mean)}</span>`).join('')+an.weaknesses.map(s=>`<span class="tag r">보완 ${esc(s.name)} ${f1(s.mean)}</span>`).join('')+`</p>`;
+  h+=`<div class="tablewrap"><table><tr><th class="l">교과</th><th>누적 평균</th><th>최근</th><th>본인 평균 대비</th><th>학급 z점수</th><th>변화 추세</th></tr>`+
+    [...an.list].sort((a,b)=>b.idx-a.idx).map(s=>`<tr><td class="l">${esc(s.name)}</td><td>${f1(s.mean)}</td><td>${f1(s.latest)}</td><td>${s.dev>0?'+':''}${f1(s.dev)}</td><td>${s.z==null?'-':f1(s.z)}</td><td>${trendTag(s.label)}${s.slope!=null?` <span class="muted">(${s.slope>0?'+':''}${f1(s.slope)}/회)</span>`:''}</td></tr>`).join('')+`</table></div>`;
+  if(Object.values(cs).every(c=>c.n<5))h+=`<p class="muted">학급 z점수는 같은 교과의 학생이 5명 이상 입력되어야 계산됩니다.</p>`;
+  return h;
+}
+function recoHtml(st){
+  const r=recommend(st);
+  let h=`<h2>${esc(dispName(st))} — 고교 지망 우선순위(참고)</h2>`;
+  h+=`<p class="muted">적용 계열: <b>${esc(r.track.track)}</b> (${esc(r.track.reason)}) · 전략: ${({balanced:'균형(학력 수준 적합)',naesin:'내신 유리 우선',jinhak:'진학실적 중시'})[S.strategy]}</p>`;
+  h+=`<div class="tablewrap"><table><tr><th>순위</th><th class="l">학교</th><th>종합</th><th>선택과목</th><th>진학실적</th><th>거리</th><th>학력수준</th><th>선호</th><th class="l">근거·유의</th></tr>`;
+  let rk=0;
+  for(const x of r.list){
+    if(x.eligible)rk++;
+    const b=v=>`<span class="bar"><i style="width:${Math.round(v)}%"></i></span> ${Math.round(v)}`;
+    h+=`<tr class="${x.eligible&&rk===1?'rank1':''}"><td>${x.eligible?rk:'-'}</td><td class="l"><b>${esc(x.school.name)}</b><br><span class="muted">${x.school.type==='public'?'공립':'사립'}·${({boys:'남',girls:'여',co:'공학'})[x.school.gender]}</span></td>`+
+    (x.eligible?`<td><b>${f1(x.total)}</b></td><td>${b(x.parts.elec)}</td><td>${b(x.parts.rate)}</td><td>${b(x.parts.dist)}</td><td>${b(x.parts.level)}</td><td>${b(x.parts.pref)}</td>`:`<td colspan="6" class="muted">지원 대상 아님</td>`)+
+    `<td class="l">${x.reasons.map(esc).join(' · ')}${x.warns.map(w=>` <span class="tag w">${esc(w)}</span>`).join('')}</td></tr>`;
+  }
+  h+=`</table></div><p class="muted">※ 실제 고교 배정은 경남교육청 입학전형(지망·추첨 등)에 따릅니다. 이 표는 상담용 참고 자료이며 합격·배정을 예측하지 않습니다. 학교별 정보 미확인 항목은 중간값(50점)으로 처리됩니다.</p>`;
+  return h;
+}
+
+/* =============== 렌더링 =============== */
+const TABS=[['input','① 입력'],['analysis','② 학생 분석'],['reco','③ 고교 추천'],['class','④ 학급 요약'],['schools','⑤ 고교 정보'],['settings','⑥ 설정·백업']];
+function renderNav(){$('#nav').innerHTML=TABS.map(([k,l])=>`<button class="${S.tab===k?'on':''}" data-tab="${k}">${l}</button>`).join('');$('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;save();render()})}
+function curStudent(){return S.students.find(s=>s.id===S.selected)||null}
+function studentPicker(){
+  if(!S.students.length)return '<div class="card"><p>학생이 없습니다. ① 입력 탭에서 NEIS 일람표를 불러오거나 학생을 추가해 주세요.</p></div>';
+  return `<div class="card row"><label>학생 선택<select id="pick">${S.students.slice().sort((a,b)=>a.cls-b.cls||a.no-b.no).map(s=>`<option value="${s.id}" ${s.id===S.selected?'selected':''}>${esc(dispName(s))}</option>`).join('')}</select></label></div>`;
+}
+function bindPicker(){const p=$('#pick');if(p)p.onchange=()=>{S.selected=p.value;save();render()}}
+function render(){
+  renderNav();
+  if(!S.selected&&S.students.length)S.selected=S.students[0].id;
+  const v={input:viewInput,analysis:viewAnalysis,reco:viewReco,class:viewClass,schools:viewSchools,settings:viewSettings}[S.tab];
+  v();
+}
+function privacyBar(){return `<div class="priv">🔒 학생 정보는 <b>이 브라우저(이 기기)</b>에만 저장되며 외부로 전송되지 않습니다. 정확한 집 주소는 입력하지 않고 거주 동·읍·면만 선택합니다. 기본값으로 성명은 가운데 글자를 가려(홍○동) 저장합니다. 공용 PC에서는 사용 후 ⑥에서 전체 삭제를 권장합니다.</div>`}
+
+/* ---- ① 입력 ---- */
+let importState=null;
+function viewInput(){
+  const st=curStudent();const ex=sortedExams();
+  let h=privacyBar();
+  h+=quickCard();
+  h+=`<div class="card"><h2>NEIS 일람표 불러오기 (시험별 누적)</h2>
+  <p class="muted">NEIS → 성적 → 학급별일람표조회(전체교과목)에서 엑셀로 저장한 파일을 올리거나, 표를 복사해 붙여넣기 하세요. 같은 시험을 다시 불러오면 해당 시험 점수가 갱신됩니다.</p>
+  <div class="row"><label>반<input type="number" id="impCls" value="${st?st.cls:(S.qCls||1)}" min="1" max="30"></label>
+  <label>시험<select id="impExam">${EXAM_PRESETS.map(e=>`<option>${e}</option>`).join('')}<option value="__c">직접 입력…</option></select></label>
+  <label>직접 입력 시험명<input type="text" id="impCustom" placeholder="예: 3학년 1학기 수행평가"></label>
+  <label>파일(xlsx·csv)<input type="file" id="impFile" accept=".xlsx,.xls,.csv,.tsv,.txt,.html,.htm"></label></div>
+  <p><textarea id="impPaste" placeholder="또는 NEIS 화면의 표를 복사해서 여기에 붙여넣기"></textarea></p>
+  <button class="btn" id="impParse">미리보기</button> <button class="btn sec" id="demo">예시(가상) 데이터 불러오기</button>
+  <div id="impPreview"></div></div>`;
+  h+=`<div class="grid2"><div class="card"><h2>학생</h2><div class="slist">`+S.students.slice().sort((a,b)=>a.cls-b.cls||a.no-b.no).map(s=>`<button data-id="${s.id}" class="${s.id===S.selected?'on':''}">${esc(dispName(s))}</button>`).join('')+`</div><button class="btn sec sm" id="addSt">+ 학생 추가</button></div>`;
+  h+=`<div>`;
+  if(st){
+    h+=`<details class="card" id="detailBox" ${S.detailOpen?'open':''}><summary><b>${esc(dispName(st))} — 상세 정보 (선택 입력: 희망 직업·거주 구역·선호 등)</b></summary><div class="row" style="margin-top:8px">
+    <label>반<input type="number" data-f="cls" value="${st.cls}"></label><label>번호<input type="number" data-f="no" value="${st.no}"></label>
+    <label>성명(저장 시 마스킹)<input type="text" data-f="name" value="${esc(st.name)}"></label>
+    <label>성별<select data-f="gender"><option value="">미입력</option><option ${st.gender==='남'?'selected':''}>남</option><option ${st.gender==='여'?'selected':''}>여</option></select></label></div>
+    <div class="row" style="margin-top:8px"><label>희망 직업<input type="text" data-f="job" value="${esc(st.job)}" placeholder="예: 소프트웨어 개발자"></label>
+    <label>희망 대학·학과<input type="text" data-f="univ" value="${esc(st.univ)}" placeholder="예: 경상국립대 컴퓨터공학"></label>
+    <label>희망 계열(자동 판단 가능)<select data-f="trackSel"><option value="auto">자동</option>${TRACKS.map(t=>`<option ${st.trackSel===t?'selected':''}>${t}</option>`).join('')}</select></label></div>
+    <div class="row" style="margin-top:8px"><label>학생 구성 선호<select data-f="genderPref"><option value="any">상관없음</option><option value="co" ${st.genderPref==='co'?'selected':''}>남녀공학 선호</option><option value="single" ${st.genderPref==='single'?'selected':''}>단성 선호</option></select></label>
+    <label>설립 구분 선호<select data-f="typePref"><option value="any">상관없음</option><option value="public" ${st.typePref==='public'?'selected':''}>공립 선호</option><option value="private" ${st.typePref==='private'?'selected':''}>사립 선호</option></select></label></div>
+    <h3>거주 구역과 학교까지 거리</h3>
+    <div class="row"><label>거주 동·읍·면<select data-f="area"><option value="">선택 안 함</option>${S.areas.map(a=>`<option value="${a.id}" ${st.area===a.id?'selected':''}>${esc(a.name)}</option>`).join('')}</select></label></div>
+    <p class="muted">구역을 고르면 구역 중심에서 각 학교까지의 거리를 자동 계산합니다(정확한 집 주소는 입력·저장하지 않습니다). 더 정확한 값을 알면 오른쪽 칸에 직접 입력하세요. 직접 입력한 값이 우선 적용됩니다. *표시는 좌표 미확인(대략값)입니다.</p>
+    <div class="tablewrap"><table><tr><th class="l">학교</th><th>자동 계산(km)</th><th>직접 입력(km)</th></tr>${S.schools.map(sc=>{const a=autoDist(st,sc);return `<tr><td class="l">${esc(sc.name)}</td><td>${a?'약 '+a.km+(a.approx?'*':''):'-'}</td><td><input type="number" step="0.1" min="0" data-dist="${sc.id}" value="${st.dist[sc.id]??''}"></td></tr>`}).join('')}</table></div>
+    <p style="margin-top:10px"><button class="btn red sm" id="delSt">이 학생 삭제</button></p></details>`;
+    const subs=new Set();ex.forEach(e=>Object.keys(st.scores[e]||{}).forEach(k=>subs.add(k)));
+    h+=`<div class="card"><h2>성적 직접 입력·수정</h2>`;
+    if(!ex.length)h+=`<p class="muted">시험이 없습니다. 위에서 일람표를 불러오거나 아래에서 시험을 추가하세요.</p>`;
+    else h+=`<div class="tablewrap"><table><tr><th class="l">교과</th>${ex.map(e=>`<th>${esc(e)}</th>`).join('')}</tr>`+[...subs].map(k=>`<tr><td class="l">${esc(k)}${included(k)?'':' <span class="muted">(분석 제외)</span>'}</td>${ex.map(e=>`<td><input type="number" min="0" max="100" step="0.1" data-sc="${esc(k)}" data-ex="${esc(e)}" value="${(st.scores[e]||{})[k]??''}"></td>`).join('')}</tr>`).join('')+`</table></div>`;
+    h+=`<div class="row" style="margin-top:8px"><label>교과 추가<input type="text" id="newSubj" placeholder="예: 수학"></label><button class="btn sec sm" id="addSubj">교과 추가</button>
+    <label>시험 추가<select id="newExam">${EXAM_PRESETS.map(e=>`<option>${e}</option>`).join('')}</select></label><button class="btn sec sm" id="addExam">시험 추가</button></div></div>`;
+  }
+  h+=`</div></div>`;
+  $('#app').innerHTML=h;
+  bindQuick();
+  bindInput();
+}
+function bindInput(){
+  $('#app').querySelectorAll('.slist button').forEach(b=>b.onclick=()=>{S.selected=b.dataset.id;save();render()});
+  $('#addSt').onclick=()=>{const cls=curStudent()?curStudent().cls:1;const mx=Math.max(0,...S.students.filter(s=>String(s.cls)===String(cls)).map(s=>s.no));const st=newStudent(cls,mx+1);S.students.push(st);S.selected=st.id;save();render()};
+  $('#demo').onclick=loadDemo;
+  $('#impParse').onclick=()=>doImportPreview(null);
+  $('#impFile').onchange=async e=>{const f=e.target.files[0];if(f)await readFile(f)};
+  const st=curStudent();if(!st)return;
+  $('#detailBox').ontoggle=e=>{S.detailOpen=e.target.open;save()};
+  $('#app').querySelectorAll('[data-f]').forEach(el=>el.onchange=()=>{
+    const f=el.dataset.f;let v=el.value;
+    if(f==='cls'||f==='no')v=parseInt(v,10)||1;
+    if(f==='name'&&S.maskNames)v=maskName(v);
+    st[f]=v;save();render();
+  });
+  $('#app').querySelectorAll('[data-dist]').forEach(el=>el.onchange=()=>{if(el.value==='')delete st.dist[el.dataset.dist];else st.dist[el.dataset.dist]=parseFloat(el.value);save()});
+  $('#app').querySelectorAll('[data-sc]').forEach(el=>el.onchange=()=>{
+    const e=el.dataset.ex,k=el.dataset.sc;st.scores[e]=st.scores[e]||{};
+    if(el.value==='')delete st.scores[e][k];else st.scores[e][k]=clamp(parseFloat(el.value));
+    save();
+  });
+  $('#delSt').onclick=()=>{if(confirm('이 학생의 모든 정보를 삭제할까요?')){S.students=S.students.filter(s=>s.id!==st.id);S.selected=null;save();render()}};
+  $('#addSubj').onclick=()=>{const n=$('#newSubj').value.trim();if(!n)return;const ex=sortedExams();if(!ex.length){alert('먼저 시험을 추가해 주세요.');return}const e=ex[ex.length-1];st.scores[e]=st.scores[e]||{};st.scores[e][n]=st.scores[e][n]??0;save();render()};
+  $('#addExam').onclick=()=>{const e=$('#newExam').value;if(!S.exams.includes(e))S.exams.push(e);save();render()};
+}
+async function readFile(f){
+  const name=f.name.toLowerCase();
+  try{
+    if(/\.(csv|tsv|txt)$/.test(name)){doImportPreview(parseText(TT.util.decodeText(await f.arrayBuffer())));return}
+    doImportPreview(await TT.file.toRows(f,{firstSheet:true}));
+  }catch(err){
+    $('#impPreview').innerHTML=`<div class="notice">${esc(err&&err.userMsg?err.userMsg:'파일을 읽지 못했습니다. 나이스에서 받은 엑셀(xlsx) 파일인지 확인해 주세요.')} 엑셀을 열어 표를 복사한 뒤 위 입력칸에 붙여넣어도 됩니다.</div>`;
+  }
+}
+function doImportPreview(grid){
+  if(!grid){const t=$('#impPaste').value;if(!t.trim()){$('#impPreview').innerHTML='<div class="notice">붙여넣을 내용이 없습니다.</div>';return}grid=parseText(t)}
+  const p=parseGrid(grid);
+  if(p.error){$('#impPreview').innerHTML=`<div class="notice">${esc(p.error)}</div>`;return}
+  importState=p;
+  $('#impPreview').innerHTML=`<h3>미리보기: 학생 ${p.students.length}명 · 교과 ${p.subjects.length}개</h3>
+  <p class="muted">반영할 교과를 선택하세요. 성취도(A~E)만 있는 교과는 A=95, B=85, C=75, D=65, E=50으로 환산합니다(근사값).</p>
+  <p>${p.subjects.map((s,i)=>`<label style="margin-right:10px"><input type="checkbox" class="impSub" value="${esc(s)}" checked> ${esc(s)}</label>`).join('')}</p>
+  <div class="tablewrap"><table><tr><th>번호</th><th>성명(표시)</th>${p.subjects.slice(0,8).map(s=>`<th>${esc(s)}</th>`).join('')}</tr>`+
+  p.students.slice(0,3).map(s=>`<tr><td>${s.no}</td><td>${esc(maskName(s.name))}</td>${p.subjects.slice(0,8).map(k=>`<td>${s.scores[k]??''}</td>`).join('')}</tr>`).join('')+`</table></div>
+  <p><button class="btn" id="impApply">이 내용으로 저장</button></p>`;
+  $('#impApply').onclick=()=>{
+    let exam=$('#impExam').value;if(exam==='__c'){exam=$('#impCustom').value.trim();if(!exam){alert('시험명을 입력해 주세요.');return}}
+    const picked=[...document.querySelectorAll('.impSub:checked')].map(x=>x.value);
+    if(!picked.length){alert('교과를 하나 이상 선택해 주세요.');return}
+    const r=applyImport(importState,exam,$('#impCls').value||1,picked);
+    importState=null;save();
+    if(!S.selected&&S.students.length)S.selected=S.students[0].id;
+    render();
+    $('#impPreview').innerHTML=`<div class="priv">저장했습니다: 새 학생 ${r.added}명, 갱신 ${r.updated}명 (${esc(exam)})</div>`;
+  };
+}
+function loadDemo(){
+  if(S.students.length&&!confirm('예시 데이터를 추가합니다. 계속할까요?'))return;
+  const subj=['국어','영어','수학','사회','과학'];
+  const base=[[88,90,95,85,92],[75,70,68,80,72],[92,94,88,95,90],[60,58,55,65,62],[82,78,90,76,88],[70,85,65,88,68],[95,92,97,90,96],[66,62,70,64,68]];
+  const names=['가나다','라마바','사아자','차카타','파하나','도레미','솔라시','기니디'];
+  const exams=['3학년 1학기 중간','3학년 1학기 기말','3학년 2학기 중간'];
+  exams.forEach(e=>{if(!S.exams.includes(e))S.exams.push(e)});
+  base.forEach((b,i)=>{
+    const st=newStudent(9,i+1);st.name=maskName(names[i]);st.gender=i%2?'여':'남';
+    st.job=['소프트웨어 개발자','간호사','변호사','','건축가','기자','의사','경찰'][i];
+    exams.forEach((e,ei)=>{st.scores[e]={};subj.forEach((s,si)=>{st.scores[e][s]=clamp(b[si]+ (ei-1)*(i%3-1)*3 + ((si+i)%3-1)*2)})});
+    st.area=S.areas[(i*3)%S.areas.length].id;
+    S.students.push(st);
+  });
+  S.selected=S.students[S.students.length-8].id;save();render();
+}
+
+
+/* ---- 빠른 입력 ---- */
+function quickExamList(){const set=[...EXAM_PRESETS];S.exams.forEach(e=>{if(!set.includes(e))set.push(e)});if(!set.includes(S.qExam))set.push(S.qExam);return set}
+function quickCard(){
+  const maxNo=Math.max(0,...S.students.filter(s=>String(s.cls)===String(S.qCls)).map(s=>s.no));
+  const rows=Math.max(S.qRows||30,maxNo);
+  const subs=S.qSubjects;
+  const rm=rankMap(S.qExam);
+  let h=`<div class="card"><h2>빠른 입력: 번호·성명·성적</h2>
+  <p class="muted">번호는 1번부터 자동으로 매겨집니다. 성명 칸부터 입력하고 Enter를 누르면 아래 칸으로 내려갑니다. 엑셀·NEIS에서 성명이나 점수 열을 복사해 칸에 붙여넣으면 아래로 채워집니다. 희망 직업·거주 구역 같은 상세 정보는 나중에 필요할 때만 입력하세요.</p>
+  <div class="row"><label>반<input type="number" id="qCls" min="1" max="30" value="${S.qCls}"></label>
+  <label>시험<select id="qExam">${quickExamList().map(e=>`<option ${e===S.qExam?'selected':''}>${esc(e)}</option>`).join('')}</select></label>
+  <label>시험명 직접 추가<input type="text" id="qNewExam" placeholder="예: 3학년 2학기 기말"></label><button class="btn sec sm" id="qAddExam">시험 추가</button>
+  <label>교과 추가<input type="text" id="qNewSub" placeholder="예: 도덕"></label><button class="btn sec sm" id="qAddSub">교과 추가</button></div>
+  <div class="tablewrap" style="margin-top:10px"><table class="qgrid" id="qgrid"><tr><th>번호</th><th>성명</th>${subs.map((s,i)=>`<th>${esc(s)} <button class="btn sec sm" data-qdel="${i}" title="이 열 빼기">×</button></th>`).join('')}<th>평균</th><th>반 순위</th><th>전체 순위</th></tr>`;
+  for(let r=1;r<=rows;r++){
+    const st=S.students.find(x=>String(x.cls)===String(S.qCls)&&x.no===r);
+    const sc=(st&&st.scores[S.qExam])||{};
+    const o=st&&rm[st.id];
+    h+=`<tr><td>${r}</td><td><input type="text" data-q="name" data-r="${r}" value="${esc(st?st.name:'')}"></td>${subs.map(s=>`<td><input type="number" min="0" max="100" step="0.1" data-q="s" data-r="${r}" data-s="${esc(s)}" value="${sc[s]??''}"></td>`).join('')}<td data-rk="avg" data-r="${r}">${o?f1(o.v):''}</td><td data-rk="c" data-r="${r}">${o?o.cr+'/'+o.cn:''}</td><td data-rk="a" data-r="${r}">${o?o.ar+'/'+o.an:''}</td></tr>`;
+  }
+  h+=`</table></div><p style="margin-top:8px"><button class="btn sec sm" id="qMore">+ 5줄 더 보기</button> <span class="muted">칸을 벗어나면 자동 저장됩니다. 순위는 선택한 시험의 주요교과 평균 기준이며, 전체 순위는 입력된 모든 반 학생 중 순위입니다. 성명은 저장 시 가운데 글자가 가려집니다.</span></p></div>`;
+  return h;
+}
+function qCell(r,q,sub){const list=document.querySelectorAll(`#qgrid input[data-q="${q}"][data-r="${r}"]`);for(const el of list){if(q!=='s'||el.dataset.s===sub)return el}return null}
+function refreshGridRanks(){
+  const m=rankMap(S.qExam);
+  document.querySelectorAll('#qgrid td[data-rk]').forEach(td=>{
+    const r=+td.dataset.r;const st=S.students.find(x=>String(x.cls)===String(S.qCls)&&x.no===r);const o=st&&m[st.id];const k=td.dataset.rk;
+    td.textContent=!o?'':k==='avg'?f1(o.v):k==='c'?o.cr+'/'+o.cn:o.ar+'/'+o.an;
+  });
+}
+function commitRow(r){
+  const nameEl=qCell(r,'name');if(!nameEl)return;
+  const name=nameEl.value.trim();const sc={};const cleared=[];
+  S.qSubjects.forEach(sub=>{const el=qCell(r,'s',sub);if(!el)return;if(el.value==='')cleared.push(sub);else{const v=parseFloat(el.value);if(!isNaN(v))sc[sub]=clamp(v)}});
+  let st=S.students.find(x=>String(x.cls)===String(S.qCls)&&x.no===r);
+  if(!st&&!name&&!Object.keys(sc).length)return;
+  if(!st){st=newStudent(S.qCls,r);S.students.push(st)}
+  if(name&&name!==st.name)st.name=S.maskNames?maskName(name):name;
+  nameEl.value=st.name;
+  if(Object.keys(sc).length&&!S.exams.includes(S.qExam))S.exams.push(S.qExam);
+  if(Object.keys(sc).length||st.scores[S.qExam]){st.scores[S.qExam]=st.scores[S.qExam]||{};Object.assign(st.scores[S.qExam],sc);cleared.forEach(k=>delete st.scores[S.qExam][k])}
+  if(!S.selected)S.selected=st.id;
+  save();refreshGridRanks();
+}
+function bindQuick(){
+  const g=$('#qgrid');
+  $('#qCls').onchange=e=>{S.qCls=parseInt(e.target.value,10)||1;save();render()};
+  $('#qExam').onchange=e=>{S.qExam=e.target.value;save();render()};
+  $('#qAddExam').onclick=()=>{const v=$('#qNewExam').value.trim();if(!v)return;S.qExam=v;save();render()};
+  $('#qAddSub').onclick=()=>{const v=$('#qNewSub').value.trim();if(!v||S.qSubjects.includes(v))return;S.qSubjects.push(v);save();render()};
+  $('#qMore').onclick=()=>{S.qRows=(S.qRows||30)+5;save();render()};
+  $('#app').querySelectorAll('[data-qdel]').forEach(b=>b.onclick=()=>{S.qSubjects.splice(+b.dataset.qdel,1);save();render()});
+  g.onchange=e=>{const t=e.target;if(t.dataset&&t.dataset.q)commitRow(+t.dataset.r)};
+  g.onkeydown=e=>{
+    if(e.key!=='Enter')return;const t=e.target;if(!t.dataset||!t.dataset.q)return;
+    e.preventDefault();const nx=qCell(+t.dataset.r+1,t.dataset.q,t.dataset.s);
+    if(nx){nx.focus();if(nx.select)nx.select()}
+  };
+  g.onpaste=e=>{
+    const t=e.target;if(!t.dataset||!t.dataset.q)return;
+    const txt=((e.clipboardData||window.clipboardData).getData('text')||'').replace(/\r/g,'');
+    if(!/[\t\n]/.test(txt.trim()))return;
+    e.preventDefault();
+    const lines=txt.split('\n');while(lines.length&&lines[lines.length-1]==='')lines.pop();
+    const r0=+t.dataset.r;const cols=['name',...S.qSubjects];
+    const c0=t.dataset.q==='name'?0:1+S.qSubjects.indexOf(t.dataset.s);
+    let skipped=0;
+    lines.forEach((ln,i)=>{
+      const r=r0+i;const nameEl=qCell(r,'name');if(!nameEl){skipped++;return}
+      ln.split('\t').forEach((val,j)=>{const c=c0+j;if(c>=cols.length)return;const el=c===0?qCell(r,'name'):qCell(r,'s',cols[c]);if(el)el.value=val.trim()});
+      commitRow(r);
+    });
+    if(skipped)alert(`표 아래쪽 ${skipped}줄은 칸이 없어 입력하지 못했습니다. '+ 5줄 더 보기'로 줄을 늘린 뒤 다시 붙여넣어 주세요.`);
+  };
+}
+
+/* ---- ② 분석 ---- */
+function viewAnalysis(){
+  const st=curStudent();
+  let h=studentPicker();
+  if(st)h+=`<div class="card">${analysisHtml(st)}<p><button class="btn sec" id="prt">상담 자료 인쇄(분석+추천)</button></p></div>`;
+  $('#app').innerHTML=h;bindPicker();bindPrint(st);
+}
+function viewReco(){
+  const st=curStudent();
+  let h=studentPicker();
+  if(st)h+=`<div class="card">${recoHtml(st)}<p><button class="btn sec" id="prt">상담 자료 인쇄(분석+추천)</button></p></div>`;
+  $('#app').innerHTML=h;bindPicker();bindPrint(st);
+}
+function bindPrint(st){const b=$('#prt');if(!b)return;b.onclick=()=>{$('#printArea').innerHTML=`<div>${analysisHtml(st)}</div><hr><div>${recoHtml(st)}</div><p class="muted">※ 개인정보가 포함된 자료입니다. 상담 후 안전하게 보관·파기해 주세요.</p>`;window.print()}}
+
+/* ---- ④ 학급 요약 ---- */
+function viewClass(){
+  const cs=classStats();const basis=rankBasisOk();const rm=rankMap(basis);
+  let rows=S.students.slice().sort((a,b)=>a.cls-b.cls||a.no-b.no).map(st=>{
+    const an=analyze(st,cs);const r=recommend(st);
+    const top=r.list.filter(x=>x.eligible).slice(0,3).map(x=>x.school.name);
+    return{st,an,r,top,rk:rm[st.id]};
+  });
+  if(S.sortRank)rows.sort((a,b)=>((a.rk?a.rk.ar:1e9)-(b.rk?b.rk.ar:1e9))||(a.st.cls-b.st.cls)||(a.st.no-b.st.no));
+  const rc=x=>x.rk?`${x.rk.cr}/${x.rk.cn}`:'-',ra=x=>x.rk?`${x.rk.ar}/${x.rk.an}`:'-';
+  let h=privacyBar()+`<div class="card"><h2>학급 요약</h2>
+  <div class="row"><label>순위 기준<select id="rkb"><option value="cum" ${basis==='cum'?'selected':''}>누적(최근 가중) 평균</option>${sortedExams().map(e=>`<option value="${esc(e)}" ${basis===e?'selected':''}>${esc(e)}</option>`).join('')}</select></label>
+  <label><span>정렬</span><span><input type="checkbox" id="srt" ${S.sortRank?'checked':''}> 전체 순위순으로 보기</span></label></div>
+  <p class="muted">반 순위는 같은 반 안에서, 전체 순위는 입력된 모든 학생 중에서 주요교과 평균으로 매깁니다(동점은 같은 순위). 순위는 학생 지도용 참고 자료이니 학생·학부모 앞에 공개할 때 주의해 주세요.</p>`;
+  if(!rows.length)h+='<p class="muted">학생이 없습니다.</p>';
+  else{
+    h+=`<div class="tablewrap"><table><tr><th>반-번호</th><th>이름(표시)</th><th>평균</th><th>반 순위</th><th>전체 순위</th><th>추이</th><th>강점</th><th>보완</th><th>계열</th><th class="l">추천 1~3순위</th></tr>`+
+    rows.map(x=>`<tr><td>${x.st.cls}-${x.st.no}</td><td>${esc(x.st.name)}</td><td>${f1(x.rk?x.rk.v:null)}</td><td>${rc(x)}</td><td>${ra(x)}</td><td>${trendTag(x.an.trendLabel)}</td><td>${x.an.strengths.map(s=>esc(s.name)).join(', ')||'-'}</td><td>${x.an.weaknesses.map(s=>esc(s.name)).join(', ')||'-'}</td><td>${esc(x.r.track.track)}</td><td class="l">${x.top.map((n,i)=>`${i+1}. ${esc(n)}`).join(' ')||'-'}</td></tr>`).join('')+`</table></div>
+    <p><button class="btn sec" id="csv">CSV로 내려받기</button></p>`;
+  }
+  h+=`</div>`;
+  $('#app').innerHTML=h;
+  $('#rkb').onchange=e=>{S.rankBasis=e.target.value;save();render()};
+  $('#srt').onchange=e=>{S.sortRank=e.target.checked;save();render()};
+  const b=$('#csv');if(b)b.onclick=()=>{
+    const lines=[['반','번호','이름(표시)','순위기준','평균','반순위','반인원','전체순위','전체인원','추이','강점','보완','계열','추천1','추천2','추천3']];
+    rows.forEach(x=>lines.push([x.st.cls,x.st.no,x.st.name,basisLabel(basis),f1(x.rk?x.rk.v:null),x.rk?x.rk.cr:'',x.rk?x.rk.cn:'',x.rk?x.rk.ar:'',x.rk?x.rk.an:'',x.an.trendLabel,x.an.strengths.map(s=>s.name).join('/'),x.an.weaknesses.map(s=>s.name).join('/'),x.r.track.track,x.top[0]||'',x.top[1]||'',x.top[2]||'']));
+    download('학급요약.csv','﻿'+lines.map(l=>l.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n'),'text/csv');
+  };
+}
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+
+/* ---- ⑤ 고교 정보 ---- */
+function viewSchools(){
+  let h=`<div class="notice">진학률·설립·학생 구성은 학교알리미 자료를 가공한 공개 사이트(오늘학교 아카데미)에서 확인한 값입니다. <b>선택과목 개설 여부는 확인되지 않아 모두 '?'(미확인)</b>입니다. 각 학교의 교육과정 편성표(<a href="https://www.gne.go.kr/h-creditsystem/education/schul/BD_selectSchulBbsList.do" target="_blank" rel="noopener">경남 고교학점제 지원센터</a>, 학교 누리집, 학교알리미)를 보고 칸을 눌러 ○(개설) / ×(미개설) / ?(미확인)로 바꿔 주세요. 입력할수록 추천이 정확해집니다.<br><b>학교 위도·경도는 대략값입니다.</b> 구글지도에서 학교 위치를 우클릭하면 맨 위에 나오는 좌표(위도, 경도)를 눌러 복사할 수 있으니, 확인한 뒤 값을 고치고 '좌표 확인함'에 체크해 주세요.</div>`;
+  for(const sc of S.schools){
+    h+=`<details class="card"><summary><b>${esc(sc.name)}</b> <span class="muted">${esc(sc.addr)} · ${sc.type==='public'?'공립':'사립'} · ${({boys:'남',girls:'여',co:'공학'})[sc.gender]} · 4년제 진학률 ${sc.rate4}%</span></summary>
+    <div class="row" style="margin-top:8px"><label>설립<select data-sf="type" data-sid="${sc.id}"><option value="public" ${sc.type==='public'?'selected':''}>공립</option><option value="private" ${sc.type==='private'?'selected':''}>사립</option></select></label>
+    <label>학생 구성<select data-sf="gender" data-sid="${sc.id}"><option value="boys" ${sc.gender==='boys'?'selected':''}>남학교</option><option value="girls" ${sc.gender==='girls'?'selected':''}>여학교</option><option value="co" ${sc.gender==='co'?'selected':''}>남녀공학</option></select></label>
+    <label>4년제 진학률(%)<input type="number" step="0.01" data-sf="rate4" data-sid="${sc.id}" value="${sc.rate4}"></label>
+    <label>진학률 등급(1상~4하)<input type="number" min="1" max="4" data-sf="level" data-sid="${sc.id}" value="${sc.level}"></label>
+    <label>상위권·의약계 진학 비율(%, 선택)<input type="number" step="0.1" data-sf="top" data-sid="${sc.id}" value="${sc.top}"></label>
+    <label>비고<input type="text" data-sf="note" data-sid="${sc.id}" value="${esc(sc.note)}"></label>
+    <label>위도<input type="number" step="0.0001" style="width:110px" data-sf="lat" data-sid="${sc.id}" value="${sc.lat??''}"></label>
+    <label>경도<input type="number" step="0.0001" style="width:110px" data-sf="lng" data-sid="${sc.id}" value="${sc.lng??''}"></label>
+    <label><span>좌표 확인함</span><input type="checkbox" data-sf="coordOk" data-sid="${sc.id}" ${sc.coordOk?'checked':''}></label></div>`;
+    for(const [cat,list] of Object.entries(ELECTIVES)){
+      h+=`<h3>${cat}</h3><div class="eleclist">`+list.map(e=>{const v=sc.electives[e]||'?';return `<span><button class="tri ${v==='?'?'':v}" data-sid="${sc.id}" data-el="${esc(e)}">${v==='Y'?'○':v==='N'?'×':'?'}</button>${esc(e)}</span>`}).join('')+`</div>`;
+    }
+    h+=`</details>`;
+  }
+  $('#app').innerHTML=h;
+  $('#app').querySelectorAll('[data-sf]').forEach(el=>el.onchange=()=>{
+    const sc=schoolById(el.dataset.sid);const f=el.dataset.sf;
+    let v=el.type==='checkbox'?el.checked:el.value;if(['rate4','level'].includes(f))v=parseFloat(v)||0;if(f==='lat'||f==='lng')v=parseFloat(v);
+    sc[f]=v;save();
+  });
+  $('#app').querySelectorAll('.tri').forEach(b=>b.onclick=()=>{
+    const sc=schoolById(b.dataset.sid),e=b.dataset.el;const cur=sc.electives[e];
+    const nx=cur==='Y'?'N':cur==='N'?undefined:'Y';
+    if(nx)sc.electives[e]=nx;else delete sc.electives[e];
+    b.className='tri '+(nx||'');b.textContent=nx==='Y'?'○':nx==='N'?'×':'?';save();
+  });
+}
+
+/* ---- ⑥ 설정·백업 ---- */
+function viewSettings(){
+  const W=S.weights;
+  let h=privacyBar()+`<div class="card"><h2>추천 가중치</h2><p class="muted">합계가 100이 아니어도 비율로 계산됩니다.</p><div class="row">
+  ${[['elec','선택과목'],['rate','진학실적'],['dist','거리'],['level','학력수준'],['pref','선호']].map(([k,l])=>`<label>${l}<input type="number" min="0" max="100" data-w="${k}" value="${W[k]}"></label>`).join('')}
+  <label>전략<select id="strat"><option value="balanced" ${S.strategy==='balanced'?'selected':''}>균형(학력 수준 적합)</option><option value="naesin" ${S.strategy==='naesin'?'selected':''}>내신 유리 우선</option><option value="jinhak" ${S.strategy==='jinhak'?'selected':''}>진학실적 중시</option></select></label></div>
+  <p class="muted">학력수준 점수: 학생의 주요교과 평균을 학교의 진학률 등급별 기준(1등급 85점, 2등급 75점, 3등급 65점, 4등급 55점)과 비교합니다. 학급 한 반의 점수로 추정하므로 참고용입니다.</p></div>`;
+  h+=`<div class="card"><h2>분석 옵션·개인정보</h2>
+  <p><label><input type="checkbox" id="incAll" ${S.includeAll?'checked':''}> 예체능·기타 교과도 평균에 포함 (기본: 국·영·수·사·과 등 주요교과만)</label></p>
+  <p><label><input type="checkbox" id="mask" ${S.maskNames?'checked':''}> 새로 저장하는 성명을 가려서 저장(홍○동)</label></p>
+  <p><button class="btn sec sm" id="maskNow">저장된 모든 성명 지금 가리기</button></p></div>`;
+  h+=`<div class="card"><h2>거주 구역 좌표·거리 설정</h2>
+  <div class="notice">구역·학교 좌표는 지도를 직접 조회하지 못한 상태에서 넣은 <b>대략값</b>입니다. 구글지도 등에서 확인해 고치고 '확인함'을 체크하면 거리 계산 옆의 '대략' 표시가 사라집니다. 구역 중심 기준이라 실제 집 위치와는 차이가 있을 수 있습니다.</div>
+  <div class="row"><label>도로 보정 계수<input type="number" step="0.05" min="1" max="2" id="rf" value="${S.roadFactor}"></label></div>
+  <p class="muted">직선거리 × 보정 계수 = 예상 도로거리 (기본 1.3). 거리는 2km·5km·8km·12km 구간으로 점수화합니다.</p>
+  <div class="tablewrap"><table><tr><th class="l">구역</th><th>위도</th><th>경도</th><th>확인함</th><th></th></tr>${S.areas.map(a=>`<tr><td class="l"><input type="text" data-ar="${a.id}" data-af="name" value="${esc(a.name)}"></td><td><input type="number" step="0.0001" style="width:110px" data-ar="${a.id}" data-af="lat" value="${a.lat}"></td><td><input type="number" step="0.0001" style="width:110px" data-ar="${a.id}" data-af="lng" value="${a.lng}"></td><td><input type="checkbox" data-ar="${a.id}" data-af="coordOk" ${a.coordOk?'checked':''}></td><td><button class="btn red sm" data-ardel="${a.id}">삭제</button></td></tr>`).join('')}</table></div>
+  <p><button class="btn sec sm" id="addArea">+ 구역 추가</button></p></div>`;
+  h+=`<div class="card"><h2>백업·삭제</h2><p class="muted">백업 파일에는 학생 정보가 들어 있으므로 안전한 곳에만 보관하세요.</p>
+  <p><button class="btn sec" id="exp">백업 파일 저장(JSON)</button> <label class="btn sec" style="display:inline-block">백업 불러오기<input type="file" id="imp" accept=".json" style="display:none"></label> <button class="btn red" id="wipe">모든 데이터 삭제</button></p></div>`;
+  $('#app').innerHTML=h;
+  $('#app').querySelectorAll('[data-w]').forEach(el=>el.onchange=()=>{S.weights[el.dataset.w]=Math.max(0,parseFloat(el.value)||0);save()});
+  $('#rf').onchange=e=>{S.roadFactor=Math.min(2,Math.max(1,parseFloat(e.target.value)||1.3));save()};
+  $('#app').querySelectorAll('[data-ar]').forEach(el=>el.onchange=()=>{const a=S.areas.find(x=>x.id===el.dataset.ar);if(!a)return;const f=el.dataset.af;a[f]=f==='coordOk'?el.checked:f==='name'?el.value:parseFloat(el.value);save()});
+  $('#app').querySelectorAll('[data-ardel]').forEach(b=>b.onclick=()=>{if(!confirm('이 구역을 삭제할까요? 이 구역으로 지정된 학생은 구역이 해제됩니다.'))return;const id=b.dataset.ardel;S.areas=S.areas.filter(a=>a.id!==id);S.students.forEach(st=>{if(st.area===id)st.area=''});save();render()});
+  $('#addArea').onclick=()=>{S.areas.push({id:uid(),name:'새 구역',lat:35.2,lng:128.57,coordOk:false});save();render()};
+  $('#strat').onchange=e=>{S.strategy=e.target.value;save()};
+  $('#incAll').onchange=e=>{S.includeAll=e.target.checked;save()};
+  $('#mask').onchange=e=>{S.maskNames=e.target.checked;save()};
+  $('#maskNow').onclick=()=>{S.students.forEach(s=>{if(s.name&&!s.name.includes('○'))s.name=maskName(s.name)});save();alert('가렸습니다.')};
+  $('#exp').onclick=()=>download('진학도우미_백업.json',JSON.stringify(S),'application/json');
+  $('#imp').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(!Array.isArray(o.students))throw 0;if(confirm('현재 데이터를 백업 내용으로 바꿉니다. 계속할까요?')){S=Object.assign(defaultState(),o);migrate();save();render()}}catch(x){alert('올바른 백업 파일이 아닙니다.')}};
+  $('#wipe').onclick=()=>{if(confirm('학생·성적·학교 입력 정보를 모두 삭제합니다. 되돌릴 수 없습니다.')&&confirm('정말 삭제할까요?')){try{localStorage.removeItem(KEY)}catch(e){}S=defaultState();render()}};
+}
+
+/* =============== 시작 =============== */
+if(typeof document!=='undefined'){
+  load();
+  // 처음 쓸 때: 빠른 입력의 반을 우리 반(담임)으로 맞춥니다.
+  try{const h=TT.roster.home();if(h&&h.cls!=null&&!S.students.length)S.qCls=h.cls}catch(e){}
+  render();
+}
+if(typeof module!=='undefined')module.exports={rankMap,commitRow,quickCard,effDist,autoDist,parseGrid,parseText,applyImport,analyze,recommend,resolveTrack,S:()=>S,setS:x=>{S=x},defaultState,newStudent,maskName,classStats,levelPercentile};
+</script>
+</body>
+</html>
