@@ -7,10 +7,30 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.3.1";
+  var VERSION = "0.4.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
+  })();
+
+  /* ================= 교실 기기(전자칠판) 보호 =================
+     교실 기기로 정한 기기에서는 "수업 시작" 때 받은 자료를 창을 닫거나 20분 동안 쓰지 않으면 지웁니다.
+     도구가 자료를 읽기 전에 실행되어야 해서 맨 앞에 둡니다. (자세한 동작은 shared/vault.js) */
+  var classroom = (function(){
+    var dev = null; try{ dev = localStorage.getItem("ttv_device"); }catch(e){}
+    if(dev !== "classroom") return null;
+    var ses = null; try{ ses = JSON.parse(sessionStorage.getItem("ttv_session")); }catch(e){}
+    if(ses && ses.k && Date.now() - (ses.last || 0) < 20 * 60 * 1000){
+      ses.last = Date.now(); try{ sessionStorage.setItem("ttv_session", JSON.stringify(ses)); }catch(e){}
+      return {locked:false, id:ses.id};
+    }
+    try{
+      var del = [];
+      for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(k && k.indexOf("tt_") === 0 && k !== "tt_board_v1" && k !== "tt_mode") del.push(k); }
+      del.forEach(function(k){ localStorage.removeItem(k); });
+      sessionStorage.removeItem("ttv_session"); sessionStorage.removeItem("ttv_meta");
+    }catch(e){}
+    return {locked:true};
   })();
 
   /* ================= 저장 ================= */
@@ -508,6 +528,7 @@ var TT = (function(){
       TT_TOOLS.forEach(function(t){
         if(!t.ready || !t.href) return;                                   // 내려받는 PC 프로그램은 첫 화면에서
         if(subject && t.scope === "home" && t.id !== here) return;        // "교과만"이면 담임용 도구는 숨김
+        if(classroom && !t.room) return;                                   // 교실 기기에서는 수업용 도구만
         var on = t.id === here;
         h += '<a class="tt-ri' + (on ? ' on' : '') + '" href="' + BASE + t.href + '" title="' + attr(t.name) + '"' + (on ? ' aria-current="page"' : '') + '><span>' + t.icon + '</span><b>' + attr(t.short || t.name) + '</b></a>';
       });
@@ -565,5 +586,8 @@ var TT = (function(){
     };
   })();
 
-  return { VERSION: VERSION, BASE: BASE, store: store, roster: roster, timetable: timetable, file: {toRows: fileToRows, readXlsx: readXlsx, userErr: userErr, zip: makeZip}, util: util, ui: ui, backup: backup };
+  /* 보관함 동기화 화면(설정창·교실 모드·상태 표시)은 따로 불러옵니다 */
+  (function(){ var s = document.createElement("script"); s.src = BASE + "shared/vaultui.js"; s.defer = true; document.head.appendChild(s); })();
+
+  return { VERSION: VERSION, BASE: BASE, classroom: classroom, store: store, roster: roster, timetable: timetable, file: {toRows: fileToRows, readXlsx: readXlsx, userErr: userErr, zip: makeZip}, util: util, ui: ui, backup: backup };
 })();

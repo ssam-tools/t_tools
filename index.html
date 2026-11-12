@@ -235,7 +235,8 @@
   var $ = function(id){ return document.getElementById(id); };
   var grid = $("grid");
 
-  TT_TOOLS.forEach(function(t){
+  var LIST = TT_TOOLS.filter(function(t){ return !TT.classroom || t.room; });          // 교실 기기에서는 수업용 도구만
+  LIST.forEach(function(t){
     var el = document.createElement(t.ready ? (t.file ? "button" : "a") : "div");
     el.className = "card" + (t.ready ? "" : " wait");
     el.setAttribute("data-for", t.scope);
@@ -263,7 +264,7 @@
   /* 화면 크기와 도구 수에 맞춰 칸·줄 수를 정합니다(스크롤 없이 한눈에). */
   var mode = "home";
   function layout(){
-    var n = TT_TOOLS.filter(function(t){ return mode === "home" || t.scope === "all"; }).length;
+    var n = LIST.filter(function(t){ return mode === "home" || t.scope === "all"; }).length;
     var w = window.innerWidth, cols = w <= 760 ? 3 : (n > 12 ? 5 : 4);
     if(w > 760 && n <= 6) cols = 3;
     grid.style.setProperty("--cols", cols);

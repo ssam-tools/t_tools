@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 쌤 노트 보관함 동기화 전용 숨은 화면.
+     외부 연결은 이 화면에서만, 학교 업무판(구글 앱스 스크립트) 주소로만 허용합니다.
+     보내는 것은 이 기기에서 잠근(암호화한) 글자뿐이며, 비밀 문구와 열쇠는 보내지 않습니다. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'none'; img-src 'none'; connect-src https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
+<title>보관함 동기화</title>
+</head>
+<body>
+<script src="vault.js"></script>
+</body>
+</html>

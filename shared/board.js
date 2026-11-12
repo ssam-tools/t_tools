@@ -66,6 +66,7 @@
   /* 내 할 일(tt_mytodo_v1) 중 날짜가 있는 것 — 이 기기에서만 읽고, 업무판으로 보내지 않습니다. */
   var MYKEY = "tt_mytodo_v1";
   function myItems(){
+    if(TT.classroom) return [];                                                     // 교실 기기에서는 내 할 일을 보이지 않음
     var d = TT.store.get(MYKEY, null);
     return d && Array.isArray(d.items) ? d.items.filter(function(x){ return x.date && !x.done; }) : [];
   }
@@ -93,7 +94,7 @@
       + '<span class="bst">' + status + "</span>"
       + (st.err && st.err.auth ? '<button type="button" class="bk due" data-act="setup">비밀번호 다시 입력</button>' : "")
       + (linked && st.err && !st.err.auth ? '<button type="button" class="bk" data-act="retry">다시 시도</button>' : "")
-      + '<span class="sp"></span><span class="bhint">빈 곳을 누르면 🔒내 할 일 추가</span>'
+      + '<span class="sp"></span>' + (TT.classroom ? '' : '<span class="bhint">빈 곳을 누르면 🔒내 할 일 추가</span>') + ''
       + (linked ? '<a class="btn" href="' + esc(c.url) + '" target="_blank" rel="noopener">업무판 열기 ↗</a>'
                   + '<button type="button" class="bk" data-act="setup" title="업무판 설정" aria-label="업무판 설정">⚙</button>'
                 : '<button type="button" class="btn primary" data-act="setup">업무판 연결</button><button type="button" class="bk" data-act="hide" title="이 칸 숨기기">숨기기</button>')
@@ -218,7 +219,7 @@
   });
   /* 날짜 칸의 빈 곳(또는 내 할 일)을 누르면 그 날짜로 내 할 일 추가. 학교 업무를 누르면 업무판이 열립니다. */
   box.addEventListener("click", function(e){
-    if(e.target.closest("a,button")) return;
+    if(e.target.closest("a,button") || TT.classroom) return;
     var cell = e.target.closest(".bd[data-date]"); if(!cell) return;
     var k = cell.getAttribute("data-date"), d = new Date(+k.slice(0,4), +k.slice(5,7) - 1, +k.slice(8,10));
     TT.ui.prompt("🔒 " + (d.getMonth()+1) + "월 " + d.getDate() + "일(" + DOW[d.getDay()] + ") 내 할 일", "", "나만 보는 할 일 (학교 업무판에는 올라가지 않음)", function(v){

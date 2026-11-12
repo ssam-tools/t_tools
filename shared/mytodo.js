@@ -6,6 +6,7 @@
   var KEY = "tt_mytodo_v1", KEEP_DONE_DAYS = 30;
   var box = document.getElementById("mytodo");
   if(!box) return;
+  if(TT.classroom){ box.hidden = true; return; }                                   // 교실 기기(공용)에서는 내 할 일을 보이지 않음
   var DOW = ["일","월","화","수","목","금","토"];
   var showDone = false;
 
