@@ -39,12 +39,12 @@
     return w === 6 ? add(t, 2) : w === 0 ? add(t, 1) : add(t, 1 - w);
   }
 
-  /* 업무판에서 한 주 업무 읽기 */
+  /* 업무판에서 2주 치 업무 읽기 */
   function fetchWeek(c, mon){
     return fetch(c.url, {
       method: "POST", redirect: "follow", credentials: "omit", cache: "no-store",
       headers: {"Content-Type": "text/plain;charset=utf-8"},      // 단순 요청(사전 확인 없이 전송)
-      body: JSON.stringify({action: "week", pw: c.pw, from: ymd(mon), to: ymd(add(mon, 6))})
+      body: JSON.stringify({action: "week", pw: c.pw, from: ymd(mon), to: ymd(add(mon, 13))})   // 2주
     }).then(function(res){
       if(!res.ok) throw new Error("HTTP " + res.status);
       return res.text();
@@ -63,52 +63,67 @@
     return {text: m};
   }
 
-  /* 화면 그리기 */
+  /* 내 할 일(tt_mytodo_v1) 중 날짜가 있는 것 — 이 기기에서만 읽고, 업무판으로 보내지 않습니다. */
+  var MYKEY = "tt_mytodo_v1";
+  function myItems(){
+    var d = TT.store.get(MYKEY, null);
+    return d && Array.isArray(d.items) ? d.items.filter(function(x){ return x.date && !x.done; }) : [];
+  }
+  function addMine(date, text){
+    var d = TT.store.get(MYKEY, null); d = d && Array.isArray(d.items) ? d : {items: []};
+    d.items.push({id: "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), text: text.slice(0, 120), date: date, done: false, created: Date.now()});
+    TT.store.set(MYKEY, d);
+    window.dispatchEvent(new Event("tt-mytodo-change"));
+  }
+
+  /* 화면 그리기: 이번 주 + 다음 주 (주말에는 다음 주 + 그다음 주) */
   var st = {};
   function render(){
     var c = cfg();
     box.hidden = !!c.hidden;
     if(c.hidden) return;
-    if(!c.url){
-      box.className = "board setup";
-      box.innerHTML = '<span>📅 우리 학교 <b>주간 업무판</b>을 연결하면 이번 주 업무가 여기에 보입니다.</span>'
-        + '<button type="button" class="btn primary" data-act="setup">연결하기</button>'
-        + '<button type="button" class="bk" data-act="hide">숨기기</button>';
-      return;
-    }
-    var mon = weekStart(), tk = ymd(new Date()), next = mon > new Date();
-    var items = (st.data && st.data.items) || [];
+    var mon = weekStart(), tk = ymd(new Date()), weekend = mon > new Date(), linked = !!c.url;
+    var items = (linked && st.data && st.data.items) || [], mine = myItems();
     var focus = Math.max(0, Math.min(4, Math.round((new Date(new Date().toDateString()) - mon) / 864e5)));
-    var status = st.loading ? "불러오는 중…"
+    var status = !linked ? "" : st.loading ? "불러오는 중…"
       : st.err ? '<span class="err">⚠ ' + esc(st.err.text) + "</span>" + (st.at ? " (" + stamp(st.at) + " 내용)" : "")
       : st.at ? stamp(st.at) + " 확인" : "";
-    var h = '<div class="bh"><b>📅 ' + (next ? "다음 주" : "이번 주") + ' 업무</b>'
-      + '<span class="sm">' + esc((st.data && st.data.school) || c.school || "") + " · " + (mon.getMonth()+1) + "월 " + Math.ceil(mon.getDate()/7) + "주</span>"
+    var h = '<div class="bh"><b>📅 ' + (weekend ? "다음 주 · 그다음 주" : "이번 주 · 다음 주") + "</b>"
+      + (linked ? '<span class="sm">' + esc((st.data && st.data.school) || c.school || "") + "</span>" : '<span class="sm">학교 업무판 미연결</span>')
       + '<span class="bst">' + status + "</span>"
       + (st.err && st.err.auth ? '<button type="button" class="bk due" data-act="setup">비밀번호 다시 입력</button>' : "")
-      + (st.err && !st.err.auth ? '<button type="button" class="bk" data-act="retry">다시 시도</button>' : "")
-      + '<span class="sp"></span>'
-      + '<a class="btn" href="' + esc(c.url) + '" target="_blank" rel="noopener">업무판 열기 ↗</a>'
-      + '<button type="button" class="bk" data-act="setup" title="업무판 설정" aria-label="업무판 설정">⚙</button></div>';
-    h += '<a class="bdays" href="' + esc(c.url) + '" target="_blank" rel="noopener" title="눌러서 업무판 열기">';
-    for(var i = 0; i < 5; i++){
-      var d = add(mon, i), k = ymd(d);
-      var lab = items.filter(function(x){ return x.type === "day" && x.date === k; })[0];
-      var list = items.filter(function(x){ return x.type === "item" && x.date === k; })
-        .sort(function(a, b){ return order(a.dept) - order(b.dept) || tmin(a.time) - tmin(b.time) || (a.id < b.id ? -1 : 1); });
-      h += '<div class="bd' + (k === tk ? " today" : "") + (lab && lab.important === "1" ? " hol" : "") + (i === focus ? " focus" : "") + '">'
-        + '<div class="bdh">' + DOW[d.getDay()] + " " + d.getDate() + (k === tk ? " · 오늘" : "") + (lab ? "<em>" + esc(lab.text) + "</em>" : "") + "</div>"
-        + '<div class="bdl">'
-        + (list.length ? list.map(function(x){
-            var col = color(x.dept);
-            return '<div class="bi' + (x.important === "1" ? " imp" : "") + '" title="' + esc(x.dept + " · " + (x.time ? x.time + " " : "") + x.text) + '">'
-              + '<b style="color:' + col + '">' + esc(short(x.dept)) + "</b>"
-              + (x.time ? '<span class="t">' + esc(x.time) + "</span>" : "") + esc(x.text) + "</div>";
-          }).join("") : (st.data ? '<div class="bnone">—</div>' : ""))
-        + "</div></div>";
+      + (linked && st.err && !st.err.auth ? '<button type="button" class="bk" data-act="retry">다시 시도</button>' : "")
+      + '<span class="sp"></span><span class="bhint">빈 곳을 누르면 🔒내 할 일 추가</span>'
+      + (linked ? '<a class="btn" href="' + esc(c.url) + '" target="_blank" rel="noopener">업무판 열기 ↗</a>'
+                  + '<button type="button" class="bk" data-act="setup" title="업무판 설정" aria-label="업무판 설정">⚙</button>'
+                : '<button type="button" class="btn primary" data-act="setup">업무판 연결</button><button type="button" class="bk" data-act="hide" title="이 칸 숨기기">숨기기</button>')
+      + "</div>";
+    h += '<div class="bweeks">';
+    for(var wk = 0; wk < 2; wk++){
+      var m0 = add(mon, wk * 7);
+      h += '<div class="bwk">' + (wk === 0 ? (weekend ? "다음 주" : "이번 주") : (weekend ? "그다음" : "다음 주")) + "<small>" + (m0.getMonth()+1) + "." + m0.getDate() + "</small></div>";
+      for(var i = 0; i < 5; i++){
+        var d = add(m0, i), k = ymd(d), idx = wk * 5 + i;
+        var lab = items.filter(function(x){ return x.type === "day" && x.date === k; })[0];
+        var list = items.filter(function(x){ return x.type === "item" && x.date === k; })
+          .sort(function(a, b){ return order(a.dept) - order(b.dept) || tmin(a.time) - tmin(b.time) || (a.id < b.id ? -1 : 1); });
+        var my = mine.filter(function(x){ return x.date === k; });
+        h += '<div class="bd' + (k === tk ? " today" : "") + (k < tk ? " past" : "") + (lab && lab.important === "1" ? " hol" : "")
+          + (idx === focus ? " focus" : "") + (idx === focus + 1 ? " focus2" : "") + '" data-date="' + k + '" title="빈 곳을 누르면 이 날짜에 내 할 일 추가">'
+          + '<div class="bdh">' + DOW[d.getDay()] + " " + d.getDate() + (k === tk ? " · 오늘" : "") + (lab ? "<em>" + esc(lab.text) + "</em>" : "") + "</div>"
+          + '<div class="bdl">'
+          + my.map(function(x){ return '<div class="bi me" title="내 할 일 (나만 보기)">🔒 ' + esc(x.text) + "</div>"; }).join("")
+          + list.map(function(x){
+              var col = color(x.dept);
+              return '<a class="bi' + (x.important === "1" ? " imp" : "") + '" href="' + esc(c.url) + '" target="_blank" rel="noopener" title="' + esc(x.dept + " · " + (x.time ? x.time + " " : "") + x.text) + '">'
+                + '<b style="color:' + col + '">' + esc(short(x.dept)) + "</b>"
+                + (x.time ? '<span class="t">' + esc(x.time) + "</span>" : "") + esc(x.text) + "</a>";
+            }).join("")
+          + "</div></div>";
+      }
     }
-    h += "</a>";
-    var notice = items.filter(function(x){ return x.type === "notice"; });
+    h += "</div>";
+    var notice = items.filter(function(x){ return x.type === "notice" && x.date === ymd(mon); });
     if(notice.length) h += '<div class="bn" title="' + esc(notice.map(function(x){ return x.text; }).join("\n")) + '">📢 ' + esc(notice.map(function(x){ return x.text; }).join("  ·  ")) + "</div>";
     box.className = "board";
     box.innerHTML = h;
@@ -133,7 +148,7 @@
   var busy = false;
   function refresh(){
     var c = cfg();
-    if(c.hidden || !c.url){ st = {}; render(); return; }
+    if(c.hidden || !c.url){ st = {}; render(); return; }   // 미연결이어도 내 할 일은 달력에 보임
     if(busy) return;
     var mon = weekStart(), wk = ymd(mon);
     if(!st.data){
@@ -201,6 +216,17 @@
     if(act === "retry") refresh();
     if(act === "hide"){ setCfg({hidden: true}); render(); TT.ui.toast("숨겼습니다. ⋯ 메뉴의 '학교 업무판 연결'에서 다시 켤 수 있습니다."); }
   });
+  /* 날짜 칸의 빈 곳(또는 내 할 일)을 누르면 그 날짜로 내 할 일 추가. 학교 업무를 누르면 업무판이 열립니다. */
+  box.addEventListener("click", function(e){
+    if(e.target.closest("a,button")) return;
+    var cell = e.target.closest(".bd[data-date]"); if(!cell) return;
+    var k = cell.getAttribute("data-date"), d = new Date(+k.slice(0,4), +k.slice(5,7) - 1, +k.slice(8,10));
+    TT.ui.prompt("🔒 " + (d.getMonth()+1) + "월 " + d.getDate() + "일(" + DOW[d.getDay()] + ") 내 할 일", "", "나만 보는 할 일 (학교 업무판에는 올라가지 않음)", function(v){
+      addMine(k, v); render(); TT.ui.toast("내 할 일에 넣었습니다 (나만 보기).");
+    });
+  });
+  window.addEventListener("tt-mytodo-change", function(){ render(); });
+  window.addEventListener("storage", function(e){ if(e.key === MYKEY) render(); });
   var menuItem = $("mBoard");
   if(menuItem) menuItem.addEventListener("click", function(){ var m = $("more"); if(m) m.open = false; openSetup(); });
 

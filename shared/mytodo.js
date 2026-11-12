@@ -20,7 +20,7 @@
     d.items = d.items.filter(function(x){ return !x.done || !x.doneAt || x.doneAt > cut; });
     return d;
   }
-  function save(d){ TT.store.set(KEY, d); }
+  function save(d){ TT.store.set(KEY, d); window.dispatchEvent(new CustomEvent("tt-mytodo-change", {detail: "self"})); }   // 첫 화면 달력도 함께 갱신
   function uid(){ return "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
 
   /* 날짜 표시: 오늘·내일·요일(이번 주)·월/일, 지난 날짜는 빨간색 */
@@ -85,6 +85,7 @@
     });
   });
   window.addEventListener("storage", function(e){ if(e.key === KEY) render(); });
+  window.addEventListener("tt-mytodo-change", function(e){ if(e.detail !== "self") render(); });
   window.addEventListener("pageshow", render);
   render();
 })();
