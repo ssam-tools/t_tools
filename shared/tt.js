@@ -464,5 +464,80 @@ var TT = (function(){
   }
   if(!canStore){ if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", ui.warnStore); else ui.warnStore(); }
 
+  /* ---------- 도구 이동 메뉴 ----------
+     각 도구 화면(apps/…)에 자동으로 붙습니다. 도구 목록은 shared/tools.js 를 그대로 씁니다.
+     넓은 화면: 왼쪽에 고정된 세로 메뉴(한 번에 다른 도구로 이동)
+     좁은 화면(휴대폰): "☰ 도구" 버튼을 누르면 도구 목록이 아래에서 올라옵니다. */
+  (function(){
+    var m = location.pathname.match(/\/apps\/([^\/]+)\/(?:index\.html)?$/);
+    if(!m) return;
+    var here = m[1];
+    var WIDE = "(min-width:900px) and (min-height:460px)";
+    var CSS = ":root{--tt-rail:68px}"
+      + ".tt-rail,.tt-navbtn{display:none}"
+      + ".tt-ri{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:10px;text-decoration:none;color:#5b6773;text-align:center;font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif}"
+      + ".tt-ri span{font-size:20px;line-height:1}"
+      + ".tt-ri b{font-size:10.5px;font-weight:700;line-height:1.15;word-break:keep-all}"
+      + ".tt-ri:hover{background:#e6f0fa;color:#2f6fb5}"
+      + ".tt-ri.on{background:#2f6fb5;color:#fff}"
+      + ".tt-ri:focus-visible{outline:3px solid #7fb0e6;outline-offset:1px}"
+      + "@media " + WIDE + "{"
+      +   "html.tt-hasnav body{margin-left:var(--tt-rail)!important}"
+      +   "html.tt-hasnav .back,html.tt-hasnav .ttback{display:none!important}"
+      +   "html.tt-hasnav .cta,html.tt-hasnav .tabs,html.tt-hasnav .dock{left:var(--tt-rail)!important}"
+      +   ".tt-rail{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:var(--tt-rail);z-index:15;background:#fff;border-right:1px solid #dde3ea;padding:6px 5px;gap:2px;overflow-y:auto;box-sizing:border-box}"
+      +   ".tt-rail .tt-ri{flex:1 1 0;max-height:60px;min-height:38px}"
+      +   ".tt-rail .home{flex:0 0 50px;border-bottom:1px solid #dde3ea;border-radius:10px 10px 0 0;margin-bottom:4px}"
+      +   ".tt-rail .bd{flex:0 0 50px;border-top:1px solid #dde3ea;border-radius:0 0 10px 10px;margin-top:4px}"
+      + "}"
+      + "@media (max-width:899px),(max-height:459px){"
+      +   "html.tt-hasnav .tt-navbtn{display:inline-block;font:inherit;font-size:12px;font-weight:700;border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:1px 9px;margin-left:8px;cursor:pointer;opacity:.85;vertical-align:middle}"
+      +   "html.tt-hasnav .ttback{display:inline-block}"
+      + "}"
+      + ".tt-sheet{position:fixed;inset:0;z-index:40;background:rgba(20,30,45,.45);display:flex;align-items:flex-end;justify-content:center}"
+      + ".tt-sheet[hidden]{display:none!important}"
+      + ".tt-sheet .in{background:#fff;width:min(520px,100%);border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;box-sizing:border-box}"
+      + ".tt-sheet h3{grid-column:1/-1;font-size:15px;margin:0 0 2px;color:#1d2733;font-family:'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif}"
+      + ".tt-sheet .tt-ri{min-height:66px;border:1px solid #dde3ea}"
+      + ".tt-sheet .tt-ri b{font-size:12px}"
+      + "@media print{.tt-rail,.tt-navbtn,.tt-sheet{display:none!important}html.tt-hasnav body{margin-left:0!important}}";
+    function attr(v){ return String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+    function items(){
+      var subject = store.raw("tt_mode") === "subject";
+      var h = '<a class="tt-ri home" href="' + BASE + '" title="도구 모음 첫 화면"><span>🧰</span><b>도구 모음</b></a>';
+      TT_TOOLS.forEach(function(t){
+        if(!t.ready || !t.href) return;                                   // 내려받는 PC 프로그램은 첫 화면에서
+        if(subject && t.scope === "home" && t.id !== here) return;        // "교과만"이면 담임용 도구는 숨김
+        var on = t.id === here;
+        h += '<a class="tt-ri' + (on ? ' on' : '') + '" href="' + BASE + t.href + '" title="' + attr(t.name) + '"' + (on ? ' aria-current="page"' : '') + '><span>' + t.icon + '</span><b>' + attr(t.short || t.name) + '</b></a>';
+      });
+      var b = store.get("tt_board_v1", {}) || {};
+      if(b.url && !b.hidden && /^https:\/\/script\.google\.com\//.test(b.url))
+        h += '<a class="tt-ri bd" href="' + attr(b.url) + '" target="_blank" rel="noopener" title="학교 업무판 (새 창)"><span>📅</span><b>업무판</b></a>';
+      return h;
+    }
+    function build(){
+      var st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st);
+      document.documentElement.classList.add("tt-hasnav");
+      var rail = document.createElement("nav"); rail.className = "tt-rail"; rail.setAttribute("aria-label", "도구 이동");
+      rail.innerHTML = items(); document.body.appendChild(rail);
+      var sheet = document.createElement("div"); sheet.className = "tt-sheet"; sheet.hidden = true;
+      sheet.innerHTML = '<nav class="in" aria-label="도구 이동"><h3>다른 도구로 이동</h3>' + items() + "</nav>";
+      document.body.appendChild(sheet);
+      sheet.addEventListener("click", function(e){ if(e.target === sheet) sheet.hidden = true; });
+      document.addEventListener("keydown", function(e){ if(e.key === "Escape") sheet.hidden = true; });
+      Array.prototype.forEach.call(document.querySelectorAll(".back, .ttback"), function(a){
+        var btn = document.createElement("button"); btn.type = "button"; btn.className = "tt-navbtn"; btn.textContent = "☰ 도구";
+        btn.addEventListener("click", function(e){ e.preventDefault(); sheet.hidden = false; });
+        a.parentNode.insertBefore(btn, a.nextSibling);
+      });
+    }
+    function start(){
+      if(typeof TT_TOOLS !== "undefined") return build();
+      var s = document.createElement("script"); s.src = BASE + "shared/tools.js"; s.onload = build; document.head.appendChild(s);
+    }
+    if(document.body) start(); else document.addEventListener("DOMContentLoaded", start);
+  })();
+
   return { VERSION: VERSION, BASE: BASE, store: store, roster: roster, file: {toRows: fileToRows, readXlsx: readXlsx, userErr: userErr, zip: makeZip}, util: util, ui: ui, backup: backup };
 })();

@@ -4,7 +4,7 @@
 importScripts('shared/tools.js');
 const CACHE = 'tt-files-v1';
 const CORE = ['./', 'manifest.webmanifest', 'assets/icon-192.png', 'assets/icon-512.png',
-              'shared/tt.css', 'shared/tt.js', 'shared/tools.js', 'shared/board.js'];
+              'shared/tt.css', 'shared/tt.js', 'shared/tools.js', 'shared/board.js', 'shared/mytodo.js'];
 const FILES = CORE.concat(TT_TOOLS.filter(t => t.ready && t.href).map(t => t.href));   // 내려받는 PC 프로그램은 저장해 두지 않음
 
 self.addEventListener('install', e => {

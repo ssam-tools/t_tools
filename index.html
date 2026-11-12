@@ -50,9 +50,10 @@
   .bk.due{background:var(--star-soft);color:#7a5a00}
 
   /* 이번 주 업무 띠 (shared/board.js) */
-  .board{flex:none;background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:clamp(7px,1.3vh,11px) clamp(10px,1.6vw,14px);display:flex;flex-direction:column;gap:clamp(4px,.8vh,7px);height:clamp(118px,24vh,215px)}
-  .board.setup{height:auto;flex-direction:row;align-items:center;gap:10px;font-size:13.5px;color:var(--sub)}
+  .toprow{flex:none;display:flex;gap:clamp(8px,1.4vh,12px);height:clamp(124px,25vh,220px)}
+  .board{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:clamp(7px,1.3vh,11px) clamp(10px,1.6vw,14px);display:flex;flex-direction:column;gap:clamp(4px,.8vh,7px)}
+  .board.setup{flex-direction:row;align-items:center;gap:10px;font-size:13.5px;color:var(--sub)}
   .board.setup span{flex:1}
   .board.setup .btn{padding:6px 12px;font-size:13px}
   .bh{display:flex;align-items:center;gap:8px;font-size:14.5px;min-width:0}
@@ -77,8 +78,34 @@
   .bmore{font-size:11.5px;color:var(--accent);font-weight:700}
   .bnone{font-size:12px;color:#aab3bd}
   .bn{font-size:12.5px;color:var(--ok);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  /* 업무 띠가 있을 때 화면이 낮으면 카드 설명을 숨겨 글자가 잘리지 않게 */
-  @media (max-height:860px){ body:has(.board:not([hidden]):not(.setup)) .desc{display:none} }
+  /* 내 할 일 (shared/mytodo.js) — 이 기기에만 저장, 나만 보기 */
+  .mytodo{flex:0 0 clamp(240px,26vw,340px);min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:clamp(7px,1.3vh,11px) 12px;display:flex;flex-direction:column;gap:5px}
+  .board[hidden] + .mytodo{flex:1}
+  .th{display:flex;align-items:center;gap:6px;font-size:14.5px}
+  .th .sp{flex:1}
+  .lock{font-size:11px;font-weight:700;color:var(--ok);background:var(--ok-soft);border-radius:999px;padding:1px 7px;white-space:nowrap}
+  .tin{display:flex;gap:4px}
+  .tin input{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:4px 7px;min-width:0;background:#fbfcfd;color:var(--ink)}
+  .tin input:focus{outline:2px solid #7fb0e6;border-color:#7fb0e6;background:#fff}
+  #tdText{flex:1}
+  #tdDate{flex:0 0 112px;font-size:12px;padding:4px 4px}
+  .tl{list-style:none;flex:1;min-height:0;overflow-y:auto}
+  .tl li{display:flex;align-items:center;gap:6px;font-size:13px;padding:1px 3px;border-radius:6px}
+  .tl li:hover{background:#f3f6f9}
+  .tl input[type=checkbox]{width:15px;height:15px;flex:none;cursor:pointer;accent-color:var(--accent)}
+  .tl .tx{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:text;line-height:1.55}
+  .tl .done .tx{text-decoration:line-through;color:#9aa5b1}
+  .dt{font-size:11px;font-weight:700;color:var(--sub);background:#eceff3;border-radius:999px;padding:0 6px;white-space:nowrap}
+  .dt.today{background:var(--accent-soft);color:var(--accent)}
+  .dt.late{background:var(--danger-soft);color:var(--danger)}
+  .tl .x{border:0;background:none;color:#b0b8c1;font-size:16px;line-height:1;cursor:pointer;visibility:hidden;padding:0 2px}
+  .tl li:hover .x,.tl .x:focus{visibility:visible}
+  @media (hover:none){ .tl .x{visibility:visible} }
+  .tl .none{color:#9aa5b1;font-size:12.5px;line-height:1.5;display:block}
+
+  /* 위쪽(업무·할 일) 칸이 있으니 화면이 낮으면 카드 설명을 숨겨 글자가 잘리지 않게 */
+  @media (max-height:860px){ .desc{display:none} }
   .bErr{color:var(--danger)!important;font-weight:700;min-height:1em;margin-top:6px}
 
   @media (max-width:760px), (max-height:560px){
@@ -90,7 +117,10 @@
     .chip.t-home,.chip.t-all{display:none}
   }
   @media (max-width:760px){
-    .board{height:auto}
+    body{height:auto;min-height:100dvh;overflow:auto}   /* 휴대폰 첫 화면은 위쪽 칸이 있어 아래로 넘겨 봅니다 */
+    main{flex:none;grid-template-rows:none;grid-auto-rows:minmax(72px,auto)}
+    .toprow{flex-direction:column;height:auto}
+    .mytodo{flex:none;max-height:32vh}
     .board.setup{flex-wrap:wrap}
     .bh .sm,.bh .bst:empty{display:none}
     .bdays{grid-template-columns:1fr}
@@ -128,7 +158,10 @@
   </div>
 </header>
 
-<section id="board" class="board" hidden aria-label="이번 주 학교 업무"></section>
+<div class="toprow">
+  <section id="board" class="board" hidden aria-label="이번 주 학교 업무"></section>
+  <section id="mytodo" class="mytodo" aria-label="내 할 일 (나만 보기)"></section>
+</div>
 
 <main id="grid"></main>
 
@@ -169,6 +202,7 @@
 <script src="shared/tools.js"></script>
 <script src="shared/tt.js"></script>
 <script src="shared/board.js"></script>
+<script src="shared/mytodo.js"></script>
 <script>
 (function(){
   "use strict";
