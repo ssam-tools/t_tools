@@ -15,13 +15,14 @@
    🗃️ 문장 은행  🧾 기록 마감 점검표  🗂️ 상담 카드  🖨 인쇄
    🔢 문항 생성기  ✅ 형성평가  🔁 보충  🎯 이원목적분류표  ⏳ 진도·시수
    📊 수행평가  📦 제출물 체크  🧹 1인 1역·당번  🪑 자리 바꾸기
-   📆 연간 업무  🤖 AI·문서 도우미 (📃 학습지·문항 📏 채점 기준 📨 가정통신문 🏛️ 공문 🗒️ 회의록 💬 민원 답변 ✒️ 세특 다듬기 ✨ 자유 요청 🗄️ 보관함)  🔎 학교 자료실 */
+   📆 연간 업무  🤖 AI·문서 도우미 (📃 학습지·문항 📏 채점 기준 📨 가정통신문 🏛️ 공문 🗒️ 회의록 💬 민원 답변 ✒️ 세특 다듬기 ✨ 자유 요청 🗄️ 보관함)  🔎 학교 자료실
+   🎮 수학 놀이터 (🎁 보물 상자 💣 숫자 폭탄 🎡 돌림판 🛤️ 주사위 말판 🏇 주사위 합 경주 🃏 하이·로우 🏁 퀴즈 배틀 🎱 수학 빙고 ➕ 숫자 만들기 🕵️ 수 탐정 📈 그래프 맞히기 🔲 스도쿠 🔷 세 장 찾기 🎴 짝 맞추기 🗼 하노이 탑 🪄 마방진 🔥 성냥개비 식) */
 var TT_CATS = [
   {id:"teach", icon:"📚", name:"교과지도",   desc:"시간표 · 수업 기록 · 수업 도구 · 모둠 · 수행평가"},
   {id:"life",  icon:"🌱", name:"생활지도",   desc:"학급 명렬표 · 출결·결석계 · 학부모 문자 · 제출물 · 1인 1역"},
   {id:"care",  icon:"🤝", name:"상담·생기부", desc:"상담 · 생기부 도우미 · 진학(가산점)"},
   {id:"work",  icon:"💼", name:"업무",       desc:"연간 업무·학사일정 · AI·문서 도우미 · 파일 합치기"},
-  {id:"math",  icon:"🧮", name:"수학",       desc:"문항 생성 · 형성평가·보충 · 이원목적분류표 · 진도 — 다른 교과도 참고해 만들 수 있어요", soon:["📈 그래프·📐 도형","📉 통계 실험","🏁 모둠 퀴즈","📚 고교 대비 자료실"]}
+  {id:"math",  icon:"🧮", name:"수학",       desc:"문항 생성 · 형성평가·보충 · 이원목적분류표 · 진도 · 수학 놀이터", soon:["📐 도형·그래프 그리기","📉 통계 실험","📚 고교 대비 자료실"]}
 ];
 var TT_TOOLS = [
   {id:"timetable",icon:"🕘", cat:"teach", short:"내 시간표", name:"내 시간표", desc:"컴시간알리미 시간표를 붙여 넣으면 오늘 수업·수업 기록장에 자동으로 쓰입니다.", href:"apps/timetable/", ready:true, room:true},
@@ -43,6 +44,7 @@ var TT_TOOLS = [
   {id:"mcheck", icon:"✅", cat:"math",  short:"형성평가", name:"형성평가·보충", desc:"빠른 채점 · 문항별 정답률 · 틀린 유형만 보충 학습지 · 해결 → 세특 근거.", href:"apps/mcheck/", ready:true},
   {id:"mblue",  icon:"🎯", cat:"math",  short:"분류표", name:"이원목적분류표", desc:"문항별 성취기준·난이도·배점·정답 → 합계·분포 점검, 인쇄.", href:"apps/mblue/", ready:true},
   {id:"mpace",  icon:"⏳", cat:"math",  short:"진도·시수", name:"진도·시수", desc:"시간표 × 학사일정 × 수업 기록장 → 시험까지 남은 수업과 필요한 차시.", href:"apps/mpace/", ready:true},
+  {id:"play",   icon:"🎮", cat:"math",  short:"수학 놀이터", name:"수학 놀이터", desc:"보물 상자·숫자 폭탄·돌림판·퀴즈 배틀·빙고·스도쿠 등 17가지 수학 게임·퍼즐.", href:"apps/play/", ready:true, room:true},
   {id:"year",   icon:"📆", cat:"work",  short:"연간 업무", name:"연간 업무", desc:"해마다 돌아오는 일 · 학사일정 붙여 넣기 → 첫 화면 달력.", href:"apps/year/", ready:true},
   {id:"ai",     icon:"🤖", cat:"work",  short:"AI·문서", name:"AI·문서 도우미", desc:"개인정보를 가린 AI 요청문, 가정통신문·공문 틀, 보관함.", href:"apps/ai/", ready:true},
   {id:"lib",    icon:"🔎", cat:"work",  short:"자료실", name:"학교 자료실", desc:"규정집·교육계획서·기재요령·서식을 누구나 올리고 내용까지 찾기 (몇 쪽인지).", href:"apps/lib/", ready:true},

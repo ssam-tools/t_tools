@@ -153,7 +153,7 @@
   .soon{display:flex;flex-wrap:wrap;gap:4px}.soon span{font-size:12px;font-weight:700;border:1px dashed #c9d2dc;border-radius:8px;padding:3px 7px;color:var(--sub)}
   #cat-math{background:#fbfaf6}
   @media (max-width:1100px) and (min-width:761px){ main#grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:minmax(0,1fr)} }
-  @media (max-width:760px){ main#grid{grid-template-columns:1fr 1fr;grid-template-rows:none} .cat{overflow:visible} .tl2{overflow:visible} }
+  @media (max-width:760px){ main#grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none} .cat{overflow:visible} .tl2{overflow:visible} }
   /* 쌤 노트 제목 · 학교 설정 · 알림 · 빠른 기록 */
   .sch{font:inherit;font-size:12px;font-weight:700;border:1px dashed var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 10px;cursor:pointer;vertical-align:middle}
   .qrec{font:inherit;font-size:13.5px;font-weight:800;border:0;border-radius:10px;padding:8px 12px;cursor:pointer;background:#efe7fa;color:#5b2f99}
@@ -300,7 +300,7 @@
       var L = TT_TOOLS.filter(function(t){ return t.cat === c.id && t.ready && !t.in && (!TT.classroom || t.room); });
       if(TT.classroom && !L.length) return;
       var el = document.createElement("section"); el.className = "cat"; el.id = "cat-" + c.id;
-      el.innerHTML = '<div class="ch"><span class="ci">' + c.icon + '</span><div><div class="cn">' + c.name + '</div><div class="cd">' + c.desc + "</div></div></div>";
+      el.innerHTML = '<div class="ch"><span class="ci">' + c.icon + '</span><div><div class="cn">' + c.name + '</div></div></div>';
       var box = document.createElement("div"); box.className = "tl2"; el.appendChild(box);
       L.forEach(function(t){
         var row = document.createElement("div"); row.className = "tr" + (t.home && !hasHome ? " dim" : "");
