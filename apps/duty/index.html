@@ -84,6 +84,9 @@
   function key(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
   function parse(s){ var a = s.split("-"); return new Date(+a[0], a[1] - 1, +a[2]); }
   function monday(d){ d = new Date(d.getFullYear(), d.getMonth(), d.getDate()); var w = d.getDay(); d.setDate(d.getDate() + (w === 0 ? -6 : 1 - w)); return d; }
+  /* 학사일정의 휴업일(연간 업무 → 📌 학사일정 붙여 넣기)은 수업일에서 뺌 */
+  var OFF = (function(){ var m = {}; try{ ((TT.store.get("tt_calendar_v1", null) || {}).events || []).forEach(function(e){ if(e.k === "off") m[e.d] = 1; }); }catch(e){} return m; })();
+  function school(d){ var w = d.getDay(); return w !== 0 && w !== 6 && !OFF[key(d)]; }
   function conf(){
     var c = S.c[cls.id];
     if(!c){ c = S.c[cls.id] = {roles: DEF.map(function(x){ return {name: x[0], n: x[1]}; }), per: "week", start: key(monday(new Date())), skip: {}}; save(); }
@@ -94,15 +97,15 @@
     var s = parse(c.start), t = new Date(); t = new Date(t.getFullYear(), t.getMonth(), t.getDate());
     if(c.per === "week") return Math.max(0, Math.floor((monday(t) - monday(s)) / (7 * 864e5)));
     var n = 0, d = new Date(s); if(t < s) return 0;
-    while(d < t){ d.setDate(d.getDate() + 1); var w = d.getDay(); if(w !== 0 && w !== 6) n++; }
-    var w0 = t.getDay(); if(w0 === 0 || w0 === 6) n++;               // 주말에는 다음 수업일 당번
+    while(d < t){ d.setDate(d.getDate() + 1); if(school(d)) n++; }
+    if(!school(t)) n++;                                              // 주말·휴업일에는 다음 수업일 당번
     return n;
   }
   function label(c, i){
     var s = parse(c.start);
     if(c.per === "week"){ var m = monday(s); m.setDate(m.getDate() + i * 7); var f = new Date(m); f.setDate(f.getDate() + 4); return (m.getMonth() + 1) + "/" + m.getDate() + " ~ " + (f.getMonth() + 1) + "/" + f.getDate(); }
-    var d = new Date(s), n = 0; while(n < i){ d.setDate(d.getDate() + 1); var w = d.getDay(); if(w !== 0 && w !== 6) n++; }
-    while(d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+    var d = new Date(s), n = 0; while(n < i){ d.setDate(d.getDate() + 1); if(school(d)) n++; }
+    var g = 0; while(!school(d) && g++ < 60) d.setDate(d.getDate() + 1);
     return (d.getMonth() + 1) + "/" + d.getDate() + "(" + "일월화수목금토"[d.getDay()] + ")";
   }
   /* 배정: 학생 순서(번호순, 뺀 학생 제외)를 차례마다 밀어서 역할 칸에 채움 */

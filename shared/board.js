@@ -71,10 +71,12 @@
     var out = d && Array.isArray(d.items) ? d.items.filter(function(x){ return x.date && !x.done; }) : [];
     var G = TT.store.get("tt_guide_v1", null);                                       // 생활지도 상담 후속 확인일 (번호만 표시)
     if(G && Array.isArray(G.counsel)) G.counsel.forEach(function(c){ if(c.next && !c.done) out.push({date: c.next, text: c.sid + "번 상담 후속 확인", ic: "🗣️"}); });
-    var Yr = TT.store.get("tt_year_v1", null), t0 = new Date(), ay = t0.getMonth() >= 1 ? t0.getFullYear() : t0.getFullYear() - 1;   // 연간 업무 (학년도 2월~1월)
+    var Cal = TT.store.get("tt_calendar_v1", null);                                   // 학사일정 (연간 업무에서 붙여 넣기)
+    if(Cal && Array.isArray(Cal.events)) Cal.events.forEach(function(e){ out.push({date: e.d, text: e.t, ic: "📌"}); });
+    var Yr = TT.store.get("tt_year_v1", null), t0 = new Date(), ay = t0.getMonth() >= 2 ? t0.getFullYear() : t0.getFullYear() - 1;   // 연간 업무 (학년도 3월~이듬해 2월)
     if(Yr && Array.isArray(Yr.items)) Yr.items.forEach(function(it){
       if(!it.d || (Yr.done || {})[ay + "|" + it.id]) return;
-      var y = it.m === 1 ? ay + 1 : ay; out.push({date: y + "-" + ("0" + it.m).slice(-2) + "-" + ("0" + it.d).slice(-2), text: it.title, ic: "📆"});
+      var y = it.m <= 2 ? ay + 1 : ay; out.push({date: y + "-" + ("0" + it.m).slice(-2) + "-" + ("0" + it.d).slice(-2), text: it.title, ic: "📆"});
     });
     var Sb = TT.store.get("tt_submit_v1", null), cl = TT.roster.classes();          // 제출물 마감 (미제출이 남은 것만)
     if(Sb && Array.isArray(Sb.items)) Sb.items.forEach(function(it){
@@ -127,7 +129,7 @@
           + (idx === focus ? " focus" : "") + (idx === focus + 1 ? " focus2" : "") + '" data-date="' + k + '" title="빈 곳을 누르면 이 날짜에 내 할 일 추가">'
           + '<div class="bdh">' + DOW[d.getDay()] + " " + d.getDate() + (k === tk ? " · 오늘" : "") + (lab ? "<em>" + esc(lab.text) + "</em>" : "") + "</div>"
           + '<div class="bdl">'
-          + my.map(function(x){ return '<div class="bi me" title="' + (x.ic ? "생활지도 (나만 보기)" : "내 할 일 (나만 보기)") + '">' + (x.ic || "📝") + " " + esc(x.text) + "</div>"; }).join("")
+          + my.map(function(x){ return '<div class="bi me" title="' + (x.ic === "📌" ? "학사일정" : x.ic ? "나만 보기" : "내 할 일 (나만 보기)") + '">' + (x.ic || "📝") + " " + esc(x.text) + "</div>"; }).join("")
           + list.map(function(x){
               var col = color(x.dept);
               return '<a class="bi' + (x.important === "1" ? " imp" : "") + '" href="' + esc(c.url) + '" target="_blank" rel="noopener" title="' + esc(x.dept + " · " + (x.time ? x.time + " " : "") + x.text) + '">'

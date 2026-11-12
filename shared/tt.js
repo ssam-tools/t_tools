@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.11.0";
+  var VERSION = "0.12.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -531,33 +531,29 @@ var TT = (function(){
       + ".tt-sheet[hidden]{display:none!important}"
       + ".tt-sheet .in{background:#fff;width:min(520px,100%);border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;box-sizing:border-box}"
       + ".tt-sheet h3{grid-column:1/-1;font-size:15px;margin:0 0 2px;color:#1d2733;font-family:'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif}"
-      + ".tt-sheet .tt-ri{min-height:66px;border:1px solid #dde3ea}"
+      + ".tt-sheet .tt-ri{min-height:66px;border:1px solid #dde3ea}.tt-sheet .in{max-height:88vh;overflow:auto}"
       + ".tt-sheet .tt-ri b{font-size:12px}"
       + ".tt-sheet .tt-grp{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:6px}.tt-sheet .tt-gh{grid-column:1/-1;flex-direction:row;gap:6px;justify-content:flex-start;padding:0 4px}.tt-sheet .tt-ri.sub{min-height:56px;margin:0}"
       + "@media print{.tt-rail,.tt-navbtn,.tt-sheet{display:none!important}html.tt-hasnav body{margin-left:0!important}}";
     function attr(v){ return String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
-    function items(){
-      var subject = store.raw("tt_mode") === "subject";
-      var me = TT_TOOLS.filter(function(t){ return t.id === here; })[0], grp = me ? (me.in || me.id) : null;
-      function ok(t){
-        if(!t.ready || !t.href) return false;                              // 내려받는 PC 프로그램은 첫 화면에서
-        if(classroom && !t.room) return false;                             // 교실 기기에서는 수업용 도구만
-        if(subject && t.scope === "home" && t.id !== grp) return false;   // "교과만"이면 담임용 도구는 숨김
-        return true;
-      }
-      function link(t, cls, label, icon){
-        var on = t.id === here;
-        return '<a class="tt-ri' + cls + (on ? ' on' : '') + '" href="' + BASE + t.href + '" title="' + attr(t.name) + '"' + (on ? ' aria-current="page"' : '') + '><span>' + icon + '</span><b>' + attr(label) + '</b></a>';
+    /* 갈래(TT_CATS) → 도구. 지금 갈래는 펼쳐 모든 도구를, 다른 갈래는 아이콘 하나(누르면 그 갈래 첫 도구)로. all=true면 모두 펼침(좁은 화면 목록) */
+    function items(all){
+      var hereId = here === "tardy" && /[?&]tab=counsel/.test(location.search) ? "counsel" : here;
+      var me = TT_TOOLS.filter(function(t){ return t.id === hereId; })[0], curCat = me ? me.cat : null;
+      function ok(t){ return t.ready && t.href && !(classroom && !t.room); }   // 내려받는 프로그램은 첫 화면에서, 교실 기기는 수업용만
+      function link(t, cls, label){
+        var on = t.id === hereId;
+        return '<a class="tt-ri' + cls + (on ? ' on' : '') + '" href="' + BASE + t.href + '" title="' + attr(t.name) + '"' + (on ? ' aria-current="page"' : '') + '><span>' + t.icon + '</span><b>' + attr(label) + '</b></a>';
       }
       var h = '<a class="tt-ri home" href="' + BASE + '" title="첫 화면"><span>🍎</span><b>쌤 노트</b></a>';
-      TT_TOOLS.forEach(function(t){
-        if(t.in || !ok(t)) return;
-        var subs = TT_TOOLS.filter(function(x){ return x.in === t.id && ok(x); });
-        if(t.id === grp && subs.length){                                  // 지금 묶음: 대표 + 하위 도구를 펼쳐 보임
-          h += '<div class="tt-grp"><div class="tt-gh"><span>' + (t.gicon || t.icon) + '</span><b>' + attr(t.short || t.name) + '</b></div>';
-          [t].concat(subs).forEach(function(x){ h += link(x, " sub", x.sub || x.short || x.name, x.icon); });
+      (typeof TT_CATS !== "undefined" ? TT_CATS : []).forEach(function(c){
+        var L = TT_TOOLS.filter(function(t){ return t.cat === c.id && ok(t); });
+        if(!L.length) return;
+        if(all || c.id === curCat){
+          h += '<div class="tt-grp"><div class="tt-gh"><span>' + c.icon + '</span><b>' + attr(c.name) + '</b></div>';
+          L.forEach(function(t){ h += link(t, " sub", t.short || t.name); });
           h += '</div>';
-        } else h += link(t, "", t.short || t.name, t.icon);
+        } else h += '<a class="tt-ri" href="' + BASE + L[0].href + '" title="' + attr(c.name + ": " + L.map(function(t){ return t.name; }).join(", ")) + '"><span>' + c.icon + '</span><b>' + attr(c.name) + '</b></a>';
       });
       if(!classroom) h += '<button type="button" class="tt-ri rec" data-tt="rec" title="학생 기록 한 줄 남기기 (생기부 자료)"><span>✍️</span><b>학생 기록</b></button>';
       var b = store.get("tt_board_v1", {}) || {};
@@ -571,7 +567,7 @@ var TT = (function(){
       var rail = document.createElement("nav"); rail.className = "tt-rail"; rail.setAttribute("aria-label", "도구 이동");
       rail.innerHTML = items(); document.body.appendChild(rail);
       var sheet = document.createElement("div"); sheet.className = "tt-sheet"; sheet.hidden = true;
-      sheet.innerHTML = '<nav class="in" aria-label="도구 이동"><h3>다른 도구로 이동</h3>' + items() + "</nav>";
+      sheet.innerHTML = '<nav class="in" aria-label="도구 이동"><h3>다른 도구로 이동</h3>' + items(true) + "</nav>";
       document.body.appendChild(sheet);
       sheet.addEventListener("click", function(e){ if(e.target === sheet) sheet.hidden = true; });
       document.addEventListener("keydown", function(e){ if(e.key === "Escape") sheet.hidden = true; });

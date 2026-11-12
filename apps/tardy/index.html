@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#2f6fb5">
 <link rel="manifest" href="../../manifest.webmanifest">
 <link rel="icon" href="../../assets/icon-192.png">
-<title>생활지도(결석계) · 쌤 노트</title>
+<title>출결·결석계·상담 · 쌤 노트</title>
 <!--
   학생 생활지도(출결 포함)  — 예전 이름: 지각 관리 노트
   · 명단: 학급 명렬표의 "우리 반"(TT.roster.home). 프로그램 안에 학생 이름을 넣어 두지 않습니다.
@@ -226,7 +226,7 @@ table.plain{width:100%;border-collapse:collapse;font-size:13.5px}
 <body>
 <div class="app">
   <header class="hdr">
-    <div class="hl"><a class="back" href="../../">← 쌤 노트</a><h1>🧭 생활지도 <span class="sub" style="font-size:13px;font-weight:700">(결석계)</span></h1><span class="sub" id="classname"></span></div>
+    <div class="hl"><a class="back" href="../../">← 쌤 노트</a><h1>🧭 출결·결석계 <span class="sub" style="font-size:13px;font-weight:700">· 🗣️ 상담</span></h1><span class="sub" id="classname"></span></div>
     <div class="hr"><button class="btn btn-sm" id="maskBtn" data-act="mask" aria-pressed="false">이름 가리기</button></div>
   </header>
   <main id="main"></main>
@@ -321,10 +321,11 @@ function persist() { try { localStorage.setItem(KEY, JSON.stringify(S)); storage
 loadHome();
 let S = (() => { const o = lsGet(KEY); if (o) return normalize(o); const m = migrate(); return m || blank(); })();
 if (!lsGet(KEY)) persist();
+{ try { const C = JSON.parse(localStorage.getItem('tt_calendar_v1') || 'null'); ((C && C.events) || []).forEach(e => { if (e.k === 'off' && !S.holidays[e.d]) S.holidays[e.d] = e.t; }); } catch (e) {} }   // 학사일정(연간 업무에서 붙여 넣기)의 휴업일
 { const sc = TT.school.load(); if (sc.name) S.settings.school = sc.name; if (sc.teacher) S.settings.teacher = sc.teacher; }   // 학교 이름·담임 이름은 공통 설정(첫 화면 ⋯ → 학교·선생님 설정)과 같은 값
 
 const startDate = () => { const t = today(); return L.isSchoolDay(t, S.holidays) ? t : L.prevSchoolDay(t, S.holidays); };
-let view = { tab: 'entry', date: startDate(), monday: L.weekStart(today()), filter: 'all', range: 'all', logStudent: '', sel: '', mode: 'L', ok: false, rmonth: 'all' };
+let view = { tab: (['entry','week','student','stats','counsel','report','settings'].indexOf(new URLSearchParams(location.search).get('tab')) >= 0 ? new URLSearchParams(location.search).get('tab') : 'entry'), date: startDate(), monday: L.weekStart(today()), filter: 'all', range: 'all', logStudent: '', sel: '', mode: 'L', ok: false, rmonth: 'all' };
 const opt = () => ({ weekN: +S.settings.weekN || 3, runN: +S.settings.runN || 2 });
 const stu = id => students().find(x => x.id === String(id));
 function nm(st) { if (!st) return '(명단에 없는 학생)'; const n = st.name; return S.settings.mask && n ? n[0] + '○'.repeat(Math.max(1, n.length - 1)) : n; }

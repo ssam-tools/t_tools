@@ -198,6 +198,9 @@
       var a0 = avgs.filter(function(x){ return x != null; });
       if(a0.length >= 2){ var df = a0[a0.length - 1] - a0[0]; h += '<div class="muted">평균 변화: ' + a0[0].toFixed(1) + " → " + a0[a0.length - 1].toFixed(1) + " (" + (df >= 0 ? "▲ " : "▼ ") + Math.abs(df).toFixed(1) + ")</div>"; }
     } else h += '<div class="muted">고교 진학 추천에 이 학생의 성적이 없습니다. (진학 추천 ① 입력에서 나이스 성적 일람표를 불러오면 여기에 나옵니다)</div>';
+    /* 가산점 (가산점 자동 입력 결과, 우리 반) */
+    var BN = TT.store.get("tt_bonus_v1", null);
+    if(isHome && BN && BN.rows && BN.rows[s.no]){ var bx = BN.rows[s.no]; h += '<h3>🏅 가산점</h3><div><span class="pill">1학년 ' + esc(bx.add[0] || 0) + '</span><span class="pill">2학년 ' + esc(bx.add[1] || 0) + '</span><span class="pill">3학년 ' + esc(bx.add[2] || 0) + '</span><span class="pill">합계 ' + esc(bx.total) + '</span> <span class="muted">' + new Date(BN.at).toLocaleDateString("ko-KR") + " 입력 기준</span></div>"; }
     /* 출결·상담 (우리 반) */
     var G = TT.store.get("tt_guide_v1", null), no = String(s.no);
     if(isHome && G){

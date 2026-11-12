@@ -133,6 +133,27 @@
     .card{flex-wrap:wrap;align-content:center;row-gap:6px}
     .subs{order:9;flex:1 0 100%;padding-left:34px}
   }
+  /* 갈래 카드 5장 (교과지도 · 생활지도 · 상담·생기부 · 업무 · 수학) */
+  main#grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:clamp(8px,1.2vw,12px);min-height:0;flex:1}
+  .cat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:clamp(8px,1.4vh,12px);display:flex;flex-direction:column;gap:6px;min-height:0;overflow:hidden}
+  .ch{display:flex;gap:8px;align-items:center}
+  .ci{font-size:clamp(22px,3.6vh,30px);line-height:1}
+  .cn{font-size:clamp(15px,2.3vh,18px);font-weight:900;letter-spacing:-.01em}
+  .cd{font-size:11.5px;color:var(--sub);line-height:1.35}
+  .tl2{display:flex;flex-direction:column;gap:clamp(3px,.6vh,5px);overflow:auto;min-height:0;flex:1}
+  .tr{display:flex;gap:4px;align-items:stretch}
+  .tb{flex:1;min-width:0;display:flex;align-items:center;gap:7px;text-decoration:none;color:var(--ink);font:inherit;text-align:left;border:1px solid var(--line);background:#fbfcfd;border-radius:10px;padding:clamp(4px,.8vh,7px) 9px;cursor:pointer}
+  .tb:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .tb span{font-size:17px;flex:none}
+  .tb b{font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb .pc{margin-left:auto;font-size:10.5px;font-weight:700;color:#5a3ea6;background:#ece8f7;border-radius:999px;padding:1px 6px;flex:none}
+  .tbs{flex:none;display:flex;align-items:center;text-decoration:none;font-size:12px;font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:10px;padding:0 8px;white-space:nowrap}
+  .tbs:hover{background:var(--accent);color:#fff}
+  .tr.dim{opacity:.5}
+  .soon{display:flex;flex-wrap:wrap;gap:4px}.soon span{font-size:12px;font-weight:700;border:1px dashed #c9d2dc;border-radius:8px;padding:3px 7px;color:var(--sub)}
+  #cat-math{background:#fbfaf6}
+  @media (max-width:1100px) and (min-width:761px){ main#grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:minmax(0,1fr)} }
+  @media (max-width:760px){ main#grid{grid-template-columns:1fr 1fr;grid-template-rows:none} .cat{overflow:visible} .tl2{overflow:visible} }
   /* 쌤 노트 제목 · 학교 설정 · 알림 · 빠른 기록 */
   .sch{font:inherit;font-size:12px;font-weight:700;border:1px dashed var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 10px;cursor:pointer;vertical-align:middle}
   .qrec{font:inherit;font-size:13.5px;font-weight:800;border:0;border-radius:10px;padding:8px 12px;cursor:pointer;background:#efe7fa;color:#5b2f99}
@@ -180,7 +201,7 @@
   }
 </style>
 </head>
-<body data-mode="home">
+<body>
 <header>
   <div>
     <h1><span id="appTitle">🍎 쌤 노트</span> <button type="button" class="sch" id="schChip" hidden>🏷️ 학교 이름 넣기</button></h1>
@@ -188,10 +209,6 @@
   </div>
   <div class="bar">
     <button type="button" class="qrec" id="qRec" title="학생을 골라 본 것·한 것을 한 줄 남깁니다 (생기부 자료)">✍️ 학생 기록</button>
-    <div class="seg" role="group" aria-label="교사 유형">
-      <button type="button" id="b-home" aria-pressed="true">담임 + 교과</button>
-      <button type="button" id="b-subject" aria-pressed="false">교과만</button>
-    </div>
     <details class="more" id="more">
       <summary aria-label="더 보기">⋯</summary>
       <div class="menu">
@@ -273,26 +290,31 @@
   var $ = function(id){ return document.getElementById(id); };
   var grid = $("grid");
 
-  var LIST = TT_TOOLS.filter(function(t){ return !t.in && (!TT.classroom || t.room); });   // 묶음의 대표만 카드로 (교실 기기에서는 수업용만)
-  LIST.forEach(function(t){
-    var subs = TT_TOOLS.filter(function(x){ return x.in === t.id && x.ready && (!TT.classroom || x.room); });
-    var el = document.createElement(t.ready && t.file ? "button" : "div");
-    el.className = "card" + (t.ready ? " go" : " wait");
-    el.setAttribute("data-for", t.scope);
-    if(t.ready && t.file){ el.type = "button"; el.onclick = function(){ askDownload(t); }; }
-    else if(t.ready){ var cv = document.createElement("a"); cv.className = "cover"; cv.href = t.href; cv.setAttribute("aria-label", t.card || t.name); el.appendChild(cv); }
-    function add(cls, text){ var d = document.createElement("div"); d.className = cls; d.textContent = text; el.appendChild(d); return d; }
-    add("ico", t.gicon || t.icon); add("name", t.card || t.name); add("desc", t.desc);
-    if(subs.length){
-      var sb = add("subs", "");
-      (t.card ? [t].concat(subs) : subs).forEach(function(x){
-        var a = document.createElement("a"); a.className = "sl"; a.href = x.href; a.textContent = x.icon + " " + (x.sub || x.short || x.name); a.title = x.name; sb.appendChild(a);
+  /* 갈래 카드 5장: 카드 안에 그 갈래의 도구 단추를 모두 (어떤 도구든 한 번에) */
+  var hasHome = !!TT.roster.home(), N = 0;
+  TT_CATS.forEach(function(c){
+    var L = TT_TOOLS.filter(function(t){ return t.cat === c.id && t.ready && !t.in && (!TT.classroom || t.room); });
+    if(TT.classroom && !L.length) return;
+    var el = document.createElement("section"); el.className = "cat"; el.id = "cat-" + c.id;
+    el.innerHTML = '<div class="ch"><span class="ci">' + c.icon + '</span><div><div class="cn">' + c.name + '</div><div class="cd">' + c.desc + "</div></div></div>";
+    var box = document.createElement("div"); box.className = "tl2"; el.appendChild(box);
+    L.forEach(function(t){
+      var row = document.createElement("div"); row.className = "tr" + (t.home && !hasHome ? " dim" : "");
+      if(t.home && !hasHome) row.title = "우리 반(★)을 지정하면 쓸 수 있어요 · 명렬표에서 지정";
+      var a = document.createElement(t.file ? "button" : "a"); a.className = "tb";
+      if(t.file){ a.type = "button"; a.onclick = function(){ askDownload(t); }; } else a.href = t.href;
+      a.innerHTML = "<span>" + t.icon + "</span><b>" + t.name + "</b>" + (t.file ? '<small class="pc">PC 프로그램</small>' : "");
+      a.title = a.title || t.desc; row.appendChild(a); N++;
+      TT_TOOLS.filter(function(x){ return x.in === t.id && x.ready && (!TT.classroom || x.room); }).forEach(function(x){
+        var k = document.createElement("a"); k.className = "tbs"; k.href = x.href; k.textContent = x.icon + " " + x.short; k.title = x.name + " · " + x.desc; row.appendChild(k); N++;
       });
+      box.appendChild(row);
+    });
+    if(c.id === "work"){                                                     // 학교 업무판 (연결했을 때)
+      var B0 = TT.store.get("tt_board_v1", null) || {};
+      if(B0.url && /^https:\/\/script\.google\.com\//.test(B0.url)){ var row2 = document.createElement("div"); row2.className = "tr"; row2.innerHTML = '<a class="tb" target="_blank" rel="noopener"><span>📅</span><b>학교 업무판</b><small class="pc">새 창</small></a>'; row2.firstChild.href = B0.url; box.appendChild(row2); }
     }
-    var chips = add("chips", "");
-    function chip(cls, text){ var s = document.createElement("span"); s.className = "chip " + cls; s.textContent = text; chips.appendChild(s); }
-    chip(t.scope === "home" ? "t-home" : "t-all", t.scope === "home" ? "담임" : "공통");
-    if(!t.ready || t.file) chip(t.ready ? "s-pc" : "s-wait", t.ready ? "PC 프로그램" : "준비 중");
+    if(!L.length && c.soon){ box.innerHTML = '<div class="soon">' + c.soon.map(function(x){ return "<span>" + x + "</span>"; }).join("") + '</div><div class="cd" style="margin-top:4px">다음 단계에서 채워집니다</div>'; }
     grid.appendChild(el);
   });
 
@@ -352,7 +374,7 @@
       var Sb = TT.store.get("tt_submit_v1", null), cl = TT.roster.classes(), over = 0;          // 마감이 지났는데 미제출이 남은 제출물
       if(Sb && Array.isArray(Sb.items)) Sb.items.forEach(function(it){ if(!it.due || it.due >= ymd) return; var c = cl.filter(function(x){ return x.id === it.cls; })[0]; if(!c) return; var mk = (Sb.m || {})[it.id] || {}; if(c.students.some(function(s){ return !mk[s.no]; })) over++; });
       if(over) h += '<a class="al" href="apps/submit/" title="마감이 지났는데 미제출 학생이 있는 제출물">📦 미제출 ' + over + "건</a>";
-      var Yr = TT.store.get("tt_year_v1", null), t0 = new Date(), ay = t0.getMonth() >= 1 ? t0.getFullYear() : t0.getFullYear() - 1, cm = t0.getMonth() + 1;   // 연간 업무: 이번 달 남은 일
+      var Yr = TT.store.get("tt_year_v1", null), t0 = new Date(), ay = t0.getMonth() >= 2 ? t0.getFullYear() : t0.getFullYear() - 1, cm = t0.getMonth() + 1;   // 연간 업무: 이번 달 남은 일
       var ym = Yr && Array.isArray(Yr.items) ? Yr.items.filter(function(it){ return it.m === cm && !(Yr.done || {})[ay + "|" + it.id]; }).length : 0;
       if(ym) h += '<a class="al mid" href="apps/year/" title="연간 업무: 이번 달에 남은 일">📆 이번 달 ' + ym + "건</a>";
     }catch(err){}
@@ -370,27 +392,7 @@
       });
   }
 
-  /* 화면 크기와 도구 수에 맞춰 칸·줄 수를 정합니다(스크롤 없이 한눈에). */
-  var mode = "home";
-  function layout(){
-    var n = LIST.filter(function(t){ return mode === "home" || t.scope === "all"; }).length;
-    var w = window.innerWidth, cols = w <= 760 ? 3 : (n > 12 ? 5 : 4);
-    if(w > 760 && n <= 6) cols = 3;
-    grid.style.setProperty("--cols", cols);
-    grid.style.setProperty("--rows", Math.ceil(n / cols));
-    $("count").textContent = "도구 " + n + "개 · v" + TT.VERSION;
-  }
-  function setMode(m){
-    mode = m;
-    document.body.setAttribute("data-mode", m);
-    $("b-home").setAttribute("aria-pressed", m === "home");
-    $("b-subject").setAttribute("aria-pressed", m === "subject");
-    TT.store.setRaw("tt_mode", m);
-    layout();
-  }
-  $("b-home").onclick = function(){ setMode("home"); };
-  $("b-subject").onclick = function(){ setMode("subject"); };
-  window.addEventListener("resize", layout);
+  $("count").textContent = "도구 " + N + "개 · v" + TT.VERSION;
 
   /* 명렬표에서 지정한 우리 반(담임)을 보여 줍니다. */
   function showHome(){
@@ -418,7 +420,7 @@
   $("mSchool").onclick = function(){ closeMenu(); openSchool(); };
   $("mBackup").onclick = function(){ closeMenu(); TT.backup.save(); showBackup(); };
   $("mNewYear").onclick = function(){ closeMenu(); TT.backup.newYear(function(){ showHome(); showBackup(); showTitle(); showAlerts(); }); };
-  $("mRestore").onclick = function(){ closeMenu(); TT.backup.pick(function(){ showHome(); showBackup(); setMode(TT.store.raw("tt_mode") === "subject" ? "subject" : "home"); }); };
+  $("mRestore").onclick = function(){ closeMenu(); TT.backup.pick(function(){ location.reload(); }); };
   var installEvt = null;
   window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); installEvt = e; $("mInstall").hidden = false; });
   $("mInstall").onclick = function(){ closeMenu(); if(installEvt){ installEvt.prompt(); installEvt = null; $("mInstall").hidden = true; } };
@@ -454,7 +456,6 @@
   setInterval(showToday, 60000);
 
   showHome(); showBackup(); showToday(); showTitle(); showAlerts();
-  setMode(TT.store.raw("tt_mode") === "subject" ? "subject" : "home");
 })();
 </script>
 </body>
