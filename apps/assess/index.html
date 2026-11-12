@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>수행평가 · 쌤 노트</title>
+<!--
+  수행평가 채점표: 채점 기준을 한 번 만들고 반마다 학생별로 채점합니다.
+  · 방식: 점수형(항목별 수준을 누르면 점수, 수준이 없으면 직접 입력 → 합계) / 수준형(항목별 상·중·하 등 → 수준 모음)
+  · 관찰 한 줄은 학생 기록(교과 세특, 출처 "수행평가")으로 모입니다.
+  · 저장 "tt_assess_v1" {list:[{id,name,date,mode,levels:[..],items:[{name,pts:[..],max,desc:[..]}]}], sc:{평가id:{학급id:{번호:{v:{항목:값}, obs, ab}}}}}
+  · 내 기기에만(교실 기기 제외). 점수는 학생에게 보이는 화면에 띄우지 마세요.
+-->
+<style>
+  header{align-items:center}
+  .bar{flex-wrap:wrap}
+  main{flex-direction:column;gap:8px;padding:10px!important}
+  .tw{flex:1;min-height:0;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+  table.g{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
+  .g th,.g td{border-bottom:1px solid #eef1f4;padding:3px 6px;text-align:center;white-space:nowrap}
+  .g thead th{position:sticky;top:0;background:#f7f9fb;z-index:2;font-size:12.5px;border-bottom:1px solid var(--line)}
+  .g thead th small{display:block;font-weight:400;color:var(--sub)}
+  .g td.nm{text-align:left;font-weight:700}
+  .g tr.ab td{opacity:.45}
+  .lv{display:inline-flex;gap:2px}
+  .lv button{font:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--line);background:#fff;border-radius:7px;padding:2px 7px;cursor:pointer;color:var(--sub);min-width:30px}
+  .lv button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+  .num{width:56px;font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:7px;padding:2px 5px;text-align:center}
+  .obs{width:100%;min-width:180px;font:inherit;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:3px 7px}
+  .tot{font-weight:800;color:var(--accent)}
+  .abb{font:inherit;font-size:11.5px;border:1px solid var(--line);background:#fff;border-radius:7px;padding:2px 6px;cursor:pointer;color:var(--sub)}
+  .abb[aria-pressed=true]{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+  .stat{font-size:13px;color:var(--sub);display:flex;gap:14px;flex-wrap:wrap}
+  .stat b{color:var(--ink)}
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--sub);text-align:center}
+  .empty .big{font-size:42px}
+  /* 기준 만들기 */
+  dialog.rb{width:min(900px,96vw);max-height:calc(100vh - 16px);overflow:auto}
+  .rb label.f{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin-top:8px}
+  .rb input,.rb select{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:5px 8px;box-sizing:border-box}
+  .rb .top{display:grid;grid-template-columns:2fr 1fr 1fr 2fr;gap:8px}
+  .rb .top input,.rb .top select{width:100%}
+  .rb table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}
+  .rb th,.rb td{border:1px solid #e3e8ee;padding:3px 4px;vertical-align:top}
+  .rb td input{width:100%}
+  .rb .x{border:0;background:none;color:#a0a9b3;font-size:16px;cursor:pointer}
+  .rb .acts{display:flex;justify-content:space-between;margin-top:12px}.rb .acts .r{display:flex;gap:6px}
+  /* 기준표 인쇄 */
+  #prt{position:fixed;inset:0;z-index:50;background:#fff;overflow:auto;padding:18px 24px}
+  #prt table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px}#prt th,#prt td{border:1px solid #b9c4cf;padding:5px 7px;vertical-align:top}
+  #prt .pb{display:flex;gap:8px;margin-bottom:8px}
+  @media print{ body > *:not(#prt){display:none!important} #prt{position:static;padding:0} #prt .pb{display:none} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>📊 수행평가</h1>
+  </div>
+  <div class="bar">
+    <select id="clsSel" aria-label="학급 선택"></select>
+    <select id="aSel" aria-label="평가 고르기"></select>
+    <button type="button" class="btn primary" id="newA">＋ 새 평가</button>
+    <button type="button" class="btn" id="editA">✎ 채점 기준</button>
+    <details class="more" id="more">
+      <summary aria-label="더 보기">⋯</summary>
+      <div class="menu">
+        <button type="button" id="mPrint">🖨 채점 기준표 인쇄</button>
+        <button type="button" id="mCsv">이 반 점수표 내려받기(CSV)</button>
+        <button type="button" id="mCopy">이 평가 복사해서 새로 만들기</button>
+        <hr>
+        <button type="button" id="mDel" class="danger">이 평가 삭제</button>
+      </div>
+    </details>
+  </div>
+</header>
+<main class="panel" id="m"></main>
+<footer>
+  <span id="info">항목 칸의 수준을 누르면 채점됩니다 · 관찰 한 줄은 학생 기록(교과 세특)으로 모입니다</span>
+  <span class="priv">🔒 점수는 이 기기(와 내 보관함)에만 · 교실 화면에 띄우지 마세요</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var KEY = "tt_assess_v1", N = TT.notes;
+  var S = TT.store.get(KEY, null) || {}; S.v = 1; S.list = S.list || []; S.sc = S.sc || {};
+  function save(){ S.updatedAt = Date.now(); TT.store.set(KEY, S); }
+  var cls = null, cur = null, ui = TT.store.get("tt_ui_v1", {}) || {};
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function ymd(){ var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth()+1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function tmpl(){ return {id: TT.util.uid(), name: "수행평가 " + (S.list.length + 1), date: ymd(), mode: "score", levels: ["상", "중", "하"],
+    items: [{name: "내용 이해", pts: [10, 7, 4], max: 10, desc: ["", "", ""]}, {name: "풀이 과정", pts: [10, 7, 4], max: 10, desc: ["", "", ""]}, {name: "태도·협력", pts: [5, 3, 1], max: 5, desc: ["", "", ""]}]}; }
+  function A(){ return S.list.filter(function(a){ return a.id === cur; })[0] || null; }
+  function box(){ var a = A(); if(!a || !cls) return {}; var x = S.sc[a.id] = S.sc[a.id] || {}; return x[cls.id] = x[cls.id] || {}; }
+  function maxSum(a){ return a.items.reduce(function(s, it){ return s + (it.pts && it.pts.length ? Math.max.apply(null, it.pts) : (+it.max || 0)); }, 0); }
+  function total(a, r){
+    if(!r || r.ab) return null;
+    if(a.mode === "score"){ var s = 0, any = false; a.items.forEach(function(it, i){ var v = r.v && r.v[i]; if(v === "" || v == null) return; any = true; s += +v; }); return any ? Math.round(s * 10) / 10 : null; }
+    var c = {}; a.items.forEach(function(it, i){ var v = r.v && r.v[i]; if(v != null && v !== "") c[v] = (c[v] || 0) + 1; });
+    var k = a.levels.filter(function(l){ return c[l]; }); return k.length ? k.map(function(l){ return l + c[l]; }).join("·") : null;
+  }
+
+  /* ---------- 평가 고르기 ---------- */
+  function fillSel(){
+    var s = $("aSel"); s.textContent = "";
+    if(!S.list.length){ var o = document.createElement("option"); o.value = ""; o.textContent = "평가 없음"; s.appendChild(o); cur = null; }
+    S.list.slice().sort(function(a, b){ return a.date < b.date ? 1 : -1; }).forEach(function(a){ var o = document.createElement("option"); o.value = a.id; o.textContent = a.name + " (" + (a.mode === "score" ? "점수" : "수준") + ")"; s.appendChild(o); });
+    if(!A()) cur = (S.list[S.list.length - 1] || {}).id || null;
+    s.value = cur || "";
+  }
+  $("aSel").onchange = function(){ cur = this.value; ui.assess = cur; TT.store.set("tt_ui_v1", ui); render(); };
+
+  /* ---------- 채점 표 ---------- */
+  function render(){
+    var m = $("m"); m.textContent = "";
+    if(!cls){ TT.ui.needRoster(m); return; }
+    var a = A();
+    if(!a){ m.innerHTML = '<div class="empty"><div class="big">📊</div><div><b>수행평가를 만들어 주세요.</b><br>채점 기준(항목·수준·점수)을 한 번 만들면 모든 반에 같이 씁니다.<br>점수형과 수준형(상·중·하) 모두 됩니다.</div><button type="button" class="btn primary" id="first">＋ 새 평가 만들기</button></div>'; $("first").onclick = function(){ editor(null); }; return; }
+    var B = box(), head = "<tr><th>번호</th><th>이름</th>" + a.items.map(function(it){ return "<th>" + esc(it.name) + "<small>" + (a.mode === "score" ? (it.pts && it.pts.length ? Math.max.apply(null, it.pts) : it.max) + "점" : a.levels.join("·")) + "</small></th>"; }).join("") + "<th>" + (a.mode === "score" ? "합계<small>/ " + maxSum(a) + "</small>" : "수준") + "</th><th style=\"width:30%\">관찰 한 줄 <small>→ 학생 기록(교과 세특)</small></th><th>결시</th></tr>";
+    var rows = cls.students.map(function(s){
+      var r = B[s.no] || {}, v = r.v || {};
+      var cells = a.items.map(function(it, i){
+        var opts = a.mode === "score" ? (it.pts || []) : a.levels;
+        if(a.mode === "score" && !opts.length) return '<td><input class="num" type="number" min="0" max="' + (+it.max || 100) + '" step="0.5" data-no="' + s.no + '" data-i="' + i + '" value="' + esc(v[i] == null ? "" : v[i]) + '"></td>';
+        return '<td><span class="lv">' + opts.map(function(o, j){ var val = a.mode === "score" ? o : o; return '<button type="button" data-no="' + s.no + '" data-i="' + i + '" data-v="' + esc(val) + '" aria-pressed="' + (String(v[i]) === String(val)) + '" title="' + esc(a.levels[j] || "") + (it.desc && it.desc[j] ? " · " + esc(it.desc[j]) : "") + '">' + esc(a.mode === "score" ? o : o) + "</button>"; }).join("") + "</span></td>";
+      }).join("");
+      var t = total(a, r);
+      return '<tr class="' + (r.ab ? "ab" : "") + '"><td>' + s.no + '</td><td class="nm">' + esc(s.name || "") + "</td>" + cells + '<td class="tot">' + (t == null ? "" : t) + '</td><td><input class="obs" data-no="' + s.no + '" maxlength="300" value="' + esc(r.obs || "") + '" placeholder="예: 두 가지 풀이를 비교해 설명함"></td><td><button type="button" class="abb" data-ab="' + s.no + '" aria-pressed="' + !!r.ab + '">결시</button></td></tr>';
+    }).join("");
+    m.innerHTML = '<div class="tw"><table class="g"><thead>' + head + "</thead><tbody>" + rows + "</tbody></table></div><div class=\"stat\" id=\"stat\"></div>";
+    stat();
+  }
+  function stat(){
+    var a = A(), B = box(), n = cls.students.length, done = 0, ab = 0, sum = 0, cnt = 0;
+    cls.students.forEach(function(s){ var r = B[s.no]; if(r && r.ab){ ab++; return; } var full = r && r.v && a.items.every(function(it, i){ return r.v[i] != null && r.v[i] !== ""; }); if(full) done++; var t = total(a, r); if(a.mode === "score" && t != null){ sum += t; cnt++; } });
+    $("stat").innerHTML = "<span>" + esc(a.name) + " · " + esc(a.date) + "</span><span>채점 완료 <b>" + done + "</b> / " + (n - ab) + "명</span><span>결시 <b>" + ab + "</b></span>" + (a.mode === "score" && cnt ? "<span>평균 <b>" + (sum / cnt).toFixed(1) + "</b> / " + maxSum(a) + "</span>" : "");
+  }
+  function rec(no){ var B = box(); return B[no] = B[no] || {v: {}}; }
+  $("m").addEventListener("click", function(e){
+    var b = e.target.closest(".lv button");
+    if(b){ var r = rec(b.dataset.no); r.v = r.v || {}; r.v[b.dataset.i] = String(r.v[b.dataset.i]) === b.dataset.v ? null : (A().mode === "score" ? +b.dataset.v : b.dataset.v); save(); refreshRow(b); return; }
+    var x = e.target.closest("[data-ab]");
+    if(x){ var r2 = rec(x.dataset.ab); r2.ab = !r2.ab; save(); render(); }
+  });
+  $("m").addEventListener("change", function(e){
+    var t = e.target;
+    if(t.classList.contains("num")){ var r = rec(t.dataset.no); r.v = r.v || {}; var a = A(), it = a.items[t.dataset.i], v = t.value === "" ? null : Math.max(0, Math.min(+it.max || 100, +t.value)); r.v[t.dataset.i] = v; t.value = v == null ? "" : v; save(); refreshRow(t); }
+    if(t.classList.contains("obs")){ var r3 = rec(t.dataset.no); r3.obs = t.value.trim(); save(); obsNote(+t.dataset.no, r3.obs); TT.ui.toast(r3.obs ? "관찰을 학생 기록(교과 세특)에도 넣었습니다." : "관찰을 지웠습니다."); }
+  });
+  function refreshRow(el){
+    var tr = el.closest("tr"), no = +el.dataset.no, a = A(), r = box()[no];
+    tr.querySelectorAll(".lv button[data-i='" + el.dataset.i + "']").forEach(function(x){ x.setAttribute("aria-pressed", r && r.v && String(r.v[x.dataset.i]) === x.dataset.v); });
+    var t = total(a, r); tr.querySelector(".tot").textContent = t == null ? "" : t; stat();
+  }
+  /* 관찰 한 줄 → 학생 기록 (평가·반·번호로 짝: 고치면 바뀌고 지우면 사라짐) */
+  function obsNote(no, text){
+    var a = A(), s = cls.students.filter(function(x){ return +x.no === no; })[0]; if(!a || !s) return;
+    var d = N.load(), aid = "a" + a.id + "-" + cls.id + "-" + no, i = d.recs.findIndex(function(r){ return r.aid === aid; });
+    if(!text){ if(i >= 0){ d.recs.splice(i, 1); N.save(d); } return; }
+    var r = {k: N.key(cls, s), n: s.name, date: a.date || ymd(), area: "subj", src: "수행평가", text: "[" + a.name + "] " + text};
+    if(i >= 0) Object.assign(d.recs[i], r); else d.recs.push(Object.assign({id: TT.util.uid(), aid: aid, at: Date.now()}, r));
+    N.save(d);
+  }
+
+  /* ---------- 채점 기준 만들기·고치기 ---------- */
+  function editor(src){
+    var a = src ? JSON.parse(JSON.stringify(src)) : tmpl(), isNew = !src;
+    var d = document.createElement("dialog"); d.className = "rb"; var f = document.createElement("form"); d.appendChild(f); document.body.appendChild(d);
+    d.addEventListener("close", function(){ d.remove(); });
+    function draw(){
+      var L = a.levels;
+      f.innerHTML = "<h2>" + (isNew ? "＋ 새 수행평가" : "✎ 채점 기준 고치기") + "</h2><p>항목마다 수준별 점수와 기준을 적습니다. 점수형에서 수준별 점수를 비우면 점수를 직접 입력합니다(배점까지).</p>"
+        + '<div class="top"><label class="f">평가 이름<input id="rn" maxlength="40" value="' + esc(a.name) + '"></label><label class="f">날짜<input id="rd" type="date" value="' + esc(a.date) + '"></label>'
+        + '<label class="f">방식<select id="rm"><option value="score"' + (a.mode === "score" ? " selected" : "") + '>점수형 (합계)</option><option value="level"' + (a.mode === "level" ? " selected" : "") + ">수준형 (상·중·하 등)</option></select></label>"
+        + '<label class="f">수준 이름 (쉼표로, 2~5개)<input id="rl" value="' + esc(L.join(", ")) + '"></label></div>'
+        + "<table><thead><tr><th style=\"width:18%\">항목</th>" + (a.mode === "score" ? "<th style=\"width:8%\">배점</th>" : "") + L.map(function(l){ return "<th>" + esc(l) + (a.mode === "score" ? " (점수 · 기준)" : " 기준") + "</th>"; }).join("") + "<th></th></tr></thead><tbody>"
+        + a.items.map(function(it, i){
+            return "<tr><td><input data-k=\"name\" data-i=\"" + i + "\" value=\"" + esc(it.name) + "\"></td>" + (a.mode === "score" ? "<td><input type=\"number\" data-k=\"max\" data-i=\"" + i + "\" value=\"" + esc(it.max || "") + "\"></td>" : "")
+              + L.map(function(l, j){ return "<td>" + (a.mode === "score" ? "<input type=\"number\" step=\"0.5\" data-k=\"pts\" data-i=\"" + i + "\" data-j=\"" + j + "\" value=\"" + esc(it.pts && it.pts[j] != null ? it.pts[j] : "") + "\" placeholder=\"점수\" style=\"margin-bottom:3px\">" : "") + "<input data-k=\"desc\" data-i=\"" + i + "\" data-j=\"" + j + "\" value=\"" + esc(it.desc && it.desc[j] || "") + "\" placeholder=\"기준 설명\"></td>"; }).join("")
+              + "<td><button type=\"button\" class=\"x\" data-del=\"" + i + "\" aria-label=\"항목 지우기\">×</button></td></tr>";
+          }).join("") + "</tbody></table>"
+        + '<div class="row" style="margin-top:6px"><button type="button" class="btn" id="addIt">＋ 항목 더하기</button></div>'
+        + '<div class="acts"><span class="muted">' + (isNew ? "" : "기준을 바꿔도 이미 채점한 값은 남습니다") + '</span><div class="r"><button type="button" class="btn" data-a="close">취소</button><button type="submit" class="btn primary">저장</button></div></div>';
+      f.querySelector("#rm").onchange = function(){ pull(); a.mode = this.value; draw(); };
+      f.querySelector("#rl").onchange = function(){ pull(); var l = this.value.split(",").map(function(x){ return x.trim(); }).filter(Boolean).slice(0, 5); if(l.length >= 2){ a.levels = l; a.items.forEach(function(it){ it.pts = (it.pts || []).slice(0, l.length); it.desc = (it.desc || []).slice(0, l.length); }); } draw(); };
+      f.querySelector("#addIt").onclick = function(){ pull(); a.items.push({name: "새 항목", pts: [], max: 10, desc: []}); draw(); };
+      f.querySelectorAll("[data-del]").forEach(function(b){ b.onclick = function(){ pull(); if(a.items.length > 1){ a.items.splice(+b.dataset.del, 1); draw(); } }; });
+      f.querySelector("[data-a=close]").onclick = function(){ d.close(); };
+    }
+    function pull(){
+      a.name = (f.querySelector("#rn").value.trim() || a.name).slice(0, 40); a.date = f.querySelector("#rd").value || a.date;
+      f.querySelectorAll("[data-k]").forEach(function(x){
+        var it = a.items[+x.dataset.i], k = x.dataset.k; if(!it) return;
+        if(k === "name") it.name = x.value.trim() || "항목";
+        if(k === "max") it.max = x.value === "" ? "" : +x.value;
+        if(k === "pts"){ it.pts = it.pts || []; it.pts[+x.dataset.j] = x.value === "" ? null : +x.value; }
+        if(k === "desc"){ it.desc = it.desc || []; it.desc[+x.dataset.j] = x.value.trim(); }
+      });
+      a.items.forEach(function(it){ if(it.pts && it.pts.some(function(p){ return p == null; })) it.pts = it.pts.every(function(p){ return p == null; }) ? [] : it.pts.map(function(p){ return p == null ? 0 : p; }); if(it.pts && it.pts.length && !it.max) it.max = Math.max.apply(null, it.pts); });
+    }
+    f.onsubmit = function(e){
+      e.preventDefault(); pull();
+      if(isNew) S.list.push(a); else S.list = S.list.map(function(x){ return x.id === a.id ? a : x; });
+      cur = a.id; save(); d.close(); fillSel(); render(); TT.ui.toast("채점 기준을 저장했습니다.");
+    };
+    draw(); d.showModal();
+  }
+  $("newA").onclick = function(){ editor(null); };
+  $("editA").onclick = function(){ var a = A(); if(a) editor(a); else editor(null); };
+
+  /* ---------- 메뉴 ---------- */
+  function closeMenu(){ $("more").open = false; }
+  document.addEventListener("click", function(e){ if(!$("more").contains(e.target)) closeMenu(); });
+  $("mPrint").onclick = function(){
+    closeMenu(); var a = A(); if(!a) return;
+    var p = document.createElement("div"); p.id = "prt";
+    p.innerHTML = '<div class="pb"><button type="button" class="btn primary" id="pp">🖨 인쇄</button><button type="button" class="btn" id="pc">닫기</button></div>'
+      + "<h2>📊 " + esc(a.name) + " 채점 기준표</h2><div class=\"muted\">" + esc(TT.school.load().name || "") + " · " + esc(a.date) + " · " + (a.mode === "score" ? "점수형 (총 " + maxSum(a) + "점)" : "수준형") + "</div>"
+      + "<table><thead><tr><th>평가 항목</th>" + a.levels.map(function(l){ return "<th>" + esc(l) + "</th>"; }).join("") + "</tr></thead><tbody>"
+      + a.items.map(function(it){ return "<tr><th>" + esc(it.name) + (a.mode === "score" ? "<br><small>" + (it.pts && it.pts.length ? Math.max.apply(null, it.pts) : it.max) + "점</small>" : "") + "</th>" + a.levels.map(function(l, j){ return "<td>" + (a.mode === "score" && it.pts && it.pts.length ? "<b>" + it.pts[j] + "점</b><br>" : "") + esc(it.desc && it.desc[j] || "") + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table>";
+    document.body.appendChild(p); $("pc").onclick = function(){ p.remove(); }; $("pp").onclick = function(){ window.print(); };
+  };
+  $("mCsv").onclick = function(){
+    closeMenu(); var a = A(); if(!a || !cls) return; var B = box();
+    var rows = [["번호", "이름"].concat(a.items.map(function(it){ return it.name; }), [a.mode === "score" ? "합계" : "수준", "관찰", "결시"])].concat(cls.students.map(function(s){ var r = B[s.no] || {}; return [s.no, s.name].concat(a.items.map(function(it, i){ return r.v && r.v[i] != null ? r.v[i] : ""; }), [total(a, r) == null ? "" : total(a, r), r.obs || "", r.ab ? "결시" : ""]); }));
+    var csv = "﻿" + rows.map(function(r){ return r.map(function(v){ v = String(v); if(/^[=+\-@]/.test(v)) v = "'" + v; return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(","); }).join("\r\n");
+    TT.util.download("수행평가_" + TT.util.safe(a.name) + "_" + TT.util.safe(cls.name) + ".csv", csv, "text/csv;charset=utf-8");
+  };
+  $("mCopy").onclick = function(){ closeMenu(); var a = A(); if(!a) return; var b = JSON.parse(JSON.stringify(a)); b.id = TT.util.uid(); b.name = (a.name + " (복사)").slice(0, 40); b.date = ymd(); S.list.push(b); cur = b.id; save(); fillSel(); render(); editor(b); };
+  $("mDel").onclick = function(){ closeMenu(); var a = A(); if(!a) return; TT.ui.confirm("평가 삭제", "'" + a.name + "'의 채점 기준과 모든 반의 점수를 지웁니다. 학생 기록으로 들어간 관찰도 함께 지웁니다.", "삭제", function(){
+    var d = N.load(); d.recs = d.recs.filter(function(r){ return !(r.aid && r.aid.indexOf("a" + a.id + "-") === 0); }); N.save(d);
+    S.list = S.list.filter(function(x){ return x.id !== a.id; }); delete S.sc[a.id]; cur = null; save(); fillSel(); render(); }); };
+
+  cur = ui.assess || null; fillSel();
+  TT.ui.classSelect($("clsSel"), "assess", function(c){ cls = c; render(); });
+})();
+</script>
+</body>
+</html>

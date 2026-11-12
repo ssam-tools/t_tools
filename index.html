@@ -349,6 +349,9 @@
       var M = TT.store.get("tt_mytodo_v1", null), ymd = (function(d){ return d.getFullYear() + "-" + ("0" + (d.getMonth()+1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); })(new Date());
       var late = M && Array.isArray(M.items) ? M.items.filter(function(x){ return !x.done && x.date && x.date <= ymd; }).length : 0;
       if(late) h += '<button type="button" class="al mid" id="alTodo" title="오늘까지인 내 할 일">📝 할 일 ' + late + "건</button>";
+      var Sb = TT.store.get("tt_submit_v1", null), cl = TT.roster.classes(), over = 0;          // 마감이 지났는데 미제출이 남은 제출물
+      if(Sb && Array.isArray(Sb.items)) Sb.items.forEach(function(it){ if(!it.due || it.due >= ymd) return; var c = cl.filter(function(x){ return x.id === it.cls; })[0]; if(!c) return; var mk = (Sb.m || {})[it.id] || {}; if(c.students.some(function(s){ return !mk[s.no]; })) over++; });
+      if(over) h += '<a class="al" href="apps/submit/" title="마감이 지났는데 미제출 학생이 있는 제출물">📦 미제출 ' + over + "건</a>";
     }catch(err){}
     box.innerHTML = h;
     var t = $("alTodo"); if(t) t.onclick = function(){ var i = document.getElementById("tdText"); if(i) i.focus(); };

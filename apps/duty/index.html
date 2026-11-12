@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>1인 1역·당번 · 쌤 노트</title>
+<!--
+  1인 1역·당번: 역할과 인원을 정하면 주(또는 수업일)마다 학생이 자동으로 돌아갑니다. 교실 전자칠판에 띄워 쓸 수 있습니다.
+  · 역할 칸 수 합이 학생 수보다 적으면 "당번"처럼 다음 학생들로 넘어가고, 같거나 많으면 "1인 1역"처럼 한 칸씩 돌아갑니다.
+  · 저장 "tt_duty_v1" {c:{학급id:{roles:[{name,n}], per:"week"|"day", start:"YYYY-MM-DD", skip:{번호:1}}}} — 교실 기기에도 감(이름 없음)
+-->
+<style>
+  header{align-items:center}
+  .bar{flex-wrap:wrap}
+  main{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(240px,300px);gap:10px;padding:10px!important}
+  .board{min-height:0;display:flex;flex-direction:column;gap:8px}
+  .bh{display:flex;align-items:center;gap:8px}
+  .bh h2{font-size:clamp(18px,3vh,26px);font-weight:900}
+  .bh .sp{flex:1}
+  .roles{flex:1;min-height:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));grid-auto-rows:minmax(0,1fr);gap:8px;overflow:auto}
+  .role{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-height:84px}
+  .role .rn{font-size:clamp(14px,2.2vh,17px);font-weight:800;color:var(--accent)}
+  .role .who{font-size:clamp(20px,4vh,34px);font-weight:900;line-height:1.2;word-break:keep-all}
+  .side{min-height:0;display:flex;flex-direction:column;gap:8px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px}
+  .side h3{font-size:14px;font-weight:800}
+  .side label.f{font-size:12.5px;font-weight:700;color:var(--sub)}
+  .rl{list-style:none;display:flex;flex-direction:column;gap:4px}
+  .rl li{display:flex;gap:4px}
+  .rl input{font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:8px;padding:4px 7px;min-width:0}
+  .rl input.n{width:52px;text-align:center}
+  .rl input.t{flex:1}
+  .x{border:0;background:none;color:#a0a9b3;font-size:16px;cursor:pointer}
+  .side input[type=date],.side select{font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:8px;padding:4px 7px}
+  .sk{display:flex;flex-wrap:wrap;gap:3px}
+  .sk button{font:inherit;font-size:12px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:2px 7px;cursor:pointer}
+  .sk button[aria-pressed=true]{opacity:.4;text-decoration:line-through}
+  .muted{color:var(--sub);font-size:12.5px}
+  html.room .side{display:none}
+  html.room main{grid-template-columns:1fr}
+  @media print{ .side,.bh .btn{display:none!important} main{grid-template-columns:1fr} }
+  @media (max-width:760px){ main{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>🧹 1인 1역·당번</h1>
+  </div>
+  <div class="bar">
+    <select id="clsSel" aria-label="학급 선택"></select>
+    <a class="btn" href="../group/" title="모둠 편성의 ④ 좌석 탭에서 자리를 바꿉니다">🪑 자리 바꾸기</a>
+    <button type="button" class="btn" id="setBtn" aria-pressed="true">⚙ 역할 정하기</button>
+  </div>
+</header>
+<main class="panel" id="m">
+  <section class="board">
+    <div class="bh"><button type="button" class="btn" id="prev">◀</button><h2 id="title"></h2><button type="button" class="btn" id="next">▶</button><button type="button" class="btn" id="now">이번 주</button><span class="sp"></span><button type="button" class="btn" id="print">🖨 인쇄</button></div>
+    <div class="roles" id="roles"></div>
+  </section>
+  <aside class="side" id="side"></aside>
+</main>
+<footer>
+  <span id="info"></span>
+  <span class="priv">🔒 학급 명렬표의 이름만 씁니다</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var KEY = "tt_duty_v1", S = TT.store.get(KEY, null) || {}; S.v = 1; S.c = S.c || {};
+  function save(){ S.updatedAt = Date.now(); TT.store.set(KEY, S); }
+  var cls = null, off = 0;
+  var DEF = [["칠판 정리", 1], ["교실 바닥 쓸기", 4], ["분리수거", 2], ["창문·전등", 1], ["우유·급식 정리", 2], ["사물함 정리 확인", 1], ["교탁·게시판", 1], ["화분 물 주기", 1], ["학습지 나누기", 2], ["복도 정리", 2]];
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function pad(n){ return ("0" + n).slice(-2); }
+  function key(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function parse(s){ var a = s.split("-"); return new Date(+a[0], a[1] - 1, +a[2]); }
+  function monday(d){ d = new Date(d.getFullYear(), d.getMonth(), d.getDate()); var w = d.getDay(); d.setDate(d.getDate() + (w === 0 ? -6 : 1 - w)); return d; }
+  function conf(){
+    var c = S.c[cls.id];
+    if(!c){ c = S.c[cls.id] = {roles: DEF.map(function(x){ return {name: x[0], n: x[1]}; }), per: "week", start: key(monday(new Date())), skip: {}}; save(); }
+    return c;
+  }
+  /* 지금 몇 번째 차례인지: 시작일부터 지난 주 수(또는 수업일 수, 주말 뺌) */
+  function idxNow(c){
+    var s = parse(c.start), t = new Date(); t = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    if(c.per === "week") return Math.max(0, Math.floor((monday(t) - monday(s)) / (7 * 864e5)));
+    var n = 0, d = new Date(s); if(t < s) return 0;
+    while(d < t){ d.setDate(d.getDate() + 1); var w = d.getDay(); if(w !== 0 && w !== 6) n++; }
+    var w0 = t.getDay(); if(w0 === 0 || w0 === 6) n++;               // 주말에는 다음 수업일 당번
+    return n;
+  }
+  function label(c, i){
+    var s = parse(c.start);
+    if(c.per === "week"){ var m = monday(s); m.setDate(m.getDate() + i * 7); var f = new Date(m); f.setDate(f.getDate() + 4); return (m.getMonth() + 1) + "/" + m.getDate() + " ~ " + (f.getMonth() + 1) + "/" + f.getDate(); }
+    var d = new Date(s), n = 0; while(n < i){ d.setDate(d.getDate() + 1); var w = d.getDay(); if(w !== 0 && w !== 6) n++; }
+    while(d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+    return (d.getMonth() + 1) + "/" + d.getDate() + "(" + "일월화수목금토"[d.getDay()] + ")";
+  }
+  /* 배정: 학생 순서(번호순, 뺀 학생 제외)를 차례마다 밀어서 역할 칸에 채움 */
+  function assign(c, i){
+    var st = cls.students.filter(function(s){ return !c.skip[s.no]; }), slots = c.roles.reduce(function(a, r){ return a + (+r.n || 0); }, 0);
+    if(!st.length || !slots) return c.roles.map(function(){ return []; });
+    var step = slots < st.length ? slots : 1, k = (i * step) % st.length, out = [];
+    c.roles.forEach(function(r){ var g = []; for(var j = 0; j < (+r.n || 0); j++){ g.push(st[k % st.length]); k++; } out.push(g); });
+    return out;
+  }
+  function draw(){
+    if(!cls){ TT.ui.needRoster($("m")); return; }
+    var c = conf(), i = Math.max(0, idxNow(c) + off), A = assign(c, i);
+    $("title").textContent = (c.per === "week" ? (off === 0 ? "이번 주 " : off === 1 ? "다음 주 " : "") : (off === 0 ? "오늘 " : off === 1 ? "다음 수업일 " : "")) + label(c, i);
+    $("now").textContent = c.per === "week" ? "이번 주" : "오늘";
+    $("roles").innerHTML = c.roles.map(function(r, j){ return '<div class="role"><div class="rn">' + esc(r.name) + '</div><div class="who">' + (A[j] || []).map(function(s){ return esc(s.name || s.no + "번"); }).join(", ") + "</div></div>"; }).join("");
+    var slots = c.roles.reduce(function(a, r){ return a + (+r.n || 0); }, 0), n = cls.students.length - Object.keys(c.skip).length;
+    $("info").textContent = "역할 " + c.roles.length + "개 · " + slots + "자리 / 학생 " + n + "명 · " + (slots < n ? "당번처럼 다음 학생들로 넘어갑니다" : "1인 1역처럼 한 칸씩 돌아갑니다") + " (" + (c.per === "week" ? "매주" : "수업일마다") + ")";
+    drawSide(c);
+  }
+  function drawSide(c){
+    var sd = $("side");
+    sd.innerHTML = "<h3>⚙ 역할 정하기</h3><div class=\"muted\">역할 이름과 인원. 바꾸면 바로 반영됩니다.</div><ul class=\"rl\">" + c.roles.map(function(r, i){ return '<li><input class="t" data-i="' + i + '" value="' + esc(r.name) + '" maxlength="20"><input class="n" type="number" min="0" max="20" data-n="' + i + '" value="' + (+r.n || 0) + '"><button type="button" class="x" data-del="' + i + '" aria-label="지우기">×</button></li>'; }).join("") + "</ul>"
+      + '<button type="button" class="btn" id="addR" style="padding:5px 10px;font-size:13px">＋ 역할 더하기</button>'
+      + '<label class="f">돌아가는 단위</label><select id="per"><option value="week"' + (c.per === "week" ? " selected" : "") + '>매주 (월요일마다)</option><option value="day"' + (c.per === "day" ? " selected" : "") + ">수업일마다</option></select>"
+      + '<label class="f">시작일 (이날이 첫 차례)</label><input type="date" id="start" value="' + c.start + '">'
+      + '<label class="f">빼는 학생 (전학·장기 결석 등)</label><div class="sk">' + cls.students.map(function(s){ return '<button type="button" data-sk="' + s.no + '" aria-pressed="' + !!c.skip[s.no] + '">' + s.no + "</button>"; }).join("") + "</div>";
+    sd.oninput = sd.onchange = function(e){
+      var t = e.target;
+      if(t.dataset.i != null) c.roles[+t.dataset.i].name = t.value.trim() || "역할";
+      if(t.dataset.n != null) c.roles[+t.dataset.n].n = Math.max(0, Math.min(20, +t.value || 0));
+      if(t.id === "per"){ c.per = t.value; off = 0; }
+      if(t.id === "start" && t.value) c.start = t.value;
+      save(); if(e.type === "change") draw(); else { var A = assign(c, Math.max(0, idxNow(c) + off)); var boxes = $("roles").children; c.roles.forEach(function(r, j){ if(boxes[j]){ boxes[j].querySelector(".rn").textContent = r.name; } }); }
+    };
+    sd.onclick = function(e){
+      var d = e.target.closest("[data-del]"); if(d){ c.roles.splice(+d.dataset.del, 1); save(); draw(); return; }
+      var k = e.target.closest("[data-sk]"); if(k){ if(c.skip[k.dataset.sk]) delete c.skip[k.dataset.sk]; else c.skip[k.dataset.sk] = 1; save(); draw(); return; }
+      if(e.target.id === "addR"){ c.roles.push({name: "새 역할", n: 1}); save(); draw(); }
+    };
+  }
+  $("prev").onclick = function(){ off--; draw(); };
+  $("next").onclick = function(){ off++; draw(); };
+  $("now").onclick = function(){ off = 0; draw(); };
+  $("print").onclick = function(){ window.print(); };
+  $("setBtn").onclick = function(){ var r = document.documentElement.classList.toggle("room"); this.setAttribute("aria-pressed", !r); };
+  if(TT.classroom){ document.documentElement.classList.add("room"); $("setBtn").setAttribute("aria-pressed", "false"); }
+  TT.ui.classSelect($("clsSel"), "duty", function(c){ cls = c; off = 0; draw(); });
+})();
+</script>
+</body>
+</html>

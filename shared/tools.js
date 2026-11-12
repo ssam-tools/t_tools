@@ -10,14 +10,18 @@
    📚 수업(묶음)  📒 수업 기록장  🧩 모둠 편성  🧰 수업 도구 (🖍️ 칠판 · 🎲 뽑기 · ⏱️ 타이머 · 🏆 모둠 점수 · 🚦 소음)
    🧭 생활지도  🗣️ 상담  📄 결석신고서  ✉️ 학부모 문자  🏅 가산점  🎓 진학 추천  📑 생기부 도우미  📎 파일 합치기
    📅 학교 업무판  📝 내 할 일  ☁️ 동기화(보관함)  🏫 교실 기기  🏷️ 학교·선생님 설정  💾 백업  🖼️ 그림 저장  🔒 개인정보 보호 안내  📖 지금 차시
-   🗃️ 문장 은행  🧾 기록 마감 점검표  🗂️ 상담 카드  🖨 인쇄 */
+   🗃️ 문장 은행  🧾 기록 마감 점검표  🗂️ 상담 카드  🖨 인쇄
+   🎒 학급(묶음)  📊 수행평가  📦 제출물 체크  🧹 1인 1역·당번  🪑 자리 바꾸기 */
 var TT_TOOLS = [
-  {id:"roster", icon:"👥", short:"명렬표", sub:"명렬표", name:"학급 명렬표",     desc:"나이스 명단 · 학생 사진과 메모 · 학생별 기록을 한곳에서 봅니다.",           scope:"all",  href:"apps/roster/", ready:true, room:true},
+  {id:"roster", icon:"👥", gicon:"🎒", short:"학급", sub:"명렬표", card:"학급", name:"학급 명렬표",     desc:"명렬표(사진·메모·학생 카드) · 제출물 체크 · 1인 1역·당번.",           scope:"all",  href:"apps/roster/", ready:true, room:true},
   {id:"photo",  icon:"📷", short:"사진 이름", sub:"사진 이름", in:"roster", name:"나이스 사진 이름", desc:"반 사진을 명렬표 순서대로 이름(번호)로 바꾸고 용량도 줄입니다.",                       scope:"home", href:"apps/photo/",  ready:true},
+  {id:"submit", icon:"📦", short:"제출물", sub:"제출물 체크", in:"roster", name:"제출물 체크", desc:"동의서·회신·신청서를 학생별로 체크하고 미제출자만 모아 봅니다.", scope:"home", href:"apps/submit/", ready:true},
+  {id:"duty",   icon:"🧹", short:"1인 1역", sub:"1인 1역·당번", in:"roster", name:"1인 1역·당번", desc:"역할을 정하면 주마다 학생이 자동으로 돌아갑니다. 전자칠판에 띄워 씁니다.", scope:"home", href:"apps/duty/", ready:true, room:true},
   {id:"timetable",icon:"🕘", short:"내 시간표", name:"내 시간표",     desc:"컴시간알리미 시간표를 붙여 넣으면 첫 화면 오늘 수업·수업 기록장에 자동으로 쓰입니다.", scope:"all", href:"apps/timetable/", ready:true, room:true},
   {id:"journal",icon:"📒", gicon:"📚", short:"수업", sub:"수업 기록장", card:"수업", name:"수업 기록장",     desc:"수업 기록장 · 모둠 편성 · 수업 도구(칠판·뽑기·타이머·모둠 점수·소음)를 한곳에.",                  scope:"all",  href:"apps/journal/", ready:true, room:true},
   {id:"group",  icon:"🧩", short:"모둠 편성", sub:"모둠 편성", in:"journal", name:"모둠 편성",       desc:"조건에 맞게 모둠과 좌석을 편성합니다.",                              scope:"all",  href:"apps/group/",  ready:true, room:true},
   {id:"class",  icon:"🧰", short:"수업 도구", sub:"수업 도구", in:"journal", name:"수업 도구", desc:"칠판(모눈·좌표평면) · 뽑기 · 타이머 · 모둠 점수 · 소음 신호등.",            scope:"all",  href:"apps/class/",  ready:true, room:true},
+  {id:"assess", icon:"📊", short:"수행평가", sub:"수행평가", in:"journal", name:"수행평가", desc:"채점 기준(점수형·수준형)을 만들고 반마다 채점, 관찰은 교과 세특 기록으로.", scope:"all", href:"apps/assess/", ready:true},
   {id:"tardy",  icon:"🧭", short:"생활지도", sub:"출결·상담", name:"생활지도(결석계)", desc:"무단지각 확인, 상담일지, 결석 사유와 결석신고서(한글 파일·인쇄), 학부모 문자.", scope:"home", href:"apps/tardy/", ready:true},
   {id:"parent", icon:"✉️", short:"학부모 문자", sub:"학부모 문자", in:"tardy", name:"학부모 문자",     desc:"학부모께 보낼 안내 문자를 빠르게 만듭니다.",                  scope:"home", href:"apps/parent/", ready:true},
   {id:"record", icon:"📑", short:"생기부", name:"생기부 도우미", desc:"모인 학생 기록을 영역별로 보며 초안 쓰기 · 나이스 글자 수 · 유의 낱말 점검.", scope:"all", href:"apps/record/", ready:true},

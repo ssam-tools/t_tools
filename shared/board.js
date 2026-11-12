@@ -71,6 +71,12 @@
     var out = d && Array.isArray(d.items) ? d.items.filter(function(x){ return x.date && !x.done; }) : [];
     var G = TT.store.get("tt_guide_v1", null);                                       // 생활지도 상담 후속 확인일 (번호만 표시)
     if(G && Array.isArray(G.counsel)) G.counsel.forEach(function(c){ if(c.next && !c.done) out.push({date: c.next, text: c.sid + "번 상담 후속 확인", ic: "🗣️"}); });
+    var Sb = TT.store.get("tt_submit_v1", null), cl = TT.roster.classes();          // 제출물 마감 (미제출이 남은 것만)
+    if(Sb && Array.isArray(Sb.items)) Sb.items.forEach(function(it){
+      if(!it.due) return; var c = cl.filter(function(x){ return x.id === it.cls; })[0]; if(!c) return;
+      var mk = (Sb.m || {})[it.id] || {}, n = c.students.filter(function(s){ return !mk[s.no]; }).length;
+      if(n) out.push({date: it.due, text: it.title + " 마감 · 미제출 " + n + "명", ic: "📦"});
+    });
     return out;
   }
   function addMine(date, text){

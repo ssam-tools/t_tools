@@ -16,7 +16,7 @@
   'use strict';
   var DEV = 'ttv_device', CFG = 'ttv_vault', SES = 'ttv_session', META = 'ttv_meta', SRV = 'ttv_server';
   var LOCAL_ONLY = ['tt_board_v1', 'tt_board_cache_v1', 'tt_last_backup', 'tt_probe', 'tt_mode', 'tt_ui_v1'];
-  var CLASS_KEYS = ['tt_roster_v1', 'tt_timetable_v1', 'tt_journal_v1', 'tt_group_v1', 'tt_school_v1', 'tt_class_v1'];
+  var CLASS_KEYS = ['tt_roster_v1', 'tt_timetable_v1', 'tt_journal_v1', 'tt_group_v1', 'tt_school_v1', 'tt_class_v1', 'tt_duty_v1'];
   var URL_RE = /^https:\/\/script\.google\.com\/(?:a\/macros\/[^\/?#\s]+|macros)\/s\/[\w-]+\/exec$/;
   var ITER = 310000, IDLE_MS = 20 * 60 * 1000;
   var enc = new TextEncoder(), dec = new TextDecoder();
