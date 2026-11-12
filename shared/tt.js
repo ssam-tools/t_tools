@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.12.0";
+  var VERSION = "0.13.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -579,8 +579,9 @@ var TT = (function(){
       });
     }
     function start(){
-      if(typeof TT_TOOLS !== "undefined") return build();
-      var s = document.createElement("script"); s.src = BASE + "shared/tools.js"; s.onload = build; document.head.appendChild(s);
+      if(typeof TT_TOOLS !== "undefined" && typeof TT_CATS !== "undefined") return build();
+      var s = document.createElement("script"); s.src = BASE + "shared/tools.js?v=" + VERSION + (typeof TT_TOOLS !== "undefined" ? "." + Date.now() : "");   // 예전 목록이 남아 있으면 새로 받음
+      s.onload = build; s.onerror = build; document.head.appendChild(s);
     }
     if(document.body) start(); else document.addEventListener("DOMContentLoaded", start);
   })();

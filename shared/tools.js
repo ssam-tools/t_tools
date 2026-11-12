@@ -13,6 +13,7 @@
    🧭 생활지도  🗣️ 상담  📄 결석신고서  ✉️ 학부모 문자  🏅 가산점  🎓 진학 추천  📑 생기부 도우미  📎 파일 합치기
    📅 학교 업무판  📝 내 할 일  ☁️ 동기화(보관함)  🏫 교실 기기  🏷️ 학교·선생님 설정  💾 백업  🖼️ 그림 저장  🔒 개인정보 보호 안내  📖 지금 차시
    🗃️ 문장 은행  🧾 기록 마감 점검표  🗂️ 상담 카드  🖨 인쇄
+   🔢 문항 생성기  ✅ 형성평가  🔁 보충  🎯 이원목적분류표  ⏳ 진도·시수
    📊 수행평가  📦 제출물 체크  🧹 1인 1역·당번  🪑 자리 바꾸기
    📆 연간 업무  🤖 AI·문서 도우미 (📃 학습지·문항 📏 채점 기준 📨 가정통신문 🏛️ 공문 🗒️ 회의록 💬 민원 답변 ✒️ 세특 다듬기 ✨ 자유 요청 🗄️ 보관함) */
 var TT_CATS = [
@@ -20,7 +21,7 @@ var TT_CATS = [
   {id:"life",  icon:"🌱", name:"생활지도",   desc:"학급 명렬표 · 출결·결석계 · 학부모 문자 · 제출물 · 1인 1역"},
   {id:"care",  icon:"🤝", name:"상담·생기부", desc:"상담 · 생기부 도우미 · 진학(가산점)"},
   {id:"work",  icon:"💼", name:"업무",       desc:"연간 업무·학사일정 · AI·문서 도우미 · 파일 합치기"},
-  {id:"math",  icon:"🧮", name:"수학",       desc:"수학 꾸러미 (9단계) — 다른 교과도 참고해 만들 수 있어요", soon:["🔢 문항 생성기·학습지","✅ 형성평가 빠른 채점","🔁 보충 루프","🧾 이원목적분류표","📅 진도·시수 계산","📈 그래프·📐 도형","📉 통계 실험","🏁 모둠 퀴즈","📚 고교 대비 자료실"]}
+  {id:"math",  icon:"🧮", name:"수학",       desc:"문항 생성 · 형성평가·보충 · 이원목적분류표 · 진도 — 다른 교과도 참고해 만들 수 있어요", soon:["📈 그래프·📐 도형","📉 통계 실험","🏁 모둠 퀴즈","📚 고교 대비 자료실"]}
 ];
 var TT_TOOLS = [
   {id:"timetable",icon:"🕘", cat:"teach", short:"내 시간표", name:"내 시간표", desc:"컴시간알리미 시간표를 붙여 넣으면 오늘 수업·수업 기록장에 자동으로 쓰입니다.", href:"apps/timetable/", ready:true, room:true},
@@ -38,6 +39,10 @@ var TT_TOOLS = [
   {id:"record", icon:"📑", cat:"care",  short:"생기부", name:"생기부 도우미", desc:"모인 학생 기록을 영역별로 보며 초안 쓰기 · 나이스 글자 수 · 유의 낱말 점검.", href:"apps/record/", ready:true},
   {id:"advisor",icon:"🎓", cat:"care",  short:"진학", name:"진학", desc:"성적 분석 · 지원 가능 고교 살펴보기 · 가산점 자동 입력.", href:"apps/advisor/", ready:true, home:true},
   {id:"bonus",  icon:"🏅", cat:"care",  short:"가산점", in:"advisor", name:"가산점 자동 입력", desc:"수상경력·창체 파일을 올리면 가산점 양식을 자동으로 채웁니다.", href:"apps/bonus/", ready:true, home:true},
+  {id:"mgen",   icon:"🔢", cat:"math",  short:"문항 생성", name:"문항 생성기", desc:"계산형 문항을 숫자만 바꿔 무한히 · 학생별 다른 숫자 · 정답지.", href:"apps/mgen/", ready:true},
+  {id:"mcheck", icon:"✅", cat:"math",  short:"형성평가", name:"형성평가·보충", desc:"빠른 채점 · 문항별 정답률 · 틀린 유형만 보충 학습지 · 해결 → 세특 근거.", href:"apps/mcheck/", ready:true},
+  {id:"mblue",  icon:"🎯", cat:"math",  short:"분류표", name:"이원목적분류표", desc:"문항별 성취기준·난이도·배점·정답 → 합계·분포 점검, 인쇄.", href:"apps/mblue/", ready:true},
+  {id:"mpace",  icon:"⏳", cat:"math",  short:"진도·시수", name:"진도·시수", desc:"시간표 × 학사일정 × 수업 기록장 → 시험까지 남은 수업과 필요한 차시.", href:"apps/mpace/", ready:true},
   {id:"year",   icon:"📆", cat:"work",  short:"연간 업무", name:"연간 업무", desc:"해마다 돌아오는 일 · 학사일정 붙여 넣기 → 첫 화면 달력.", href:"apps/year/", ready:true},
   {id:"ai",     icon:"🤖", cat:"work",  short:"AI·문서", name:"AI·문서 도우미", desc:"개인정보를 가린 AI 요청문, 가정통신문·공문 틀, 보관함.", href:"apps/ai/", ready:true},
   {id:"merge",  icon:"📎", cat:"work",  short:"파일 합치기", name:"파일 합치기", desc:"한글·엑셀 파일 여러 개를 하나로 합치는 윈도우 프로그램을 내려받습니다.", file:"downloads/FileMerge.exe", ready:true}

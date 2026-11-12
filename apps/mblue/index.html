@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>이원목적분류표 · 쌤 노트</title>
+<!--
+  이원목적분류표(문항 정보표): 문항마다 성취기준·단원·행동 영역·난이도·유형·배점·정답을 적으면
+  배점 합계, 난이도 비율, 영역 분포, 선택형 정답 번호 분포를 바로 점검하고 인쇄합니다.
+  · 시험일은 연간 업무의 학사일정(📌 시험)에서 고를 수 있습니다.
+  · 저장 "tt_mblue_v1" {list:[{id,name,grade,subj,date,total,acts:[..],rows:[{std,unit,act,lv,kind,pts,ans}]}]}
+-->
+<style>
+  header{align-items:center}
+  .bar{flex-wrap:wrap}
+  main{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(250px,300px);gap:10px;padding:10px!important}
+  .tw{min-height:0;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff;display:flex;flex-direction:column}
+  table.g{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+  .g th,.g td{border-bottom:1px solid #eef1f4;padding:2px 3px;text-align:center}
+  .g thead th{position:sticky;top:0;background:#f7f9fb;z-index:2;font-size:12px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .g input,.g select{font:inherit;font-size:13px;border:1px solid transparent;border-radius:6px;padding:3px 4px;width:100%;background:transparent;box-sizing:border-box}
+  .g input:hover,.g select:hover{border-color:var(--line)}
+  .g input:focus,.g select:focus{border-color:#7fb0e6;background:#fff;outline:none}
+  .g .n{width:56px;text-align:center}
+  .g .x{border:0;background:none;color:#a0a9b3;font-size:15px;cursor:pointer}
+  .addr{display:flex;gap:6px;padding:6px}
+  .side{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px}
+  .box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;display:flex;flex-direction:column;gap:4px}
+  .box h3{font-size:14px;font-weight:800}
+  .bar2{display:flex;align-items:center;gap:6px}.bar2 span{width:64px;color:var(--sub);font-size:12px}.bar2 i{display:block;height:10px;border-radius:5px;background:var(--accent);min-width:2px}.bar2 b{font-size:12px}
+  .ok{color:var(--ok);font-weight:800}.bad{color:var(--danger);font-weight:800}
+  .muted{color:var(--sub);font-size:12.5px}
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--sub);text-align:center;grid-column:1/-1}
+  dialog label.f{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin-top:8px}
+  dialog input,dialog select{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:5px 8px;width:100%;box-sizing:border-box}
+  dialog .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  dialog .acts{display:flex;justify-content:space-between;margin-top:12px}dialog .acts .r{display:flex;gap:6px}
+  #prt{position:fixed;inset:0;z-index:50;background:#fff;overflow:auto;padding:16px 22px}
+  #prt .pb{display:flex;gap:8px;margin-bottom:10px}
+  #prt h2{font-size:18px;margin:0 0 4px}
+  #prt table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}#prt th,#prt td{border:1px solid #888;padding:3px 5px;text-align:center}#prt td.l{text-align:left}
+  @media print{ body > *:not(#prt){display:none!important} #prt{position:static;padding:0} #prt .pb{display:none} @page{size:A4 landscape;margin:10mm} }
+  @media (max-width:860px){ main{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>🎯 이원목적분류표</h1>
+  </div>
+  <div class="bar">
+    <select id="eSel" aria-label="시험 고르기"></select>
+    <button type="button" class="btn primary" id="newE">＋ 새 시험</button>
+    <button type="button" class="btn" id="editE">✎ 시험 정보</button>
+    <details class="more" id="more">
+      <summary aria-label="더 보기">⋯</summary>
+      <div class="menu">
+        <button type="button" id="mPrint">🖨 이원목적분류표 인쇄</button>
+        <button type="button" id="mCsv">표 내려받기(CSV)</button>
+        <button type="button" id="mCopy">이 시험 복사해서 새로 만들기</button>
+        <hr><button type="button" id="mDel" class="danger">이 시험 삭제</button>
+      </div>
+    </details>
+  </div>
+</header>
+<main class="panel" id="m"></main>
+<footer>
+  <span>칸을 눌러 바로 고칩니다 · 오른쪽에서 배점·난이도·정답 분포를 바로 점검합니다</span>
+  <span class="priv">🔒 출제 정보는 이 기기(와 내 보관함)에만 · 시험 전 공유 주의</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var KEY = "tt_mblue_v1", LV = ["상", "중", "하"], KIND = ["선택형", "서답형"], ANS = ["①", "②", "③", "④", "⑤"];
+  var S = TT.store.get(KEY, null) || {}; S.v = 1; S.list = S.list || [];
+  function save(){ S.updatedAt = Date.now(); TT.store.set(KEY, S); }
+  var cur = (TT.store.get("tt_ui_v1", {}) || {}).mblue || null;
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function E(){ return S.list.filter(function(x){ return x.id === cur; })[0] || null; }
+  function row(){ return {std: "", unit: "", act: "", lv: "중", kind: "선택형", pts: "", ans: ""}; }
+  function exams(){ var o = TT.store.get("tt_calendar_v1", null) || {}, seen = {}, out = []; (o.events || []).forEach(function(e){ if(e.k === "exam" && !seen[e.t]){ seen[e.t] = 1; out.push(e); } }); return out; }
+
+  function fillSel(){
+    var s = $("eSel"); s.textContent = "";
+    if(!S.list.length){ var o = document.createElement("option"); o.value = ""; o.textContent = "시험 없음"; s.appendChild(o); }
+    S.list.slice().sort(function(a, b){ return (a.date || "") < (b.date || "") ? 1 : -1; }).forEach(function(e){ var o = document.createElement("option"); o.value = e.id; o.textContent = e.name + (e.date ? " · " + e.date.slice(5).replace("-", "/") : ""); s.appendChild(o); });
+    if(!E()) cur = (S.list[S.list.length - 1] || {}).id || null; s.value = cur || "";
+  }
+  $("eSel").onchange = function(){ cur = this.value; var u = TT.store.get("tt_ui_v1", {}) || {}; u.mblue = cur; TT.store.set("tt_ui_v1", u); render(); };
+
+  function render(){
+    var m = $("m"), e = E();
+    if(!e){ m.innerHTML = '<div class="empty"><div style="font-size:42px">🎯</div><div><b>시험을 만들어 주세요.</b><br>문항마다 성취기준·난이도·배점·정답을 적으면 합계와 분포를 바로 점검합니다.</div><button type="button" class="btn primary" id="first">＋ 새 시험</button></div>'; $("first").onclick = function(){ info(null); }; return; }
+    var acts = e.acts || [];
+    var head = "<tr><th>번호</th><th style=\"width:28%\">성취기준</th><th>단원·내용</th><th>행동 영역</th><th>난이도</th><th>유형</th><th>배점</th><th>정답</th><th></th></tr>";
+    var rows = e.rows.map(function(r, i){
+      function sel(k, arr){ return '<select data-i="' + i + '" data-k="' + k + '"><option value=""></option>' + arr.map(function(x){ return "<option" + (r[k] === x ? " selected" : "") + ">" + esc(x) + "</option>"; }).join("") + "</select>"; }
+      return "<tr><td>" + (i + 1) + '</td><td><input data-i="' + i + '" data-k="std" value="' + esc(r.std) + '" placeholder="[9수02-01] …"></td><td><input data-i="' + i + '" data-k="unit" value="' + esc(r.unit) + '"></td><td>' + sel("act", acts) + "</td><td>" + sel("lv", LV) + "</td><td>" + sel("kind", KIND) + '</td><td><input class="n" type="number" step="0.1" min="0" data-i="' + i + '" data-k="pts" value="' + esc(r.pts) + '"></td><td>' + (r.kind === "선택형" ? sel("ans", ANS) : '<input data-i="' + i + '" data-k="ans" value="' + esc(r.ans) + '" placeholder="답">') + '</td><td><button type="button" class="x" data-del="' + i + '" aria-label="지우기">×</button></td></tr>';
+    }).join("");
+    m.innerHTML = '<div class="tw"><table class="g"><thead>' + head + "</thead><tbody>" + rows + '</tbody></table><div class="addr"><button type="button" class="btn" id="add1">＋ 문항</button><button type="button" class="btn" id="add5">＋ 5문항</button><span class="muted" style="align-self:center">위 문항의 성취기준·단원을 이어받습니다</span></div></div><aside class="side" id="side"></aside>';
+    $("add1").onclick = function(){ addRows(1); }; $("add5").onclick = function(){ addRows(5); };
+    side();
+  }
+  function addRows(k){ var e = E(), last = e.rows[e.rows.length - 1]; for(var i = 0; i < k; i++){ var r = row(); if(last){ r.std = last.std; r.unit = last.unit; r.act = last.act; r.kind = last.kind; } e.rows.push(r); } save(); render(); var ins = $("m").querySelectorAll("tbody tr"); if(ins.length) ins[ins.length - k].querySelector("input").focus(); }
+  $("m").addEventListener("change", function(ev){
+    var t = ev.target, e = E(); if(!e || t.dataset.i == null) return;
+    var r = e.rows[+t.dataset.i]; r[t.dataset.k] = t.dataset.k === "pts" ? (t.value === "" ? "" : +t.value) : t.value; save();
+    if(t.dataset.k === "kind") render(); else side();
+  });
+  $("m").addEventListener("click", function(ev){ var x = ev.target.closest("[data-del]"); if(!x) return; E().rows.splice(+x.dataset.del, 1); save(); render(); });
+
+  /* 점검: 배점 합계, 난이도·영역·유형 분포, 선택형 정답 번호 분포 */
+  function side(){
+    var e = E(), R = e.rows, tot = R.reduce(function(a, r){ return a + (+r.pts || 0); }, 0), target = +e.total || 100, n = R.length;
+    function dist(k, keys){ var c = {}; R.forEach(function(r){ if(r[k]) c[r[k]] = (c[r[k]] || 0) + (+r.pts || 0); }); return keys.map(function(x){ return {k: x, v: c[x] || 0}; }); }
+    function bars(list){ var mx = Math.max.apply(null, list.map(function(x){ return x.v; }).concat([1])); return list.map(function(x){ return '<div class="bar2"><span>' + esc(x.k) + '</span><i style="width:' + Math.round(x.v / mx * 120) + 'px"></i><b>' + (Math.round(x.v * 10) / 10) + "점 " + (tot ? "(" + Math.round(x.v / tot * 100) + "%)" : "") + "</b></div>"; }).join(""); }
+    var sel = R.filter(function(r){ return r.kind === "선택형"; }), ac = {}; sel.forEach(function(r){ if(r.ans) ac[r.ans] = (ac[r.ans] || 0) + 1; });
+    var fair = sel.length ? Math.ceil(sel.length / 5) : 0, ansWarn = sel.length >= 5 && ANS.some(function(a){ return !ac[a] || ac[a] > fair + 1; });
+    var miss = R.filter(function(r){ return !r.pts || !r.ans || !r.lv; }).length;
+    var units = {}; R.forEach(function(r){ if(r.unit) units[r.unit] = (units[r.unit] || 0) + (+r.pts || 0); });
+    $("side").innerHTML = '<div class="box"><h3>배점 합계</h3><div style="font-size:22px;font-weight:900" class="' + (Math.abs(tot - target) < .05 ? "ok" : "bad") + '">' + (Math.round(tot * 10) / 10) + " / " + target + "점</div>" + (Math.abs(tot - target) < .05 ? '<span class="ok">✔ 맞음</span>' : '<span class="bad">' + (tot < target ? (Math.round((target - tot) * 10) / 10) + "점 모자람" : (Math.round((tot - target) * 10) / 10) + "점 넘침") + "</span>") + '<span class="muted">문항 ' + n + "개 · 선택형 " + sel.length + " · 서답형 " + (n - sel.length) + (miss ? ' · <b class="bad">빈칸 있는 문항 ' + miss + "</b>" : "") + "</span></div>"
+      + '<div class="box"><h3>난이도 (배점)</h3>' + bars(dist("lv", LV)) + "</div>"
+      + '<div class="box"><h3>행동 영역 (배점)</h3>' + bars(dist("act", e.acts || [])) + "</div>"
+      + '<div class="box"><h3>유형 (배점)</h3>' + bars(dist("kind", KIND)) + "</div>"
+      + '<div class="box"><h3>선택형 정답 번호</h3><div>' + ANS.map(function(a){ return a + " " + (ac[a] || 0) + "개"; }).join(" · ") + "</div>" + (ansWarn ? '<span class="bad">⚠ 한 번호에 몰리거나 빠진 번호가 있어요</span>' : sel.length >= 5 ? '<span class="ok">✔ 고르게 나뉨</span>' : "") + "</div>"
+      + (Object.keys(units).length ? '<div class="box"><h3>단원별 배점</h3>' + bars(Object.keys(units).map(function(k){ return {k: k, v: units[k]}; })) + "</div>" : "");
+  }
+
+  /* 시험 정보 (새로·고치기) */
+  function info(src){
+    var isNew = !src, e = src || {id: TT.util.uid(), name: "", grade: "3", subj: "수학", date: "", total: 100, acts: ["계산", "이해", "추론", "문제해결"], rows: [row(), row(), row(), row(), row()]};
+    var d = document.createElement("dialog"), f = document.createElement("form"); d.appendChild(f); document.body.appendChild(d); d.style.width = "min(560px,94vw)";
+    d.addEventListener("close", function(){ d.remove(); });
+    var ex = exams();
+    f.innerHTML = "<h2>" + (isNew ? "＋ 새 시험" : "✎ 시험 정보") + "</h2>"
+      + '<label class="f">시험 이름<input id="iN" maxlength="40" value="' + esc(e.name) + '" placeholder="예: 2학기 기말고사 3학년 수학"></label>'
+      + '<div class="g2"><label class="f">학년<select id="iG">' + ["1", "2", "3"].map(function(g){ return "<option" + (String(e.grade) === g ? " selected" : "") + ">" + g + "</option>"; }).join("") + '</select></label><label class="f">교과<input id="iS" value="' + esc(e.subj) + '"></label></div>'
+      + '<div class="g2"><label class="f">시험일' + (ex.length ? ' <small>(학사일정에서 고르기)</small>' : "") + '<input id="iD" type="date" value="' + esc(e.date) + '"></label><label class="f">총점<input id="iT" type="number" value="' + esc(e.total) + '"></label></div>'
+      + (ex.length ? '<div class="muted" style="margin-top:4px">학사일정 시험: ' + ex.map(function(x){ return '<button type="button" class="btn" style="padding:2px 8px;font-size:12px" data-d="' + x.d + '">' + esc(x.t) + " " + x.d.slice(5).replace("-", "/") + "</button>"; }).join(" ") + "</div>" : "")
+      + '<label class="f">행동 영역 (쉼표로)<input id="iA" value="' + esc((e.acts || []).join(", ")) + '"></label>'
+      + '<div class="acts"><span></span><div class="r"><button type="button" class="btn" id="iX">취소</button><button type="submit" class="btn primary">저장</button></div></div>';
+    f.querySelectorAll("[data-d]").forEach(function(b){ b.onclick = function(){ f.querySelector("#iD").value = b.dataset.d; if(!f.querySelector("#iN").value) f.querySelector("#iN").value = b.textContent.replace(/\s[\d/]+$/, "") + " " + f.querySelector("#iG").value + "학년 " + f.querySelector("#iS").value; }; });
+    f.querySelector("#iX").onclick = function(){ d.close(); };
+    f.onsubmit = function(ev){
+      ev.preventDefault();
+      e.name = (f.querySelector("#iN").value.trim() || "시험").slice(0, 40); e.grade = f.querySelector("#iG").value; e.subj = f.querySelector("#iS").value.trim(); e.date = f.querySelector("#iD").value; e.total = +f.querySelector("#iT").value || 100;
+      e.acts = f.querySelector("#iA").value.split(",").map(function(x){ return x.trim(); }).filter(Boolean);
+      if(isNew) S.list.push(e); cur = e.id; save(); d.close(); fillSel(); render();
+    };
+    d.showModal();
+  }
+  $("newE").onclick = function(){ info(null); };
+  $("editE").onclick = function(){ var e = E(); if(e) info(e); else info(null); };
+
+  function closeMenu(){ $("more").open = false; }
+  document.addEventListener("click", function(ev){ if(!$("more").contains(ev.target)) closeMenu(); });
+  $("mPrint").onclick = function(){
+    closeMenu(); var e = E(); if(!e) return; var sc = TT.school.load(), tot = e.rows.reduce(function(a, r){ return a + (+r.pts || 0); }, 0);
+    var p = document.createElement("div"); p.id = "prt";
+    p.innerHTML = '<div class="pb"><button type="button" class="btn primary" id="pp">🖨 인쇄</button><button type="button" class="btn" id="pc">닫기</button></div><h2>' + esc(e.name) + " 이원목적분류표</h2><div class=\"muted\">" + esc(sc.name || "") + " · " + esc(e.grade) + "학년 " + esc(e.subj) + (e.date ? " · " + esc(e.date) : "") + " · 총 " + (Math.round(tot * 10) / 10) + "점</div>"
+      + "<table><tr><th rowspan=2>번호</th><th rowspan=2>성취기준</th><th rowspan=2>단원·내용</th><th colspan=" + (e.acts || []).length + ">행동 영역</th><th colspan=3>난이도</th><th rowspan=2>유형</th><th rowspan=2>배점</th><th rowspan=2>정답</th></tr><tr>" + (e.acts || []).map(function(a){ return "<th>" + esc(a) + "</th>"; }).join("") + LV.map(function(l){ return "<th>" + l + "</th>"; }).join("") + "</tr>"
+      + e.rows.map(function(r, i){ return "<tr><td>" + (i + 1) + '</td><td class="l">' + esc(r.std) + '</td><td class="l">' + esc(r.unit) + "</td>" + (e.acts || []).map(function(a){ return "<td>" + (r.act === a ? "○" : "") + "</td>"; }).join("") + LV.map(function(l){ return "<td>" + (r.lv === l ? "○" : "") + "</td>"; }).join("") + "<td>" + esc(r.kind) + "</td><td>" + esc(r.pts) + "</td><td>" + esc(r.ans) + "</td></tr>"; }).join("") + "</table>";
+    document.body.appendChild(p); $("pc").onclick = function(){ p.remove(); }; $("pp").onclick = function(){ window.print(); };
+  };
+  $("mCsv").onclick = function(){
+    closeMenu(); var e = E(); if(!e) return;
+    var rows = [["번호", "성취기준", "단원·내용", "행동 영역", "난이도", "유형", "배점", "정답"]].concat(e.rows.map(function(r, i){ return [i + 1, r.std, r.unit, r.act, r.lv, r.kind, r.pts, r.ans]; }));
+    var csv = "﻿" + rows.map(function(r){ return r.map(function(v){ v = String(v == null ? "" : v); if(/^[=+\-@]/.test(v)) v = "'" + v; return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(","); }).join("\r\n");
+    TT.util.download("이원목적분류표_" + TT.util.safe(e.name) + ".csv", csv, "text/csv;charset=utf-8");
+  };
+  $("mCopy").onclick = function(){ closeMenu(); var e = E(); if(!e) return; var b = JSON.parse(JSON.stringify(e)); b.id = TT.util.uid(); b.name = (e.name + " (복사)").slice(0, 40); b.date = ""; S.list.push(b); cur = b.id; save(); fillSel(); render(); info(b); };
+  $("mDel").onclick = function(){ closeMenu(); var e = E(); if(!e) return; TT.ui.confirm("시험 삭제", "'" + e.name + "' 이원목적분류표를 지웁니다.", "삭제", function(){ S.list = S.list.filter(function(x){ return x.id !== e.id; }); cur = null; save(); fillSel(); render(); }); };
+
+  fillSel(); render();
+})();
+</script>
+</body>
+</html>

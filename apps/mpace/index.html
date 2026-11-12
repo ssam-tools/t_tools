@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>진도·시수 · 쌤 노트</title>
+<!--
+  진도·시수 계산: 내 시간표 × 학사일정(휴업·시험일) × 수업 기록장 진도를 묶어
+  "목표일(예: 중간고사)까지 남은 수업 수"와 "시험 범위까지 남은 차시"를 반별로 비교합니다.
+  · 모자라면 첫 화면에 "⏳ 진도 부족 n반" 알림
+  · 저장 "tt_mpace_v1" {to, end:{학년: 차시 번호}, adj:{반코드: ±}, short, at}
+-->
+<style>
+  header{align-items:center}
+  .bar{flex-wrap:wrap}
+  main{flex-direction:column;gap:10px;padding:10px!important}
+  .tgt{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13.5px}
+  .tgt input,.tgt select{font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+  .tgt .btn{padding:4px 9px;font-size:12.5px}
+  .tw{flex:1;min-height:0;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+  table.g{border-collapse:collapse;width:100%;font-size:14px}
+  .g th,.g td{border-bottom:1px solid #eef1f4;padding:8px 10px;text-align:center}
+  .g th{background:#f7f9fb;font-size:12.5px;position:sticky;top:0}
+  .g td.l{text-align:left}
+  .g .big{font-size:20px;font-weight:900}
+  .ok{color:var(--ok)}.bad{color:var(--danger)}.mid{color:#8a6a00}
+  .g input{width:56px;font:inherit;text-align:center;border:1px solid var(--line);border-radius:7px;padding:3px}
+  .muted{color:var(--sub);font-size:12.5px}
+  .ends{display:flex;gap:10px;flex-wrap:wrap}
+  .ends label{display:flex;gap:6px;align-items:center;font-size:13px;font-weight:700}
+  .ends select{max-width:320px}
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--sub);text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>⏳ 진도·시수</h1>
+  </div>
+  <div class="bar"><a class="btn" href="../timetable/">🕘 시간표</a><a class="btn" href="../year/">📌 학사일정</a><a class="btn" href="../journal/">📒 수업 기록장</a></div>
+</header>
+<main class="panel" id="m"></main>
+<footer>
+  <span>남은 수업 = 오늘부터 목표일 전날까지 내 시간표의 그 반 수업 (주말·학사일정 휴업일·시험일 빼고) + 보강·결강 조정</span>
+  <span class="priv">🔒 이 기기(와 내 보관함)에만</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var KEY = "tt_mpace_v1", S = TT.store.get(KEY, null) || {}; S.v = 1; S.end = S.end || {}; S.adj = S.adj || {};
+  function save(){ S.at = Date.now(); TT.store.set(KEY, S); }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function pad(n){ return ("0" + n).slice(-2); }
+  function key(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function parse(s){ var a = s.split("-"); return new Date(+a[0], a[1] - 1, +a[2]); }
+  var T = TT.store.get("tt_timetable_v1", null), J = TT.store.get("tt_journal_v1", null), C = TT.store.get("tt_calendar_v1", null) || {events: []};
+  var skip = {}; (C.events || []).forEach(function(e){ if(e.k === "off" || e.k === "exam") skip[e.d] = e.t; });
+  var exams = []; (function(){ var seen = {}; (C.events || []).forEach(function(e){ if(e.k === "exam" && !seen[e.t] && e.d >= key(new Date())){ seen[e.t] = 1; exams.push(e); } }); })();
+  /* 학년별 차시 목록 (수업 기록장) */
+  function lessons(g){ var raw = J && J.cur ? J.cur[g] : ""; raw = Array.isArray(raw) ? raw.join("\n") : String(raw || ""); var L = [], unit = ""; raw.split("\n").forEach(function(l){ l = l.trim(); if(!l) return; if(l[0] === "#"){ unit = l.replace(/^#+\s*/, ""); return; } L.push({u: unit, t: l}); }); return L; }
+  /* 반마다 목표일까지 남은 수업 수 (오늘 포함, 오늘은 아직 끝나지 않은 교시만) */
+  function remain(cc, to){
+    if(!T || !T.slots || !to) return null;
+    var per = {}; Object.keys(T.slots).forEach(function(k){ var s = T.slots[k]; if(+s.cls === cc){ var w = +k.split("-")[0]; (per[w] = per[w] || []).push(+k.split("-")[1]); } });
+    var d = new Date(), end = parse(to), n = 0, now = d.getHours() * 60 + d.getMinutes(), first = true, g = 0;
+    d = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    while(d < end && g++ < 400){
+      var w = d.getDay(), k = key(d);
+      if(w >= 1 && w <= 5 && !skip[k] && per[w]){
+        per[w].forEach(function(p){
+          if(first){ var t = (T.periods || []).filter(function(x){ return +x.n === p; })[0]; if(t){ var a = t.t.split(":"); if(+a[0] * 60 + +a[1] + 45 <= now) return; } }
+          n++;
+        });
+      }
+      first = false; d.setDate(d.getDate() + 1);
+    }
+    return n;
+  }
+  function render(){
+    var m = $("m");
+    var codes = []; if(T && T.slots) Object.keys(T.slots).forEach(function(k){ var c = +T.slots[k].cls; if(c && codes.indexOf(c) < 0) codes.push(c); });
+    codes.sort(function(a, b){ return a - b; });
+    if(!codes.length){ m.innerHTML = '<div class="empty"><div style="font-size:42px">⏳</div><div><b>내 시간표가 필요해요.</b><br>🕘 내 시간표에 컴시간 시간표를 붙여 넣으면 반별 남은 수업 수를 셉니다.<br>📌 학사일정을 넣으면 휴업일·시험일도 빼고 셉니다.</div><a class="btn primary" href="../timetable/">🕘 내 시간표 열기</a></div>'; return; }
+    if(!S.to && exams.length) S.to = exams[0].d;
+    var grades = []; codes.forEach(function(c){ var g = Math.floor(c / 100); if(grades.indexOf(g) < 0) grades.push(g); });
+    var h = '<div class="tgt"><b>목표일</b><input type="date" id="to" value="' + esc(S.to || "") + '">' + (exams.length ? '<span class="muted">학사일정 시험:</span>' + exams.slice(0, 4).map(function(e){ return '<button type="button" class="btn" data-to="' + e.d + '">' + esc(e.t) + " " + e.d.slice(5).replace("-", "/") + "</button>"; }).join("") : '<span class="muted">(📌 학사일정을 넣으면 시험일을 바로 고를 수 있어요)</span>') + "</div>";
+    h += '<div class="ends">' + grades.map(function(g){
+      var L = lessons(g);
+      return "<label>" + g + "학년 시험 범위 끝 차시 <select data-g=\"" + g + "\"><option value=\"\">" + (L.length ? "고르세요" : "수업 기록장에 차시 목록 없음") + "</option>" + L.map(function(l, i){ return '<option value="' + i + '"' + (+S.end[g] === i && S.end[g] !== "" && S.end[g] != null ? " selected" : "") + ">" + (i + 1) + ". " + esc(l.u ? "[" + l.u + "] " : "") + esc(l.t) + "</option>"; }).join("") + "</select></label>";
+    }).join("") + "</div>";
+    var short = 0;
+    var rows = codes.map(function(c){
+      var g = Math.floor(c / 100), L = lessons(g), done = J && J.prog && J.prog[c] ? +J.prog[c].n || 0 : 0, r = remain(c, S.to), adj = +S.adj[c] || 0;
+      var endI = S.end[g] === "" || S.end[g] == null ? null : +S.end[g], need = endI == null ? null : Math.max(0, endI + 1 - done), left = r == null ? null : r + adj, mar = need == null || left == null ? null : left - need;
+      if(mar != null && mar < 0) short++;
+      var cur = L[done] ? (L[done].u ? "[" + L[done].u + "] " : "") + L[done].t : (L.length && done >= L.length ? "모두 마침" : "");
+      return '<tr><td class="l"><b>' + g + "학년 " + (c % 100) + "반</b></td><td>" + (left == null ? "—" : '<span class="big">' + left + "</span>시간") + '</td><td><input type="number" data-adj="' + c + '" value="' + adj + '" title="보강(+)·결강(−)"></td><td class="l">' + done + (L.length ? " / " + L.length : "") + '차시 <span class="muted">' + esc(cur) + "</span></td><td>" + (need == null ? "—" : '<span class="big">' + need + "</span>차시") + "</td><td>" + (mar == null ? "—" : '<span class="big ' + (mar < 0 ? "bad" : mar <= 1 ? "mid" : "ok") + '">' + (mar < 0 ? mar : "+" + mar) + "</span>" + (mar < 0 ? " 부족" : " 여유")) + "</td></tr>";
+    }).join("");
+    h += '<div class="tw"><table class="g"><thead><tr><th>반</th><th>목표일까지 남은 수업</th><th>보강·결강 ±</th><th>지금 진도 (수업 기록장)</th><th>시험 범위까지 필요</th><th>여유</th></tr></thead><tbody>' + rows + "</tbody></table></div>";
+    m.innerHTML = h;
+    S.short = S.to && S.to >= key(new Date()) ? short : 0; save();
+  }
+  $("m").addEventListener("change", function(e){
+    var t = e.target;
+    if(t.id === "to"){ S.to = t.value; save(); render(); }
+    if(t.dataset.g){ S.end[t.dataset.g] = t.value === "" ? "" : +t.value; save(); render(); }
+    if(t.dataset.adj){ S.adj[t.dataset.adj] = +t.value || 0; save(); render(); }
+  });
+  $("m").addEventListener("click", function(e){ var b = e.target.closest("[data-to]"); if(b){ S.to = b.dataset.to; save(); render(); } });
+  render();
+})();
+</script>
+</body>
+</html>

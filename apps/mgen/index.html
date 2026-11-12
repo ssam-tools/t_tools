@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>문항 생성기 · 쌤 노트</title>
+<!--
+  문항 생성기·학습지: 유형과 개수를 고르면 숫자만 바꾼 계산형 문항을 만들고 정답지와 함께 인쇄합니다.
+  · 학생별 다른 숫자: 반을 고르면 번호마다 다른 문제지 + 한 장짜리 정답표
+  · "✅ 형성평가로" 누르면 같은 문항으로 형성평가가 만들어지고, 틀린 유형은 보충 학습지로 다시 만들 수 있습니다.
+  · 설정 "tt_mgen_v1" {spec:[{id,n}], lv, seed, cols, names}
+-->
+<style>
+  header{align-items:center}
+  .bar{flex-wrap:wrap}
+  main{display:grid!important;grid-template-columns:minmax(230px,280px) minmax(0,1fr);gap:10px;padding:10px!important}
+  .types{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:2px}
+  .types h4{font-size:12px;color:var(--sub);margin:6px 2px 2px}
+  .ty{display:flex;align-items:center;gap:6px;font-size:13.5px;border-radius:8px;padding:3px 4px}
+  .ty:hover{background:#f3f6f9}
+  .ty b{flex:1;font-weight:700}
+  .ty small{color:var(--sub);font-size:11px}
+  .ty input[type=number]{width:46px;font:inherit;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:2px 4px;text-align:center}
+  .ty.on{background:var(--accent-soft)}
+  .right{min-height:0;display:flex;flex-direction:column;gap:8px}
+  .pv{flex:1;min-height:0;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+  .pv ol{columns:2;column-gap:28px;padding-left:22px;font-size:15px;line-height:1.7}
+  .pv ol.c1{columns:1}
+  .pv li{break-inside:avoid;margin-bottom:14px}
+  .pv .ans{color:var(--ok);font-weight:800;font-size:13.5px}
+  .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .row .btn{padding:7px 12px;font-size:13.5px}
+  .muted{color:var(--sub);font-size:12.5px}
+  .chk{display:inline-flex;gap:4px;align-items:center;font-size:13px;font-weight:700;color:var(--sub)}
+  /* 인쇄 */
+  #prt{position:fixed;inset:0;z-index:50;background:#fff;overflow:auto;padding:16px 22px}
+  #prt .pb{display:flex;gap:8px;margin-bottom:10px}
+  .page{max-width:760px;margin:0 auto 24px;color:#111;page-break-after:always}
+  .page:last-child{page-break-after:auto}
+  .page .hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #111;padding-bottom:4px;margin-bottom:12px;font-size:13px}
+  .page h2{font-size:19px;margin:0}
+  .page ol{columns:2;column-gap:30px;padding-left:22px;font-size:15px;line-height:1.75}
+  .page ol.c1{columns:1}
+  .page li{break-inside:avoid;margin-bottom:34px}
+  .page table{border-collapse:collapse;width:100%;font-size:12px}.page td,.page th{border:1px solid #888;padding:3px 5px;text-align:center}
+  @media print{ body > *:not(#prt){display:none!important} #prt{position:static;padding:0} #prt .pb{display:none} @page{size:A4;margin:12mm} }
+  @media (max-width:760px){ main{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>🔢 문항 생성기</h1>
+  </div>
+  <div class="bar">
+    <div class="seg" id="lv" role="group" aria-label="난이도"><button type="button" data-v="1">기초</button><button type="button" data-v="2">보통</button><button type="button" data-v="3">심화</button></div>
+    <button type="button" class="btn" id="reseed" title="숫자를 모두 새로 뽑습니다">🎲 새 숫자</button>
+    <label class="chk"><input type="checkbox" id="c1"> 한 줄로</label>
+    <label class="chk"><input type="checkbox" id="showA" checked> 정답 보기</label>
+  </div>
+</header>
+<main class="panel" id="m">
+  <section class="types" id="types" aria-label="문항 유형"></section>
+  <section class="right">
+    <div class="pv" id="pv"></div>
+    <div class="row">
+      <input id="title" maxlength="40" placeholder="학습지 제목 (예: 인수분해 연습)" style="font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:6px 9px;min-width:200px">
+      <button type="button" class="btn primary" id="pAll">🖨 학습지 (공통)</button>
+      <select id="clsSel" aria-label="학생별 학습지를 만들 반"></select>
+      <label class="chk"><input type="checkbox" id="names"> 이름 넣기</label>
+      <button type="button" class="btn" id="pEach" title="번호마다 다른 숫자의 문제지 + 정답표">🖨 학생별 다른 숫자</button>
+      <span style="flex:1"></span>
+      <button type="button" class="btn primary" id="toQuiz" title="이 문항(공통)으로 형성평가를 만듭니다">✅ 형성평가로</button>
+    </div>
+  </section>
+</main>
+<footer>
+  <span id="info">유형을 고르고 개수를 넣으세요 · 같은 숫자 = 언제 인쇄해도 같은 문제</span>
+  <span class="priv">🔒 학생 정보는 인쇄할 때 번호(선택: 이름)만</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script src="../../shared/mathgen.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var KEY = "tt_mgen_v1";
+  var S = TT.store.get(KEY, null) || {}; S.spec = S.spec || [{id: "factor", n: 4}, {id: "quad", n: 4}]; S.lv = S.lv || 2; S.seed = S.seed || Math.random().toString(36).slice(2, 8);
+  function save(){ TT.store.set(KEY, S); }
+  var cls = null;
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function spec(){ return S.spec.filter(function(x){ return x.n > 0 && MG.type(x.id); }); }
+  function items(who){ return MG.sheet(spec(), S.lv, S.seed, who); }
+
+  function drawTypes(){
+    var g = 0, h = "";
+    MG.T.forEach(function(t){
+      if(t.g !== g){ g = t.g; h += "<h4>중" + g + "</h4>"; }
+      var cur = S.spec.filter(function(x){ return x.id === t.id; })[0], n = cur ? cur.n : 0;
+      h += '<label class="ty' + (n ? " on" : "") + '"><b>' + esc(t.n) + '</b><small>' + esc(t.unit) + '</small><input type="number" min="0" max="20" data-id="' + t.id + '" value="' + n + '" aria-label="' + esc(t.n) + ' 개수"></label>';
+    });
+    $("types").innerHTML = h;
+  }
+  $("types").oninput = function(e){
+    var i = e.target; if(!i.dataset.id) return;
+    var n = Math.max(0, Math.min(20, +i.value || 0)), cur = S.spec.filter(function(x){ return x.id === i.dataset.id; })[0];
+    if(cur) cur.n = n; else S.spec.push({id: i.dataset.id, n: n});
+    S.spec = S.spec.filter(function(x){ return x.n > 0; }); i.closest(".ty").classList.toggle("on", n > 0); save(); draw();
+  };
+  function lvUI(){ $("lv").querySelectorAll("button").forEach(function(b){ b.setAttribute("aria-pressed", +b.dataset.v === S.lv); }); }
+  $("lv").onclick = function(e){ var b = e.target.closest("button"); if(!b) return; S.lv = +b.dataset.v; save(); lvUI(); draw(); };
+  $("reseed").onclick = function(){ S.seed = Math.random().toString(36).slice(2, 8); save(); draw(); };
+  $("c1").checked = !!S.c1; $("c1").onchange = function(){ S.c1 = this.checked; save(); draw(); };
+  $("showA").onchange = draw;
+  $("title").value = S.title || ""; $("title").oninput = function(){ S.title = this.value; save(); };
+  $("names").checked = !!S.names; $("names").onchange = function(){ S.names = this.checked; save(); };
+
+  function list(L, ans){ return '<ol class="' + (S.c1 ? "c1" : "") + '">' + L.map(function(o){ return "<li>" + o.q + (ans ? '<div class="ans">답: ' + o.a + "</div>" : "") + "</li>"; }).join("") + "</ol>"; }
+  function draw(){
+    var L = items(0);
+    $("pv").innerHTML = L.length ? list(L, $("showA").checked) : '<div class="muted">왼쪽에서 유형과 개수를 고르세요.</div>';
+    $("info").textContent = "문항 " + L.length + "개 · " + ["", "기초", "보통", "심화"][S.lv] + " · 숫자 번호 " + S.seed + " (같은 번호면 언제 인쇄해도 같은 문제)";
+  }
+
+  /* 인쇄 */
+  function overlay(html){
+    var old = $("prt"); if(old) old.remove();
+    var p = document.createElement("div"); p.id = "prt"; p.innerHTML = '<div class="pb"><button type="button" class="btn primary" id="pp">🖨 인쇄</button><button type="button" class="btn" id="pc">닫기</button></div>' + html;
+    document.body.appendChild(p); $("pc").onclick = function(){ p.remove(); }; $("pp").onclick = function(){ window.print(); };
+  }
+  function head(sub){ var sc = TT.school.load(); return '<div class="hd"><div><h2>' + esc(S.title || "수학 학습지") + "</h2>" + esc(sc.name || "") + '</div><div>' + sub + "</div></div>"; }
+  $("pAll").onclick = function(){
+    var L = items(0); if(!L.length) return;
+    overlay('<div class="page">' + head("____학년 ____반 ____번 이름 ________") + list(L, false) + '</div><div class="page">' + head("정답") + list(L, true) + "</div>");
+  };
+  $("pEach").onclick = function(){
+    if(!cls){ TT.ui.toast("반을 골라 주세요."); return; } if(!spec().length) return;
+    var pages = cls.students.map(function(s){ return '<div class="page">' + head(esc(cls.name) + " " + s.no + "번 " + (S.names ? esc(s.name || "") : "이름 ________")) + list(items(s.no), false) + "</div>"; }).join("");
+    var L0 = items(0), key = '<div class="page">' + head("정답표 · " + esc(cls.name)) + "<table><tr><th>번호</th>" + L0.map(function(o, i){ return "<th>" + (i + 1) + "</th>"; }).join("") + "</tr>"
+      + cls.students.map(function(s){ return "<tr><td>" + s.no + "</td>" + items(s.no).map(function(o){ return "<td>" + o.a + "</td>"; }).join("") + "</tr>"; }).join("") + "</table></div>";
+    overlay(pages + key);
+  };
+  /* 형성평가로: 공통 문항을 그대로 형성평가 문항으로 (유형 id가 함께 가서 보충 학습지를 만들 수 있음) */
+  $("toQuiz").onclick = function(){
+    var L = items(0); if(!L.length) return;
+    var Q = TT.store.get("tt_mcheck_v1", null) || {v: 1, list: [], res: {}}; Q.list = Q.list || []; Q.res = Q.res || {};
+    var d = new Date(), ymd = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+    var q = {id: TT.util.uid(), name: (S.title || spec().map(function(x){ return MG.type(x.id).n; }).join("·")).slice(0, 40), date: ymd, lv: S.lv, seed: S.seed,
+      items: L.map(function(o){ return {type: o.type, q: o.q, a: o.a, std: MG.type(o.type).unit}; })};
+    Q.list.push(q); TT.store.set("tt_mcheck_v1", Q);
+    var u = TT.store.get("tt_ui_v1", {}) || {}; u.mcheck = q.id; TT.store.set("tt_ui_v1", u);
+    location.href = "../mcheck/";
+  };
+
+  drawTypes(); lvUI(); draw();
+  TT.ui.classSelect($("clsSel"), "mgen", function(c){ cls = c; });
+})();
+</script>
+</body>
+</html>

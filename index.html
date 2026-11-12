@@ -290,33 +290,47 @@
   var $ = function(id){ return document.getElementById(id); };
   var grid = $("grid");
 
-  /* 갈래 카드 5장: 카드 안에 그 갈래의 도구 단추를 모두 (어떤 도구든 한 번에) */
+  /* 갈래 카드 5장: 카드 안에 그 갈래의 도구 단추를 모두 (어떤 도구든 한 번에)
+     새로 올린 직후에는 브라우저가 예전 shared/tools.js(갈래 정보 없음)를 쓸 수 있어, 그때는 새 파일을 다시 받아 그립니다. */
   var hasHome = !!TT.roster.home(), N = 0;
-  TT_CATS.forEach(function(c){
-    var L = TT_TOOLS.filter(function(t){ return t.cat === c.id && t.ready && !t.in && (!TT.classroom || t.room); });
-    if(TT.classroom && !L.length) return;
-    var el = document.createElement("section"); el.className = "cat"; el.id = "cat-" + c.id;
-    el.innerHTML = '<div class="ch"><span class="ci">' + c.icon + '</span><div><div class="cn">' + c.name + '</div><div class="cd">' + c.desc + "</div></div></div>";
-    var box = document.createElement("div"); box.className = "tl2"; el.appendChild(box);
-    L.forEach(function(t){
-      var row = document.createElement("div"); row.className = "tr" + (t.home && !hasHome ? " dim" : "");
-      if(t.home && !hasHome) row.title = "우리 반(★)을 지정하면 쓸 수 있어요 · 명렬표에서 지정";
-      var a = document.createElement(t.file ? "button" : "a"); a.className = "tb";
-      if(t.file){ a.type = "button"; a.onclick = function(){ askDownload(t); }; } else a.href = t.href;
-      a.innerHTML = "<span>" + t.icon + "</span><b>" + t.name + "</b>" + (t.file ? '<small class="pc">PC 프로그램</small>' : "");
-      a.title = a.title || t.desc; row.appendChild(a); N++;
-      TT_TOOLS.filter(function(x){ return x.in === t.id && x.ready && (!TT.classroom || x.room); }).forEach(function(x){
-        var k = document.createElement("a"); k.className = "tbs"; k.href = x.href; k.textContent = x.icon + " " + x.short; k.title = x.name + " · " + x.desc; row.appendChild(k); N++;
+  function drawCats(){
+    try{
+      grid.textContent = ""; N = 0;
+    TT_CATS.forEach(function(c){
+      var L = TT_TOOLS.filter(function(t){ return t.cat === c.id && t.ready && !t.in && (!TT.classroom || t.room); });
+      if(TT.classroom && !L.length) return;
+      var el = document.createElement("section"); el.className = "cat"; el.id = "cat-" + c.id;
+      el.innerHTML = '<div class="ch"><span class="ci">' + c.icon + '</span><div><div class="cn">' + c.name + '</div><div class="cd">' + c.desc + "</div></div></div>";
+      var box = document.createElement("div"); box.className = "tl2"; el.appendChild(box);
+      L.forEach(function(t){
+        var row = document.createElement("div"); row.className = "tr" + (t.home && !hasHome ? " dim" : "");
+        if(t.home && !hasHome) row.title = "우리 반(★)을 지정하면 쓸 수 있어요 · 명렬표에서 지정";
+        var a = document.createElement(t.file ? "button" : "a"); a.className = "tb";
+        if(t.file){ a.type = "button"; a.onclick = function(){ askDownload(t); }; } else a.href = t.href;
+        a.innerHTML = "<span>" + t.icon + "</span><b>" + t.name + "</b>" + (t.file ? '<small class="pc">PC 프로그램</small>' : "");
+        a.title = a.title || t.desc; row.appendChild(a); N++;
+        TT_TOOLS.filter(function(x){ return x.in === t.id && x.ready && (!TT.classroom || x.room); }).forEach(function(x){
+          var k = document.createElement("a"); k.className = "tbs"; k.href = x.href; k.textContent = x.icon + " " + x.short; k.title = x.name + " · " + x.desc; row.appendChild(k); N++;
+        });
+        box.appendChild(row);
       });
-      box.appendChild(row);
+      if(c.id === "work"){                                                     // 학교 업무판 (연결했을 때)
+        var B0 = TT.store.get("tt_board_v1", null) || {};
+        if(B0.url && /^https:\/\/script\.google\.com\//.test(B0.url)){ var row2 = document.createElement("div"); row2.className = "tr"; row2.innerHTML = '<a class="tb" target="_blank" rel="noopener"><span>📅</span><b>학교 업무판</b><small class="pc">새 창</small></a>'; row2.firstChild.href = B0.url; box.appendChild(row2); }
+      }
+      if(!L.length && c.soon){ box.innerHTML = '<div class="soon">' + c.soon.map(function(x){ return "<span>" + x + "</span>"; }).join("") + '</div><div class="cd" style="margin-top:4px">다음 단계에서 채워집니다</div>'; }
+      grid.appendChild(el);
     });
-    if(c.id === "work"){                                                     // 학교 업무판 (연결했을 때)
-      var B0 = TT.store.get("tt_board_v1", null) || {};
-      if(B0.url && /^https:\/\/script\.google\.com\//.test(B0.url)){ var row2 = document.createElement("div"); row2.className = "tr"; row2.innerHTML = '<a class="tb" target="_blank" rel="noopener"><span>📅</span><b>학교 업무판</b><small class="pc">새 창</small></a>'; row2.firstChild.href = B0.url; box.appendChild(row2); }
+      $("count").textContent = "도구 " + N + "개 · v" + TT.VERSION;
+    }catch(err){
+      grid.innerHTML = '<div class="cat" style="grid-column:1/-1;align-items:center;justify-content:center;text-align:center"><b>도구 목록을 불러오지 못했습니다.</b><span class="cd">새로 올린 파일이 아직 다 받아지지 않았을 수 있어요. 잠시 뒤 Ctrl+F5(새로 고침)를 눌러 주세요.</span></div>';
     }
-    if(!L.length && c.soon){ box.innerHTML = '<div class="soon">' + c.soon.map(function(x){ return "<span>" + x + "</span>"; }).join("") + '</div><div class="cd" style="margin-top:4px">다음 단계에서 채워집니다</div>'; }
-    grid.appendChild(el);
-  });
+  }
+  if(typeof TT_CATS === "undefined"){
+    var fix = document.createElement("script"); fix.src = "shared/tools.js?v=" + Date.now();
+    fix.onload = function(){ if(typeof TT_CATS !== "undefined") drawCats(); else drawCats(); };
+    fix.onerror = drawCats; document.head.appendChild(fix);
+  } else drawCats();
 
   /* 쌤 노트 제목: 학교 이름은 "학교·선생님 설정" 한 곳에서 (TT.school) */
   function showTitle(){
@@ -377,6 +391,8 @@
       var Yr = TT.store.get("tt_year_v1", null), t0 = new Date(), ay = t0.getMonth() >= 2 ? t0.getFullYear() : t0.getFullYear() - 1, cm = t0.getMonth() + 1;   // 연간 업무: 이번 달 남은 일
       var ym = Yr && Array.isArray(Yr.items) ? Yr.items.filter(function(it){ return it.m === cm && !(Yr.done || {})[ay + "|" + it.id]; }).length : 0;
       if(ym) h += '<a class="al mid" href="apps/year/" title="연간 업무: 이번 달에 남은 일">📆 이번 달 ' + ym + "건</a>";
+      var Pc = TT.store.get("tt_mpace_v1", null);                                         // 진도·시수: 목표일까지 진도가 모자란 반
+      if(Pc && Pc.short > 0 && Pc.to && Pc.to >= ymd) h += '<a class="al" href="apps/mpace/" title="시험 범위까지 남은 수업이 모자란 반">⏳ 진도 부족 ' + Pc.short + "반</a>";
     }catch(err){}
     box.innerHTML = h;
     var t = $("alTodo"); if(t) t.onclick = function(){ var i = document.getElementById("tdText"); if(i) i.focus(); };
@@ -391,8 +407,6 @@
         TT.ui.toast("내려받기를 시작했습니다. 다운로드 폴더의 " + t.file.split("/").pop() + " 를 실행하세요.");
       });
   }
-
-  $("count").textContent = "도구 " + N + "개 · v" + TT.VERSION;
 
   /* 명렬표에서 지정한 우리 반(담임)을 보여 줍니다. */
   function showHome(){
