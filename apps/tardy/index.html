@@ -2,11 +2,16 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
 <title>지각 관리 노트 · 선생님 도구 모음</title>
 <!--
   [저장 방식]
-  · 우리 반 명단은 명렬표(roster.html)가 저장한 것을 읽습니다. (localStorage "tt_roster_v1")
+  · 우리 반 명단은 명렬표(apps/roster)가 저장한 것을 읽습니다. (localStorage "tt_roster_v1")
   · 출결 기록  : "tt_attend_v1"  — 학생 번호 기준(이름 없음). 기기 연동 파일로 내보낼 수 있습니다.
   · 상담일지   : "tt_counsel_v1" — 이 기기에만 저장되며 연동 파일에 들어가지 않습니다.
   모두 브라우저(이 기기) 안에만 저장되고 서버로 전송되지 않습니다.
@@ -290,6 +295,7 @@
 <input type="file" id="fileBackup" accept=".json,.txt,application/json,text/plain" hidden>
 <div id="toast" hidden></div>
 
+<script src="../../shared/tt.js"></script>
 <script>
 (function(){
   "use strict";
