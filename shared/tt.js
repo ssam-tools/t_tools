@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.16.0";
+  var VERSION = "0.17.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -508,20 +508,20 @@ var TT = (function(){
       + ".tt-grp{display:flex;flex-direction:column;gap:2px;background:#eef4fb;border-radius:10px;padding:3px 0 3px}"
       + ".tt-gh{display:flex;flex-direction:column;align-items:center;color:#2f6fb5;padding:2px 0;font-family:'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif}"
       + ".tt-gh span{font-size:18px;line-height:1}.tt-gh b{font-size:10.5px;font-weight:800}"
-      + ".tt-ri.sub{margin:0 3px;background:#fff;border:1px solid #d6e3f1}"
-      + ".tt-ri.sub span{font-size:15px}.tt-ri.sub b{font-size:9.5px}"
-      + ".tt-ri.sub.on{background:#2f6fb5;border-color:#2f6fb5}"
-      + ".tt-ri.rec{color:#7a4fb5}.tt-ri.rec:hover{background:#f1eafb;color:#7a4fb5}"
+      + ".tt-ri.tt-sub{margin:0 3px;background:#fff;border:1px solid #d6e3f1}"
+      + ".tt-ri.tt-sub span{font-size:15px}.tt-ri.tt-sub b{font-size:9.5px}"
+      + ".tt-ri.tt-sub.on{background:#2f6fb5;border-color:#2f6fb5}"
+      + ".tt-ri.tt-rec{color:#7a4fb5}.tt-ri.tt-rec:hover{background:#f1eafb;color:#7a4fb5}"
       + "@media " + WIDE + "{"
       +   "html.tt-hasnav body{margin-left:var(--tt-rail)!important}"
       +   "html.tt-hasnav .back,html.tt-hasnav .ttback{display:none!important}"
       +   "html.tt-hasnav .cta,html.tt-hasnav .tabs,html.tt-hasnav .dock{left:var(--tt-rail)!important}"
       +   ".tt-rail{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:var(--tt-rail);z-index:15;background:#fff;border-right:1px solid #dde3ea;padding:6px 5px;gap:2px;overflow-y:auto;box-sizing:border-box}"
       +   ".tt-rail .tt-ri{flex:1 1 0;max-height:60px;min-height:38px}"
-      +   ".tt-rail .tt-grp{flex:0 0 auto}.tt-rail .tt-ri.sub{flex:0 0 40px;min-height:0}"
-      +   ".tt-rail .rec{flex:0 0 50px;border-top:1px solid #dde3ea;border-radius:0;margin-top:auto}"
-      +   ".tt-rail .home{flex:0 0 50px;border-bottom:1px solid #dde3ea;border-radius:10px 10px 0 0;margin-bottom:4px}"
-      +   ".tt-rail .bd{flex:0 0 50px;border-top:1px solid #dde3ea;border-radius:0 0 10px 10px}"
+      +   ".tt-rail .tt-grp{flex:0 0 auto}.tt-rail .tt-ri.tt-sub{flex:0 0 40px;min-height:0}"
+      +   ".tt-rail .tt-rec{flex:0 0 50px;border-top:1px solid #dde3ea;border-radius:0;margin-top:auto}"
+      +   ".tt-rail .tt-home{flex:0 0 50px;border-bottom:1px solid #dde3ea;border-radius:10px 10px 0 0;margin-bottom:4px}"
+      +   ".tt-rail .tt-bd{flex:0 0 50px;border-top:1px solid #dde3ea;border-radius:0 0 10px 10px}"
       + "}"
       + "@media (max-width:899px),(max-height:459px){"
       +   "html.tt-hasnav .tt-navbtn{display:inline-block;font:inherit;font-size:12px;font-weight:700;border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:1px 9px;margin-left:8px;cursor:pointer;opacity:.85;vertical-align:middle}"
@@ -533,7 +533,7 @@ var TT = (function(){
       + ".tt-sheet h3{grid-column:1/-1;font-size:15px;margin:0 0 2px;color:#1d2733;font-family:'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif}"
       + ".tt-sheet .tt-ri{min-height:66px;border:1px solid #dde3ea}.tt-sheet .in{max-height:88vh;overflow:auto}"
       + ".tt-sheet .tt-ri b{font-size:12px}"
-      + ".tt-sheet .tt-grp{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:6px}.tt-sheet .tt-gh{grid-column:1/-1;flex-direction:row;gap:6px;justify-content:flex-start;padding:0 4px}.tt-sheet .tt-ri.sub{min-height:56px;margin:0}"
+      + ".tt-sheet .tt-grp{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:6px}.tt-sheet .tt-gh{grid-column:1/-1;flex-direction:row;gap:6px;justify-content:flex-start;padding:0 4px}.tt-sheet .tt-ri.tt-sub{min-height:56px;margin:0}"
       + "@media print{.tt-rail,.tt-navbtn,.tt-sheet{display:none!important}html.tt-hasnav body{margin-left:0!important}}";
     function attr(v){ return String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
     /* 갈래(TT_CATS) → 도구. 지금 갈래는 펼쳐 모든 도구를, 다른 갈래는 아이콘 하나(누르면 그 갈래 첫 도구)로. all=true면 모두 펼침(좁은 화면 목록) */
@@ -545,20 +545,20 @@ var TT = (function(){
         var on = t.id === hereId;
         return '<a class="tt-ri' + cls + (on ? ' on' : '') + '" href="' + BASE + t.href + '" title="' + attr(t.name) + '"' + (on ? ' aria-current="page"' : '') + '><span>' + t.icon + '</span><b>' + attr(label) + '</b></a>';
       }
-      var h = '<a class="tt-ri home" href="' + BASE + '" title="첫 화면"><span>🍎</span><b>쌤 노트</b></a>';
+      var h = '<a class="tt-ri tt-home" href="' + BASE + '" title="첫 화면"><span>🍎</span><b>쌤 노트</b></a>';
       (typeof TT_CATS !== "undefined" ? TT_CATS : []).forEach(function(c){
         var L = TT_TOOLS.filter(function(t){ return t.cat === c.id && ok(t); });
         if(!L.length) return;
         if(all || c.id === curCat){
           h += '<div class="tt-grp"><div class="tt-gh"><span>' + c.icon + '</span><b>' + attr(c.name) + '</b></div>';
-          L.forEach(function(t){ h += link(t, " sub", t.short || t.name); });
+          L.forEach(function(t){ h += link(t, " tt-sub", t.short || t.name); });
           h += '</div>';
         } else h += '<a class="tt-ri" href="' + BASE + L[0].href + '" title="' + attr(c.name + ": " + L.map(function(t){ return t.name; }).join(", ")) + '"><span>' + c.icon + '</span><b>' + attr(c.name) + '</b></a>';
       });
-      if(!classroom) h += '<button type="button" class="tt-ri rec" data-tt="rec" title="학생 기록 한 줄 남기기 (생기부 자료)"><span>✍️</span><b>학생 기록</b></button>';
+      if(!classroom) h += '<button type="button" class="tt-ri tt-rec" data-tt="rec" title="학생 기록 한 줄 남기기 (생기부 자료)"><span>✍️</span><b>학생 기록</b></button>';
       var b = store.get("tt_board_v1", {}) || {};
       if(b.url && !b.hidden && /^https:\/\/script\.google\.com\//.test(b.url))
-        h += '<a class="tt-ri bd" href="' + attr(b.url) + '" target="_blank" rel="noopener" title="학교 업무판 (새 창)"><span>📅</span><b>업무판</b></a>';
+        h += '<a class="tt-ri tt-bd" href="' + attr(b.url) + '" target="_blank" rel="noopener" title="학교 업무판 (새 창)"><span>📅</span><b>업무판</b></a>';
       return h;
     }
     function build(){
@@ -620,12 +620,14 @@ var TT = (function(){
       var o = store.get("tt_school_v1", null) || {};
       var name = String(o.name || "").trim();
       if(!name){ var b = store.get("tt_board_v1", null) || {}; name = String(b.school || "").trim(); }
-      return {name: name, teacher: String(o.teacher || "").trim()};
+      var logo = /^data:image\/(png|jpeg|webp);base64,/.test(o.logo || "") && o.logo.length < 200000 ? o.logo : "";
+      return {name: name, teacher: String(o.teacher || "").trim(), logo: logo};
     },
     save: function(o){
       var c = store.get("tt_school_v1", null) || {};
       if(o.name != null) c.name = String(o.name).trim().slice(0, 20);
       if(o.teacher != null) c.teacher = String(o.teacher).trim().slice(0, 10);
+      if(o.logo != null) c.logo = /^data:image\/(png|jpeg|webp);base64,/.test(o.logo) && o.logo.length < 200000 ? o.logo : "";   // 학교 로고(선택, 작게 줄인 그림)
       c.updatedAt = Date.now(); store.set("tt_school_v1", c);
     },
     short: function(){ return school.load().name.replace(/\s+/g, "").replace(/학교$/, ""); },   // 마산서중학교 → 마산서중

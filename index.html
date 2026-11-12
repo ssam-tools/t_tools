@@ -13,7 +13,15 @@
 <link rel="apple-touch-icon" href="assets/icon-192.png">
 <link rel="stylesheet" href="shared/tt.css">
 <style>
-  header{align-items:center}
+  header{align-items:center;margin-bottom:clamp(2px,1vh,10px)}
+  h1.ttl{display:flex;align-items:center;gap:10px;font-size:clamp(22px,3.6vh,30px)}
+  .slogo{height:clamp(26px,4.2vh,38px);width:auto;flex:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.12))}
+  header .lead{font-size:clamp(14px,2.1vh,16px);margin-top:clamp(6px,1.2vh,12px);color:#33404d}
+  header .lead .tc{font-size:clamp(13px,1.9vh,15px);padding:2px 10px}
+  header .lead .home{font-size:13.5px}
+  #dlgSchool .logo{display:flex;gap:10px;align-items:center;margin-top:4px}
+  #dlgSchool .logo img{height:48px;max-width:120px;object-fit:contain;background:#f3f6f9;border-radius:8px;padding:3px}
+  #dlgSchool .logo .none{font-size:12.5px;color:var(--sub)}
   .home{display:inline-block;font-weight:700;font-size:12.5px;padding:2px 10px;border-radius:999px;margin-left:6px;background:var(--star-soft);color:#7a5a00;text-decoration:none}
   .home.none{background:#eceff3;color:#4a5560}
   .card:focus-visible{outline:3px solid #7fb0e6;outline-offset:2px}
@@ -59,13 +67,13 @@
   .tset{color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap}
 
   /* 이번 주 업무 띠 (shared/board.js) */
-  .toprow{flex:none;display:flex;gap:clamp(8px,1.4vh,12px);height:clamp(176px,35vh,310px)}
+  .toprow{flex:1 1 0;display:flex;gap:clamp(8px,1.4vh,12px);min-height:clamp(176px,30vh,260px)}   /* 위(이번 주·내 할 일)와 아래(갈래 카드)가 반씩 */
   .board{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;
     padding:clamp(7px,1.3vh,11px) clamp(10px,1.6vw,14px);display:flex;flex-direction:column;gap:clamp(4px,.8vh,7px)}
   .board.setup{flex-direction:row;align-items:center;gap:10px;font-size:13.5px;color:var(--sub)}
   .board.setup span{flex:1}
   .board.setup .btn{padding:6px 12px;font-size:13px}
-  .bh{display:flex;align-items:center;gap:8px;font-size:14.5px;min-width:0}
+  .bh{display:flex;align-items:center;gap:8px;font-size:clamp(14.5px,2vh,17px);min-width:0}
   .bh .sm{white-space:nowrap}
   .bh .sp{flex:1}
   .bh .btn{padding:5px 11px;font-size:13px}
@@ -84,11 +92,11 @@
   .bd:hover{border-color:#c7d3e0}
   .bd.today{border-color:var(--accent)!important;background:var(--accent-soft)}
   .bd.hol{background:var(--danger-soft)}
-  .bdh{font-size:12.5px;font-weight:800;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bdh{font-size:clamp(12.5px,1.7vh,15px);font-weight:800;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bd.today .bdh{color:var(--accent)}
   .bdh em{font-style:normal;color:var(--danger);font-size:11.5px;margin-left:5px}
   .bdl{flex:1;min-height:0;overflow:hidden}
-  .bi{font-size:12.5px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bi{font-size:clamp(12.5px,1.6vh,14.5px);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bi b{font-size:11.5px;margin-right:4px}
   .bi .t{color:var(--accent);font-weight:700;margin-right:3px}
   .bi.imp{color:var(--danger);font-weight:700}
@@ -96,19 +104,19 @@
   .bnone{font-size:12px;color:#aab3bd}
   .bn{font-size:12.5px;color:var(--ok);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* 내 할 일 (shared/mytodo.js) — 이 기기에만 저장, 나만 보기 */
-  .mytodo{flex:0 0 clamp(240px,26vw,340px);min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;
+  .mytodo{flex:0 0 clamp(240px,26vw,400px);min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;
     padding:clamp(7px,1.3vh,11px) 12px;display:flex;flex-direction:column;gap:5px}
   .board[hidden] + .mytodo{flex:1}
-  .th{display:flex;align-items:center;gap:6px;font-size:14.5px}
+  .th{display:flex;align-items:center;gap:6px;font-size:clamp(14.5px,2vh,17px)}
   .th .sp{flex:1}
   .lock{font-size:11px;font-weight:700;color:var(--ok);background:var(--ok-soft);border-radius:999px;padding:1px 7px;white-space:nowrap}
   .tin{display:flex;gap:4px}
-  .tin input{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:4px 7px;min-width:0;background:#fbfcfd;color:var(--ink)}
+  .tin input{font:inherit;font-size:clamp(13px,1.7vh,15px);border:1px solid var(--line);border-radius:8px;padding:4px 7px;min-width:0;background:#fbfcfd;color:var(--ink)}
   .tin input:focus{outline:2px solid #7fb0e6;border-color:#7fb0e6;background:#fff}
   #tdText{flex:1}
   #tdDate{flex:0 0 112px;font-size:12px;padding:4px 4px}
   .tl{list-style:none;flex:1;min-height:0;overflow-y:auto}
-  .tl li{display:flex;align-items:center;gap:6px;font-size:13px;padding:1px 3px;border-radius:6px}
+  .tl li{display:flex;align-items:center;gap:6px;font-size:clamp(13px,1.7vh,15px);padding:1px 3px;border-radius:6px}
   .tl li:hover{background:#f3f6f9}
   .tl input[type=checkbox]{width:15px;height:15px;flex:none;cursor:pointer;accent-color:var(--accent)}
   .tl .tx{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:text;line-height:1.55}
@@ -134,18 +142,18 @@
     .subs{order:9;flex:1 0 100%;padding-left:34px}
   }
   /* 갈래 카드 5장 (교과지도 · 생활지도 · 상담·생기부 · 업무 · 수학) */
-  main#grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:clamp(8px,1.2vw,12px);min-height:0;flex:1}
+  main#grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:clamp(8px,1.2vw,12px);min-height:clamp(250px,40vh,999px);flex:1 1 0}
   .cat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:clamp(8px,1.4vh,12px);display:flex;flex-direction:column;gap:6px;min-height:0;overflow:hidden}
   .ch{display:flex;gap:8px;align-items:center}
-  .ci{font-size:clamp(22px,3.6vh,30px);line-height:1}
-  .cn{font-size:clamp(15px,2.3vh,18px);font-weight:900;letter-spacing:-.01em}
+  .ci{font-size:clamp(22px,3.8vh,34px);line-height:1}
+  .cn{font-size:clamp(15px,2.5vh,20px);font-weight:900;letter-spacing:-.01em}
   .cd{font-size:11.5px;color:var(--sub);line-height:1.35}
-  .tl2{display:flex;flex-direction:column;gap:clamp(3px,.6vh,5px);overflow:auto;min-height:0;flex:1}
-  .tr{display:flex;gap:4px;align-items:stretch}
+  .tl2{display:grid;grid-template-rows:repeat(var(--n,5),minmax(30px,54px));align-content:start;gap:clamp(3px,.8vh,8px);overflow:auto;min-height:0;flex:1}   /* 모든 갈래의 단추 높이를 같게, 칸이 넉넉하면 커짐 */
+  .tr{display:flex;gap:4px;align-items:stretch;min-height:0}
   .tb{flex:1;min-width:0;display:flex;align-items:center;gap:7px;text-decoration:none;color:var(--ink);font:inherit;text-align:left;border:1px solid var(--line);background:#fbfcfd;border-radius:10px;padding:clamp(4px,.8vh,7px) 9px;cursor:pointer}
   .tb:hover{border-color:var(--accent);background:var(--accent-soft)}
-  .tb span{font-size:17px;flex:none}
-  .tb b{font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb span{font-size:clamp(17px,2.4vh,22px);flex:none}
+  .tb b{font-size:clamp(13.5px,1.8vh,16px);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tb .pc{margin-left:auto;font-size:10.5px;font-weight:700;color:#5a3ea6;background:#ece8f7;border-radius:999px;padding:1px 6px;flex:none}
   .tbs{flex:none;display:flex;align-items:center;text-decoration:none;font-size:12px;font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:10px;padding:0 8px;white-space:nowrap}
   .tbs:hover{background:var(--accent);color:#fff}
@@ -153,7 +161,7 @@
   .soon{display:flex;flex-wrap:wrap;gap:4px}.soon span{font-size:12px;font-weight:700;border:1px dashed #c9d2dc;border-radius:8px;padding:3px 7px;color:var(--sub)}
   #cat-math{background:#fbfaf6}
   @media (max-width:1100px) and (min-width:761px){ main#grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:minmax(0,1fr)} }
-  @media (max-width:760px){ main#grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none} .cat{overflow:visible} .tl2{overflow:visible} }
+  @media (max-width:760px){ main#grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;flex:none;min-height:0} .toprow{flex:none} .cat{overflow:hidden} .tl2{overflow:visible;grid-template-rows:none;grid-auto-rows:auto} .tr{flex-wrap:wrap} .tbs{padding:4px 8px} }
   /* 쌤 노트 제목 · 학교 설정 · 알림 · 빠른 기록 */
   .sch{font:inherit;font-size:12px;font-weight:700;border:1px dashed var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 10px;cursor:pointer;vertical-align:middle}
   .qrec{font:inherit;font-size:13.5px;font-weight:800;border:0;border-radius:10px;padding:8px 12px;cursor:pointer;background:#efe7fa;color:#5b2f99}
@@ -204,7 +212,7 @@
 <body>
 <header>
   <div>
-    <h1><span id="appTitle">🍎 쌤 노트</span> <button type="button" class="sch" id="schChip" hidden>🏷️ 학교 이름 넣기</button></h1>
+    <h1 class="ttl"><img id="schLogo" class="slogo" alt="학교 로고" hidden><span id="appTitle">🍎 쌤 노트</span> <button type="button" class="sch" id="schChip" hidden>🏷️ 학교 이름 넣기</button></h1>
     <p class="lead"><span id="leadTxt">학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다.</span> <a class="home" id="homeChip" href="apps/roster/"></a><span id="alerts"></span></p>
   </div>
   <div class="bar">
@@ -244,6 +252,8 @@
     <p>여기 한 곳에만 넣으면 첫 화면 제목, 결석신고서, 학부모 문자에 함께 쓰입니다.</p>
     <label class="f">학교 이름<input type="text" id="sName" maxlength="20" placeholder="예: 마산서중학교" autocomplete="off"></label>
     <label class="f">선생님 이름 <small>(결석신고서 담임 칸·문자 서명)</small><input type="text" id="sTeacher" maxlength="10" autocomplete="off"></label>
+    <label class="f">학교 로고 <small>(선택 · 제목 옆에 보여요. 흰 바탕은 자동으로 투명하게)</small></label>
+    <div class="logo"><img id="sLogoImg" alt="" hidden><span class="none" id="sLogoNone">없음</span><input type="file" id="sLogo" accept="image/png,image/jpeg,image/webp" hidden><button type="button" class="btn" id="sLogoPick">🖼️ 그림 고르기</button><button type="button" class="btn" id="sLogoDel" hidden>지우기</button></div>
     <p class="muted" id="sPrev"></p>
     <div class="acts"><span></span><div class="r"><button type="button" class="btn" id="sCancel">취소</button><button type="submit" class="btn primary">저장</button></div></div>
   </form>
@@ -321,6 +331,7 @@
       if(!L.length && c.soon){ box.innerHTML = '<div class="soon">' + c.soon.map(function(x){ return "<span>" + x + "</span>"; }).join("") + '</div><div class="cd" style="margin-top:4px">다음 단계에서 채워집니다</div>'; }
       grid.appendChild(el);
     });
+      var mx = 1; Array.prototype.forEach.call(grid.querySelectorAll(".tl2"), function(b){ mx = Math.max(mx, b.querySelectorAll(".tr").length); }); grid.style.setProperty("--n", mx);
       $("count").textContent = "도구 " + N + "개 · v" + TT.VERSION;
     }catch(err){
       grid.innerHTML = '<div class="cat" style="grid-column:1/-1;align-items:center;justify-content:center;text-align:center"><b>도구 목록을 불러오지 못했습니다.</b><span class="cd">새로 올린 파일이 아직 다 받아지지 않았을 수 있어요. 잠시 뒤 Ctrl+F5(새로 고침)를 눌러 주세요.</span></div>';
@@ -334,17 +345,45 @@
 
   /* 쌤 노트 제목: 학교 이름은 "학교·선생님 설정" 한 곳에서 (TT.school) */
   function showTitle(){
-    var t = TT.school.title(); $("appTitle").textContent = "🍎 " + t; document.title = t;
+    var t = TT.school.title(), lg = TT.school.load().logo; $("appTitle").textContent = (lg ? "" : "🍎 ") + t; document.title = t;
+    $("schLogo").hidden = !lg; if(lg) $("schLogo").src = lg;
     $("schChip").hidden = !!TT.school.load().name || !!TT.classroom;
   }
   function openSchool(){
-    var sc = TT.school.load(); $("sName").value = sc.name; $("sTeacher").value = sc.teacher; prevSchool(); $("dlgSchool").showModal(); $("sName").focus();
+    var sc = TT.school.load(); $("sName").value = sc.name; $("sTeacher").value = sc.teacher; newLogo = sc.logo; showLogo(); prevSchool(); $("dlgSchool").showModal(); $("sName").focus();
   }
+  var newLogo = "";
+  function showLogo(){ $("sLogoImg").hidden = !newLogo; $("sLogoNone").hidden = !!newLogo; $("sLogoDel").hidden = !newLogo; if(newLogo) $("sLogoImg").src = newLogo; }
+  $("sLogoPick").onclick = function(){ $("sLogo").click(); };
+  $("sLogoDel").onclick = function(){ newLogo = ""; showLogo(); };
+  /* 로고 줄이기: 둘레의 흰 바탕을 투명하게(가장자리에서 이어진 흰색만), 여백 자르기, 높이 128px */
+  $("sLogo").onchange = function(){
+    var f = this.files[0]; this.value = ""; if(!f) return;
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = function(){
+      var W = img.naturalWidth, H = img.naturalHeight, k = Math.min(1, 600 / Math.max(W, H)); W = Math.round(W * k); H = Math.round(H * k);
+      var cv = document.createElement("canvas"); cv.width = W; cv.height = H; var c = cv.getContext("2d"); c.drawImage(img, 0, 0, W, H);
+      var d = c.getImageData(0, 0, W, H), p = d.data, seen = new Uint8Array(W * H), st = [];
+      function white(i){ return p[i * 4 + 3] < 20 || (p[i * 4] > 235 && p[i * 4 + 1] > 235 && p[i * 4 + 2] > 235); }
+      for(var x = 0; x < W; x++){ st.push(x, (H - 1) * W + x); } for(var y = 0; y < H; y++){ st.push(y * W, y * W + W - 1); }
+      while(st.length){ var i = st.pop(); if(seen[i] || !white(i)) continue; seen[i] = 1; p[i * 4 + 3] = 0; var xx = i % W, yy = (i - xx) / W;
+        if(xx > 0) st.push(i - 1); if(xx < W - 1) st.push(i + 1); if(yy > 0) st.push(i - W); if(yy < H - 1) st.push(i + W); }
+      c.putImageData(d, 0, 0);
+      var x0 = W, y0 = H, x1 = 0, y1 = 0; for(var j = 0; j < W * H; j++) if(p[j * 4 + 3] > 20){ var a = j % W, b = (j - a) / W; if(a < x0) x0 = a; if(a > x1) x1 = a; if(b < y0) y0 = b; if(b > y1) y1 = b; }
+      if(x1 < x0){ TT.ui.toast("그림을 읽지 못했습니다."); return; }
+      var w = x1 - x0 + 1, h = y1 - y0 + 1, s = 128 / h, out = document.createElement("canvas"); out.width = Math.max(1, Math.round(w * s)); out.height = 128;
+      if(out.width > 400){ s = 400 / w; out.width = 400; out.height = Math.max(1, Math.round(h * s)); }
+      out.getContext("2d").drawImage(cv, x0, y0, w, h, 0, 0, out.width, out.height);
+      newLogo = out.toDataURL("image/png"); URL.revokeObjectURL(url); showLogo();
+    };
+    img.onerror = function(){ TT.ui.toast("그림 파일을 열지 못했습니다."); };
+    img.src = url;
+  };
   function prevSchool(){ var n = $("sName").value.replace(/\s+/g, "").replace(/학교$/, ""); $("sPrev").textContent = "제목 미리보기: 🍎 " + (n ? n + " " : "") + "쌤 노트"; }
   $("sName").oninput = prevSchool;
   $("schChip").onclick = openSchool;
   $("sCancel").onclick = function(){ $("dlgSchool").close(); };
-  $("fSchool").onsubmit = function(e){ e.preventDefault(); TT.school.save({name: $("sName").value, teacher: $("sTeacher").value}); $("dlgSchool").close(); showTitle(); TT.ui.toast("학교·선생님 설정을 저장했습니다."); };
+  $("fSchool").onsubmit = function(e){ e.preventDefault(); TT.school.save({name: $("sName").value, teacher: $("sTeacher").value, logo: newLogo}); $("dlgSchool").close(); showTitle(); TT.ui.toast("학교·선생님 설정을 저장했습니다."); };
 
   /* 빠른 학생 기록 (shared/notes.js) */
   if(TT.classroom) $("qRec").hidden = true;

@@ -25,9 +25,9 @@
   .tbtn[aria-pressed=true]{background:#2d3a48;border-color:#2d3a48;color:#fff}
   main{display:grid!important;grid-template-columns:minmax(150px,178px) minmax(0,1fr);gap:10px;padding:10px!important}
   .nav{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:2px}
-  .nav h3{font-size:11.5px;color:var(--sub);margin:5px 6px 1px;font-weight:800}
+  .nav h3{font-size:15px;color:#1d2733;margin:5px 4px 1px;padding-top:5px;border-top:1px solid var(--line);font-weight:900}
   .nav h3:first-child{margin-top:0}
-  .nav button{font:inherit;font-size:13.5px;text-align:left;border:0;background:transparent;border-radius:8px;padding:3px 8px;cursor:pointer;color:var(--ink);display:flex;gap:7px;align-items:center}
+  .nav button{font:inherit;font-size:13.5px;text-align:left;border:0;background:transparent;border-radius:8px;padding:clamp(1px,.4vh,4px) 8px;cursor:pointer;color:var(--ink);display:flex;gap:7px;align-items:center}
   .nav button:hover{background:#f3f6f9}
   .nav button[aria-current=true]{background:var(--accent);color:#fff}
   .stage{min-height:0;display:flex;flex-direction:column;gap:8px}
@@ -46,14 +46,16 @@
   .tm .pm{display:flex;flex-direction:column;gap:2px}
   .tm .pm button{border:0;border-radius:6px;width:22px;height:17px;line-height:15px;font-weight:900;cursor:pointer;background:#eef2f6;font-size:13px;padding:0}
   .tm .crown{position:absolute;top:-11px;left:4px;font-size:15px}
+  .tcnt{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:800;color:var(--sub);background:#fff;border:1px dashed var(--line);border-radius:12px;padding:3px 6px}
+  .tcnt div{display:flex;gap:3px;align-items:center}.tcnt b{font-size:16px;color:var(--ink);min-width:14px;text-align:center}
+  .tcnt button{border:0;border-radius:6px;width:24px;height:22px;font-weight:900;cursor:pointer;background:#eef2f6;font-size:15px;padding:0}.tcnt button:disabled{opacity:.3}
   .tm.bump .sc{animation:bump .5s}
   .tm .fly{position:absolute;right:8px;top:-6px;font-weight:900;font-size:18px;animation:fly 1s forwards;pointer-events:none}
   @keyframes bump{40%{transform:scale(1.6)}}
   @keyframes fly{to{transform:translateY(-34px);opacity:0}}
   /* 처음 화면: 놀이 고르기 */
-  .home{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
-  .home h3{font-size:14px;font-weight:900;color:#33404d}
-  .home h3 small{font-weight:500;color:var(--sub);margin-left:6px}
+  .phome{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+  .phome h3{font-size:17px;font-weight:900;color:#1d2733;margin-top:4px}
   .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
   .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:9px 11px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);display:flex;gap:9px;align-items:flex-start;transition:transform .12s,box-shadow .12s}
   .card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(30,60,100,.14)}
@@ -111,7 +113,6 @@
     <button type="button" class="tbtn" id="snd" aria-pressed="true" title="소리 켜고 끄기">🔊 소리</button>
     <button type="button" class="tbtn" id="full" title="전체 화면">⛶ 전체 화면</button>
     <details class="more" id="more"><summary aria-label="더 보기">⋯</summary><div class="menu">
-      <button type="button" id="mCount">모둠 수 바꾸기</button>
       <button type="button" id="mReset" class="danger">모둠 점수 모두 0으로</button>
       <hr><a href="../class/">🧰 수업 도구 (🎲 뽑기 · 🏆 모둠 점수)</a><a href="../mgen/">🔢 문항 생성기</a>
     </div></details>
@@ -126,7 +127,7 @@
   </section>
 </main>
 <footer>
-  <span id="info">맞히면 기회, 점수는 운으로! 모둠 점수는 수업 도구 🏆와 함께 쌓입니다 · 모둠 이름을 누르면 바꿀 수 있어요</span>
+  <span id="info">맞히면 기회, 점수는 운으로! 모둠 점수는 수업 도구 🏆와 함께 쌓입니다 · 모둠 이름을 누르면 바꿀 수 있어요 · 모둠 수 2~6</span>
   <span class="priv">🔒 학생 이름 없이 · 저장되는 것은 모둠 점수뿐</span>
 </footer>
 <script src="../../shared/tt.js"></script>
@@ -163,7 +164,7 @@
     drawNav();
     if(!g){
       gh.appendChild(h("h2", "", "오늘은 무엇을 할까요?")); gh.appendChild(h("span", "d", "운 게임은 문제를 맞힌 모둠에게 기회를 주는 상으로 쓰면 좋아요. 🏁 퀴즈 배틀 → 맞힌 모둠이 🎁 상자 열기!"));
-      var home = h("div", "home");
+      var home = h("div", "phome");
       CATS.forEach(function(c){
         home.appendChild(h("h3", "", c.name));
         var cards = h("div", "cards");
@@ -190,6 +191,10 @@
       if(ev && ev.type === "score" && ev.i === t.i && ev.n){ d.classList.add("bump"); var f = h("span", "fly", (ev.n > 0 ? "+" : "") + ev.n); f.style.color = ev.n > 0 ? "#2e9d5b" : "#d64545"; d.appendChild(f); }
       box.appendChild(d);
     });
+    var tc = h("div", "tcnt"); tc.appendChild(h("span", "", "모둠 수")); var row = h("div"), mi = h("button", "", "−"), pl = h("button", "", "+"); mi.type = pl.type = "button";
+    mi.disabled = T.length <= 2; pl.disabled = T.length >= 6; mi.title = "모둠 줄이기"; pl.title = "모둠 늘리기";
+    mi.onclick = function(){ K.setCount(T.length - 1); }; pl.onclick = function(){ K.setCount(T.length + 1); };
+    row.appendChild(mi); row.appendChild(h("b", "", String(T.length))); row.appendChild(pl); tc.appendChild(row); box.appendChild(tc);
   }
   K.on(drawTeams);
 
@@ -199,7 +204,6 @@
   $("full").onclick = function(){ if(document.fullscreenElement) document.exitFullscreen(); else (document.documentElement.requestFullscreen || function(){}).call(document.documentElement); };
   function closeMenu(){ $("more").open = false; }
   document.addEventListener("click", function(e){ if(!$("more").contains(e.target)) closeMenu(); });
-  $("mCount").onclick = function(){ closeMenu(); TT.ui.prompt("모둠 수 (2~8)", String(K.teams().length), "", function(v){ var n = Math.max(2, Math.min(8, parseInt(v, 10) || 4)); K.setCount(n); }); };
   $("mReset").onclick = function(){ closeMenu(); TT.ui.confirm("모둠 점수 0으로", "이 반의 모둠 점수를 모두 0으로 합니다. (수업 도구 🏆 모둠 점수도 같이 바뀝니다)", "0으로", function(){ K.resetScores(); }); };
 
   var sel = $("cls");

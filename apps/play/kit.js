@@ -119,7 +119,7 @@ var K = (function(){
   function setScore(i, v){ var o = sc(); if(o.g[i]){ o.g[i].score = v; save(); emit({type: "score", i: i, n: 0}); } }
   function setTurn(i){ turn = ((i % sc().g.length) + sc().g.length) % sc().g.length; emit({type: "turn"}); }
   function nextTurn(){ setTurn(turn + 1); }
-  function setCount(n){ var o = sc(); while(o.g.length < n) o.g.push({name: (o.g.length + 1) + "모둠", score: 0}); o.g.length = n; save(); if(turn >= n) turn = 0; emit({type: "teams"}); }
+  function setCount(n){ n = Math.max(2, Math.min(6, n)); var o = sc(); while(o.g.length < n) o.g.push({name: (o.g.length + 1) + "모둠", score: 0}); o.g.length = n; save(); if(turn >= n) turn = 0; emit({type: "teams"}); }
   function resetScores(){ sc().g.forEach(function(g){ g.score = 0; }); save(); emit({type: "teams"}); }
   function rename(i, nm){ var o = sc(); if(o.g[i]){ o.g[i].name = nm; save(); emit({type: "teams"}); } }
   function setClass(c){ cls = c; turn = 0; emit({type: "teams"}); }
