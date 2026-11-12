@@ -7,7 +7,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2f6fb5">
-<title>선생님 도구 모음</title>
+<title>쌤 노트</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icon-192.png">
@@ -130,7 +130,29 @@
     .name{font-size:15px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .chips{margin-top:0;flex-wrap:nowrap}
     .chip.s-ready{display:none}
+    .card{flex-wrap:wrap;align-content:center;row-gap:6px}
+    .subs{order:9;flex:1 0 100%;padding-left:34px}
   }
+  /* 쌤 노트 제목 · 학교 설정 · 알림 · 빠른 기록 */
+  .sch{font:inherit;font-size:12px;font-weight:700;border:1px dashed var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 10px;cursor:pointer;vertical-align:middle}
+  .qrec{font:inherit;font-size:13.5px;font-weight:800;border:0;border-radius:10px;padding:8px 12px;cursor:pointer;background:#efe7fa;color:#5b2f99}
+  .qrec:hover{background:#7a4fb5;color:#fff}
+  #alerts{display:inline-flex;gap:5px;flex-wrap:wrap;vertical-align:middle;margin-left:6px}
+  .al{font-size:12px;font-weight:800;border-radius:999px;padding:2px 9px;text-decoration:none;white-space:nowrap;background:var(--danger-soft);color:var(--danger);border:0;cursor:pointer;font-family:inherit}
+  .al.mid{background:var(--star-soft);color:#7a5a00}
+  .al:hover{filter:brightness(.95);text-decoration:underline}
+  #dlgSchool label.f{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin-top:10px}
+  #dlgSchool label.f input{display:block;width:100%;margin-top:3px;font:inherit;font-size:15px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;box-sizing:border-box}
+  #dlgSchool .acts{display:flex;justify-content:space-between;margin-top:14px}#dlgSchool .acts .r{display:flex;gap:6px}
+  /* 묶음 카드: 카드 전체는 대표 도구로, 안의 작은 단추는 묶인 도구로 */
+  .card{position:relative}
+  .card .cover{position:absolute;inset:0;border-radius:inherit;z-index:1}
+  .card:has(.cover:focus-visible){outline:3px solid #7fb0e6;outline-offset:2px}
+  .card.go{cursor:pointer;transition:transform .12s,box-shadow .12s}
+  .card.go:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(30,60,100,.12)}
+  .subs{position:relative;z-index:2;display:flex;gap:4px;flex-wrap:wrap}
+  .sl{font-size:12px;font-weight:700;padding:3px 8px;border-radius:8px;background:#eef4fb;color:var(--accent);text-decoration:none;white-space:nowrap}
+  .sl:hover{background:var(--accent);color:#fff}
   .bErr{color:var(--danger)!important;font-weight:700;min-height:1em;margin-top:6px}
 
   @media (max-width:760px), (max-height:560px){
@@ -140,6 +162,7 @@
     .chips{margin-top:0;justify-content:center}
     .chip{font-size:10px;padding:2px 6px}
     .chip.t-home,.chip.t-all{display:none}
+    .subs{justify-content:center}.sl{font-size:11px;padding:2px 6px}
   }
   @media (max-width:760px){
     body{height:auto;min-height:100dvh;overflow:auto}   /* 휴대폰 첫 화면은 위쪽 칸이 있어 아래로 넘겨 봅니다 */
@@ -160,10 +183,11 @@
 <body data-mode="home">
 <header>
   <div>
-    <h1>🧰 선생님 도구 모음</h1>
-    <p class="lead"><span id="leadTxt">학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다.</span> <a class="home" id="homeChip" href="apps/roster/"></a></p>
+    <h1><span id="appTitle">🧰 쌤 노트</span> <button type="button" class="sch" id="schChip" hidden>🏫 학교 이름 넣기</button></h1>
+    <p class="lead"><span id="leadTxt">학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다.</span> <a class="home" id="homeChip" href="apps/roster/"></a><span id="alerts"></span></p>
   </div>
   <div class="bar">
+    <button type="button" class="qrec" id="qRec" title="학생을 골라 본 것·한 것을 한 줄 남깁니다 (생기부 자료)">✏️ 학생 기록</button>
     <div class="seg" role="group" aria-label="교사 유형">
       <button type="button" id="b-home" aria-pressed="true">담임 + 교과</button>
       <button type="button" id="b-subject" aria-pressed="false">교과만</button>
@@ -172,6 +196,7 @@
       <summary aria-label="더 보기">⋯</summary>
       <div class="menu">
         <button type="button" id="mHelp">처음 사용 안내</button>
+        <button type="button" id="mSchool">학교·선생님 설정</button>
         <button type="button" id="mBoard">학교 업무판 연결</button>
         <button type="button" id="mInstall" hidden>앱으로 설치</button>
         <hr>
@@ -196,15 +221,27 @@
   <span><button type="button" class="bk" id="bkChip" hidden></button> <span id="count"></span></span>
 </footer>
 
+<dialog id="dlgSchool">
+  <form id="fSchool">
+    <h2>🏫 학교·선생님 설정</h2>
+    <p>여기 한 곳에만 넣으면 첫 화면 제목, 결석신고서, 학부모 문자에 함께 쓰입니다.</p>
+    <label class="f">학교 이름<input type="text" id="sName" maxlength="20" placeholder="예: 마산서중학교" autocomplete="off"></label>
+    <label class="f">선생님 이름 <small>(결석신고서 담임 칸·문자 서명)</small><input type="text" id="sTeacher" maxlength="10" autocomplete="off"></label>
+    <p class="muted" id="sPrev"></p>
+    <div class="acts"><span></span><div class="r"><button type="button" class="btn" id="sCancel">취소</button><button type="submit" class="btn primary">저장</button></div></div>
+  </form>
+</dialog>
+
 <dialog id="dlgHelp">
   <form method="dialog">
     <h2>처음 사용 안내</h2>
     <ol>
       <li><b>학급 명렬표</b>에서 나이스 학생 명단 파일(엑셀)을 올립니다. 학년·반이 자동으로 등록됩니다.</li>
       <li>담임이라면 ★ 버튼으로 <b>우리 반</b>을 지정합니다.</li>
-      <li>이제 모든 도구가 같은 명단을 씁니다. 필요한 도구를 눌러 쓰면 됩니다.</li>
+      <li>⋯ 메뉴의 <b>학교·선생님 설정</b>에 학교 이름을 넣으면 제목·결석신고서·문자에 함께 쓰입니다.</li>
+      <li>수업·생활지도 중 본 것은 <b>✏️ 학생 기록</b>으로 한 줄씩 남기세요. 명렬표의 📇 학생 카드에 모여 생기부 쓸 때 꺼내 봅니다.</li>
     </ol>
-    <p style="margin-top:10px">🔒 학생 자료는 이 기기의 브라우저에만 저장됩니다. 기기를 바꾸거나 학년이 끝날 때는 ⋯ 메뉴의 <b>전체 백업 저장</b>으로 파일 하나에 담아 옮기세요. 백업 파일에는 학생 이름이 들어 있으니 다른 사람에게 보내지 마세요.</p>
+    <p style="margin-top:10px">🔒 학생 자료는 이 기기의 브라우저에만 저장됩니다(⋯ → 기기 연결·동기화를 켜면 내 비밀 문구로 잠가 학교 보관함과 맞춥니다). 학년이 끝날 때는 ⋯ 메뉴의 <b>전체 백업 저장</b>을 하세요. 백업 파일에는 학생 이름이 들어 있으니 다른 사람에게 보내지 마세요.</p>
     <p style="margin-top:6px">📱 휴대폰은 브라우저 메뉴의 "홈 화면에 추가", 컴퓨터는 주소창의 설치 아이콘을 누르면 앱처럼 쓸 수 있고, 인터넷이 끊겨도 열립니다.</p>
     <div class="acts"><span></span><div class="r"><button type="submit" class="btn primary">확인</button></div></div>
   </form>
@@ -227,6 +264,7 @@
 
 <script src="shared/tools.js"></script>
 <script src="shared/tt.js"></script>
+<script src="shared/guidelogic.js"></script>
 <script src="shared/board.js"></script>
 <script src="shared/mytodo.js"></script>
 <script>
@@ -235,21 +273,86 @@
   var $ = function(id){ return document.getElementById(id); };
   var grid = $("grid");
 
-  var LIST = TT_TOOLS.filter(function(t){ return !TT.classroom || t.room; });          // 교실 기기에서는 수업용 도구만
+  var LIST = TT_TOOLS.filter(function(t){ return !t.in && (!TT.classroom || t.room); });   // 묶음의 대표만 카드로 (교실 기기에서는 수업용만)
   LIST.forEach(function(t){
-    var el = document.createElement(t.ready ? (t.file ? "button" : "a") : "div");
-    el.className = "card" + (t.ready ? "" : " wait");
+    var subs = TT_TOOLS.filter(function(x){ return x.in === t.id && x.ready && (!TT.classroom || x.room); });
+    var el = document.createElement(t.ready && t.file ? "button" : "div");
+    el.className = "card" + (t.ready ? " go" : " wait");
     el.setAttribute("data-for", t.scope);
     if(t.ready && t.file){ el.type = "button"; el.onclick = function(){ askDownload(t); }; }
-    else if(t.ready) el.href = t.href;
+    else if(t.ready){ var cv = document.createElement("a"); cv.className = "cover"; cv.href = t.href; cv.setAttribute("aria-label", t.card || t.name); el.appendChild(cv); }
     function add(cls, text){ var d = document.createElement("div"); d.className = cls; d.textContent = text; el.appendChild(d); return d; }
-    add("ico", t.icon); add("name", t.name); add("desc", t.desc);
+    add("ico", t.icon); add("name", t.card || t.name); add("desc", t.desc);
+    if(subs.length){
+      var sb = add("subs", "");
+      (t.card ? [t].concat(subs) : subs).forEach(function(x){
+        var a = document.createElement("a"); a.className = "sl"; a.href = x.href; a.textContent = x.icon + " " + (x.sub || x.short || x.name); a.title = x.name; sb.appendChild(a);
+      });
+    }
     var chips = add("chips", "");
     function chip(cls, text){ var s = document.createElement("span"); s.className = "chip " + cls; s.textContent = text; chips.appendChild(s); }
     chip(t.scope === "home" ? "t-home" : "t-all", t.scope === "home" ? "담임" : "공통");
-    chip(t.ready ? (t.file ? "s-pc" : "s-ready") : "s-wait", t.ready ? (t.file ? "PC 프로그램" : "사용 가능") : "준비 중");
+    if(!t.ready || t.file) chip(t.ready ? "s-pc" : "s-wait", t.ready ? "PC 프로그램" : "준비 중");
     grid.appendChild(el);
   });
+
+  /* 쌤 노트 제목: 학교 이름은 "학교·선생님 설정" 한 곳에서 (TT.school) */
+  function showTitle(){
+    var t = TT.school.title(); $("appTitle").textContent = "🧰 " + t; document.title = t;
+    $("schChip").hidden = !!TT.school.load().name || !!TT.classroom;
+  }
+  function openSchool(){
+    var sc = TT.school.load(); $("sName").value = sc.name; $("sTeacher").value = sc.teacher; prevSchool(); $("dlgSchool").showModal(); $("sName").focus();
+  }
+  function prevSchool(){ var n = $("sName").value.replace(/\s+/g, "").replace(/학교$/, ""); $("sPrev").textContent = "제목 미리보기: 🧰 " + (n ? n + " " : "") + "쌤 노트"; }
+  $("sName").oninput = prevSchool;
+  $("schChip").onclick = openSchool;
+  $("sCancel").onclick = function(){ $("dlgSchool").close(); };
+  $("fSchool").onsubmit = function(e){ e.preventDefault(); TT.school.save({name: $("sName").value, teacher: $("sTeacher").value}); $("dlgSchool").close(); showTitle(); TT.ui.toast("학교·선생님 설정을 저장했습니다."); };
+
+  /* 빠른 학생 기록 (shared/notes.js) */
+  if(TT.classroom) $("qRec").hidden = true;
+  $("qRec").onclick = function(){ TT.notes.quick({src: "첫 화면"}); };
+
+  /* 자동 알림: 생활지도·내 할 일에서 지금 챙길 것만 작은 표시로 (눌러서 바로 이동) */
+  function showAlerts(){
+    var box = $("alerts"), h = "";
+    if(TT.classroom){ box.innerHTML = ""; return; }
+    function e(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+    try{
+      var G = TT.store.get("tt_guide_v1", null), home = TT.roster.home(), L = window.Logic;
+      if(G && home && L){
+        var T = G.att || {}, hol = G.holidays || {}, set = G.settings || {}, td = L.fmt(new Date()), mon = L.weekStart(td);
+        L.cfg.countApproved = !!set.countApproved;
+        var opt = {weekN: +set.weekN || 3, runN: +set.runN || 2}, need = 0, follow = 0, reps = 0;
+        (home.students || []).forEach(function(s){
+          var sid = String(s.no), w = L.weekStatus(T, hol, sid, mon, opt);
+          if(w.level === "ok") return;
+          var since = [mon].concat(w.runs.map(function(x){ return x.start; })).sort()[0];
+          if(!(G.counsel || []).some(function(c){ return c.sid === sid && c.date >= since; })) need++;
+        });
+        follow = (G.counsel || []).filter(function(c){ return c.next && !c.done && c.next <= td; }).length;
+        /* 결석신고서: 이어진 같은 구분 결석을 한 건으로 묶어, 아직 만들지 않은 것 */
+        var rep = G.reports || {};
+        (home.students || []).forEach(function(s){
+          var no = String(s.no), cur = null;
+          Object.keys(T).filter(function(d){ var r = T[d][no]; return r && r.t === "A"; }).sort().forEach(function(d){
+            var k = T[d][no].k || "un";
+            if(cur && cur.k === k && L.nextSchoolDay(cur.end, hol) === d) cur.end = d;
+            else{ cur = {k: k, start: d, end: d}; if(!rep[no + "|" + d]) reps++; }
+          });
+        });
+        if(need) h += '<a class="al" href="apps/tardy/" title="무단지각 기준에 걸렸는데 상담일지가 없는 학생">🧭 상담 필요 ' + need + "명</a>";
+        if(follow) h += '<a class="al mid" href="apps/tardy/" title="상담 후속 확인일이 된 학생">🔁 후속 확인 ' + follow + "건</a>";
+        if(reps) h += '<a class="al mid" href="apps/tardy/" title="아직 만들지 않은 결석신고서">📄 결석신고서 ' + reps + "건</a>";
+      }
+      var M = TT.store.get("tt_mytodo_v1", null), ymd = (function(d){ return d.getFullYear() + "-" + ("0" + (d.getMonth()+1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); })(new Date());
+      var late = M && Array.isArray(M.items) ? M.items.filter(function(x){ return !x.done && x.date && x.date <= ymd; }).length : 0;
+      if(late) h += '<button type="button" class="al mid" id="alTodo" title="오늘까지인 내 할 일">📝 할 일 ' + late + "건</button>";
+    }catch(err){}
+    box.innerHTML = h;
+    var t = $("alTodo"); if(t) t.onclick = function(){ var i = document.getElementById("tdText"); if(i) i.focus(); };
+  }
 
   /* PC 프로그램(실행파일) 내려받기: 무엇인지 먼저 알려 주고 받습니다. */
   function askDownload(t){
@@ -306,14 +409,16 @@
   function closeMenu(){ $("more").open = false; }
   document.addEventListener("click", function(e){ if(!$("more").contains(e.target)) closeMenu(); });
   $("mHelp").onclick = function(){ closeMenu(); $("dlgHelp").showModal(); };
+  $("mSchool").onclick = function(){ closeMenu(); openSchool(); };
   $("mBackup").onclick = function(){ closeMenu(); TT.backup.save(); showBackup(); };
-  $("mNewYear").onclick = function(){ closeMenu(); TT.backup.newYear(function(){ showHome(); showBackup(); }); };
+  $("mNewYear").onclick = function(){ closeMenu(); TT.backup.newYear(function(){ showHome(); showBackup(); showTitle(); showAlerts(); }); };
   $("mRestore").onclick = function(){ closeMenu(); TT.backup.pick(function(){ showHome(); showBackup(); setMode(TT.store.raw("tt_mode") === "subject" ? "subject" : "home"); }); };
   var installEvt = null;
   window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); installEvt = e; $("mInstall").hidden = false; });
   $("mInstall").onclick = function(){ closeMenu(); if(installEvt){ installEvt.prompt(); installEvt = null; $("mInstall").hidden = true; } };
-  window.addEventListener("storage", showHome);
-  window.addEventListener("pageshow", function(){ showHome(); showBackup(); });
+  window.addEventListener("storage", function(){ showHome(); showTitle(); showAlerts(); });
+  window.addEventListener("tt-mytodo-change", showAlerts);
+  window.addEventListener("pageshow", function(){ showHome(); showBackup(); showTitle(); showAlerts(); });
 
   /* 오늘 내 수업: 내 시간표가 있으면 머리말 자리에 오늘 수업과 다음 수업을 보여 줍니다. */
   function showToday(){
@@ -342,7 +447,7 @@
   window.addEventListener("storage", function(ev){ if(ev.key === "tt_timetable_v1") showToday(); });
   setInterval(showToday, 60000);
 
-  showHome(); showBackup(); showToday();
+  showHome(); showBackup(); showToday(); showTitle(); showAlerts();
   setMode(TT.store.raw("tt_mode") === "subject" ? "subject" : "home");
 })();
 </script>

@@ -9,7 +9,7 @@
 <link rel="manifest" href="../../manifest.webmanifest">
 <link rel="icon" href="../../assets/icon-192.png">
 <link rel="stylesheet" href="../../shared/tt.css">
-<title>학부모 문자 만들기 · 선생님 도구 모음</title>
+<title>학부모 문자 만들기 · 쌤 노트</title>
 <!-- 학생 이름은 화면에서 문구에 들어갈 뿐 저장되지 않습니다. "보내는 사람" 표기만 이 기기에 기억합니다(tt_parent_sig). -->
 <style>
   main{flex-direction:column;gap:10px}
@@ -22,7 +22,7 @@
 <body>
 <header>
   <div>
-    <a class="back" href="../../">← 도구 모음</a>
+    <a class="back" href="../../">← 쌤 노트</a>
     <h1>✉️ 학부모 문자 만들기</h1>
   </div>
   <div class="bar">
@@ -67,6 +67,7 @@
   var me = $("me"); me.value = TT.store.raw(SIG) || "";
   var home = TT.roster.home();
   me.placeholder = home ? "예: " + home.name + " 담임 ○○○" : "예: 3학년 2반 담임 ○○○";
+  if(!me.value){ var sc = TT.school.load(); if(sc.teacher && home) me.value = (sc.name ? sc.name + " " : "") + home.name + " 담임 " + sc.teacher; }   // 학교·선생님 설정에서 기본 서명
   var t = new Date(); $("dt").value = t.getFullYear() + "-" + ("0" + (t.getMonth()+1)).slice(-2) + "-" + ("0" + t.getDate()).slice(-2);
 
   function kinds(){

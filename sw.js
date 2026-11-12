@@ -2,9 +2,9 @@
    인터넷이 되면 항상 새 파일을 받아 보여 주고(자동 업데이트), 안 되면 지난번에 받아 둔 파일을 보여 줍니다.
    버전 숫자를 따로 올릴 필요가 없습니다. 학생 자료는 다루지 않고, 프로그램 파일만 저장합니다. */
 importScripts('shared/tools.js');
-const CACHE = 'tt-files-v1';
+const CACHE = 'tt-files-v2';
 const CORE = ['./', 'manifest.webmanifest', 'assets/icon-192.png', 'assets/icon-512.png',
-              'shared/tt.css', 'shared/tt.js', 'shared/tools.js', 'shared/board.js', 'shared/mytodo.js', 'shared/vaultui.js', 'shared/vault.js', 'shared/sync.html', 'apps/tardy/absence-form.hwpx'];
+              'shared/tt.css', 'shared/tt.js', 'shared/tools.js', 'shared/board.js', 'shared/mytodo.js', 'shared/vaultui.js', 'shared/vault.js', 'shared/notes.js', 'shared/guidelogic.js', 'shared/sync.html', 'apps/tardy/absence-form.hwpx'];
 const FILES = CORE.concat(TT_TOOLS.filter(t => t.ready && t.href).map(t => t.href));   // 내려받는 PC 프로그램은 저장해 두지 않음
 
 self.addEventListener('install', e => {

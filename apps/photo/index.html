@@ -9,7 +9,7 @@
 <link rel="manifest" href="../../manifest.webmanifest">
 <link rel="icon" href="../../assets/icon-192.png">
 <link rel="stylesheet" href="../../shared/tt.css">
-<title>나이스 사진 이름 · 선생님 도구 모음</title>
+<title>나이스 사진 이름 · 쌤 노트</title>
 <!--
   반 사진 파일을 명렬표 순서대로 "이름(번호).jpg"처럼 바꾸고, 필요하면 용량을 줄여 ZIP 하나로 내려받습니다.
   · 명단은 학급 명렬표(TT.roster)에서 가져옵니다. 엑셀 파일을 따로 올리지 않습니다.
@@ -59,7 +59,7 @@
 <body>
 <header>
   <div>
-    <a class="back" href="../../">← 도구 모음</a>
+    <a class="back" href="../../">← 쌤 노트</a>
     <h1>📷 나이스 사진 이름</h1>
   </div>
   <div class="bar">
@@ -86,6 +86,7 @@
     </div>
     <div class="go">
       <button type="button" class="btn primary" id="run" disabled>⬇ 바꿔서 한 파일(ZIP)로 받기</button>
+      <button type="button" class="btn" id="toRoster" disabled title="작게 줄인 사진을 이 기기의 명렬표에만 넣습니다 (백업·동기화·교실 기기에는 가지 않음)">👥 명렬표에 사진 넣기</button>
       <span id="prog"></span>
     </div>
   </div>
@@ -97,7 +98,7 @@
 </main>
 <footer>
   <span id="stat"></span>
-  <span class="priv">🔒 사진은 이 기기 안에서만 처리 · 저장·전송 안 함</span>
+  <span class="priv">🔒 사진은 이 기기 안에서만 처리 · 명렬표에 넣은 작은 사진도 이 기기에만 (전송·동기화 안 함)</span>
 </footer>
 <input type="file" id="files" accept="image/*" multiple hidden>
 
@@ -202,7 +203,7 @@
       if(extra > 0){ st.textContent += " · 남는 사진 " + extra + "장(바꾸지 않음)"; st.className = "warn"; }
       else if(missing > 0){ st.textContent += " · 사진 없는 학생 " + missing + "명 → 사진을 안 찍은 학생을 눌러 건너뛰세요"; st.className = "warn"; }
     }
-    $("run").disabled = busy || !matched;
+    $("run").disabled = busy || !matched; $("toRoster").disabled = busy || !matched || !!TT.classroom;
     layout();
   }
   if(window.ResizeObserver) new ResizeObserver(layout).observe(list); else window.addEventListener("resize", layout);
@@ -276,6 +277,27 @@
     var big = out.reduce(function(m, f){ return Math.max(m, f.data.length); }, 0);
     $("prog").textContent = "완료: " + out.length + "장" + (fail ? " · 실패 " + fail + "장" : "") + (shrink ? " · 가장 큰 사진 " + Math.ceil(big / 1024) + "KB" : "");
     TT.ui.toast(zipName + " 파일을 저장했습니다. 압축을 풀어 나이스에 올리세요. 원본 사진은 그대로입니다.");
+    render();
+  };
+
+  /* 명렬표 사진: 짝지은 사진을 작게(긴 쪽 240px) 줄여 이 기기에만 저장 → 학급 명렬표·학생 카드에서 보임 */
+  async function thumb(file){
+    var bmp = await createImageBitmap(file), r = Math.min(1, 240 / Math.max(bmp.width, bmp.height));
+    var cv = document.createElement("canvas"); cv.width = Math.round(bmp.width * r); cv.height = Math.round(bmp.height * r);
+    var g = cv.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(bmp, 0, 0, cv.width, cv.height);
+    if(bmp.close) bmp.close();
+    return await new Promise(function(res){ cv.toBlob(res, "image/jpeg", 0.82); });
+  }
+  $("toRoster").onclick = async function(){
+    if(busy || !cls) return;
+    var todo = pairs().filter(function(p){ return p.photo; }), n = 0;
+    busy = true; this.disabled = true;
+    for(var i = 0; i < todo.length; i++){
+      $("prog").textContent = "명렬표에 넣는 중… " + (i + 1) + " / " + todo.length;
+      try{ await TT.photos.put(TT.notes.key(cls, todo[i].s), await thumb(todo[i].photo)); n++; }catch(e){}
+    }
+    busy = false; $("prog").textContent = "";
+    TT.ui.toast(n ? cls.name + " 학생 " + n + "명의 사진을 명렬표에 넣었습니다. (이 기기에만 저장)" : "사진을 넣지 못했습니다.");
     render();
   };
 

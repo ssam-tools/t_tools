@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2f6fb5">
-<title>학급 명렬표 · 선생님 도구 모음</title>
+<title>학급 명렬표 · 쌤 노트</title>
 <link rel="manifest" href="../../manifest.webmanifest">
 <link rel="icon" href="../../assets/icon-192.png">
 <link rel="stylesheet" href="../../shared/tt.css">
@@ -34,6 +34,13 @@
   .row .no.dup{border-color:var(--danger);background:var(--danger-soft);color:var(--danger)}
   .del{flex:none;width:26px;border:0;background:transparent;color:#a0a9b3;font-size:18px;cursor:pointer;border-radius:6px}
   .del:hover{background:var(--danger-soft);color:var(--danger)}
+  /* 학생 사진·카드 (사진은 이 기기에만, 메모·기록은 shared/notes.js) */
+  .ph{flex:none;width:30px;border-radius:6px;object-fit:cover;background:#eef1f4;cursor:pointer;border:0;padding:0}
+  .cardb{flex:none;position:relative;width:32px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font-size:14px;padding:0;color:var(--sub)}
+  .cardb:hover{border-color:#7a4fb5;background:#f5f0fc}
+  .cardb.has{border-color:#cdb8ea;background:#f5f0fc}
+  .cardb sup{position:absolute;top:-6px;right:-6px;background:#7a4fb5;color:#fff;border-radius:999px;font-size:10px;font-weight:800;padding:0 4px;line-height:15px;min-width:15px}
+  .cardb.memo::after{content:"";position:absolute;left:3px;top:3px;width:6px;height:6px;border-radius:50%;background:#e0a100}
   #empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;color:var(--sub);font-size:15px;line-height:1.65;padding:10px}
   #empty .big{font-size:42px}
   #empty b{color:var(--ink)}
@@ -50,14 +57,14 @@
     #list{display:block!important;column-count:3;overflow:visible}
     .row{break-inside:avoid;margin-bottom:4px}
     .row input{border:0;background:none;font-size:14px;padding:2px 4px}
-    .del{display:none}
+    .del,.cardb,.ph{display:none}
   }
 </style>
 </head>
 <body>
 <header>
   <div>
-    <a class="back" href="../../">← 도구 모음</a>
+    <a class="back" href="../../">← 쌤 노트</a>
     <h1>👥 학급 명렬표</h1>
   </div>
   <div class="bar">
@@ -208,15 +215,45 @@
       b.maxLength = 20; b.autocomplete = "off"; b.setAttribute("aria-label", s.no + "번 이름");
       var d = document.createElement("button"); d.type = "button"; d.className = "del";
       d.textContent = "×"; d.title = "삭제"; d.setAttribute("aria-label", s.no + "번 삭제");
-      row.appendChild(a); row.appendChild(b); row.appendChild(d);
+      row.appendChild(a); row.appendChild(b);
+      if(!TT.classroom){ var cb = document.createElement("button"); cb.type = "button"; cb.className = "cardb"; cb.textContent = "📇"; cb.title = "학생 카드: 사진·메모·기록"; cb.setAttribute("aria-label", s.no + "번 학생 카드"); row.appendChild(cb); }
+      row.appendChild(d);
       list.appendChild(row);
     });
     var has = c.students.length > 0;
     $("empty").hidden = has; list.hidden = !has;
     $("cnt").textContent = has ? c.name + " · 총 " + c.students.length + "명" : "";
-    layout();
+    layout(); decorate();
   }
   function renderAll(){ renderSel(); renderList(); }
+
+  /* 학생 카드 단추에 메모·기록 표시, 사진이 있으면 번호 앞에 작게 */
+  var urls = [];
+  function decorate(){
+    if(TT.classroom) return;
+    var c = cur(), N = TT.notes, m = N.count(), memo = N.load().memo;
+    Array.prototype.forEach.call(list.children, function(row){
+      var s = c.students[+row.dataset.i], k = N.key(c, s), b = row.querySelector(".cardb"); if(!b || !s) return;
+      var n = m[k] || 0, mm = memo[k] && memo[k].t;
+      b.className = "cardb" + (n || mm ? " has" : "") + (mm ? " memo" : "");
+      b.innerHTML = "📇" + (n ? "<sup>" + n + "</sup>" : "");
+      b.title = (mm ? "메모: " + mm + "\n" : "") + "기록 " + n + "건 · 눌러서 학생 카드";
+    });
+    urls.forEach(function(u){ URL.revokeObjectURL(u); }); urls = [];
+    var pre = c.grade && c.cls ? c.grade + "-" + c.cls + "-" : c.id + "-";
+    TT.photos.all().then(function(all){
+      if(cur() !== c) return;
+      Array.prototype.forEach.call(list.children, function(row){
+        var s = c.students[+row.dataset.i], blob = s && all[pre + s.no], old = row.querySelector(".ph");
+        if(old) old.remove();
+        if(!blob){ if(Object.keys(all).some(function(k){ return k.indexOf(pre) === 0; })){ var e0 = document.createElement("span"); e0.className = "ph"; row.insertBefore(e0, row.firstChild); } return; }
+        var u = URL.createObjectURL(blob); urls.push(u);
+        var img = document.createElement("img"); img.className = "ph"; img.src = u; img.alt = ""; img.title = "학생 카드 열기";
+        row.insertBefore(img, row.firstChild);
+      });
+    });
+  }
+  window.addEventListener("tt-notes-change", decorate);
 
   if(window.ResizeObserver){ new ResizeObserver(layout).observe(list); }
   else window.addEventListener("resize", layout);
@@ -353,6 +390,8 @@
     c.students[i].no = v; c.students.sort(byNo); save(); renderAll();
   });
   list.addEventListener("click", function(e){
+    var cb = e.target.closest(".cardb, .ph");
+    if(cb){ var cc = cur(), st = cc.students[+cb.parentNode.dataset.i]; if(st) TT.notes.card(cc, st); return; }
     if(!e.target.classList.contains("del")) return;
     var snap = clone(D), c = cur(), i = +e.target.parentNode.dataset.i, s = c.students[i];
     c.students.splice(i, 1); save(); renderAll();

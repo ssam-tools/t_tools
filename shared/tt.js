@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.4.0";
+  var VERSION = "0.5.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -417,7 +417,7 @@ var TT = (function(){
     },
     save: function(){
       var b = backup.make();
-      download("선생님도구_전체백업_" + today() + ".json", JSON.stringify(b, null, 1), "application/json");
+      download("쌤노트_전체백업_" + today() + ".json", JSON.stringify(b, null, 1), "application/json");
       store.setRaw("tt_last_backup", new Date().toISOString());
       ui.toast("모든 도구의 자료를 백업 파일 하나로 저장했습니다. 다운로드 폴더를 확인하세요.");
     },
@@ -433,11 +433,12 @@ var TT = (function(){
     /* 새 학년 시작: 전체 백업을 파일로 저장한 뒤 모든 도구의 자료를 비웁니다. */
     newYear: function(done){
       ui.confirm("새 학년 시작",
-        "지금까지의 자료(명렬표, 출결, 상담 기록 등)를 백업 파일 하나로 저장한 뒤, 이 기기의 자료를 모두 비웁니다. 비운 뒤에는 새 학년 나이스 명단을 올려 다시 시작합니다.",
+        "지금까지의 자료(명렬표, 출결·상담, 학생 메모·기록 등)를 백업 파일 하나로 저장한 뒤, 이 기기의 자료와 학생 사진을 모두 비웁니다. 동기화를 켰다면 보관함에서도 지워집니다. 학교 이름·업무판 연결은 그대로 둡니다. 비운 뒤에는 새 학년 나이스 명단을 올려 다시 시작합니다.",
         "백업 저장 후 비우기", function(){
           backup.save();
           setTimeout(function(){
-            store.keys().forEach(function(k){ if(k !== "tt_mode" && k.indexOf("tt_board") !== 0) store.remove(k); });   // 학교 업무판 연결은 새 학년에도 유지
+            store.keys().forEach(function(k){ if(k !== "tt_mode" && k !== "tt_school_v1" && k.indexOf("tt_board") !== 0) store.remove(k); });   // 학교 업무판 연결·학교 이름은 새 학년에도 유지
+            photos.clear();                                                                    // 학생 사진도 지움
             ui.toast("지난 학년 자료를 비웠습니다. 백업 파일은 다운로드 폴더에 있습니다.");
             if(done) done();
           }, 600);
@@ -501,14 +502,24 @@ var TT = (function(){
       + ".tt-ri:hover{background:#e6f0fa;color:#2f6fb5}"
       + ".tt-ri.on{background:#2f6fb5;color:#fff}"
       + ".tt-ri:focus-visible{outline:3px solid #7fb0e6;outline-offset:1px}"
+      + "button.tt-ri{border:0;background:transparent;cursor:pointer;font-family:inherit;padding:0}"
+      + ".tt-grp{display:flex;flex-direction:column;gap:2px;background:#eef4fb;border-radius:10px;padding:3px 0 3px}"
+      + ".tt-gh{display:flex;flex-direction:column;align-items:center;color:#2f6fb5;padding:2px 0;font-family:'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif}"
+      + ".tt-gh span{font-size:18px;line-height:1}.tt-gh b{font-size:10.5px;font-weight:800}"
+      + ".tt-ri.sub{margin:0 3px;background:#fff;border:1px solid #d6e3f1}"
+      + ".tt-ri.sub span{font-size:15px}.tt-ri.sub b{font-size:9.5px}"
+      + ".tt-ri.sub.on{background:#2f6fb5;border-color:#2f6fb5}"
+      + ".tt-ri.rec{color:#7a4fb5}.tt-ri.rec:hover{background:#f1eafb;color:#7a4fb5}"
       + "@media " + WIDE + "{"
       +   "html.tt-hasnav body{margin-left:var(--tt-rail)!important}"
       +   "html.tt-hasnav .back,html.tt-hasnav .ttback{display:none!important}"
       +   "html.tt-hasnav .cta,html.tt-hasnav .tabs,html.tt-hasnav .dock{left:var(--tt-rail)!important}"
       +   ".tt-rail{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:var(--tt-rail);z-index:15;background:#fff;border-right:1px solid #dde3ea;padding:6px 5px;gap:2px;overflow-y:auto;box-sizing:border-box}"
       +   ".tt-rail .tt-ri{flex:1 1 0;max-height:60px;min-height:38px}"
+      +   ".tt-rail .tt-grp{flex:0 0 auto}.tt-rail .tt-ri.sub{flex:0 0 40px;min-height:0}"
+      +   ".tt-rail .rec{flex:0 0 50px;border-top:1px solid #dde3ea;border-radius:0;margin-top:auto}"
       +   ".tt-rail .home{flex:0 0 50px;border-bottom:1px solid #dde3ea;border-radius:10px 10px 0 0;margin-bottom:4px}"
-      +   ".tt-rail .bd{flex:0 0 50px;border-top:1px solid #dde3ea;border-radius:0 0 10px 10px;margin-top:4px}"
+      +   ".tt-rail .bd{flex:0 0 50px;border-top:1px solid #dde3ea;border-radius:0 0 10px 10px}"
       + "}"
       + "@media (max-width:899px),(max-height:459px){"
       +   "html.tt-hasnav .tt-navbtn{display:inline-block;font:inherit;font-size:12px;font-weight:700;border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:1px 9px;margin-left:8px;cursor:pointer;opacity:.85;vertical-align:middle}"
@@ -520,18 +531,33 @@ var TT = (function(){
       + ".tt-sheet h3{grid-column:1/-1;font-size:15px;margin:0 0 2px;color:#1d2733;font-family:'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif}"
       + ".tt-sheet .tt-ri{min-height:66px;border:1px solid #dde3ea}"
       + ".tt-sheet .tt-ri b{font-size:12px}"
+      + ".tt-sheet .tt-grp{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:6px}.tt-sheet .tt-gh{grid-column:1/-1;flex-direction:row;gap:6px;justify-content:flex-start;padding:0 4px}.tt-sheet .tt-ri.sub{min-height:56px;margin:0}"
       + "@media print{.tt-rail,.tt-navbtn,.tt-sheet{display:none!important}html.tt-hasnav body{margin-left:0!important}}";
     function attr(v){ return String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
     function items(){
       var subject = store.raw("tt_mode") === "subject";
-      var h = '<a class="tt-ri home" href="' + BASE + '" title="도구 모음 첫 화면"><span>🧰</span><b>도구 모음</b></a>';
-      TT_TOOLS.forEach(function(t){
-        if(!t.ready || !t.href) return;                                   // 내려받는 PC 프로그램은 첫 화면에서
-        if(subject && t.scope === "home" && t.id !== here) return;        // "교과만"이면 담임용 도구는 숨김
-        if(classroom && !t.room) return;                                   // 교실 기기에서는 수업용 도구만
+      var me = TT_TOOLS.filter(function(t){ return t.id === here; })[0], grp = me ? (me.in || me.id) : null;
+      function ok(t){
+        if(!t.ready || !t.href) return false;                              // 내려받는 PC 프로그램은 첫 화면에서
+        if(classroom && !t.room) return false;                             // 교실 기기에서는 수업용 도구만
+        if(subject && t.scope === "home" && t.id !== grp) return false;   // "교과만"이면 담임용 도구는 숨김
+        return true;
+      }
+      function link(t, cls, label, icon){
         var on = t.id === here;
-        h += '<a class="tt-ri' + (on ? ' on' : '') + '" href="' + BASE + t.href + '" title="' + attr(t.name) + '"' + (on ? ' aria-current="page"' : '') + '><span>' + t.icon + '</span><b>' + attr(t.short || t.name) + '</b></a>';
+        return '<a class="tt-ri' + cls + (on ? ' on' : '') + '" href="' + BASE + t.href + '" title="' + attr(t.name) + '"' + (on ? ' aria-current="page"' : '') + '><span>' + icon + '</span><b>' + attr(label) + '</b></a>';
+      }
+      var h = '<a class="tt-ri home" href="' + BASE + '" title="첫 화면"><span>🧰</span><b>쌤 노트</b></a>';
+      TT_TOOLS.forEach(function(t){
+        if(t.in || !ok(t)) return;
+        var subs = TT_TOOLS.filter(function(x){ return x.in === t.id && ok(x); });
+        if(t.id === grp && subs.length){                                  // 지금 묶음: 대표 + 하위 도구를 펼쳐 보임
+          h += '<div class="tt-grp"><div class="tt-gh"><span>' + t.icon + '</span><b>' + attr(t.short || t.name) + '</b></div>';
+          [t].concat(subs).forEach(function(x){ h += link(x, " sub", x.sub || x.short || x.name, x.icon); });
+          h += '</div>';
+        } else h += link(t, "", t.short || t.name, t.icon);
       });
+      if(!classroom) h += '<button type="button" class="tt-ri rec" data-tt="rec" title="학생 기록 한 줄 남기기 (생기부 자료)"><span>✏️</span><b>학생 기록</b></button>';
       var b = store.get("tt_board_v1", {}) || {};
       if(b.url && !b.hidden && /^https:\/\/script\.google\.com\//.test(b.url))
         h += '<a class="tt-ri bd" href="' + attr(b.url) + '" target="_blank" rel="noopener" title="학교 업무판 (새 창)"><span>📅</span><b>업무판</b></a>';
@@ -547,6 +573,7 @@ var TT = (function(){
       document.body.appendChild(sheet);
       sheet.addEventListener("click", function(e){ if(e.target === sheet) sheet.hidden = true; });
       document.addEventListener("keydown", function(e){ if(e.key === "Escape") sheet.hidden = true; });
+      document.addEventListener("click", function(e){ var r = e.target.closest && e.target.closest("[data-tt=rec]"); if(r){ sheet.hidden = true; notes.quick({}); } });
       Array.prototype.forEach.call(document.querySelectorAll(".back, .ttback"), function(a){
         var btn = document.createElement("button"); btn.type = "button"; btn.className = "tt-navbtn"; btn.textContent = "☰ 도구";
         btn.addEventListener("click", function(e){ e.preventDefault(); sheet.hidden = false; });
@@ -587,7 +614,110 @@ var TT = (function(){
   })();
 
   /* 보관함 동기화 화면(설정창·교실 모드·상태 표시)은 따로 불러옵니다 */
+  /* ---------- 학교·선생님 설정 ("tt_school_v1") ----------
+     학교 이름은 여기 한 곳에만 넣으면 첫 화면 제목, 결석신고서, 학부모 문자에 함께 쓰입니다. */
+  var school = {
+    load: function(){
+      var o = store.get("tt_school_v1", null) || {};
+      var name = String(o.name || "").trim();
+      if(!name){ var b = store.get("tt_board_v1", null) || {}; name = String(b.school || "").trim(); }
+      return {name: name, teacher: String(o.teacher || "").trim()};
+    },
+    save: function(o){
+      var c = store.get("tt_school_v1", null) || {};
+      if(o.name != null) c.name = String(o.name).trim().slice(0, 20);
+      if(o.teacher != null) c.teacher = String(o.teacher).trim().slice(0, 10);
+      c.updatedAt = Date.now(); store.set("tt_school_v1", c);
+    },
+    short: function(){ return school.load().name.replace(/\s+/g, "").replace(/학교$/, ""); },   // 마산서중학교 → 마산서중
+    title: function(){ var s = school.short(); return (s ? s + " " : "") + "쌤 노트"; }
+  };
+
+  /* ---------- 학생 기록 ("tt_notes_v1") ----------
+     모든 도구가 함께 쓰는 학생 기록 창고. 학생 메모(한 줄)와 날짜별 기록(영역: 교과·행동·창체 등)을 담습니다.
+     학생은 "학년-반-번호"로 찾고, 이름도 함께 적어 둡니다(명단이 바뀌었을 때 확인용).
+     교실 기기에는 보내지 않습니다(동기화 CLASS_KEYS에 없음). 화면은 shared/notes.js */
+  var notes = (function(){
+    var KEY = "tt_notes_v1";
+    var AREAS = [["subj","교과 세특"],["beh","행동특성"],["auto","자율"],["club","동아리"],["career","진로"],["etc","기타"]];
+    function load(){
+      var d = store.get(KEY, null); if(!d || typeof d !== "object") d = {};
+      if(!d.memo || typeof d.memo !== "object") d.memo = {};
+      if(!Array.isArray(d.recs)) d.recs = [];
+      d.v = 1; return d;
+    }
+    function save(d){ d.updatedAt = Date.now(); return store.set(KEY, d); }
+    function key(c, s){ return c && (c.grade && c.cls) ? c.grade + "-" + c.cls + "-" + s.no : (c ? c.id : "_") + "-" + s.no; }
+    function ymd(){ var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()); }
+    return {
+      KEY: KEY, AREAS: AREAS, load: load, save: save, key: key,
+      area: function(id){ var a = AREAS.filter(function(x){ return x[0] === id; })[0]; return a ? a[1] : "기타"; },
+      memo: function(k){ var m = load().memo[k]; return m ? m.t || "" : ""; },
+      setMemo: function(k, text, name){
+        var d = load(); text = String(text || "").trim().slice(0, 200);
+        if(text) d.memo[k] = {t: text, n: name || "", u: Date.now()}; else delete d.memo[k];
+        save(d);
+      },
+      add: function(o){
+        var d = load(), r = {id: uid(), k: o.k, n: o.n || "", date: o.date || ymd(), area: o.area || "etc", src: o.src || "", text: String(o.text || "").trim().slice(0, 1000), at: Date.now()};
+        if(!r.k || !r.text) return null;
+        d.recs.push(r); save(d); return r;
+      },
+      update: function(id, patch){ var d = load(); d.recs.forEach(function(r){ if(r.id === id) Object.assign(r, patch); }); save(d); },
+      remove: function(id){ var d = load(); d.recs = d.recs.filter(function(r){ return r.id !== id; }); save(d); },
+      list: function(k){ return load().recs.filter(function(r){ return !k || r.k === k; }).sort(function(a, b){ return b.date < a.date ? -1 : b.date > a.date ? 1 : b.at - a.at; }); },
+      count: function(){ var c = {}; load().recs.forEach(function(r){ c[r.k] = (c[r.k] || 0) + 1; }); return c; },
+      /* 화면(빠른 기록·학생 카드)은 shared/notes.js 가 채웁니다. */
+      quick: function(o){ withUI(function(){ TT.notesUI.quick(o || {}); }); },
+      card: function(c, s){ withUI(function(){ TT.notesUI.card(c, s); }); }
+    };
+  })();
+  function withUI(fn){
+    if(TT.notesUI) return fn();
+    var s = document.createElement("script"); s.src = BASE + "shared/notes.js"; s.onload = fn; document.head.appendChild(s);
+  }
+
+  /* ---------- 학생 사진 (명렬표에서만 보임) ----------
+     "나이스 사진 이름"에서 짝지은 사진을 작게 줄여 이 기기의 IndexedDB("tt_photos")에만 둡니다.
+     전체 백업·동기화에는 들어가지 않습니다(용량이 크고 민감한 자료). 키는 학생 기록과 같은 "학년-반-번호". */
+  var photos = (function(){
+    var DB = "tt_photos", ST = "p";
+    function open(){
+      return new Promise(function(res, rej){
+        if(!window.indexedDB) return rej(new Error("no idb"));
+        var r = indexedDB.open(DB, 1);
+        r.onupgradeneeded = function(){ r.result.createObjectStore(ST); };
+        r.onsuccess = function(){ res(r.result); }; r.onerror = function(){ rej(r.error); };
+      });
+    }
+    function tx(mode, fn){
+      return open().then(function(db){ return new Promise(function(res, rej){
+        var t = db.transaction(ST, mode), st = t.objectStore(ST), out = fn(st);
+        t.oncomplete = function(){ db.close(); res(out && "result" in out ? out.result : out); };
+        t.onerror = function(){ db.close(); rej(t.error); };
+      }); });
+    }
+    return {
+      put: function(k, blob){ return tx("readwrite", function(st){ st.put(blob, k); }); },
+      get: function(k){ return tx("readonly", function(st){ return st.get(k); }).catch(function(){ return null; }); },
+      all: function(){
+        return open().then(function(db){ return new Promise(function(res){
+          var out = {}, t = db.transaction(ST, "readonly"), c = t.objectStore(ST).openCursor();
+          c.onsuccess = function(){ var cur = c.result; if(cur){ out[cur.key] = cur.value; cur.continue(); } };
+          t.oncomplete = function(){ db.close(); res(out); }; t.onerror = function(){ db.close(); res(out); };
+        }); }).catch(function(){ return {}; });
+      },
+      del: function(k){ return tx("readwrite", function(st){ st.delete(k); }); },
+      clear: function(prefix){
+        return tx("readwrite", function(st){
+          if(!prefix){ st.clear(); return; }
+          var c = st.openCursor(); c.onsuccess = function(){ var cur = c.result; if(cur){ if(String(cur.key).indexOf(prefix) === 0) cur.delete(); cur.continue(); } };
+        }).catch(function(){});
+      }
+    };
+  })();
+
   (function(){ var s = document.createElement("script"); s.src = BASE + "shared/vaultui.js"; s.defer = true; document.head.appendChild(s); })();
 
-  return { VERSION: VERSION, BASE: BASE, classroom: classroom, store: store, roster: roster, timetable: timetable, file: {toRows: fileToRows, readXlsx: readXlsx, userErr: userErr, zip: makeZip}, util: util, ui: ui, backup: backup };
+  return { VERSION: VERSION, BASE: BASE, classroom: classroom, store: store, roster: roster, timetable: timetable, school: school, notes: notes, photos: photos, file: {toRows: fileToRows, readXlsx: readXlsx, userErr: userErr, zip: makeZip}, util: util, ui: ui, backup: backup };
 })();

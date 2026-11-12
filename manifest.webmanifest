@@ -1,7 +1,7 @@
 {
-  "name": "선생님 도구 모음",
-  "short_name": "선생님 도구",
-  "description": "학급 운영과 수업에 쓰는 선생님용 도구 모음",
+  "name": "쌤 노트",
+  "short_name": "쌤 노트",
+  "description": "학급 운영·수업·생활지도 기록을 한곳에 모은 선생님 노트",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",

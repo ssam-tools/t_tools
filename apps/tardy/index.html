@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#2f6fb5">
 <link rel="manifest" href="../../manifest.webmanifest">
 <link rel="icon" href="../../assets/icon-192.png">
-<title>학생 생활지도(출결 포함) · 선생님 도구 모음</title>
+<title>생활지도(결석계) · 쌤 노트</title>
 <!--
   학생 생활지도(출결 포함)  — 예전 이름: 지각 관리 노트
   · 명단: 학급 명렬표의 "우리 반"(TT.roster.home). 프로그램 안에 학생 이름을 넣어 두지 않습니다.
@@ -226,7 +226,7 @@ table.plain{width:100%;border-collapse:collapse;font-size:13.5px}
 <body>
 <div class="app">
   <header class="hdr">
-    <div class="hl"><a class="back" href="../../">← 도구 모음</a><h1>🧭 학생 생활지도 <span class="sub" style="font-size:13px;font-weight:700">(출결 포함)</span></h1><span class="sub" id="classname"></span></div>
+    <div class="hl"><a class="back" href="../../">← 쌤 노트</a><h1>🧭 생활지도 <span class="sub" style="font-size:13px;font-weight:700">(결석계)</span></h1><span class="sub" id="classname"></span></div>
     <div class="hr"><button class="btn btn-sm" id="maskBtn" data-act="mask" aria-pressed="false">이름 가리기</button></div>
   </header>
   <main id="main"></main>
@@ -245,56 +245,7 @@ table.plain{width:100%;border-collapse:collapse;font-size:13.5px}
 <div id="printArea"></div>
 
 <script src="../../shared/tt.js"></script>
-<script>
-/* ======================= 날짜·판정 규칙 ======================= */
-const Logic = (() => {
-  const KD = ['일', '월', '화', '수', '목', '금', '토'];
-  const cfg = { countApproved: false };
-  const pad = n => String(n).padStart(2, '0');
-  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
-  const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return fmt(d); };
-  const dow = s => parse(s).getDay();
-  const diffDays = (a, b) => Math.round((parse(a) - parse(b)) / 86400000);
-  const label = d => { const x = parse(d); return `${x.getMonth() + 1}/${x.getDate()}(${KD[x.getDay()]})`; };
-  const isSchoolDay = (s, hol) => { const w = dow(s); return w !== 0 && w !== 6 && !(hol && hol[s]); };
-  const step = (s, dir, hol) => { let x = addDays(s, dir), g = 0; while (!isSchoolDay(x, hol) && g++ < 400) x = addDays(x, dir); return x; };
-  const prevSchoolDay = (s, hol) => step(s, -1, hol);
-  const nextSchoolDay = (s, hol) => step(s, 1, hol);
-  const weekStart = s => { const w = dow(s); return addDays(s, w === 0 ? -6 : 1 - w); };
-  const weekDates = mon => [0, 1, 2, 3, 4].map(i => addDays(mon, i));
-  /* 무단 지각만 기준에 넣음 (설정에서 인정 지각 포함 가능) */
-  const isTardy = (T, hol, key, d) => { const r = T[d] && T[d][key]; return !!r && r.t === 'L' && (cfg.countApproved || !r.o) && isSchoolDay(d, hol); };
-  function runAround(T, hol, key, d) {
-    let start = d, end = d, len = 1, g = 0;
-    while (g++ < 400) { const p = prevSchoolDay(start, hol); if (isTardy(T, hol, key, p)) { start = p; len++; } else break; }
-    g = 0;
-    while (g++ < 400) { const n = nextSchoolDay(end, hol); if (isTardy(T, hol, key, n)) { end = n; len++; } else break; }
-    return { start, end, len };
-  }
-  function weekStatus(T, hol, key, mon, opt) {
-    const weekN = (opt && opt.weekN) || 3, runN = (opt && opt.runN) || 2;
-    const tardyDays = weekDates(mon).filter(d => isTardy(T, hol, key, d));
-    const runDates = new Set(), runs = [], seen = new Set();
-    tardyDays.forEach(d => { const r = runAround(T, hol, key, d); if (r.len >= runN) { runDates.add(d); if (!seen.has(r.start)) { seen.add(r.start); runs.push(r); } } });
-    const alert = tardyDays.length >= weekN, caution = runs.length > 0;
-    return { count: tardyDays.length, tardyDays, runDates, runs, alert, caution, level: alert ? 'alert' : caution ? 'caution' : 'ok' };
-  }
-  const allTardyDates = (T, hol, key) => Object.keys(T).filter(d => isTardy(T, hol, key, d)).sort();
-  function allRuns(T, hol, key, runN) {
-    const out = [], seen = new Set();
-    allTardyDates(T, hol, key).forEach(d => { const r = runAround(T, hol, key, d); if (r.len >= (runN || 2) && !seen.has(r.start)) { seen.add(r.start); out.push(r); } });
-    return out;
-  }
-  function describe(w) {
-    const parts = [];
-    if (w.alert) parts.push(`주 ${w.count}회 무단지각(${w.tardyDays.map(label).join(', ')})`);
-    w.runs.forEach(r => parts.push(`${r.len}일 연속 무단지각(${label(r.start)}~${label(r.end)})`));
-    return parts.join(' / ');
-  }
-  return { KD, cfg, fmt, parse, addDays, dow, diffDays, label, isSchoolDay, prevSchoolDay, nextSchoolDay, weekStart, weekDates, isTardy, runAround, weekStatus, allTardyDates, allRuns, describe };
-})();
-</script>
+<script src="../../shared/guidelogic.js"></script>
 <script>
 (function () {
 'use strict';
@@ -369,7 +320,7 @@ function persist() { try { localStorage.setItem(KEY, JSON.stringify(S)); storage
 loadHome();
 let S = (() => { const o = lsGet(KEY); if (o) return normalize(o); const m = migrate(); return m || blank(); })();
 if (!lsGet(KEY)) persist();
-if (!S.settings.school) { const b = lsGet('tt_board_v1'); if (b && b.school) S.settings.school = b.school; }   // 업무판에 연결돼 있으면 학교 이름을 가져옴
+{ const sc = TT.school.load(); if (sc.name) S.settings.school = sc.name; if (sc.teacher) S.settings.teacher = sc.teacher; }   // 학교 이름·담임 이름은 공통 설정(첫 화면 ⋯ → 학교·선생님 설정)과 같은 값
 
 const startDate = () => { const t = today(); return L.isSchoolDay(t, S.holidays) ? t : L.prevSchoolDay(t, S.holidays); };
 let view = { tab: 'entry', date: startDate(), monday: L.weekStart(today()), filter: 'all', range: 'all', logStudent: '', sel: '', mode: 'L', ok: false, rmonth: 'all' };
@@ -974,8 +925,8 @@ const C = {
   runN: t => { S.settings.runN = Math.min(5, Math.max(2, +t.value || 2)); persist(); render(); },
   weekN: t => { S.settings.weekN = Math.min(5, Math.max(2, +t.value || 3)); persist(); render(); },
   cApp: t => { S.settings.countApproved = !!t.checked; persist(); render(); },
-  school: t => { S.settings.school = t.value.trim(); persist(); },
-  teacher: t => { S.settings.teacher = t.value.trim(); persist(); },
+  school: t => { S.settings.school = t.value.trim(); TT.school.save({ name: S.settings.school }); persist(); },
+  teacher: t => { S.settings.teacher = t.value.trim(); TT.school.save({ teacher: S.settings.teacher }); persist(); },
   confirm: t => { S.settings.confirm = t.value; persist(); },
   'rec-ok': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; const n = Object.assign({}, cur); if (t.checked) n.o = 1; else delete n.o; setRec(no, d, n); render(); recModal(no, d); },
   'rec-min': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; const n = Object.assign({}, cur); if (+t.value > 0) n.m = +t.value; else delete n.m; setRec(no, d, n); },
