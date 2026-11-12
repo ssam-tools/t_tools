@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>생기부 도우미 · 쌤 노트</title>
+<!--
+  생기부 도우미: 학생 기록(tt_notes_v1)을 학생·영역별로 모아 보고, 초안을 쓰고, 나이스 글자 수(바이트)와 유의 낱말을 점검합니다.
+  · 기록은 수업 기록장·뽑기 발표·상담일지 행동특성·✍️ 학생 기록에서 모입니다(shared/tt.js TT.notes).
+  · 초안: "tt_saeteuk_v1" {drafts:{"학년-반-번호":{영역:{t, u}}}, limits:{영역:바이트}, words:[유의 낱말], few:기록 적음 기준}
+  · 문장은 선생님이 씁니다. 학생 자료를 밖(외부 AI 등)으로 보내지 않습니다. 교실 기기에서는 열리지 않습니다.
+-->
+<style>
+  header{align-items:center}
+  main{display:grid!important;grid-template-columns:minmax(200px,240px) minmax(0,1fr) minmax(0,1.25fr);gap:10px;padding:10px!important;min-height:0}
+  .col{min-height:0;display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;overflow:hidden}
+  .col h2{font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:6px}
+  .col h2 .sp{flex:1}
+  .muted{color:var(--sub);font-size:12.5px}
+  .sum{font-size:12px;color:var(--sub);line-height:1.5}
+  .sum b{color:var(--ink)}
+  /* 학생 목록 */
+  .stl{list-style:none;overflow:auto;min-height:0;flex:1;display:flex;flex-direction:column;gap:2px}
+  .stl button{width:100%;display:flex;align-items:center;gap:6px;font:inherit;font-size:13.5px;border:0;background:transparent;border-radius:8px;padding:4px 6px;cursor:pointer;text-align:left;color:var(--ink)}
+  .stl button:hover{background:#f3f6f9}
+  .stl button[aria-current=true]{background:var(--accent);color:#fff}
+  .stl .no{width:22px;color:var(--sub);font-size:12px;text-align:right;flex:none}
+  .stl button[aria-current=true] .no{color:#dbe8f6}
+  .stl .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cnt{font-size:11px;font-weight:800;border-radius:999px;padding:0 6px;background:#eceff3;color:#4a5560;min-width:20px;text-align:center}
+  .cnt.few{background:var(--danger-soft);color:var(--danger)}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none;background:#dde3ea}
+  .dot.mid{background:var(--star)}.dot.full{background:var(--ok)}
+  .stl button[aria-current=true] .cnt{background:rgba(255,255,255,.25);color:#fff}
+  /* 근거 기록 */
+  .recs{list-style:none;overflow:auto;min-height:0;flex:1;display:flex;flex-direction:column;gap:4px}
+  .recs li{display:flex;gap:6px;align-items:flex-start;border:1px solid #eef1f4;border-radius:8px;padding:5px 7px;font-size:13.5px;line-height:1.45}
+  .recs li.on{background:#f5f0fc;border-color:#cdb8ea}
+  .recs input{margin-top:3px;width:16px;height:16px;accent-color:#7a4fb5;flex:none}
+  .recs .d{flex:none;color:var(--sub);font-size:12px;min-width:34px;padding-top:1px}
+  .recs .t{flex:1;word-break:break-all}
+  .recs .src{color:var(--sub);font-size:11.5px}
+  .tag{flex:none;font-size:11px;font-weight:700;border-radius:999px;padding:1px 7px;background:#efe7fa;color:#4b2a80}
+  .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .row .btn{padding:6px 10px;font-size:13px}
+  .add{display:flex;gap:6px}
+  .add input{flex:1;min-width:0;font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:9px;padding:6px 9px}
+  /* 초안 */
+  #draft{flex:1;min-height:0;resize:none;font:inherit;font-size:15px;line-height:1.75;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fbfcfd;color:var(--ink)}
+  #draft:focus{outline:2px solid #7fb0e6;border-color:#7fb0e6;background:#fff}
+  .meter{height:8px;border-radius:999px;background:#eceff3;overflow:hidden}
+  .meter i{display:block;height:100%;background:var(--ok);transition:width .2s}
+  .meter.over i{background:var(--danger)}
+  .bytes{font-size:13px;font-weight:700;display:flex;gap:8px;align-items:center}
+  .bytes .over{color:var(--danger)}
+  .warns{list-style:none;display:flex;flex-direction:column;gap:3px;max-height:22vh;overflow:auto}
+  .warns li{font-size:12.5px;border-radius:8px;padding:3px 8px;background:var(--star-soft);color:#6b4e00}
+  .warns li.bad{background:var(--danger-soft);color:var(--danger)}
+  .warns li.ok{background:var(--ok-soft);color:var(--ok)}
+  .seg button{padding:7px 11px}
+  dialog textarea{height:clamp(90px,22vh,180px)}
+  dialog label.f{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin-top:10px}
+  dialog .lim{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+  dialog .lim input{width:100%;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:5px 6px}
+  dialog .acts{display:flex;justify-content:space-between;margin-top:12px}dialog .acts .r{display:flex;gap:6px}
+  @media (max-width:900px){ main{grid-template-columns:1fr;overflow:auto} body{height:auto;min-height:100dvh;overflow:auto} .col{max-height:none} #draft{min-height:220px} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>📑 생기부 도우미</h1>
+  </div>
+  <div class="bar">
+    <select id="clsSel" aria-label="학급 선택"></select>
+    <div class="seg" role="group" aria-label="영역" id="areas"></div>
+    <details class="more" id="more">
+      <summary aria-label="더 보기">⋯</summary>
+      <div class="menu">
+        <button type="button" id="mCsv">이 반 초안 표로 내려받기(CSV)</button>
+        <button type="button" id="mSet">글자 수·점검 낱말 설정</button>
+      </div>
+    </details>
+  </div>
+</header>
+<main class="panel" id="m">
+  <section class="col" aria-label="학생 목록">
+    <h2>학생 <span class="sp"></span><label class="muted"><input type="checkbox" id="onlyFew"> 기록 적은 학생만</label></h2>
+    <div class="sum" id="sum"></div>
+    <ul class="stl" id="stl"></ul>
+  </section>
+  <section class="col" aria-label="근거 기록">
+    <h2>근거 기록 <span class="muted" id="recInfo"></span><span class="sp"></span><label class="muted"><input type="checkbox" id="allAreas"> 모든 영역</label></h2>
+    <ul class="recs" id="recs"></ul>
+    <div class="row"><button type="button" class="btn" id="paste" disabled>⬇ 고른 기록을 초안 아래에 붙이기</button><span class="muted">붙인 뒤 문장으로 다듬어 쓰세요</span></div>
+    <div class="add"><input type="text" id="addTxt" maxlength="1000" placeholder="기록 한 줄 더하기 (Enter)"><button type="button" class="btn" id="addBtn">더하기</button></div>
+  </section>
+  <section class="col" aria-label="초안">
+    <h2 id="dTitle">초안</h2>
+    <textarea id="draft" spellcheck="false" placeholder="근거 기록을 보며 이 학생의 모습을 문장으로 적어 보세요. 자동으로 저장됩니다."></textarea>
+    <div class="bytes"><span id="byteTxt"></span><span class="muted" id="saved"></span></div>
+    <div class="meter" id="meter"><i></i></div>
+    <ul class="warns" id="warns"></ul>
+    <div class="row"><button type="button" class="btn" id="prev">◀ 이전 학생</button><button type="button" class="btn primary" id="copy">📋 복사 (나이스에 붙여 넣기)</button><button type="button" class="btn" id="next">다음 학생 ▶</button></div>
+  </section>
+</main>
+<footer>
+  <span>문장은 선생님이 씁니다 · 근거 기록은 날짜와 출처를 함께 보여 줍니다</span>
+  <span class="priv">🔒 초안·기록은 이 기기(와 내 보관함)에만 · 밖으로 보내지 않음</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var N = TT.notes, KEY = "tt_saeteuk_v1";
+  /* 기본값은 예시입니다. 학교의 학교생활기록부 기재요령에 맞게 설정에서 바꾸세요. */
+  var DEF_LIMIT = {subj: 1500, beh: 1500, auto: 1500, club: 1500, career: 2100};
+  var DEF_WORDS = ["토익", "TOEIC", "토플", "TOEFL", "텝스", "TEPS", "HSK", "JPT", "학원", "과외", "인강", "경시대회", "올림피아드", "교외 수상", "교외 대회", "해외 봉사", "논문", "특허", "부모 직업"];
+  var AREAS = N.AREAS.filter(function(a){ return a[0] !== "etc"; });
+  var D = TT.store.get(KEY, null) || {};
+  D.v = 1; D.drafts = D.drafts || {}; D.limits = Object.assign({}, DEF_LIMIT, D.limits || {}); if(!Array.isArray(D.words)) D.words = DEF_WORDS.slice(); if(!D.few) D.few = 2;
+  function save(){ D.updatedAt = Date.now(); TT.store.set(KEY, D); }
+  var cls = null, area = "subj", sel = 0, picked = {};
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function md(s){ var a = String(s).split("-"); return (+a[1]) + "/" + (+a[2]); }
+
+  /* 나이스 글자 수(바이트): 한글 등 3, 영문·숫자·띄어쓰기·기호 1, 줄바꿈 2 */
+  function bytes(t){ t = String(t || "").replace(/\r\n/g, "\n"); var n = 0; for(var i = 0; i < t.length; i++){ var c = t.charCodeAt(i); n += c === 10 ? 2 : c < 128 ? 1 : 3; } return n; }
+  function draftOf(k){ return ((D.drafts[k] || {})[area] || {}).t || ""; }
+  function setDraft(k, t){ var o = D.drafts[k] = D.drafts[k] || {}; if(t) o[area] = {t: t, u: Date.now()}; else delete o[area]; save(); }
+  function recsOf(k, all){ return N.list(k).filter(function(r){ return all || r.area === area; }); }
+  function stus(){ return cls ? cls.students : []; }
+  function stuKey(s){ return N.key(cls, s); }
+
+  /* 영역 고르기 */
+  function drawAreas(){
+    $("areas").innerHTML = AREAS.map(function(a){ return '<button type="button" data-a="' + a[0] + '" aria-pressed="' + (a[0] === area) + '">' + a[1] + "</button>"; }).join("");
+  }
+  $("areas").onclick = function(e){ var b = e.target.closest("button"); if(!b) return; area = b.dataset.a; picked = {}; drawAreas(); drawAll(); };
+
+  /* 학생 목록: 이 영역 기록 수 · 초안 상태(점: 회색 없음 / 노랑 작성 중 / 초록 한도의 60% 이상) */
+  function drawList(){
+    var list = stus(), counts = list.map(function(s){ return recsOf(stuKey(s)).length; });
+    var avg = counts.length ? counts.reduce(function(a, b){ return a + b; }, 0) / counts.length : 0;
+    var few = list.filter(function(s, i){ return counts[i] < D.few; }).length, done = list.filter(function(s){ return bytes(draftOf(stuKey(s))) >= D.limits[area] * .6; }).length;
+    $("sum").innerHTML = "기록 평균 <b>" + avg.toFixed(1) + "</b>건 · 기록 적은 학생 <b>" + few + "</b>명<br>초안 거의 완성 <b>" + done + "</b> / " + list.length + "명";
+    var only = $("onlyFew").checked;
+    $("stl").innerHTML = list.map(function(s, i){
+      if(only && counts[i] >= D.few && i !== sel) return "";
+      var b = bytes(draftOf(stuKey(s))), dot = b >= D.limits[area] * .6 ? "full" : b ? "mid" : "";
+      return '<li><button type="button" data-i="' + i + '" aria-current="' + (i === sel) + '"><span class="no">' + s.no + '</span><span class="nm">' + esc(s.name || "") + '</span><span class="cnt' + (counts[i] < D.few ? " few" : "") + '" title="' + N.area(area) + ' 기록 수">' + counts[i] + '</span><span class="dot ' + dot + '" title="초안 ' + b + '바이트"></span></button></li>';
+    }).join("");
+    var cur = $("stl").querySelector("[aria-current=true]"); if(cur) cur.scrollIntoView({block: "nearest"});
+  }
+  $("stl").onclick = function(e){ var b = e.target.closest("button"); if(!b) return; go(+b.dataset.i); };
+  $("onlyFew").onchange = drawList;
+
+  /* 근거 기록 */
+  function drawRecs(){
+    var s = stus()[sel]; if(!s){ $("recs").innerHTML = ""; return; }
+    var all = $("allAreas").checked, L = recsOf(stuKey(s), all);
+    $("recInfo").textContent = (all ? "모든 영역 " : N.area(area) + " ") + L.length + "건";
+    $("recs").innerHTML = L.length ? L.map(function(r){
+      return '<li class="' + (picked[r.id] ? "on" : "") + '"><input type="checkbox" data-id="' + esc(r.id) + '" ' + (picked[r.id] ? "checked" : "") + ' aria-label="고르기"><span class="d">' + md(r.date) + "</span>" + (all ? '<span class="tag">' + esc(N.area(r.area)) + "</span>" : "") + '<span class="t">' + esc(r.text) + (r.src ? ' <span class="src">· ' + esc(r.src) + "</span>" : "") + "</span></li>";
+    }).join("") : '<li class="muted" style="border:0">이 영역 기록이 아직 없습니다. 아래에 더하거나, 수업 중 ✍️ 학생 기록·뽑기 👍 발표로 모아 두세요.</li>';
+    $("paste").disabled = !Object.keys(picked).length;
+  }
+  $("recs").onchange = function(e){ var c = e.target; if(!c.dataset.id) return; if(c.checked) picked[c.dataset.id] = 1; else delete picked[c.dataset.id]; drawRecs(); };
+  $("allAreas").onchange = drawRecs;
+  $("paste").onclick = function(){
+    var s = stus()[sel], L = recsOf(stuKey(s), true).filter(function(r){ return picked[r.id]; }).reverse();
+    var add = L.map(function(r){ return "- " + r.text; }).join("\n");
+    var t = draftOf(stuKey(s)); $("draft").value = (t ? t.replace(/\s+$/, "") + "\n\n" : "") + add; $("draft").dispatchEvent(new Event("input")); picked = {}; drawRecs();
+    TT.ui.toast("고른 기록을 초안 아래에 붙였습니다. 문장으로 다듬은 뒤 '- ' 줄은 지워 주세요.");
+  };
+  function addRec(){
+    var s = stus()[sel], t = $("addTxt").value.trim(); if(!s || !t) return;
+    N.add({k: stuKey(s), n: s.name, area: area, text: t, src: "생기부 도우미"}); $("addTxt").value = ""; drawRecs(); drawList();
+  }
+  $("addBtn").onclick = addRec;
+  $("addTxt").onkeydown = function(e){ if(e.key === "Enter"){ e.preventDefault(); addRec(); } };
+
+  /* 초안 · 바이트 · 점검 */
+  var saveT = null;
+  function drawDraft(){
+    var s = stus()[sel];
+    $("dTitle").textContent = s ? N.area(area) + " 초안 · " + s.no + "번 " + (s.name || "") : "초안";
+    $("draft").value = s ? draftOf(stuKey(s)) : ""; $("draft").disabled = !s; check();
+  }
+  function check(){
+    var s = stus()[sel], t = $("draft").value, b = bytes(t), lim = D.limits[area] || 1500, over = b > lim;
+    $("byteTxt").innerHTML = '<span class="' + (over ? "over" : "") + '">' + b.toLocaleString() + " / " + lim.toLocaleString() + " 바이트</span> <span class=\"muted\">(한글 약 " + Math.floor(b / 3) + "자 · 남은 " + (lim - b).toLocaleString() + ")</span>";
+    $("meter").className = "meter" + (over ? " over" : ""); $("meter").firstChild.style.width = Math.min(100, b / lim * 100) + "%";
+    var w = [];
+    if(over) w.push(["bad", "나이스 글자 수(" + lim.toLocaleString() + "바이트)를 넘었습니다. " + (b - lim) + "바이트 줄여 주세요."]);
+    if(s && s.name && s.name.length >= 2 && t.indexOf(s.name) >= 0) w.push(["bad", "학생 이름이 들어 있습니다. 생기부 문장에는 보통 이름을 쓰지 않습니다."]);
+    var hit = D.words.filter(function(x){ return x && t.toLowerCase().indexOf(x.toLowerCase()) >= 0; });
+    if(hit.length) w.push(["bad", "기재 유의 낱말: " + hit.join(", ") + " — 학교 기재요령을 확인하세요."]);
+    if(/^- /m.test(t)) w.push(["", "근거 기록을 붙인 '- ' 줄이 남아 있습니다. 문장으로 다듬은 뒤 지워 주세요."]);
+    if(/ {2,}/.test(t)) w.push(["", "띄어쓰기가 두 번 이상 겹친 곳이 있습니다."]);
+    if(/[!?~ㅋㅎ]{2,}|\^\^/.test(t)) w.push(["", "느낌표·물결·웃음 표시 등 생기부에 어울리지 않는 기호가 있습니다."]);
+    if(t.trim() && !over && !w.length) w.push(["ok", "점검 통과 · 복사해서 나이스에 붙여 넣으세요."]);
+    $("warns").innerHTML = w.map(function(x){ return '<li class="' + x[0] + '">' + esc(x[1]) + "</li>"; }).join("");
+  }
+  $("draft").oninput = function(){
+    check(); $("saved").textContent = "저장 중…";
+    var s = stus()[sel], v = this.value; clearTimeout(saveT);
+    saveT = setTimeout(function(){ if(s){ setDraft(stuKey(s), v.trim() ? v : ""); $("saved").textContent = "저장됨"; drawList(); } }, 500);
+  };
+  function flush(){ if(saveT){ clearTimeout(saveT); saveT = null; var s = stus()[sel]; if(s) setDraft(stuKey(s), $("draft").value.trim() ? $("draft").value : ""); } }
+  $("copy").onclick = function(){
+    var t = $("draft").value.replace(/\s+$/, "");
+    function done(ok){ TT.ui.toast(ok ? "복사했습니다. 나이스 입력 칸에 붙여 넣으세요." : "복사하지 못했습니다. 글을 직접 골라 복사해 주세요."); }
+    if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(function(){ done(true); }, function(){ done(false); });
+    else{ $("draft").select(); var ok = false; try{ ok = document.execCommand("copy"); }catch(e){} done(ok); }
+  };
+  function go(i){ flush(); if(i < 0 || i >= stus().length) return; sel = i; picked = {}; $("saved").textContent = ""; drawAll(); }
+  $("prev").onclick = function(){ go(sel - 1); };
+  $("next").onclick = function(){ go(sel + 1); };
+  window.addEventListener("beforeunload", flush);
+
+  function drawAll(){ drawList(); drawRecs(); drawDraft(); }
+
+  /* 메뉴: 내려받기 · 설정 */
+  function closeMenu(){ $("more").open = false; }
+  document.addEventListener("click", function(e){ if(!$("more").contains(e.target)) closeMenu(); });
+  $("mCsv").onclick = function(){
+    closeMenu(); flush(); if(!cls) return;
+    var rows = [["번호", "이름", "영역", "초안", "바이트", "기록 수"]].concat(stus().map(function(s){ var t = draftOf(stuKey(s)); return [s.no, s.name, N.area(area), t, bytes(t), recsOf(stuKey(s)).length]; }));
+    var csv = "﻿" + rows.map(function(r){ return r.map(function(v){ v = String(v); if(/^[=+\-@]/.test(v)) v = "'" + v; return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(","); }).join("\r\n");
+    TT.util.download("생기부초안_" + TT.util.safe(cls.name) + "_" + N.area(area).replace(/\s/g, "") + "_" + TT.util.today() + ".csv", csv, "text/csv;charset=utf-8");
+    TT.ui.toast("내려받았습니다. 학생 이름이 들어 있으니 업무용 PC에서만 다뤄 주세요.");
+  };
+  $("mSet").onclick = function(){
+    closeMenu();
+    var d = document.createElement("dialog"), f = document.createElement("form"); d.appendChild(f); document.body.appendChild(d);
+    f.innerHTML = '<h2>글자 수·점검 낱말 설정</h2><p>기본값은 예시입니다. <b>학교의 학교생활기록부 기재요령</b>에 맞게 바꾸세요. 나이스 글자 수는 한글 3바이트, 영문·숫자·띄어쓰기 1바이트, 줄바꿈 2바이트로 셉니다.</p>'
+      + '<label class="f">영역별 최대 바이트</label><div class="lim">' + AREAS.map(function(a){ return '<label class="muted">' + a[1] + '<input type="number" min="100" max="9000" step="10" data-l="' + a[0] + '" value="' + D.limits[a[0]] + '"></label>'; }).join("") + "</div>"
+      + '<label class="f">기록 적은 학생 기준 (이 영역 기록 수가 이보다 적으면 빨갛게)</label><input type="number" id="fewN" min="1" max="20" value="' + D.few + '" style="width:90px;font:inherit;border:1px solid var(--line);border-radius:8px;padding:5px 6px">'
+      + '<label class="f">기재 유의 낱말 (쉼표로 구분)</label><textarea id="wds">' + esc(D.words.join(", ")) + "</textarea>"
+      + '<div class="acts"><button type="button" class="btn" data-a="reset">기본값으로</button><div class="r"><button type="button" class="btn" data-a="close">취소</button><button type="submit" class="btn primary">저장</button></div></div>';
+    d.addEventListener("close", function(){ d.remove(); });
+    f.querySelector("[data-a=close]").onclick = function(){ d.close(); };
+    f.querySelector("[data-a=reset]").onclick = function(){ D.limits = Object.assign({}, DEF_LIMIT); D.words = DEF_WORDS.slice(); D.few = 2; save(); d.close(); drawAll(); };
+    f.onsubmit = function(e){
+      e.preventDefault();
+      f.querySelectorAll("[data-l]").forEach(function(i){ var v = parseInt(i.value, 10); if(v > 0) D.limits[i.dataset.l] = v; });
+      D.few = Math.max(1, parseInt(f.querySelector("#fewN").value, 10) || 2);
+      D.words = f.querySelector("#wds").value.split(/[,\n]/).map(function(x){ return x.trim(); }).filter(Boolean);
+      save(); d.close(); drawAll(); TT.ui.toast("설정을 저장했습니다.");
+    };
+    d.showModal();
+  };
+
+  window.addEventListener("tt-notes-change", function(){ drawList(); drawRecs(); });
+  window.addEventListener("storage", function(e){ if(e.key === N.KEY){ drawList(); drawRecs(); } });
+  drawAreas();
+  TT.ui.classSelect($("clsSel"), "record", function(c){ flush(); cls = c; sel = 0; picked = {}; if(!c){ TT.ui.needRoster($("m")); return; } drawAll(); });
+})();
+</script>
+</body>
+</html>

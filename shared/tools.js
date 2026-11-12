@@ -8,7 +8,7 @@
 /* 아이콘 표 — 기능마다 하나씩, 같은 기능은 어느 화면에서나 같은 아이콘을 씁니다. 새 기능은 겹치지 않게 골라 여기에 적으세요.
    🍎 쌤 노트(첫 화면)  👥 학급 명렬표  📷 사진 이름  📇 학생 카드  ✍️ 학생 기록  🕘 내 시간표
    📚 수업(묶음)  📒 수업 기록장  🧩 모둠 편성  🧰 수업 도구 (🖍️ 칠판 · 🎲 뽑기 · ⏱️ 타이머 · 🏆 모둠 점수 · 🚦 소음)
-   🧭 생활지도  🗣️ 상담  📄 결석신고서  ✉️ 학부모 문자  🏅 가산점  🎓 진학 추천  📎 파일 합치기
+   🧭 생활지도  🗣️ 상담  📄 결석신고서  ✉️ 학부모 문자  🏅 가산점  🎓 진학 추천  📑 생기부 도우미  📎 파일 합치기
    📅 학교 업무판  📝 내 할 일  ☁️ 동기화(보관함)  🏫 교실 기기  🏷️ 학교·선생님 설정  💾 백업  🖼️ 그림 저장  🔒 개인정보 보호 안내  📖 지금 차시 */
 var TT_TOOLS = [
   {id:"roster", icon:"👥", short:"명렬표", sub:"명렬표", name:"학급 명렬표",     desc:"나이스 명단 · 학생 사진과 메모 · 학생별 기록을 한곳에서 봅니다.",           scope:"all",  href:"apps/roster/", ready:true, room:true},
@@ -19,6 +19,7 @@ var TT_TOOLS = [
   {id:"class",  icon:"🧰", short:"수업 도구", sub:"수업 도구", in:"journal", name:"수업 도구", desc:"칠판(모눈·좌표평면) · 뽑기 · 타이머 · 모둠 점수 · 소음 신호등.",            scope:"all",  href:"apps/class/",  ready:true, room:true},
   {id:"tardy",  icon:"🧭", short:"생활지도", sub:"출결·상담", name:"생활지도(결석계)", desc:"무단지각 확인, 상담일지, 결석 사유와 결석신고서(한글 파일·인쇄), 학부모 문자.", scope:"home", href:"apps/tardy/", ready:true},
   {id:"parent", icon:"✉️", short:"학부모 문자", sub:"학부모 문자", in:"tardy", name:"학부모 문자",     desc:"학부모께 보낼 안내 문자를 빠르게 만듭니다.",                  scope:"home", href:"apps/parent/", ready:true},
+  {id:"record", icon:"📑", short:"생기부", name:"생기부 도우미", desc:"모인 학생 기록을 영역별로 보며 초안 쓰기 · 나이스 글자 수 · 유의 낱말 점검.", scope:"all", href:"apps/record/", ready:true},
   {id:"bonus",  icon:"🏅", short:"가산점", name:"가산점 자동 입력", desc:"수상경력·창체 파일을 올리면 가산점 양식을 자동으로 채웁니다.", scope:"home", href:"apps/bonus/",  ready:true},
   {id:"advisor",icon:"🎓", short:"진학 추천", name:"고교 진학 추천",   desc:"성적을 분석해 지원 가능한 고등학교를 살펴봅니다.",             scope:"home", href:"apps/advisor/", ready:true},
   {id:"merge",  icon:"📎", short:"파일 합치기", name:"파일 합치기",     desc:"한글·엑셀 파일 여러 개를 하나로 합치는 윈도우 프로그램을 내려받습니다.", scope:"all",  file:"downloads/FileMerge.exe", ready:true}
