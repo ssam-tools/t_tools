@@ -49,6 +49,15 @@
   .bk{font:inherit;font-size:12px;font-weight:700;border:0;border-radius:999px;padding:4px 10px;cursor:pointer;background:#eceff3;color:#4a5560}
   .bk.due{background:var(--star-soft);color:#7a5a00}
 
+  /* 오늘 내 수업 (내 시간표) */
+  .tday{color:inherit;text-decoration:none;display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center}
+  .tday b.lb{color:var(--ink)}
+  .tc{background:#eceff3;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap}
+  .tc.past{opacity:.45}
+  .tc.cur{background:var(--accent);color:#fff}
+  .tnext{color:var(--accent);font-weight:800;white-space:nowrap}
+  .tset{color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap}
+
   /* 이번 주 업무 띠 (shared/board.js) */
   .toprow{flex:none;display:flex;gap:clamp(8px,1.4vh,12px);height:clamp(124px,25vh,220px)}
   .board{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;
@@ -135,7 +144,7 @@
 <header>
   <div>
     <h1>🧰 선생님 도구 모음</h1>
-    <p class="lead">학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다. <a class="home" id="homeChip" href="apps/roster/"></a></p>
+    <p class="lead"><span id="leadTxt">학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다.</span> <a class="home" id="homeChip" href="apps/roster/"></a></p>
   </div>
   <div class="bar">
     <div class="seg" role="group" aria-label="교사 유형">
@@ -288,7 +297,34 @@
   window.addEventListener("storage", showHome);
   window.addEventListener("pageshow", function(){ showHome(); showBackup(); });
 
-  showHome(); showBackup();
+  /* 오늘 내 수업: 내 시간표가 있으면 머리말 자리에 오늘 수업과 다음 수업을 보여 줍니다. */
+  function showToday(){
+    var el = $("leadTxt"), TTT = TT.timetable;
+    function e(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+    if(!TTT.has()){ el.innerHTML = '학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다. <a class="tset" href="apps/timetable/">🗓️ 내 시간표 넣기 →</a>'; return; }
+    var d = new Date(), w = d.getDay(), label = "오늘 수업", list;
+    if(w < 1 || w > 5){ var mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() + (w === 6 ? 2 : 1)); list = TTT.day(mon); label = "월요일 수업"; }
+    else list = TTT.day(d);
+    var m = d.getHours() * 60 + d.getMinutes(), weekday = w >= 1 && w <= 5;
+    var h = '<a class="tday" href="apps/timetable/" title="내 시간표 열기"><b class="lb">🗓️ ' + label + " " + list.length + "시간</b>";
+    if(!list.length) h += '<span class="tc">수업 없음</span>';
+    list.forEach(function(s){
+      var cls = weekday && m >= s.end ? " past" : weekday && m >= s.start ? " cur" : "";
+      h += '<span class="tc' + cls + '">' + s.n + "교시 " + e(s.code) + "</span>";
+    });
+    if(weekday && list.length){
+      var cur = TTT.now(), nx = TTT.next();
+      if(cur) h += '<span class="tnext">● 지금 ' + cur.n + "교시 " + e(cur.code) + " (~" + cur.e + ")</span>";
+      else if(nx) h += '<span class="tnext">▶ 다음 ' + nx.n + "교시 " + e(nx.code) + " (" + nx.t + ")</span>";
+      else h += '<span class="tnext" style="color:var(--ok)">✔ 오늘 수업 끝</span>';
+    }
+    el.innerHTML = h + "</a>";
+  }
+  window.addEventListener("pageshow", showToday);
+  window.addEventListener("storage", function(ev){ if(ev.key === "tt_timetable_v1") showToday(); });
+  setInterval(showToday, 60000);
+
+  showHome(); showBackup(); showToday();
   setMode(TT.store.raw("tt_mode") === "subject" ? "subject" : "home");
 })();
 </script>

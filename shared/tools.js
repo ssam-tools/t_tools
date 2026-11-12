@@ -5,6 +5,7 @@
    href 대신 file 을 적으면 웹 도구가 아니라 내려받는 PC 프로그램입니다(downloads 폴더). */
 var TT_TOOLS = [
   {id:"roster", icon:"👥", short:"명렬표", name:"학급 명렬표",     desc:"나이스 파일을 한 번 올리면 모든 도구가 함께 씁니다.",           scope:"all",  href:"apps/roster/", ready:true},
+  {id:"timetable",icon:"🗓️", short:"내 시간표", name:"내 시간표",     desc:"컴시간알리미 시간표를 붙여 넣으면 첫 화면 오늘 수업·수업 기록장에 자동으로 쓰입니다.", scope:"all", href:"apps/timetable/", ready:true},
   {id:"tardy",  icon:"⏰", short:"지각 관리", name:"지각 관리 노트",   desc:"출결을 입력하고 연속·주간 지각 학생에게 상담일지를 남깁니다.", scope:"home", href:"apps/tardy/",  ready:true},
   {id:"bonus",  icon:"🏅", short:"가산점", name:"가산점 자동 입력", desc:"수상경력·창체 파일을 올리면 가산점 양식을 자동으로 채웁니다.", scope:"home", href:"apps/bonus/",  ready:true},
   {id:"advisor",icon:"🎓", short:"진학 추천", name:"고교 진학 추천",   desc:"성적을 분석해 지원 가능한 고등학교를 살펴봅니다.",             scope:"home", href:"apps/advisor/", ready:true},

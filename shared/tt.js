@@ -539,5 +539,31 @@ var TT = (function(){
     if(document.body) start(); else document.addEventListener("DOMContentLoaded", start);
   })();
 
-  return { VERSION: VERSION, BASE: BASE, store: store, roster: roster, file: {toRows: fileToRows, readXlsx: readXlsx, userErr: userErr, zip: makeZip}, util: util, ui: ui, backup: backup };
+  /* ---------- 내 시간표 (apps/timetable 에서 입력, "tt_timetable_v1") ----------
+     slots: {"요일-교시": {code:"304", cls:304, subj:"수학"}}  (요일 1=월 … 5=금)
+     periods: [{n:1, t:"08:50"}, …]  수업 길이는 45분으로 계산합니다. */
+  var timetable = (function(){
+    var KEY = "tt_timetable_v1", LEN = 45;
+    function toMin(t){ var a = String(t).split(":"); return (+a[0]) * 60 + (+a[1]); }
+    function hm(m){ return pad(Math.floor(m / 60)) + ":" + pad(m % 60); }
+    function load(){ var t = store.get(KEY, null); return t && t.slots && Array.isArray(t.periods) ? t : null; }
+    function day(date){
+      var t = load(); date = date || new Date();
+      var w = date.getDay(); if(!t || w < 1 || w > 5) return [];
+      return t.periods.map(function(p){
+        var s = t.slots[w + "-" + p.n]; if(!s) return null;
+        var st = toMin(p.t);
+        return {key: w + "-" + p.n, n: p.n, t: p.t, e: hm(st + LEN), start: st, end: st + LEN, code: s.code, cls: s.cls, subj: s.subj};
+      }).filter(Boolean);
+    }
+    function nowMin(){ var d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
+    return {
+      KEY: KEY, load: load, day: day,
+      has: function(){ var t = load(); return !!(t && Object.keys(t.slots).length); },
+      now: function(){ var m = nowMin(); return day().filter(function(s){ return m >= s.start && m < s.end; })[0] || null; },     // 지금 수업 중
+      next: function(){ var m = nowMin(); return day().filter(function(s){ return s.start > m; })[0] || null; }                    // 오늘 남은 다음 수업
+    };
+  })();
+
+  return { VERSION: VERSION, BASE: BASE, store: store, roster: roster, timetable: timetable, file: {toRows: fileToRows, readXlsx: readXlsx, userErr: userErr, zip: makeZip}, util: util, ui: ui, backup: backup };
 })();

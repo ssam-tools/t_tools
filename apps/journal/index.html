@@ -573,7 +573,7 @@ function sTT(){
   if(s.sel){
     const a=s.sel.split('-');
     b+='<div class="tg"><h4>'+DAY[+a[0]]+'요일 '+a[1]+'교시에 들어갈 반</h4><div class="chips-wrap"><button class="chip" data-act="setTT" data-c="0">비우기</button>'+CLS.map(c=>'<button class="chip '+(S.tt[s.sel]===c?'on':'')+'" data-act="setTT" data-c="'+c+'">'+cs(c)+'</button>').join('')+'</div></div>';
-  }else b+='<p class="hint">칸을 누르고 수업할 반을 고르세요. 교시 시간은 예시예요.</p>';
+  }else b+=window.__ttShared?'<p class="hint">\'내 시간표\'에서 가져온 시간표예요. 시간표가 바뀌면 내 시간표에 다시 붙여 넣으면 여기도 바뀝니다. (여기서 고친 것은 다음에 내 시간표가 바뀔 때까지 유지)</p>':'<p class="hint">칸을 누르고 수업할 반을 고르세요. 교시 시간은 예시예요. 도구 모음의 \'내 시간표\'에 컴시간 시간표를 붙여 넣으면 자동으로 채워집니다.</p>';
   return shell('주간 시간표','',b,false);
 }
 function sClass(){
@@ -790,6 +790,23 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!ui.sheet
 
 /* ---------- 시작 ---------- */
 S=load();
+/* 내 시간표(tt_timetable_v1, "내 시간표" 도구)가 있으면 교시 시각과 시간표를 그대로 씁니다.
+   내 시간표가 바뀌었을 때만 덮어쓰므로, 그 사이 여기서 고친 내용은 다음 변경 전까지 유지됩니다. */
+(function(){try{
+  const T=JSON.parse(localStorage.getItem('tt_timetable_v1')||'null');
+  if(!T||!T.slots||!Array.isArray(T.periods)||!Object.keys(T.slots).length)return;
+  const used=Object.keys(T.slots).reduce((a,k)=>Math.max(a,+k.split('-')[1]),0);
+  T.periods.forEach((p,i)=>{
+    if(!p||!/^\d{1,2}:\d{2}$/.test(p.t))return;
+    const st=toMin(p.t),e=st+45,v={n:p.n,t:p.t,e:pad(Math.floor(e/60))+':'+pad(e%60)};
+    if(PERIODS[i])Object.assign(PERIODS[i],v);else if(p.n<=used)PERIODS.push(v);
+  });
+  if((S.ttFrom||0)<(T.updatedAt||0)){
+    const tt={};Object.keys(T.slots).forEach(k=>{const c=T.slots[k]&&T.slots[k].cls;if(c&&CLS.includes(c))tt[k]=c;});
+    S.tt=tt;S.ttFrom=T.updatedAt;save();
+  }
+  window.__ttShared=true;
+}catch(e){}})();
 /* 명렬표에 새로 생긴 반·아직 명단이 없는 반을 채웁니다. 이미 있는 명단과 자리표는 건드리지 않습니다. */
 (function(){
   let ch=false;
