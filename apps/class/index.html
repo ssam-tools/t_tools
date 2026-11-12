@@ -119,14 +119,14 @@
 <header>
   <div>
     <a class="back" href="../../">← 쌤 노트</a>
-    <h1>🎲 수업 도구 <span class="muted" id="nowTag"></span></h1>
+    <h1>🧰 수업 도구 <span class="muted" id="nowTag"></span></h1>
   </div>
   <div class="bar">
     <select id="clsSel" aria-label="학급 선택"></select>
     <div class="seg" role="group" aria-label="도구 고르기" id="tabs">
-      <button type="button" data-t="board" aria-pressed="false">✏️ 칠판</button>
+      <button type="button" data-t="board" aria-pressed="false">🖍️ 칠판</button>
       <button type="button" data-t="pick" aria-pressed="true">🎲 뽑기</button>
-      <button type="button" data-t="timer" aria-pressed="false">⏱ 타이머</button>
+      <button type="button" data-t="timer" aria-pressed="false">⏱️ 타이머</button>
       <button type="button" data-t="score" aria-pressed="false">🏆 모둠 점수</button>
       <button type="button" data-t="noise" aria-pressed="false">🚦 소음</button>
     </div>
@@ -242,7 +242,7 @@
     tools.appendChild(h("span", "pg", (B.p + 1) + " / " + B.pages.length));
     tools.appendChild(btn("▶", "", function(){ if(B.p < B.pages.length - 1){ B.p++; render(); } }));
     tools.appendChild(btn("＋ 새 쪽", "", function(){ B.pages.splice(B.p + 1, 0, {bg: B.pages[B.p].bg, strokes: []}); B.p++; render(); }));
-    tools.appendChild(btn("💾 그림 저장", "", savePng));
+    tools.appendChild(btn("🖼️ 그림 저장", "", savePng));
     var wrap = h("div", "bwrap"), cbg = h("canvas"), ink = h("canvas"); ink.id = "ink";
     wrap.appendChild(cbg); wrap.appendChild(ink); m.appendChild(tools); m.appendChild(wrap);
     var cur = null;
@@ -274,7 +274,7 @@
       o.toBlob(function(b){ var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "board_" + ymd() + "_p" + (B.p + 1) + ".png"; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500); });
     }
     boardRO = new ResizeObserver(size); boardRO.observe(wrap);
-    info.textContent = "손가락·펜으로 쓰세요 · 그림은 저장되지 않습니다(필요하면 💾 그림 저장)";
+    info.textContent = "손가락·펜으로 쓰세요 · 그림은 저장되지 않습니다(필요하면 🖼️ 그림 저장)";
   }
   function paintBg(g, W, H, d, kind){
     g.fillStyle = B.dark ? "#1f3d33" : "#ffffff"; g.fillRect(0, 0, W, H);
@@ -326,7 +326,7 @@
         b.onclick = function(){ var ok = P.last.every(function(s){ return jAdd(cls, s, x[1], "", x[2]); }); if(ok){ b.classList.add("done"); b.textContent = "✔ 기록함"; b.disabled = true; } else TT.ui.toast("수업 기록장을 한 번 열어 이 반을 준비하면 기록됩니다."); };
         acts.appendChild(b);
       });
-      var w = h("button", "", "✏️ 한 줄 기록"); w.type = "button";
+      var w = h("button", "", "✍️ 한 줄 기록"); w.type = "button";
       w.onclick = function(){ writeLine(P.last); }; acts.appendChild(w);
     }
     stage.appendChild(acts); m.appendChild(stage);
@@ -389,7 +389,7 @@
   function writeLine(list){
     if(!TT.classroom){ TT.notes.quick({cls: cls.id, nos: list.map(function(s){ return s.no; }), area: "subj", src: "수업 도구"}); return; }
     var d = document.createElement("dialog"), f = document.createElement("form"); d.appendChild(f); document.body.appendChild(d);
-    f.innerHTML = '<h2>✏️ 한 줄 기록</h2><p>' + list.map(function(s){ return s.no + "번"; }).join(", ") + ' · 수업 기록장에 남기고, 내 기기에서 학생 기록으로 모입니다. (교실 기기에는 지난 기록이 보이지 않아요)</p><textarea maxlength="300" placeholder="예: 이차함수 그래프를 칠판에 그려 설명함"></textarea><div class="acts"><span></span><div class="r"><button type="button" class="btn">취소</button><button type="submit" class="btn primary">저장</button></div></div>';
+    f.innerHTML = '<h2>✍️ 한 줄 기록</h2><p>' + list.map(function(s){ return s.no + "번"; }).join(", ") + ' · 수업 기록장에 남기고, 내 기기에서 학생 기록으로 모입니다. (교실 기기에는 지난 기록이 보이지 않아요)</p><textarea maxlength="300" placeholder="예: 이차함수 그래프를 칠판에 그려 설명함"></textarea><div class="acts"><span></span><div class="r"><button type="button" class="btn">취소</button><button type="submit" class="btn primary">저장</button></div></div>';
     d.addEventListener("close", function(){ d.remove(); });
     f.querySelector("button[type=button]").onclick = function(){ d.close(); };
     f.onsubmit = function(e){ e.preventDefault(); var t = f.querySelector("textarea").value.trim(); if(!t) return; var ok = list.every(function(s){ return jAdd(cls, s, [], t, false); }); d.close(); TT.ui.toast(ok ? "기록했습니다." : "수업 기록장을 한 번 열어 이 반을 준비하면 기록됩니다."); };

@@ -23,7 +23,7 @@
 <header>
   <div>
     <a class="back" href="../../">← 쌤 노트</a>
-    <h1>✉️ 학부모 문자 만들기</h1>
+    <h1>✉️ 학부모 문자</h1>
   </div>
   <div class="bar">
     <select id="clsSel" aria-label="학급 선택"></select>
@@ -55,7 +55,9 @@
   /* 문구 (0.2.0 원본 그대로) */
   var K = [
  {id:'late',n:'지각',xl:'지각 시각·횟수 (선택)',x:'',f:function(s,d,x,me){return '안녕하세요. '+me+'입니다.\n'+d+' '+s+' 학생이 지각하였습니다.'+(x?' ('+x+')':'')+'\n등교 시간 준수를 위해 가정에서도 지도 부탁드립니다. 지각 사유나 어려운 점이 있으시면 편하게 말씀해 주세요.'}},
+ {id:'lateN',n:'잦은 지각',xl:'무단지각한 날',x:'',f:function(s,d,x,me){return '안녕하세요. '+me+'입니다.\n'+s+' 학생이 최근 '+(x?x+'에 ':'')+'여러 차례 지각하였습니다. 등교 습관을 함께 살펴 주시면 감사하겠습니다.\n혹시 아침에 어려운 사정이 있다면 편하게 말씀해 주세요. 학교에서도 함께 지도하겠습니다.'}},
  {id:'abs',n:'결석 확인',xl:'확인할 내용 (선택)',x:'',f:function(s,d,x,me){return '안녕하세요. '+me+'입니다.\n'+d+' '+s+' 학생이 등교하지 않아 연락드립니다.'+(x?' '+x:'')+'\n결석 사유를 알려 주시면 출결 처리에 반영하겠습니다. 증빙 서류가 필요한 경우 따로 안내드리겠습니다.'}},
+ {id:'absdoc',n:'결석계 안내',xl:'결석 기간·구분',x:'',f:function(s,d,x,me){return '안녕하세요. '+me+'입니다.\n'+s+' 학생의 '+(x?x+' ':'')+'결석 처리를 위해 결석신고서와 증빙 서류(진료확인서·처방전 등)가 필요합니다.\n준비되는 대로 학생 편으로 보내 주시면 감사하겠습니다.'}},
  {id:'cons',n:'상담 요청',xl:'상담 주제',x:'학교생활',f:function(s,d,x,me){return '안녕하세요. '+me+'입니다.\n'+s+' 학생의 '+(x||'학교생활')+'에 관해 상담을 드리고 싶습니다. 편하신 날짜와 시간을 알려 주시면 일정을 맞추겠습니다. 통화나 방문 중 편한 방법으로 진행하겠습니다.'}},
  {id:'sub',n:'제출·준비물',xl:'제출/준비할 것',x:'',f:function(s,d,x,me){return '안녕하세요. '+me+'입니다.\n'+s+' 학생이 아직 '+(x||'제출물')+'을(를) 내지 않았습니다. '+d+'까지 준비해 보내 주시면 감사하겠습니다.'}},
  {id:'praise',n:'칭찬',xl:'칭찬할 내용',x:'',f:function(s,d,x,me){return '안녕하세요. '+me+'입니다.\n'+s+' 학생이 '+(x||'학교생활에 성실히 참여하여')+' 기쁜 소식을 전합니다. 가정에서도 격려해 주시면 큰 힘이 될 것 같습니다. 감사합니다.'}},
@@ -96,9 +98,28 @@
   TT.ui.classSelect($("clsSel"), "parent", function(c){
     var sel = $("stu"); sel.textContent = "";
     if(!c){ var o = document.createElement("option"); o.value = ""; o.textContent = "명단 없음"; sel.appendChild(o); }
-    else c.students.forEach(function(s){ var o = document.createElement("option"); o.value = s.name; o.textContent = s.no + "번 " + s.name; sel.appendChild(o); });
-    build();
+    else c.students.forEach(function(s){ var o = document.createElement("option"); o.value = s.name; o.textContent = s.no + "번 " + s.name; o.dataset.no = s.no; sel.appendChild(o); });
+    applyQ(); build();
   });
+  /* 생활지도에서 넘어온 상황(?k=종류&no=번호&d=날짜&x=내용&c=학급): 한 번만 채움 */
+  var Q = null;
+  function applyQ(){
+    if(!Q) return;
+    var o = Array.prototype.filter.call($("stu").options, function(x){ return x.dataset.no === Q.no; })[0];
+    if(o) $("stu").value = o.value;
+    if(Q.d) $("dt").value = Q.d;
+    if(Q.k && K.some(function(k){ return k.id === Q.k; })){ kind = Q.k; $("xl").textContent = cur().xl; kinds(); }
+    $("x").value = Q.x || "";
+    Q = null;
+  }
+  (function(){
+    var u = new URLSearchParams(location.search); if(!u.get("k")) return;
+    Q = {k: u.get("k"), no: u.get("no") || "", d: u.get("d") || "", x: u.get("x") || ""};
+    history.replaceState(null, "", location.pathname);              // 주소창에서 지움
+    var c = u.get("c"), sel = $("clsSel");
+    if(c && sel.value !== c && Array.prototype.some.call(sel.options, function(x){ return x.value === c; })){ sel.value = c; sel.dispatchEvent(new Event("change")); }
+    else applyQ();
+  })();
   $("xl").textContent = cur().xl;
   kinds(); build();
 })();

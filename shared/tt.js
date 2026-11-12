@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.6.0";
+  var VERSION = "0.7.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -493,6 +493,8 @@ var TT = (function(){
     var m = location.pathname.match(/\/apps\/([^\/]+)\/(?:index\.html)?$/);
     if(!m) return;
     var here = m[1];
+    document.documentElement.setAttribute("data-app", here);               // 공통 디자인 맞춤(shared/theme.css)
+    (function(){ var l = document.createElement("link"); l.rel = "stylesheet"; l.href = BASE + "shared/theme.css"; document.head.appendChild(l); })();
     var WIDE = "(min-width:900px) and (min-height:460px)";
     var CSS = ":root{--tt-rail:68px}"
       + ".tt-rail,.tt-navbtn{display:none}"
@@ -547,17 +549,17 @@ var TT = (function(){
         var on = t.id === here;
         return '<a class="tt-ri' + cls + (on ? ' on' : '') + '" href="' + BASE + t.href + '" title="' + attr(t.name) + '"' + (on ? ' aria-current="page"' : '') + '><span>' + icon + '</span><b>' + attr(label) + '</b></a>';
       }
-      var h = '<a class="tt-ri home" href="' + BASE + '" title="첫 화면"><span>🧰</span><b>쌤 노트</b></a>';
+      var h = '<a class="tt-ri home" href="' + BASE + '" title="첫 화면"><span>🍎</span><b>쌤 노트</b></a>';
       TT_TOOLS.forEach(function(t){
         if(t.in || !ok(t)) return;
         var subs = TT_TOOLS.filter(function(x){ return x.in === t.id && ok(x); });
         if(t.id === grp && subs.length){                                  // 지금 묶음: 대표 + 하위 도구를 펼쳐 보임
-          h += '<div class="tt-grp"><div class="tt-gh"><span>' + t.icon + '</span><b>' + attr(t.short || t.name) + '</b></div>';
+          h += '<div class="tt-grp"><div class="tt-gh"><span>' + (t.gicon || t.icon) + '</span><b>' + attr(t.short || t.name) + '</b></div>';
           [t].concat(subs).forEach(function(x){ h += link(x, " sub", x.sub || x.short || x.name, x.icon); });
           h += '</div>';
         } else h += link(t, "", t.short || t.name, t.icon);
       });
-      if(!classroom) h += '<button type="button" class="tt-ri rec" data-tt="rec" title="학생 기록 한 줄 남기기 (생기부 자료)"><span>✏️</span><b>학생 기록</b></button>';
+      if(!classroom) h += '<button type="button" class="tt-ri rec" data-tt="rec" title="학생 기록 한 줄 남기기 (생기부 자료)"><span>✍️</span><b>학생 기록</b></button>';
       var b = store.get("tt_board_v1", {}) || {};
       if(b.url && !b.hidden && /^https:\/\/script\.google\.com\//.test(b.url))
         h += '<a class="tt-ri bd" href="' + attr(b.url) + '" target="_blank" rel="noopener" title="학교 업무판 (새 창)"><span>📅</span><b>업무판</b></a>';

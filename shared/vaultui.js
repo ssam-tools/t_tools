@@ -86,10 +86,10 @@
   function stamp(t){ if(!t) return ""; var d = new Date(t); return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
   function chipText(){
     var s = lastStatus;
-    if(!s || !s.mode) return {t:"🔄 동기화 안 함", c:"off"};
+    if(!s || !s.mode) return {t:"☁️ 동기화 안 함", c:"off"};
     if(s.error) return {t:"⚠ 동기화 오류", c:"err"};
     if(s.busy) return {t:"🔄 맞추는 중…", c:""};
-    return {t:"🔒 동기화 " + stamp(s.last), c:""};
+    return {t:"☁️ 동기화 " + stamp(s.last), c:""};
   }
   function paintChip(){
     var c = chipText();
@@ -104,7 +104,7 @@
       else if(personal) pv.textContent = "🔒 자료는 이 기기에 저장되고, 내 비밀 문구로 잠근 뒤에만 학교 보관함과 동기화됩니다."; }
     if(foot && !document.querySelector(".ttv-chip")){ var b = document.createElement("button"); b.type = "button"; b.className = "ttv-chip off"; b.onclick = open; foot.parentNode.insertBefore(b, foot); foot.parentNode.insertBefore(document.createTextNode(" "), foot); }
     var rail = document.querySelector(".tt-rail");                                  // 도구 화면 왼쪽 메뉴
-    if(rail && !rail.querySelector(".ttv-ri")){ var a = document.createElement("a"); a.href = "#"; a.className = "tt-ri ttv-ri bd"; a.innerHTML = "<span>🔒</span><b>동기화</b>"; a.onclick = function(e){ e.preventDefault(); open(); }; rail.appendChild(a); }
+    if(rail && !rail.querySelector(".ttv-ri")){ var a = document.createElement("a"); a.href = "#"; a.className = "tt-ri ttv-ri bd"; a.innerHTML = "<span>☁️</span><b>동기화</b>"; a.onclick = function(e){ e.preventDefault(); open(); }; rail.appendChild(a); }
     paintChip();
   }
 
@@ -129,7 +129,7 @@
     }
     if(cfg && cfg.id){
       var s = lastStatus || {};
-      dialog('<h2>🔒 기기 연결·동기화</h2><p>이 기기는 <b>' + esc(cfg.id) + '</b> 보관함과 연결된 <b>내 기기</b>예요. 바뀐 내용은 잠긴 채로 학교 업무판 보관함에 자동으로 맞춰집니다.</p>'
+      dialog('<h2>☁️ 기기 연결·동기화</h2><p>이 기기는 <b>' + esc(cfg.id) + '</b> 보관함과 연결된 <b>내 기기</b>예요. 바뀐 내용은 잠긴 채로 학교 업무판 보관함에 자동으로 맞춰집니다.</p>'
         + '<div class="ttv-box">마지막 동기화: <b class="ttv-last">' + (s.last ? new Date(s.last).toLocaleString("ko-KR") : "—") + '</b>' + (s.error ? '<br><span style="color:#b3261e">' + esc(s.error) + '</span>' : '') + '</div>'
         + '<p>다른 기기 연결: 그 기기에서 <b>⋯ → 기기 연결·동기화</b>를 열고 같은 ID와 비밀 문구를 넣으세요. 전자칠판은 “교실 기기”로 정하세요.</p>'
         + '<div class="ttv-err"></div><div class="acts"><button class="ttv-btn d" data-a="off">이 기기 연결 끊기</button><div class="r"><button class="ttv-btn" data-a="close">닫기</button><button class="ttv-btn p" data-a="now">지금 동기화</button></div></div>'
@@ -143,7 +143,7 @@
       return;
     }
     var p = serverPrefill();
-    dialog('<h2>🔒 기기 연결·동기화</h2>'
+    dialog('<h2>☁️ 기기 연결·동기화</h2>'
       + '<p>교무실 PC·휴대폰·교실 전자칠판에서 같은 자료를 쓰도록 연결합니다. 자료는 <b>이 기기에서 비밀 문구로 잠근 뒤</b> 학교 업무판 보관함에 맡겨지고, 업무판 관리자나 구글도 내용을 볼 수 없어요.</p>'
       + '<div class="seg2"><label><input type="radio" name="kind" value="personal" checked><b>💻 내 기기</b>교무실 PC, 내 휴대폰</label><label><input type="radio" name="kind" value="classroom"><b>🏫 교실 기기</b>전자칠판 등 여럿이 쓰는 기기</label></div>'
       + '<label class="f">학교 업무판 주소</label><input type="url" name="url" value="' + esc(p.url) + '" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" spellcheck="false">'

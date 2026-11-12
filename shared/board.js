@@ -68,7 +68,10 @@
   function myItems(){
     if(TT.classroom) return [];                                                     // 교실 기기에서는 내 할 일을 보이지 않음
     var d = TT.store.get(MYKEY, null);
-    return d && Array.isArray(d.items) ? d.items.filter(function(x){ return x.date && !x.done; }) : [];
+    var out = d && Array.isArray(d.items) ? d.items.filter(function(x){ return x.date && !x.done; }) : [];
+    var G = TT.store.get("tt_guide_v1", null);                                       // 생활지도 상담 후속 확인일 (번호만 표시)
+    if(G && Array.isArray(G.counsel)) G.counsel.forEach(function(c){ if(c.next && !c.done) out.push({date: c.next, text: c.sid + "번 상담 후속 확인", ic: "🗣️"}); });
+    return out;
   }
   function addMine(date, text){
     var d = TT.store.get(MYKEY, null); d = d && Array.isArray(d.items) ? d : {items: []};
@@ -94,7 +97,7 @@
       + '<span class="bst">' + status + "</span>"
       + (st.err && st.err.auth ? '<button type="button" class="bk due" data-act="setup">비밀번호 다시 입력</button>' : "")
       + (linked && st.err && !st.err.auth ? '<button type="button" class="bk" data-act="retry">다시 시도</button>' : "")
-      + '<span class="sp"></span>' + (TT.classroom ? '' : '<span class="bhint">빈 곳을 누르면 🔒내 할 일 추가</span>') + ''
+      + '<span class="sp"></span>' + (TT.classroom ? '' : '<span class="bhint">빈 곳을 누르면 📝 내 할 일 추가</span>') + ''
       + (linked ? '<a class="btn" href="' + esc(c.url) + '" target="_blank" rel="noopener">업무판 열기 ↗</a>'
                   + '<button type="button" class="bk" data-act="setup" title="업무판 설정" aria-label="업무판 설정">⚙</button>'
                 : '<button type="button" class="btn primary" data-act="setup">업무판 연결</button><button type="button" class="bk" data-act="hide" title="이 칸 숨기기">숨기기</button>')
@@ -113,7 +116,7 @@
           + (idx === focus ? " focus" : "") + (idx === focus + 1 ? " focus2" : "") + '" data-date="' + k + '" title="빈 곳을 누르면 이 날짜에 내 할 일 추가">'
           + '<div class="bdh">' + DOW[d.getDay()] + " " + d.getDate() + (k === tk ? " · 오늘" : "") + (lab ? "<em>" + esc(lab.text) + "</em>" : "") + "</div>"
           + '<div class="bdl">'
-          + my.map(function(x){ return '<div class="bi me" title="내 할 일 (나만 보기)">🔒 ' + esc(x.text) + "</div>"; }).join("")
+          + my.map(function(x){ return '<div class="bi me" title="' + (x.ic ? "생활지도 (나만 보기)" : "내 할 일 (나만 보기)") + '">' + (x.ic || "📝") + " " + esc(x.text) + "</div>"; }).join("")
           + list.map(function(x){
               var col = color(x.dept);
               return '<a class="bi' + (x.important === "1" ? " imp" : "") + '" href="' + esc(c.url) + '" target="_blank" rel="noopener" title="' + esc(x.dept + " · " + (x.time ? x.time + " " : "") + x.text) + '">'
@@ -222,7 +225,7 @@
     if(e.target.closest("a,button") || TT.classroom) return;
     var cell = e.target.closest(".bd[data-date]"); if(!cell) return;
     var k = cell.getAttribute("data-date"), d = new Date(+k.slice(0,4), +k.slice(5,7) - 1, +k.slice(8,10));
-    TT.ui.prompt("🔒 " + (d.getMonth()+1) + "월 " + d.getDate() + "일(" + DOW[d.getDay()] + ") 내 할 일", "", "나만 보는 할 일 (학교 업무판에는 올라가지 않음)", function(v){
+    TT.ui.prompt("📝 " + (d.getMonth()+1) + "월 " + d.getDate() + "일(" + DOW[d.getDay()] + ") 내 할 일", "", "나만 보는 할 일 (학교 업무판에는 올라가지 않음)", function(v){
       addMine(k, v); render(); TT.ui.toast("내 할 일에 넣었습니다 (나만 보기).");
     });
   });

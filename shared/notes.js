@@ -73,7 +73,7 @@
     var c = list.filter(function(x){ return x.id === o.cls; })[0] || now || (home && home.students.length ? home : list[0]);
     var area = o.area || (now ? "subj" : "beh"), picked = {};
     (o.nos || []).forEach(function(n){ picked[n] = 1; });
-    var d = dlg('<h2>✏️ 학생 기록 <small>본 것·한 것을 그때그때 한 줄씩 · 생기부 쓸 때 모아 봅니다</small></h2>'
+    var d = dlg('<h2>✍️ 학생 기록 <small>본 것·한 것을 그때그때 한 줄씩 · 생기부 쓸 때 모아 봅니다</small></h2>'
       + '<div class="top"><select data-k="cls" aria-label="학급">' + list.map(function(x){ return '<option value="' + esc(x.id) + '"' + (x.id === c.id ? " selected" : "") + ">" + (x === now ? "● " : x.id === d0.home ? "★ " : "") + esc(x.name) + "</option>"; }).join("") + "</select>"
       + '<input type="date" data-k="date" value="' + ymd() + '" aria-label="날짜"><div class="areas">' + areaBtns(area) + "</div></div>"
       + '<div class="stu" role="group" aria-label="학생 고르기 (여러 명 가능)"></div>'
@@ -103,7 +103,7 @@
         last = L.length ? "최근: " + L.map(function(r){ return md(r.date) + " " + N.area(r.area) + " · " + r.text.slice(0, 40); }).join(" / ") : "";
       }
       q("[data-k=last]").textContent = last;
-      var l = les(); q("[data-k=les]").textContent = l ? "📘 지금 차시: " + l + " (기록 앞에 붙습니다)" : "";
+      var l = les(); q("[data-k=les]").textContent = l ? "📖 지금 차시: " + l + " (기록 앞에 붙습니다)" : "";
     }
     q("[data-k=cls]").onchange = function(){ var v = this.value; c = list.filter(function(x){ return x.id === v; })[0]; picked = {}; drawStu(); };
     q(".areas").onclick = function(e){ var b = e.target.closest("button"); if(!b) return; area = b.dataset.area; this.querySelectorAll("button").forEach(function(x){ x.setAttribute("aria-pressed", x === b); }); upd(); };
@@ -144,7 +144,7 @@
       var L = all.filter(function(r){ return flt === "all" || r.area === flt; });
       q("[data-k=recs]").innerHTML = L.length ? L.map(function(r){
         return '<li><span class="d">' + md(r.date) + "</span>" + chip(r.area) + '<span class="t">' + esc(r.text) + (r.src ? ' <span class="muted">· ' + esc(r.src) + "</span>" : "") + '</span><button type="button" class="x" data-del="' + esc(r.id) + '" title="지우기" aria-label="지우기">×</button></li>';
-      }).join("") : '<li class="muted" style="border:0">아직 기록이 없습니다. 아래에 한 줄 적거나, 어느 화면에서든 ✏️ 학생 기록을 누르세요.</li>';
+      }).join("") : '<li class="muted" style="border:0">아직 기록이 없습니다. 아래에 한 줄 적거나, 어느 화면에서든 ✍️ 학생 기록을 누르세요.</li>';
     }
     q("[data-k=memo]").onchange = function(){ N.setMemo(k, this.value, s.name); window.dispatchEvent(new CustomEvent("tt-notes-change")); TT.ui.toast("메모를 저장했습니다."); };
     q("[data-k=flt]").onclick = function(e){ var b = e.target.closest("button"); if(b){ flt = b.dataset.f; draw(); } };

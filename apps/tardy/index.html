@@ -238,6 +238,7 @@ table.plain{width:100%;border-collapse:collapse;font-size:13.5px}
     <button class="tab" role="tab" data-act="tab" data-tab="counsel">상담</button>
     <button class="tab" role="tab" data-act="tab" data-tab="report" id="tabReport">결석신고서</button>
     <button class="tab" role="tab" data-act="tab" data-tab="settings">설정</button>
+    <a class="tab" href="../parent/" style="text-decoration:none;margin-left:auto">✉️ 학부모 문자</a>
   </nav>
 </div>
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="상세 창"></div></div>
@@ -416,7 +417,7 @@ function todoList(rows, mon) {
   rows.forEach(r => {
     if (r.w.level === 'ok') return;
     const since = [mon].concat(r.w.runs.map(x => x.start)).sort()[0];
-    if (!S.counsel.some(c => c.sid === r.st.id && c.date >= since)) todos.push(`<li><span><b>${esc(nm(r.st))}</b> <span class="muted small">${esc(L.describe(r.w))}</span></span><button class="btn btn-sm btn-primary" data-act="counsel-new" data-sid="${r.st.id}">상담일지 쓰기</button></li>`);
+    if (!S.counsel.some(c => c.sid === r.st.id && c.date >= since)) todos.push(`<li><span><b>${esc(nm(r.st))}</b> <span class="muted small">${esc(L.describe(r.w))}</span></span><span class="row">${sms('lateN', r.st.no, today(), r.w.tardyDays.map(mdk).join(', '), '문자')}<button class="btn btn-sm btn-primary" data-act="counsel-new" data-sid="${r.st.id}">상담일지 쓰기</button></span></li>`);
   });
   S.counsel.filter(c => c.next && !c.done && c.next <= td).forEach(c => {
     todos.push(`<li><span><b>${esc(nm(stu(c.sid)))}</b> <span class="muted small">후속 확인일 ${esc(mdShort(c.next))} (상담 ${esc(mdShort(c.date))})</span></span><span class="row"><button class="btn btn-sm" data-act="follow-done" data-id="${c.id}">개선 확인</button><button class="btn btn-sm" data-act="counsel-new" data-sid="${c.sid}">다시 상담</button></span></li>`);
@@ -549,7 +550,7 @@ function renderReports() {
     return `<tr><td class="l"><b>${e.st.no} ${esc(nm(e.st))}</b></td><td class="l">${mdk(e.start)}${e.days.length > 1 ? ' ~ ' + mdk(e.end) : ''}</td><td>${e.days.length}일</td>
       <td class="l"><span class="pill pill-A">${esc(AK[e.kind])}</span></td><td class="l" style="white-space:normal">${esc(e.reasons.join(', ') || '—')}</td>
       <td class="l">${made ? `<span class="pill pill-good">작성 ${esc(mdShort(made.made || today()))}</span>` : '<span class="pill pill-caution">미작성</span>'}</td>
-      <td><button class="btn btn-sm ${made ? '' : 'btn-primary'}" data-act="report-open" data-key="${esc(e.key)}">${made ? '열기' : '결석신고서 작성'}</button></td></tr>`;
+      <td style="white-space:nowrap">${made ? '' : sms('absdoc', e.st.no, e.start, mdk(e.start) + (e.days.length > 1 ? ' ~ ' + mdk(e.end) : '') + ' ' + AK[e.kind], '제출 안내')} <button class="btn btn-sm ${made ? '' : 'btn-primary'}" data-act="report-open" data-key="${esc(e.key)}">${made ? '열기' : '결석신고서 작성'}</button></td></tr>`;
   }).join('');
   return `<div class="view"><div class="row spread" style="flex:none"><div class="row">${msel}<span class="small muted">같은 학생의 이어진 결석(같은 구분)은 한 장으로 묶입니다. 결석의 구분·사유는 입력 화면이나 주간 표에서 칸을 눌러 고칠 수 있어요.</span></div>
     <button class="btn" data-act="report-blank">빈 결석신고서</button></div>
@@ -605,6 +606,21 @@ function todoModal() {
 
 /* 출결 한 칸 */
 let recCtx = null;
+/* 상황별 학부모 문자: 학부모 문자 화면을 그 상황의 글로 채워 엽니다(주소에는 번호만, 이름은 넣지 않음) */
+function sms(k, no, d, x, label) {
+  const q = new URLSearchParams({ k, no: String(no), d: d || today(), x: x || '', c: HOME ? String(HOME.id) : '' });
+  return `<a class="btn btn-sm" href="../parent/?${q.toString()}" title="학부모 문자 만들기">✉️ ${esc(label || '문자')}</a>`;
+}
+/* 상담일지의 "행동특성 참고" 한 줄 → 학생 기록(tt_notes_v1, 영역 행동특성). 상담 내용 자체는 옮기지 않습니다. */
+function behNote(c) {
+  if (!c || !TT.notes) return;
+  const N = TT.notes, d = N.load(), gid = 'g' + c.id, i = d.recs.findIndex(r => r.gid === gid);
+  const st = c.sid ? stu(c.sid) : null;
+  if (!c.beh || !st || !HOME) { if (i >= 0) { d.recs.splice(i, 1); N.save(d); } return; }
+  const rec = { k: N.key(HOME, st), n: st.name, date: c.date || today(), area: 'beh', src: '상담일지', text: c.beh };
+  if (i >= 0) Object.assign(d.recs[i], rec); else d.recs.push(Object.assign({ id: uid(), gid, at: Date.now() }, rec));
+  N.save(d);
+}
 function recModal(no, d) {
   recCtx = { no, d };
   const st = stu(no), r = rec(no, d) || null, t = r ? r.t : '';
@@ -618,7 +634,8 @@ function recModal(no, d) {
     <input type="text" id="rec-r" data-chg="rec-r" value="${esc(r.r || '')}" maxlength="40" placeholder="예: 감기 몸살로 병원 진료">
     <div class="chips" style="margin-top:6px">${ABS_REASONS.map(x => `<button type="button" class="chip" data-act="rec-areason" data-r="${esc(x)}" aria-pressed="${r.r === x}">${esc(x)}</button>`).join('')}</div>
     <label class="f">증빙 서류</label><div class="chips">${EVID.map(x => `<button type="button" class="chip" data-act="rec-ev" data-r="${esc(x)}" aria-pressed="${r.ev === x}">${esc(x)}</button>`).join('')}</div>
-    <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn btn-primary" data-act="close">확인</button></div>`;
+    <div class="row" style="justify-content:flex-end;margin-top:12px">${sms('abs', no, d, '', '결석 확인 문자')}<button class="btn btn-primary" data-act="close">확인</button></div>`;
+  if (t === 'L') h += `<div class="row" style="justify-content:flex-end;margin-top:12px">${sms('late', no, d, r.m ? r.m + '분 늦음' : '', '지각 안내 문자')}<button class="btn btn-primary" data-act="close">확인</button></div>`;
   openModal(h);
   if (t === 'A' && !r.r) setTimeout(() => { const i = $('#rec-r'); if (i) i.focus(); }, 30);
 }
@@ -637,6 +654,8 @@ function counselModal(sid, id) {
     <label class="f" for="c-content">상담 내용</label><textarea id="c-content" placeholder="학생이 한 말, 확인한 내용을 간단히 적습니다.">${esc(c.content)}</textarea>
     <label class="f">지도·조치</label>${chips(ACTIONS, c.actions || [], 'actions')}
     <input type="text" id="c-action" style="margin-top:8px" value="${esc(c.actionNote)}" placeholder="추가로 적을 조치나 약속">
+    <label class="f" for="c-beh">행동특성 참고 <span class="muted small">(선택 · 생기부에 쓸 만한 모습만 · 학생 카드의 행동특성 기록으로 모입니다)</span></label>
+    <input type="text" id="c-beh" maxlength="200" value="${esc(c.beh || '')}" placeholder="예: 지각 이유를 솔직히 말하고 스스로 기상 계획을 세움">
     <div class="grid2"><div><label class="f" for="c-parent">학부모 연락</label><select id="c-parent">${Object.keys(PARENT).map(k => `<option value="${k}" ${c.parent === k ? 'selected' : ''}>${PARENT[k]}</option>`).join('')}</select></div>
     <div><label class="f" for="c-next">후속 확인일 (선택)</label><input type="date" id="c-next" value="${esc(c.next)}"></div></div>
     <div class="err" id="c-err"></div>
@@ -646,7 +665,7 @@ function triggerFor(sid) { const a = L.describe(wkStat(sid, view.monday)); retur
 const grp = g => Array.from(document.querySelectorAll(`[data-group="${g}"] .chip[aria-pressed="true"]`)).map(b => b.textContent);
 function readForm() {
   return { id: $('#c-id').value, sid: $('#c-sid').value, date: $('#c-date').value, trigger: $('#c-trigger').value.trim(), reasons: grp('reasons'),
-    content: $('#c-content').value.trim(), actions: grp('actions'), actionNote: $('#c-action').value.trim(), parent: $('#c-parent').value, next: $('#c-next').value };
+    content: $('#c-content').value.trim(), actions: grp('actions'), actionNote: $('#c-action').value.trim(), parent: $('#c-parent').value, next: $('#c-next').value, beh: $('#c-beh').value.trim() };
 }
 function parentText(c) {
   const st = stu(c.sid);
@@ -703,7 +722,7 @@ function reportModal(key) {
     </div>
     <div class="err" id="r-err"></div>
     <div class="row spread" style="margin-top:12px"><span class="small muted">🔒 학생 이름이 들어간 문서입니다.</span>
-      <span class="row"><button class="btn" data-act="report-print">🖨 인쇄</button><button class="btn btn-primary" data-act="report-hwpx">📝 한글 파일(.hwpx) 저장</button></span></div>`, true);
+      <span class="row"><button class="btn" data-act="report-print">🖨 인쇄</button><button class="btn btn-primary" data-act="report-hwpx">⬇ 한글 파일(.hwpx) 저장</button></span></div>`, true);
 }
 function readReport() {
   const f = Object.assign({}, RC.f);
@@ -875,9 +894,10 @@ const A = {
     if (!f.trigger && !f.content && !f.reasons.length) { err.textContent = '상담 계기, 사유, 내용 중 하나는 적어 주세요.'; return; }
     if (f.id) { const c = S.counsel.find(x => x.id === f.id); if (c) Object.assign(c, f, { done: f.next !== c.next ? false : c.done }); }
     else S.counsel.push(Object.assign(f, { id: uid(), done: false, created: Date.now() }));
-    persist(); closeModal(); render(); toast('상담일지를 저장했습니다');
+    const saved = f.id ? S.counsel.find(x => x.id === f.id) : S.counsel[S.counsel.length - 1];
+    persist(); behNote(saved); closeModal(); render(); toast('상담일지를 저장했습니다' + (f.beh ? ' · 행동특성 기록에도 넣었어요' : ''));
   },
-  'counsel-del': t => { const id = t.dataset.id; confirmBox('이 상담일지를 삭제할까요? 되돌릴 수 없습니다.', '삭제', () => { S.counsel = S.counsel.filter(c => c.id !== id); persist(); closeModal(); render(); }); },
+  'counsel-del': t => { const id = t.dataset.id; confirmBox('이 상담일지를 삭제할까요? 되돌릴 수 없습니다.', '삭제', () => { S.counsel = S.counsel.filter(c => c.id !== id); persist(); behNote({ id, beh: '' }); closeModal(); render(); }); },
   'follow-done': t => { const c = S.counsel.find(x => x.id === t.dataset.id); if (c) { c.done = true; persist(); closeModal(); render(); toast('개선 확인으로 표시했습니다'); } },
   'log-copy': t => { const c = S.counsel.find(x => x.id === t.dataset.id); if (c) copyText(logText(c)); },
   'parent-copy': t => { const c = S.counsel.find(x => x.id === t.dataset.id); if (c) copyText(parentText(c)); },

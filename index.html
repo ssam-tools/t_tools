@@ -183,11 +183,11 @@
 <body data-mode="home">
 <header>
   <div>
-    <h1><span id="appTitle">🧰 쌤 노트</span> <button type="button" class="sch" id="schChip" hidden>🏫 학교 이름 넣기</button></h1>
+    <h1><span id="appTitle">🍎 쌤 노트</span> <button type="button" class="sch" id="schChip" hidden>🏷️ 학교 이름 넣기</button></h1>
     <p class="lead"><span id="leadTxt">학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다.</span> <a class="home" id="homeChip" href="apps/roster/"></a><span id="alerts"></span></p>
   </div>
   <div class="bar">
-    <button type="button" class="qrec" id="qRec" title="학생을 골라 본 것·한 것을 한 줄 남깁니다 (생기부 자료)">✏️ 학생 기록</button>
+    <button type="button" class="qrec" id="qRec" title="학생을 골라 본 것·한 것을 한 줄 남깁니다 (생기부 자료)">✍️ 학생 기록</button>
     <div class="seg" role="group" aria-label="교사 유형">
       <button type="button" id="b-home" aria-pressed="true">담임 + 교과</button>
       <button type="button" id="b-subject" aria-pressed="false">교과만</button>
@@ -223,7 +223,7 @@
 
 <dialog id="dlgSchool">
   <form id="fSchool">
-    <h2>🏫 학교·선생님 설정</h2>
+    <h2>🏷️ 학교·선생님 설정</h2>
     <p>여기 한 곳에만 넣으면 첫 화면 제목, 결석신고서, 학부모 문자에 함께 쓰입니다.</p>
     <label class="f">학교 이름<input type="text" id="sName" maxlength="20" placeholder="예: 마산서중학교" autocomplete="off"></label>
     <label class="f">선생님 이름 <small>(결석신고서 담임 칸·문자 서명)</small><input type="text" id="sTeacher" maxlength="10" autocomplete="off"></label>
@@ -239,7 +239,7 @@
       <li><b>학급 명렬표</b>에서 나이스 학생 명단 파일(엑셀)을 올립니다. 학년·반이 자동으로 등록됩니다.</li>
       <li>담임이라면 ★ 버튼으로 <b>우리 반</b>을 지정합니다.</li>
       <li>⋯ 메뉴의 <b>학교·선생님 설정</b>에 학교 이름을 넣으면 제목·결석신고서·문자에 함께 쓰입니다.</li>
-      <li>수업·생활지도 중 본 것은 <b>✏️ 학생 기록</b>으로 한 줄씩 남기세요. 명렬표의 📇 학생 카드에 모여 생기부 쓸 때 꺼내 봅니다.</li>
+      <li>수업·생활지도 중 본 것은 <b>✍️ 학생 기록</b>으로 한 줄씩 남기세요. 명렬표의 📇 학생 카드에 모여 생기부 쓸 때 꺼내 봅니다.</li>
     </ol>
     <p style="margin-top:10px">🔒 학생 자료는 이 기기의 브라우저에만 저장됩니다(⋯ → 기기 연결·동기화를 켜면 내 비밀 문구로 잠가 학교 보관함과 맞춥니다). 학년이 끝날 때는 ⋯ 메뉴의 <b>전체 백업 저장</b>을 하세요. 백업 파일에는 학생 이름이 들어 있으니 다른 사람에게 보내지 마세요.</p>
     <p style="margin-top:6px">📱 휴대폰은 브라우저 메뉴의 "홈 화면에 추가", 컴퓨터는 주소창의 설치 아이콘을 누르면 앱처럼 쓸 수 있고, 인터넷이 끊겨도 열립니다.</p>
@@ -282,7 +282,7 @@
     if(t.ready && t.file){ el.type = "button"; el.onclick = function(){ askDownload(t); }; }
     else if(t.ready){ var cv = document.createElement("a"); cv.className = "cover"; cv.href = t.href; cv.setAttribute("aria-label", t.card || t.name); el.appendChild(cv); }
     function add(cls, text){ var d = document.createElement("div"); d.className = cls; d.textContent = text; el.appendChild(d); return d; }
-    add("ico", t.icon); add("name", t.card || t.name); add("desc", t.desc);
+    add("ico", t.gicon || t.icon); add("name", t.card || t.name); add("desc", t.desc);
     if(subs.length){
       var sb = add("subs", "");
       (t.card ? [t].concat(subs) : subs).forEach(function(x){
@@ -298,13 +298,13 @@
 
   /* 쌤 노트 제목: 학교 이름은 "학교·선생님 설정" 한 곳에서 (TT.school) */
   function showTitle(){
-    var t = TT.school.title(); $("appTitle").textContent = "🧰 " + t; document.title = t;
+    var t = TT.school.title(); $("appTitle").textContent = "🍎 " + t; document.title = t;
     $("schChip").hidden = !!TT.school.load().name || !!TT.classroom;
   }
   function openSchool(){
     var sc = TT.school.load(); $("sName").value = sc.name; $("sTeacher").value = sc.teacher; prevSchool(); $("dlgSchool").showModal(); $("sName").focus();
   }
-  function prevSchool(){ var n = $("sName").value.replace(/\s+/g, "").replace(/학교$/, ""); $("sPrev").textContent = "제목 미리보기: 🧰 " + (n ? n + " " : "") + "쌤 노트"; }
+  function prevSchool(){ var n = $("sName").value.replace(/\s+/g, "").replace(/학교$/, ""); $("sPrev").textContent = "제목 미리보기: 🍎 " + (n ? n + " " : "") + "쌤 노트"; }
   $("sName").oninput = prevSchool;
   $("schChip").onclick = openSchool;
   $("sCancel").onclick = function(){ $("dlgSchool").close(); };
@@ -342,7 +342,7 @@
             else{ cur = {k: k, start: d, end: d}; if(!rep[no + "|" + d]) reps++; }
           });
         });
-        if(need) h += '<a class="al" href="apps/tardy/" title="무단지각 기준에 걸렸는데 상담일지가 없는 학생">🧭 상담 필요 ' + need + "명</a>";
+        if(need) h += '<a class="al" href="apps/tardy/" title="무단지각 기준에 걸렸는데 상담일지가 없는 학생">🗣️ 상담 필요 ' + need + "명</a>";
         if(follow) h += '<a class="al mid" href="apps/tardy/" title="상담 후속 확인일이 된 학생">🔁 후속 확인 ' + follow + "건</a>";
         if(reps) h += '<a class="al mid" href="apps/tardy/" title="아직 만들지 않은 결석신고서">📄 결석신고서 ' + reps + "건</a>";
       }
@@ -424,12 +424,12 @@
   function showToday(){
     var el = $("leadTxt"), TTT = TT.timetable;
     function e(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-    if(!TTT.has()){ el.innerHTML = '학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다. <a class="tset" href="apps/timetable/">🗓️ 내 시간표 넣기 →</a>'; return; }
+    if(!TTT.has()){ el.innerHTML = '학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다. <a class="tset" href="apps/timetable/">🕘 내 시간표 넣기 →</a>'; return; }
     var d = new Date(), w = d.getDay(), label = "오늘 수업", list;
     if(w < 1 || w > 5){ var mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() + (w === 6 ? 2 : 1)); list = TTT.day(mon); label = "월요일 수업"; }
     else list = TTT.day(d);
     var m = d.getHours() * 60 + d.getMinutes(), weekday = w >= 1 && w <= 5;
-    var h = '<a class="tday" href="apps/timetable/" title="내 시간표 열기"><b class="lb">🗓️ ' + label + " " + list.length + "시간</b>";
+    var h = '<a class="tday" href="apps/timetable/" title="내 시간표 열기"><b class="lb">🕘 ' + label + " " + list.length + "시간</b>";
     if(!list.length) h += '<span class="tc">수업 없음</span>';
     list.forEach(function(s){
       var cls = weekday && m >= s.end ? " past" : weekday && m >= s.start ? " cur" : "";
