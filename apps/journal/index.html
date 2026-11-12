@@ -373,7 +373,7 @@ function defaultClass(){
 }
 function addRecord(c,no,tags,text,star){
   const id=S.nextId++;
-  S.records.push({id:id,date:dkey(new Date()),period:periodFor(c),cls:c,no:no,tags:tags,text:text,star:!!star,ts:Date.now()});
+  S.records.push({id:id,date:dkey(new Date()),period:periodFor(c),cls:c,no:no,tags:tags,text:text,star:!!star,ts:Date.now(),les:(TT.notes&&TT.notes.lessonNow)?TT.notes.lessonNow(c):''});
   save();return id;
 }
 function delRecord(id){S.records=S.records.filter(r=>r.id!==id);save();}
@@ -766,7 +766,7 @@ function act(a,t){
       if(list.map(x=>x.no).join(',')!==oldNos||!S.seats[c]||!S.seats[c].length)S.seats[c]=buildSeats(list.map(x=>x.no));
       save();closeSheet();render();toast(cn(c)+' 명단 '+list.length+'명을 저장했어요');break;
     }
-    case 'toggleHide':S.hideNames=!S.hideNames;save();renderSheet();render();break;
+    case 'toggleHide':S.hideNames=!S.hideNames;save();try{const C0=TT.store.get('tt_class_v1',{})||{};C0.mask=S.hideNames;TT.store.set('tt_class_v1',C0);}catch(e){}renderSheet();render();break;
     case 'exportRec':exportRecords();break;
     case 'exportProg':exportProgress();break;
     case 'clearSample':{
@@ -789,7 +789,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!ui.sheet&&ui.tab==='today')render();});
 
 /* ---------- 시작 ---------- */
-S=load();
+S=load();try{const C0=TT.store.get("tt_class_v1",null);if(C0&&typeof C0.mask==="boolean"&&C0.mask!==!!S.hideNames){S.hideNames=C0.mask;save();}}catch(e){}
 /* 내 시간표(tt_timetable_v1, "내 시간표" 도구)가 있으면 교시 시각과 시간표를 그대로 씁니다.
    내 시간표가 바뀌었을 때만 덮어쓰므로, 그 사이 여기서 고친 내용은 다음 변경 전까지 유지됩니다. */
 (function(){try{

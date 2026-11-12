@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.5.0";
+  var VERSION = "0.6.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -649,6 +649,47 @@ var TT = (function(){
     function save(d){ d.updatedAt = Date.now(); return store.set(KEY, d); }
     function key(c, s){ return c && (c.grade && c.cls) ? c.grade + "-" + c.cls + "-" + s.no : (c ? c.id : "_") + "-" + s.no; }
     function ymd(){ var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()); }
+    /* 수업 기록장(tt_journal_v1)의 지금 차시 이름: 지금 교시에 "수업함"으로 표시한 차시, 없으면 다음 차시 */
+    function lessonNow(cc){
+      var J = store.get("tt_journal_v1", null); if(!J || !J.cur) return "";
+      var g = Math.floor(cc / 100), raw = J.cur[g]; raw = Array.isArray(raw) ? raw.join("\n") : String(raw || "");
+      var L = [], unit = "";
+      raw.split("\n").forEach(function(l){ l = l.trim(); if(!l) return; if(l[0] === "#"){ unit = l.replace(/^#+\s*/, ""); return; } L.push(l); });
+      if(!L.length) return "";
+      var now = timetable.now(), i = -1;
+      if(now && J.taught){ var tg = J.taught[ymd() + "|" + now.n]; if(tg && tg.kind === "done") i = tg.lesson; }
+      if(i < 0) i = Math.min(((J.prog || {})[cc] || {}).n || 0, L.length - 1);
+      return L[i] || "";
+    }
+    /* 수업 기록장의 학생 기록(발표·질문 등)을 학생 기록 창고로 모읍니다. 교실 기기에서 쓴 것도 내 기기에서 모입니다.
+       "내부 참고" 꼬리표만 있는 기록은 옮기지 않고, 수업 기록장에서 지우면 여기서도 지웁니다. */
+    var INTERNAL = ["과제 미제출", "집중 부족", "준비물 미지참", "지원 필요"];
+    function fromJournal(){
+      if(classroom) return;
+      var J = store.get("tt_journal_v1", null); if(!J || !Array.isArray(J.records)) return;
+      var d = load(), have = {}, live = {}, changed = false, skip = d.skipJ || {};
+      d.recs.forEach(function(r){ if(r.jid) have[r.jid] = 1; });
+      var cl = roster.classes();
+      J.records.forEach(function(r){
+        var jid = "j" + r.cls + "-" + r.id + "-" + r.ts; live[jid] = 1;
+        if(have[jid] || skip[jid]) return;
+        var tags = (r.tags || []).filter(function(t){ return INTERNAL.indexOf(t) < 0; }), inn = (r.tags || []).filter(function(t){ return INTERNAL.indexOf(t) >= 0; });
+        if(!tags.length && !r.text) return;
+        var g = Math.floor(r.cls / 100), c = r.cls % 100, cc = cl.filter(function(x){ return +x.grade === g && +x.cls === c; })[0];
+        var st = cc ? cc.students.filter(function(x){ return +x.no === +r.no; })[0] : null;
+        var text = (r.les ? "[" + r.les + "] " : "") + tags.concat(inn.length ? ["(참고: " + inn.join(", ") + ")"] : []).join(", ") + (r.text ? (tags.length ? " — " : "") + r.text : "") + (r.star ? " ⭐" : "");
+        d.recs.push({id: uid(), jid: jid, k: g + "-" + c + "-" + r.no, n: st ? st.name : "", date: r.date, area: "subj", src: "수업 기록장", text: text.slice(0, 1000), at: r.ts || Date.now()});
+        changed = true;
+      });
+      var before = d.recs.length;
+      d.recs = d.recs.filter(function(r){ return !r.jid || live[r.jid]; });
+      if(changed || d.recs.length !== before) save(d);
+    }
+    if(!classroom){
+      setTimeout(function(){ try{ fromJournal(); }catch(e){} }, 0);
+      window.addEventListener("storage", function(e){ if(e.key === "tt_journal_v1"){ try{ fromJournal(); }catch(err){} } });
+    }
+
     return {
       KEY: KEY, AREAS: AREAS, load: load, save: save, key: key,
       area: function(id){ var a = AREAS.filter(function(x){ return x[0] === id; })[0]; return a ? a[1] : "기타"; },
@@ -664,9 +705,10 @@ var TT = (function(){
         d.recs.push(r); save(d); return r;
       },
       update: function(id, patch){ var d = load(); d.recs.forEach(function(r){ if(r.id === id) Object.assign(r, patch); }); save(d); },
-      remove: function(id){ var d = load(); d.recs = d.recs.filter(function(r){ return r.id !== id; }); save(d); },
+      remove: function(id){ var d = load(); d.recs = d.recs.filter(function(r){ if(r.id === id && r.jid){ d.skipJ = d.skipJ || {}; d.skipJ[r.jid] = 1; } return r.id !== id; }); save(d); },
       list: function(k){ return load().recs.filter(function(r){ return !k || r.k === k; }).sort(function(a, b){ return b.date < a.date ? -1 : b.date > a.date ? 1 : b.at - a.at; }); },
       count: function(){ var c = {}; load().recs.forEach(function(r){ c[r.k] = (c[r.k] || 0) + 1; }); return c; },
+      lessonNow: lessonNow, fromJournal: fromJournal,
       /* 화면(빠른 기록·학생 카드)은 shared/notes.js 가 채웁니다. */
       quick: function(o){ withUI(function(){ TT.notesUI.quick(o || {}); }); },
       card: function(c, s){ withUI(function(){ TT.notesUI.card(c, s); }); }

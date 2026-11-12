@@ -78,7 +78,7 @@
       + '<input type="date" data-k="date" value="' + ymd() + '" aria-label="날짜"><div class="areas">' + areaBtns(area) + "</div></div>"
       + '<div class="stu" role="group" aria-label="학생 고르기 (여러 명 가능)"></div>'
       + '<textarea data-k="text" maxlength="1000" placeholder="예: 이차함수 그래프의 평행이동을 친구에게 그림으로 설명함"></textarea>'
-      + '<div class="muted" data-k="last"></div>'
+      + '<div class="muted" data-k="les"></div><div class="muted" data-k="last"></div>'
       + '<div class="acts"><span class="muted" data-k="cnt">학생을 골라 주세요 (여러 명 가능)</span><div class="r"><button type="button" class="b" data-a="close">닫기</button><button type="button" class="b p" data-a="save" disabled>저장</button></div></div>');
     var q = function(s){ return d.querySelector(s); }, ta = q("[data-k=text]");
     if(o.text) ta.value = o.text;
@@ -92,6 +92,7 @@
       upd();
     }
     function sel(){ return c.students.filter(function(s){ return picked[s.no]; }); }
+    function les(){ return area === "subj" && c.grade && c.cls && N.lessonNow ? N.lessonNow(c.grade * 100 + c.cls) : ""; }   // 수업 기록장의 지금 차시
     function upd(){
       var s = sel();
       q("[data-k=cnt]").textContent = s.length ? s.length + "명 선택 · " + N.area(area) : "학생을 골라 주세요 (여러 명 가능)";
@@ -102,8 +103,9 @@
         last = L.length ? "최근: " + L.map(function(r){ return md(r.date) + " " + N.area(r.area) + " · " + r.text.slice(0, 40); }).join(" / ") : "";
       }
       q("[data-k=last]").textContent = last;
+      var l = les(); q("[data-k=les]").textContent = l ? "📘 지금 차시: " + l + " (기록 앞에 붙습니다)" : "";
     }
-    q("[data-k=cls]").onchange = function(){ c = list.filter(function(x){ return x.id === this.value; }, this)[0]; picked = {}; drawStu(); };
+    q("[data-k=cls]").onchange = function(){ var v = this.value; c = list.filter(function(x){ return x.id === v; })[0]; picked = {}; drawStu(); };
     q(".areas").onclick = function(e){ var b = e.target.closest("button"); if(!b) return; area = b.dataset.area; this.querySelectorAll("button").forEach(function(x){ x.setAttribute("aria-pressed", x === b); }); upd(); };
     q(".stu").onclick = function(e){ var b = e.target.closest("button"); if(!b) return; var n = +b.dataset.no; if(picked[n]) delete picked[n]; else picked[n] = 1; b.setAttribute("aria-pressed", !!picked[n]); upd(); };
     ta.oninput = upd;
@@ -112,6 +114,7 @@
     q("[data-a=save]").onclick = function(){
       var s = sel(), text = ta.value.trim(), date = q("[data-k=date]").value || ymd();
       if(!s.length || !text) return;
+      var l = les(); if(l && text.indexOf("[") !== 0) text = "[" + l + "] " + text;
       s.forEach(function(x){ N.add({k: N.key(c, x), n: x.name, date: date, area: area, src: o.src || "", text: text}); });
       TT.ui.toast(s.length === 1 ? (s[0].name || s[0].no + "번") + " 기록을 저장했습니다." : s.length + "명에게 같은 기록을 저장했습니다.");
       picked = {}; ta.value = ""; drawStu(); ta.focus();
