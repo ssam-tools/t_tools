@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.3.0";
+  var VERSION = "0.3.1";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -408,7 +408,7 @@ var TT = (function(){
     },
     /* 저장된 자료가 하나라도 있는지 (설정값 제외) */
     hasData: function(){
-      return store.keys().some(function(k){ return k !== "tt_mode" && k !== "tt_last_backup"; });
+      return store.keys().some(function(k){ return k !== "tt_mode" && k !== "tt_last_backup" && k.indexOf("tt_board") !== 0; });   // 업무판 설정만 있을 때는 백업 알림 안 함
     },
     /* 새 학년 시작: 전체 백업을 파일로 저장한 뒤 모든 도구의 자료를 비웁니다. */
     newYear: function(done){
@@ -417,7 +417,7 @@ var TT = (function(){
         "백업 저장 후 비우기", function(){
           backup.save();
           setTimeout(function(){
-            store.keys().forEach(function(k){ if(k !== "tt_mode") store.remove(k); });
+            store.keys().forEach(function(k){ if(k !== "tt_mode" && k.indexOf("tt_board") !== 0) store.remove(k); });   // 학교 업무판 연결은 새 학년에도 유지
             ui.toast("지난 학년 자료를 비웠습니다. 백업 파일은 다운로드 폴더에 있습니다.");
             if(done) done();
           }, 600);

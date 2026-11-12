@@ -2,8 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용).
+     예외: 첫 화면의 "이번 주 업무"가 학교 업무판(구글 앱스 스크립트)을 읽어 오는 주소 두 곳. 학생 자료는 보내지 않습니다. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2f6fb5">
 <title>선생님 도구 모음</title>
@@ -48,6 +49,38 @@
   .bk{font:inherit;font-size:12px;font-weight:700;border:0;border-radius:999px;padding:4px 10px;cursor:pointer;background:#eceff3;color:#4a5560}
   .bk.due{background:var(--star-soft);color:#7a5a00}
 
+  /* 이번 주 업무 띠 (shared/board.js) */
+  .board{flex:none;background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:clamp(7px,1.3vh,11px) clamp(10px,1.6vw,14px);display:flex;flex-direction:column;gap:clamp(4px,.8vh,7px);height:clamp(118px,24vh,215px)}
+  .board.setup{height:auto;flex-direction:row;align-items:center;gap:10px;font-size:13.5px;color:var(--sub)}
+  .board.setup span{flex:1}
+  .board.setup .btn{padding:6px 12px;font-size:13px}
+  .bh{display:flex;align-items:center;gap:8px;font-size:14.5px;min-width:0}
+  .bh .sm{white-space:nowrap}
+  .bh .sp{flex:1}
+  .bh .btn{padding:5px 11px;font-size:13px}
+  .bst{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .bst .err{color:var(--danger);font-weight:700}
+  .bdays{flex:1;min-height:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;text-decoration:none;color:inherit}
+  .bd{border:1px solid var(--line);border-radius:10px;padding:4px 8px;display:flex;flex-direction:column;min-height:0;min-width:0;background:#fbfcfd}
+  .bdays:hover .bd{border-color:#c7d3e0}
+  .bd.today{border-color:var(--accent)!important;background:var(--accent-soft)}
+  .bd.hol{background:var(--danger-soft)}
+  .bdh{font-size:12.5px;font-weight:800;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bd.today .bdh{color:var(--accent)}
+  .bdh em{font-style:normal;color:var(--danger);font-size:11.5px;margin-left:5px}
+  .bdl{flex:1;min-height:0;overflow:hidden}
+  .bi{font-size:12.5px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bi b{font-size:11.5px;margin-right:4px}
+  .bi .t{color:var(--accent);font-weight:700;margin-right:3px}
+  .bi.imp{color:var(--danger);font-weight:700}
+  .bmore{font-size:11.5px;color:var(--accent);font-weight:700}
+  .bnone{font-size:12px;color:#aab3bd}
+  .bn{font-size:12.5px;color:var(--ok);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* 업무 띠가 있을 때 화면이 낮으면 카드 설명을 숨겨 글자가 잘리지 않게 */
+  @media (max-height:860px){ body:has(.board:not([hidden]):not(.setup)) .desc{display:none} }
+  .bErr{color:var(--danger)!important;font-weight:700;min-height:1em;margin-top:6px}
+
   @media (max-width:760px), (max-height:560px){
     .desc{display:none}
     .card{padding:9px 8px;gap:4px;align-items:center;text-align:center;justify-content:center;border-radius:14px}
@@ -57,6 +90,12 @@
     .chip.t-home,.chip.t-all{display:none}
   }
   @media (max-width:760px){
+    .board{height:auto}
+    .board.setup{flex-wrap:wrap}
+    .bh .sm,.bh .bst:empty{display:none}
+    .bdays{grid-template-columns:1fr}
+    .bd:not(.focus){display:none}
+    .bdl{max-height:6.2em}
     header{flex-direction:column;align-items:stretch;gap:8px}
     .bar .seg{flex:1}.seg button{flex:1;padding:7px 8px}
   }
@@ -77,6 +116,7 @@
       <summary aria-label="더 보기">⋯</summary>
       <div class="menu">
         <button type="button" id="mHelp">처음 사용 안내</button>
+        <button type="button" id="mBoard">학교 업무판 연결</button>
         <button type="button" id="mInstall" hidden>앱으로 설치</button>
         <hr>
         <button type="button" id="mBackup">전체 백업 저장</button>
@@ -87,6 +127,8 @@
     </details>
   </div>
 </header>
+
+<section id="board" class="board" hidden aria-label="이번 주 학교 업무"></section>
 
 <main id="grid"></main>
 
@@ -109,8 +151,24 @@
   </form>
 </dialog>
 
+<dialog id="dlgBoard">
+  <form id="fBoard">
+    <h2>📅 학교 주간 업무판 연결</h2>
+    <p>학교에서 쓰는 주간·월간 업무판의 <b>주소</b>와 <b>공용 비밀번호</b>를 넣으면 첫 화면에 이번 주 업무가 보입니다. 주소는 업무판을 만든 선생님께 받으세요.</p>
+    <label class="field" style="margin-top:12px">업무판 주소
+      <input type="url" id="bUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" spellcheck="false"></label>
+    <label class="field" style="margin-top:10px">공용 비밀번호
+      <input type="password" id="bPw" autocomplete="off"></label>
+    <p class="sm" style="margin-top:8px">🔒 주소와 비밀번호는 이 기기 브라우저에만 저장됩니다. 업무판에는 날짜와 비밀번호만 보내고, 학생 자료는 보내지 않습니다. 업무판 내용은 읽기만 합니다(입력은 업무판에서).</p>
+    <p class="bErr" id="bErr"></p>
+    <div class="acts"><button type="button" class="btn" id="bOff">이 기능 쓰지 않기</button>
+      <div class="r"><button type="button" class="btn" id="bCancel">취소</button><button type="submit" class="btn primary" id="bOk">연결 확인</button></div></div>
+  </form>
+</dialog>
+
 <script src="shared/tools.js"></script>
 <script src="shared/tt.js"></script>
+<script src="shared/board.js"></script>
 <script>
 (function(){
   "use strict";
