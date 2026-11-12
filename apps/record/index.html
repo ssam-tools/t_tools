@@ -68,6 +68,22 @@
   dialog label.f{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin-top:10px}
   dialog .lim{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
   dialog .lim input{width:100%;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:5px 6px}
+  /* 문장 은행 */
+  .pb{list-style:none;max-height:42vh;overflow:auto;display:flex;flex-direction:column;gap:4px;margin-top:8px}
+  .pb li{display:flex;gap:6px;align-items:flex-start}
+  .pb li button.t{flex:1;text-align:left;font:inherit;font-size:13.5px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 9px;cursor:pointer;line-height:1.45}
+  .pb li button.t:hover{border-color:#7a4fb5;background:#f5f0fc}
+  .pb .x{border:0;background:none;color:#a0a9b3;font-size:16px;cursor:pointer;padding:4px}
+  .pbin{display:flex;gap:6px;margin-top:8px}.pbin input{flex:1;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:6px 9px}
+  /* 기록 마감 점검표 (인쇄) */
+  #chk{position:fixed;inset:0;z-index:50;background:#fff;overflow:auto;padding:18px 24px}
+  #chk h2{font-size:18px;margin-bottom:4px}
+  #chk table{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:8px}
+  #chk th,#chk td{border:1px solid #c9d2dc;padding:3px 6px;text-align:center}
+  #chk td.l{text-align:left}
+  #chk .ok{color:var(--ok);font-weight:800}#chk .no{color:var(--danger);font-weight:800}#chk .mid{color:#8a6a00}
+  #chk .bar{position:sticky;top:-18px;background:#fff;padding:6px 0;display:flex;gap:8px;align-items:center}
+  @media print{ body > *:not(#chk){display:none!important} #chk{position:static;padding:0} #chk .bar{display:none} @page{size:A4 landscape;margin:10mm} }
   dialog .acts{display:flex;justify-content:space-between;margin-top:12px}dialog .acts .r{display:flex;gap:6px}
   @media (max-width:900px){ main{grid-template-columns:1fr;overflow:auto} body{height:auto;min-height:100dvh;overflow:auto} .col{max-height:none} #draft{min-height:220px} }
 </style>
@@ -84,6 +100,7 @@
     <details class="more" id="more">
       <summary aria-label="더 보기">⋯</summary>
       <div class="menu">
+        <button type="button" id="mCheck">🧾 기록 마감 점검표 (인쇄)</button>
         <button type="button" id="mCsv">이 반 초안 표로 내려받기(CSV)</button>
         <button type="button" id="mSet">글자 수·점검 낱말 설정</button>
       </div>
@@ -108,7 +125,7 @@
     <div class="bytes"><span id="byteTxt"></span><span class="muted" id="saved"></span></div>
     <div class="meter" id="meter"><i></i></div>
     <ul class="warns" id="warns"></ul>
-    <div class="row"><button type="button" class="btn" id="prev">◀ 이전 학생</button><button type="button" class="btn primary" id="copy">📋 복사 (나이스에 붙여 넣기)</button><button type="button" class="btn" id="next">다음 학생 ▶</button></div>
+    <div class="row"><button type="button" class="btn" id="prev">◀ 이전</button><button type="button" class="btn" id="bank" title="학생 정보 없는 나만의 표현 모음">🗃️ 문장 은행</button><button type="button" class="btn primary" id="copy">📋 복사 (나이스에 붙여 넣기)</button><button type="button" class="btn" id="next">다음 ▶</button></div>
   </section>
 </main>
 <footer>
@@ -258,6 +275,68 @@
       save(); d.close(); drawAll(); TT.ui.toast("설정을 저장했습니다.");
     };
     d.showModal();
+  };
+
+  /* ---------- 🗃️ 문장 은행: 학생 정보 없는 나만의 표현 ("tt_phrases_v1") ---------- */
+  var PK = "tt_phrases_v1";
+  function phrases(){ var o = TT.store.get(PK, null) || {}; return Array.isArray(o.list) ? o.list : []; }
+  function savePhrases(l){ TT.store.set(PK, {v: 1, list: l, updatedAt: Date.now()}); }
+  function hasName(t){ return TT.roster.classes().some(function(c){ return c.students.some(function(x){ return x.name && x.name.length >= 2 && t.indexOf(x.name) >= 0; }); }); }
+  $("bank").onclick = function(){
+    var ta = $("draft"), selTxt = ta.value.slice(ta.selectionStart, ta.selectionEnd).trim(), pos = ta.selectionEnd, fa = area;
+    var d = document.createElement("dialog"), f = document.createElement("form"); d.appendChild(f); document.body.appendChild(d);
+    d.addEventListener("close", function(){ d.remove(); });
+    function draw(){
+      var q = (f.querySelector("#pq") || {}).value || "", L = phrases().filter(function(p){ return (fa === "all" || p.area === fa) && (!q || p.text.indexOf(q) >= 0); });
+      f.querySelector(".pb").innerHTML = L.length ? L.map(function(p){ return '<li><button type="button" class="t" data-id="' + esc(p.id) + '">' + (fa === "all" ? '<span class="tag">' + esc(N.area(p.area)) + "</span> " : "") + esc(p.text) + '</button><button type="button" class="x" data-del="' + esc(p.id) + '" aria-label="지우기">×</button></li>'; }).join("") : '<li class="muted">아직 없습니다. 아래에 자주 쓰는 표현을 넣어 두세요. 누르면 초안의 커서 자리에 들어갑니다.</li>';
+    }
+    f.innerHTML = '<h2>🗃️ 문장 은행</h2><p>학생 이름·개인 정보 없이 자주 쓰는 표현만 모아 둡니다. 누르면 초안에 들어가고, 학생에 맞게 고쳐 쓰세요.</p>'
+      + '<div class="row" style="margin-top:6px"><select id="pa" style="padding:6px 8px">' + '<option value="all">모든 영역</option>' + AREAS.map(function(a){ return '<option value="' + a[0] + '"' + (a[0] === fa ? " selected" : "") + ">" + a[1] + "</option>"; }).join("") + '</select><input id="pq" placeholder="찾기" style="flex:1;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:6px 9px"></div>'
+      + '<ul class="pb"></ul><div class="pbin"><input id="pn" maxlength="300" placeholder="새 표현 (예: 문제를 여러 방법으로 풀어 보며 풀이 과정을 비교함)" value="' + esc(selTxt) + '"><button type="button" class="btn" id="padd">넣어 두기</button></div>'
+      + '<div class="acts"><span class="muted">' + (selTxt ? "초안에서 고른 글을 미리 넣어 두었어요" : "") + '</span><div class="r"><button type="button" class="btn" data-a="close">닫기</button></div></div>';
+    f.querySelector("#pa").onchange = function(){ fa = this.value; draw(); };
+    f.querySelector("#pq").oninput = draw;
+    f.querySelector("[data-a=close]").onclick = function(){ d.close(); };
+    f.querySelector("#padd").onclick = function(){
+      var t = f.querySelector("#pn").value.trim(); if(!t) return;
+      if(hasName(t)){ TT.ui.toast("학생 이름이 들어 있어 넣지 않았습니다. 이름을 빼고 넣어 주세요."); return; }
+      var l = phrases(); l.push({id: TT.util.uid(), area: fa === "all" ? area : fa, text: t}); savePhrases(l); f.querySelector("#pn").value = ""; draw();
+    };
+    f.querySelector(".pb").onclick = function(e){
+      var x = e.target.closest("[data-del]"); if(x){ savePhrases(phrases().filter(function(p){ return p.id !== x.dataset.del; })); draw(); return; }
+      var b = e.target.closest("[data-id]"); if(!b) return;
+      var p = phrases().filter(function(q){ return q.id === b.dataset.id; })[0]; if(!p) return;
+      var v = ta.value; ta.value = v.slice(0, pos) + p.text + v.slice(pos); ta.dispatchEvent(new Event("input")); d.close(); ta.focus(); ta.selectionStart = ta.selectionEnd = pos + p.text.length;
+    };
+    draw(); d.showModal();
+  };
+
+  /* ---------- 🧾 기록 마감 점검표: 학생 × 영역 (기록 수 · 초안 바이트 · 점검) ---------- */
+  function verdict(s, a){
+    var t = ((D.drafts[stuKey(s)] || {})[a] || {}).t || "", b = bytes(t), lim = D.limits[a] || 1500;
+    var bad = b > lim || (s.name && s.name.length >= 2 && t.indexOf(s.name) >= 0) || D.words.some(function(w){ return w && t.toLowerCase().indexOf(w.toLowerCase()) >= 0; }) || /^- /m.test(t);
+    return {b: b, lim: lim, st: !t ? "없음" : bad ? "점검 필요" : b >= lim * .6 ? "완성" : "작성 중"};
+  }
+  $("mCheck").onclick = function(){
+    closeMenu(); flush(); if(!cls) return;
+    var old = $("chk"); if(old) old.remove();
+    var box = document.createElement("div"); box.id = "chk";
+    var head = "<tr><th rowspan=2>번호</th><th rowspan=2>이름</th>" + AREAS.map(function(a){ return "<th colspan=2>" + a[1] + "</th>"; }).join("") + "</tr><tr>" + AREAS.map(function(){ return "<th>기록</th><th>초안</th>"; }).join("") + "</tr>";
+    var tot = {}; AREAS.forEach(function(a){ tot[a[0]] = 0; });
+    var body = stus().map(function(s){
+      return "<tr><td>" + s.no + '</td><td class="l">' + esc(s.name || "") + "</td>" + AREAS.map(function(a){
+        var n = N.list(stuKey(s)).filter(function(r){ return r.area === a[0]; }).length, v = verdict(s, a[0]);
+        if(v.st === "완성") tot[a[0]]++;
+        var cl = v.st === "완성" ? "ok" : v.st === "점검 필요" ? "no" : v.st === "작성 중" ? "mid" : "";
+        return '<td class="' + (n < D.few ? "no" : "") + '">' + n + '</td><td class="' + cl + '">' + (v.st === "없음" ? "—" : v.st + "<br><small>" + v.b + "B</small>") + "</td>";
+      }).join("") + "</tr>";
+    }).join("");
+    box.innerHTML = '<div class="bar"><button type="button" class="btn primary" id="chkPrint">🖨 인쇄</button><button type="button" class="btn" id="chkClose">닫기</button><span class="muted">빨강: 기록이 ' + D.few + "건 미만이거나 점검이 필요한 초안</span></div>"
+      + "<h2>🧾 기록 마감 점검표 · " + esc(cls.name) + '</h2><div class="muted">' + new Date().toLocaleDateString("ko-KR") + " 기준 · 완성 = 한도의 60% 이상이고 점검 통과 · " + AREAS.map(function(a){ return a[1] + " 완성 " + tot[a[0]] + "/" + stus().length; }).join(" · ") + "</div>"
+      + "<table><thead>" + head + "</thead><tbody>" + body + "</tbody></table>";
+    document.body.appendChild(box);
+    $("chkClose").onclick = function(){ box.remove(); };
+    $("chkPrint").onclick = function(){ window.print(); };
   };
 
   window.addEventListener("tt-notes-change", function(){ drawList(); drawRecs(); });

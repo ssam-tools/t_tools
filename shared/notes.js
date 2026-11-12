@@ -40,6 +40,14 @@
     + ".ttn .who .nm{font-size:20px;font-weight:800}.ttn .who .memo{width:100%;margin-top:4px}"
     + ".ttn .add{display:flex;gap:6px;align-items:center}.ttn .add input[type=text]{flex:1;min-width:0}"
     + ".ttn .flt{display:flex;gap:4px;flex-wrap:wrap}"
+    + ".ttsc{position:fixed;inset:0;z-index:60;background:#fff;overflow:auto;padding:18px 26px;color:#1d2733;font:13.5px/1.55 'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif}"
+    + ".ttsc .bar{display:flex;gap:8px;align-items:center;margin-bottom:8px}.ttsc .bar button{font:inherit;font-weight:700;border:1px solid #dde3ea;background:#fff;border-radius:10px;padding:7px 14px;cursor:pointer}.ttsc .bar button.p{background:#2f6fb5;border-color:#2f6fb5;color:#fff}"
+    + ".ttsc h1{font-size:20px;margin:0 0 2px}.ttsc h3{font-size:14px;margin:12px 0 4px;border-bottom:2px solid #2f6fb5;padding-bottom:2px}"
+    + ".ttsc .g2{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px}"
+    + ".ttsc table{border-collapse:collapse;width:100%;font-size:12.5px}.ttsc th,.ttsc td{border:1px solid #c9d2dc;padding:3px 6px;text-align:center}.ttsc td.l{text-align:left}"
+    + ".ttsc .muted{color:#5b6773;font-size:12px}.ttsc ul{margin:0;padding-left:18px}"
+    + ".ttsc .pill{display:inline-block;border-radius:999px;padding:0 8px;background:#eef2f6;font-weight:700;margin-right:4px}"
+    + "@media print{body > *:not(.ttsc){display:none!important}.ttsc{position:static;padding:0}.ttsc .bar{display:none}@page{size:A4;margin:12mm}}"
     + "@media (max-height:560px){.ttn textarea{height:44px}.ttn .stu{max-height:30vh}}";
   var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
 
@@ -133,7 +141,7 @@
       + '<ul class="recs" data-k="recs"></ul>'
       + '<div class="add"><select data-k="area" aria-label="영역">' + N.AREAS.map(function(a){ return '<option value="' + a[0] + '">' + a[1] + "</option>"; }).join("") + "</select>"
       + '<input type="text" data-k="text" maxlength="1000" placeholder="새 기록 한 줄 (Enter로 저장)"><button type="button" class="b p" data-a="add">더하기</button></div>'
-      + '<div class="acts"><span class="muted">🔒 메모·기록은 이 기기(와 내 보관함)에만 · 교실 기기에는 가지 않음</span><div class="r"><button type="button" class="b" data-a="close">닫기</button></div></div>');
+      + '<div class="acts"><span class="muted">🔒 메모·기록은 이 기기(와 내 보관함)에만 · 교실 기기에는 가지 않음</span><div class="r"><button type="button" class="b" data-a="sc" title="성적·출결·상담·기록을 한 장으로 (상담·학부모 면담 준비)">🗂️ 상담 카드</button><button type="button" class="b" data-a="close">닫기</button></div></div>');
     var q = function(x){ return d.querySelector(x); };
     if(TT.photos) TT.photos.get(k).then(function(b){ if(b && d.isConnected){ var u = URL.createObjectURL(b), img = document.createElement("img"); img.className = "ph"; img.alt = ""; img.src = u; q("[data-k=ph]").replaceWith(img); d.addEventListener("close", function(){ URL.revokeObjectURL(u); }); } });
     function draw(){
@@ -160,10 +168,56 @@
       window.dispatchEvent(new CustomEvent("tt-notes-change"));
     }
     q("[data-a=add]").onclick = add;
+    q("[data-a=sc]").onclick = function(){ var m = q("[data-k=memo]"); if(m.value.trim() !== N.memo(k)) m.onchange(); d.close(); sheet(c, s); };
     q("[data-k=text]").onkeydown = function(e){ if(e.key === "Enter"){ e.preventDefault(); add(); } };
     q("[data-a=close]").onclick = function(){ var m = q("[data-k=memo]"); if(m.value.trim() !== N.memo(k)) m.onchange(); d.close(); };
     draw();
   }
 
-  TT.notesUI = {quick: quick, card: card};
+  /* ========== 🗂️ 상담 카드: 한 학생의 성적·출결·상담·기록을 한 장으로 (인쇄) ==========
+     성적은 고교 진학 추천(tt_advisor_v1), 출결·상담은 생활지도(tt_guide_v1, 우리 반만), 기록·메모는 학생 기록에서 가져옵니다. */
+  function sheet(c, s){
+    var k = N.key(c, s), sc = TT.school.load(), h = "", home = R.home(), isHome = home && home.id === c.id;
+    var AK = {sick: "병결", ok: "인정결", un: "미인정결", etc: "기타결"};
+    h += '<div class="bar"><button type="button" class="p" data-a="print">🖨 인쇄</button><button type="button" data-a="close">닫기</button><span class="muted">🔒 학생 개인정보가 들어 있습니다. 상담 뒤 인쇄물은 파기해 주세요.</span></div>';
+    h += "<h1>🗂️ 상담 카드 · " + esc(c.name) + " " + s.no + "번 " + esc(s.name || "") + "</h1>";
+    h += '<div class="muted">' + esc(sc.name || "") + (sc.teacher ? " · 담임 " + esc(sc.teacher) : "") + " · " + new Date().toLocaleDateString("ko-KR") + " 기준</div>";
+    var memo = N.memo(k); if(memo) h += "<h3>📇 메모</h3><div>" + esc(memo) + "</div>";
+    /* 성적 */
+    var A = TT.store.get("tt_advisor_v1", null), st = null;
+    if(A && Array.isArray(A.students)) st = A.students.filter(function(x){ return String(x.cls) === String(c.cls) && +x.no === +s.no && (!x.name || !s.name || x.name === s.name); })[0];
+    h += "<h3>🎓 성적</h3>";
+    if(st && st.scores && Object.keys(st.scores).length){
+      var ex = (A.exams || Object.keys(st.scores)).filter(function(e){ return st.scores[e]; }), subs = [];
+      ex.forEach(function(e){ Object.keys(st.scores[e]).forEach(function(x){ if(subs.indexOf(x) < 0) subs.push(x); }); });
+      var avgs = [];
+      h += "<table><thead><tr><th>시험</th>" + subs.map(function(x){ return "<th>" + esc(x) + "</th>"; }).join("") + "<th>평균</th></tr></thead><tbody>" + ex.map(function(e){
+        var v = subs.map(function(x){ return st.scores[e][x]; }), nums = v.filter(function(x){ return typeof x === "number"; }), av = nums.length ? nums.reduce(function(a, b){ return a + b; }, 0) / nums.length : null; avgs.push(av);
+        return '<tr><td class="l">' + esc(e) + "</td>" + v.map(function(x){ return "<td>" + (x == null ? "" : x) + "</td>"; }).join("") + "<td><b>" + (av == null ? "" : av.toFixed(1)) + "</b></td></tr>";
+      }).join("") + "</tbody></table>";
+      var a0 = avgs.filter(function(x){ return x != null; });
+      if(a0.length >= 2){ var df = a0[a0.length - 1] - a0[0]; h += '<div class="muted">평균 변화: ' + a0[0].toFixed(1) + " → " + a0[a0.length - 1].toFixed(1) + " (" + (df >= 0 ? "▲ " : "▼ ") + Math.abs(df).toFixed(1) + ")</div>"; }
+    } else h += '<div class="muted">고교 진학 추천에 이 학생의 성적이 없습니다. (진학 추천 ① 입력에서 나이스 성적 일람표를 불러오면 여기에 나옵니다)</div>';
+    /* 출결·상담 (우리 반) */
+    var G = TT.store.get("tt_guide_v1", null), no = String(s.no);
+    if(isHome && G){
+      var cnt = {L: 0, Lo: 0, A: {}}, rec = [];
+      Object.keys(G.att || {}).sort().forEach(function(d){ var r = G.att[d][no]; if(!r) return; if(r.t === "L"){ if(r.o) cnt.Lo++; else cnt.L++; } if(r.t === "A"){ var kk = r.k || "un"; cnt.A[kk] = (cnt.A[kk] || 0) + 1; } rec.push(md(d) + " " + (r.t === "L" ? (r.o ? "인정지각" : "지각") : AK[r.k || "un"]) + (r.r ? "(" + r.r + ")" : "")); });
+      h += '<h3>🧭 출결</h3><div><span class="pill">무단지각 ' + cnt.L + '</span><span class="pill">인정지각 ' + cnt.Lo + "</span>" + Object.keys(AK).map(function(x){ return cnt.A[x] ? '<span class="pill">' + AK[x] + " " + cnt.A[x] + "</span>" : ""; }).join("") + "</div>";
+      if(rec.length) h += '<div class="muted">최근: ' + esc(rec.slice(-8).join(" · ")) + "</div>";
+      var cs = (G.counsel || []).filter(function(x){ return x.sid === no; }).sort(function(a, b){ return a.date < b.date ? -1 : 1; });
+      h += "<h3>🗣️ 상담 " + cs.length + "건</h3>" + (cs.length ? "<ul>" + cs.map(function(x){ return "<li><b>" + md(x.date) + "</b> " + esc(x.trigger || "") + (x.content ? " — " + esc(x.content) : "") + ((x.actions || []).length ? ' <span class="muted">[' + esc(x.actions.join(", ")) + "]</span>" : "") + (x.next ? ' <span class="muted">후속 ' + md(x.next) + (x.done ? " 확인함" : "") + "</span>" : "") + "</li>"; }).join("") + "</ul>" : '<div class="muted">없음</div>');
+    } else if(!isHome) h += '<div class="muted" style="margin-top:8px">출결·상담은 우리 반(★) 학생만 보입니다.</div>';
+    /* 학생 기록 */
+    var L = N.list(k);
+    h += "<h3>✍️ 학생 기록 " + L.length + '건</h3><div class="g2">' + N.AREAS.map(function(a){
+      var la = L.filter(function(r){ return r.area === a[0]; }); if(!la.length) return "";
+      return "<div><b>" + a[1] + " " + la.length + "</b><ul>" + la.slice(0, 4).map(function(r){ return "<li>" + md(r.date) + " " + esc(r.text) + "</li>"; }).join("") + "</ul></div>";
+    }).join("") + "</div>";
+    var box = document.createElement("div"); box.className = "ttsc"; box.innerHTML = h; document.body.appendChild(box);
+    box.querySelector("[data-a=close]").onclick = function(){ box.remove(); };
+    box.querySelector("[data-a=print]").onclick = function(){ window.print(); };
+  }
+
+  TT.notesUI = {quick: quick, card: card, sheet: sheet};
 })();
