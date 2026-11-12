@@ -4,7 +4,7 @@
    GitHub Pages는 브라우저가 파일을 10분쯤 그대로 쓰게 하므로, 새 파일을 받을 때는 브라우저 저장본을 건너뜁니다(cache: no-cache).
    그래야 새로 올린 화면 파일과 예전 공통 파일이 섞여 화면이 비는 일이 없습니다. */
 importScripts('shared/tools.js');
-const CACHE = 'tt-files-v10';
+const CACHE = 'tt-files-v11';
 const CORE = ['./', 'manifest.webmanifest', 'assets/icon-192.png', 'assets/icon-512.png',
               'shared/tt.css', 'shared/tt.js', 'shared/tools.js', 'shared/board.js', 'shared/mytodo.js', 'shared/vaultui.js', 'shared/vault.js', 'shared/notes.js', 'shared/guidelogic.js', 'shared/theme.css', 'shared/calendar.js', 'shared/mathgen.js', 'shared/sync.html', 'apps/tardy/absence-form.hwpx'];
 const FILES = CORE.concat(TT_TOOLS.filter(t => t.ready && t.href).map(t => t.href));   // 내려받는 PC 프로그램은 저장해 두지 않음

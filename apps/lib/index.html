@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 막습니다. 예외: 학교 업무판(구글 앱스 스크립트) — 자료실 파일은 학교 구글 드라이브에 있습니다. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; worker-src 'self' blob:; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>학교 자료실 · 쌤 노트</title>
+<!--
+  학교 자료실: 규정집·교육계획서·생활기록부 기재요령·서식처럼 구성원이 가끔 찾아보는 자료를 누구나 올리고, 내용까지 찾아봅니다.
+  · 파일은 학교 업무판 계정의 구글 드라이브 폴더("쌤노트_학교자료실"), 목록과 쪽별 글자는 업무판 시트에 저장됩니다.
+  · 올리기 전에 이 기기에서 글자를 뽑아(PDF: pdf.js, HWPX·DOCX·XLSX·PPTX: 압축 안 XML) 쪽 단위로 색인하고,
+    학생 이름(명렬표)·전화번호·주민번호 꼴이 있으면 경고합니다. 개인정보가 담긴 자료는 올리지 않습니다.
+  · 지우기: 올린 사람(이 기기·내 보관함에 남은 표) 또는 관리자(업무판 스크립트 속성 LIB_ADMIN).
+  · 🤖 물어보기: 업무판에 AI 키가 있으면, 찾은 쪽만 근거로 답하고 [자료 n쪽]을 붙입니다.
+  · "tt_lib_v1" {mine:{자료id: 지우기 표}}
+-->
+<style>
+  header{align-items:center}
+  .bar{flex-wrap:wrap;flex:1;justify-content:flex-end}
+  .sbox{display:flex;gap:6px;flex:1;max-width:620px}
+  .sbox input{flex:1;font:inherit;font-size:16px;border:2px solid #b9c9dc;border-radius:12px;padding:8px 12px;min-width:0}
+  .sbox input:focus{outline:none;border-color:var(--accent)}
+  main{display:grid!important;grid-template-columns:minmax(170px,200px) minmax(0,1fr);gap:10px;padding:10px!important}
+  .nav{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:3px}
+  .nav button{font:inherit;font-size:13.5px;text-align:left;border:0;background:transparent;border-radius:9px;padding:6px 9px;cursor:pointer;color:var(--ink);display:flex;justify-content:space-between}
+  .nav button:hover{background:#f3f6f9}
+  .nav button[aria-current=true]{background:var(--accent);color:#fff}
+  .nav small{opacity:.75}
+  .nav label{font-size:12.5px;color:var(--sub);display:flex;gap:5px;align-items:center;padding:6px 4px}
+  .body{min-height:0;display:flex;flex-direction:column;gap:8px}
+  .list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:5px}
+  .it{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+  .it .ic{font-size:24px;flex:none}
+  .it .mn{flex:1;min-width:0}
+  .it .tt{font-weight:800;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .it .mt{font-size:12px;color:var(--sub);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .it .btn{padding:5px 10px;font-size:13px}
+  .chip{font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;background:#eceff3;color:#4a5560}
+  .chip.new{background:var(--ok-soft);color:var(--ok)}.chip.old{background:#f3f4f6;color:#9aa5b1}.chip.idx{background:var(--accent-soft);color:var(--accent)}
+  .hit{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;display:flex;flex-direction:column;gap:3px}
+  .hit .hh{display:flex;gap:8px;align-items:center;font-size:13.5px}
+  .hit .hh b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hit .pg{font-weight:900;color:var(--accent);white-space:nowrap}
+  .hit .sn{font-size:13.5px;line-height:1.6;color:#33404d}
+  mark{background:#ffe58a;border-radius:3px;padding:0 1px}
+  .ans{background:#f8f5ff;border:1px solid #d9c9f3;border-radius:12px;padding:10px 14px;font-size:14.5px;line-height:1.7;white-space:pre-wrap}
+  .ans h3{font-size:13.5px;color:#5b2f99;margin-bottom:4px}
+  .muted{color:var(--sub);font-size:12.5px}
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--sub);text-align:center}
+  .empty .big{font-size:44px}
+  dialog.up{width:min(620px,94vw);max-height:calc(100vh - 16px);overflow:auto}
+  .up label.f{display:flex;flex-direction:column;align-items:stretch;gap:4px;font-size:12.5px;font-weight:700;color:var(--sub);margin-top:8px}
+  .up label.f input[type=file]{font-size:13px}
+  .up input[type=text],.up select{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:6px 9px;width:100%;box-sizing:border-box}
+  .up .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .up .st{font-size:13px;border-radius:8px;padding:6px 9px;background:#f3f6f9;margin-top:8px}
+  .up .warn{background:var(--danger-soft);color:var(--danger);font-weight:700}
+  .up .ok{background:var(--ok-soft);color:var(--ok)}
+  .up .acts{display:flex;justify-content:space-between;margin-top:12px;gap:8px;align-items:center}.up .acts .r{display:flex;gap:6px}
+  @media (max-width:760px){ main{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} .bar{justify-content:flex-start} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>🔎 학교 자료실</h1>
+  </div>
+  <div class="bar">
+    <form class="sbox" id="sf"><input id="q" type="search" placeholder="찾을 말 (예: 교외 수상, 결석 처리, 체험학습 신청)" autocomplete="off"><button type="submit" class="btn primary">🔎 찾기</button><button type="button" class="btn" id="ask" hidden title="찾은 쪽만 근거로 AI가 답합니다">🤖 물어보기</button></form>
+    <button type="button" class="btn primary" id="upBtn">＋ 자료 올리기</button>
+    <details class="more" id="more"><summary aria-label="더 보기">⋯</summary><div class="menu"><button type="button" id="mAdmin">관리자 모드</button><button type="button" id="mReload">목록 새로 고침</button></div></details>
+  </div>
+</header>
+<main class="panel" id="m">
+  <nav class="nav" id="nav" aria-label="갈래"></nav>
+  <section class="body" id="body"></section>
+</main>
+<footer>
+  <span id="info">누구나 올리고 내려받습니다 · 내용까지 찾아 몇 쪽인지 보여 줍니다</span>
+  <span class="priv">🔒 개인정보가 담긴 자료는 올리지 마세요 · 우리 학교 공용 비밀번호를 아는 구성원만</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var CATS = ["규정", "교육계획", "생활기록부", "학사·평가", "서식", "업무 안내", "연수 자료", "기타"];
+  var B = TT.store.get("tt_board_v1", null) || {}, items = [], cat = "전체", onlyNew = true, admin = sessionStorage.getItem("tt_lib_admin") || "", canAsk = false;
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function mine(){ var o = TT.store.get("tt_lib_v1", null) || {}; o.mine = o.mine || {}; return o; }
+  function kb(n){ return n > 1048576 ? (n / 1048576).toFixed(1) + "MB" : Math.max(1, Math.round(n / 1024)) + "KB"; }
+  function icon(name){ var e = (String(name).match(/\.(\w+)$/) || [])[1] || ""; e = e.toLowerCase(); return {pdf: "📕", hwp: "📘", hwpx: "📘", doc: "📄", docx: "📄", xls: "📗", xlsx: "📗", ppt: "📙", pptx: "📙", jpg: "🖼️", jpeg: "🖼️", png: "🖼️", zip: "🗜️"}[e] || "📄"; }
+  function pg(p){ return /^\d+$/.test(p) ? p + "쪽" : p; }
+  function post(o){
+    return fetch(B.url, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(Object.assign({pw: B.pw}, o))})
+      .then(function(r){ return r.json(); }).then(function(r){ if(!r || !r.ok) throw new Error((r && r.error) || "오류"); return r; });
+  }
+  function err(e){ var m = String(e && e.message || e); return m === "AUTH" ? "업무판 비밀번호가 맞지 않습니다" : /지원하지 않는 요청/.test(m) ? "업무판 Code.gs가 예전 것입니다 (10단계 Code.gs로 바꾸고 새 버전으로 배포)" : m; }
+
+  /* ---------- 목록 ---------- */
+  function load(){
+    $("body").innerHTML = '<div class="empty"><div class="big">⏳</div><div>자료 목록을 불러오는 중…</div></div>';
+    post({action: "liblist"}).then(function(r){ items = r.items || []; drawNav(); drawList(); }).catch(function(e){ $("body").innerHTML = '<div class="empty"><div class="big">⚠️</div><div><b>자료실을 열지 못했습니다.</b><br>' + esc(err(e)) + "</div></div>"; });
+    post({action: "aiinfo"}).then(function(r){ canAsk = !!r.enabled; $("ask").hidden = !canAsk; }).catch(function(){});
+  }
+  function drawNav(){
+    var c = {"전체": 0}; items.forEach(function(x){ if(onlyNew && !x.latest) return; c["전체"]++; c[x.cat] = (c[x.cat] || 0) + 1; });
+    $("nav").innerHTML = ["전체"].concat(CATS).map(function(k){ return '<button type="button" data-c="' + esc(k) + '" aria-current="' + (k === cat) + '">' + esc(k) + "<small>" + (c[k] || 0) + "</small></button>"; }).join("")
+      + '<label><input type="checkbox" id="onlyNew" ' + (onlyNew ? "checked" : "") + "> 최신 판만</label>";
+    $("onlyNew").onchange = function(){ onlyNew = this.checked; drawNav(); drawList(); };
+  }
+  $("nav").onclick = function(e){ var b = e.target.closest("[data-c]"); if(!b) return; cat = b.dataset.c; $("q").value = ""; drawNav(); drawList(); };
+  function drawList(){
+    var my = mine().mine, L = items.filter(function(x){ return (cat === "전체" || x.cat === cat) && (!onlyNew || x.latest); }).sort(function(a, b){ return a.at < b.at ? 1 : -1; });
+    $("body").innerHTML = L.length ? '<div class="list">' + L.map(function(x){
+      return '<div class="it"><span class="ic">' + icon(x.name) + '</span><div class="mn"><div class="tt" title="' + esc(x.name) + '">' + esc(x.title) + '</div><div class="mt"><span class="chip">' + esc(x.cat) + "</span>" + (x.latest ? '<span class="chip new">최신</span>' : '<span class="chip old">보관</span>') + (x.pages ? '<span class="chip idx">내용 검색' + (/\.pdf$/i.test(x.name) ? " " + x.pages + "쪽" : "") + "</span>" : '<span class="chip">이름으로만 검색</span>') + "<span>" + esc(x.by || "") + "</span><span>" + esc(x.at) + "</span><span>" + kb(x.size) + "</span>" + (x.desc ? "<span>" + esc(x.desc) + "</span>" : "") + '</div></div><button type="button" class="btn" data-get="' + x.id + '">⬇ 내려받기</button>' + (my[x.id] || admin ? '<button type="button" class="btn" data-del="' + x.id + '" title="' + (my[x.id] ? "내가 올린 자료" : "관리자") + '">🗑</button>' : "") + "</div>";
+    }).join("") + "</div>" : '<div class="empty"><div class="big">🔎</div><div><b>' + (items.length ? "이 갈래에 자료가 없습니다." : "아직 올라온 자료가 없습니다.") + '</b><br>규정집, 교육계획서, 생활기록부 기재요령, 자주 쓰는 서식처럼<br>구성원이 가끔 찾아보는 자료를 올려 주세요. PDF·HWPX·워드·엑셀은 내용까지 찾을 수 있어요.</div><button type="button" class="btn primary" id="up2">＋ 자료 올리기</button></div>';
+    var u2 = $("up2"); if(u2) u2.onclick = upload;
+    $("info").textContent = "자료 " + items.filter(function(x){ return x.latest; }).length + "개 (보관 " + items.filter(function(x){ return !x.latest; }).length + ") · 누구나 올리고 내려받습니다";
+  }
+  $("body").addEventListener("click", function(e){
+    var g = e.target.closest("[data-get]"); if(g){ download(g.dataset.get, g); return; }
+    var d = e.target.closest("[data-del]"); if(d){ del(d.dataset.del); }
+  });
+  function download(id, btn){
+    var t = btn.textContent; btn.textContent = "받는 중…"; btn.disabled = true;
+    post({action: "libget", id: id}).then(function(r){
+      var bin = atob(r.data), u8 = new Uint8Array(bin.length); for(var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([u8], {type: r.mime || "application/octet-stream"})); a.download = r.name; document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+    }).catch(function(e){ TT.ui.toast("내려받지 못했습니다: " + err(e)); }).then(function(){ btn.textContent = t; btn.disabled = false; });
+  }
+  function del(id){
+    var x = items.filter(function(i){ return i.id === id; })[0]; if(!x) return;
+    TT.ui.confirm("자료 지우기", "'" + x.title + "'을(를) 자료실에서 지웁니다. 드라이브 휴지통으로 옮겨집니다.", "지우기", function(){
+      var o = mine(); post({action: "libdel", id: id, tok: o.mine[id] || "", admin: admin}).then(function(){ delete o.mine[id]; TT.store.set("tt_lib_v1", o); TT.ui.toast("지웠습니다."); load(); }).catch(function(e){ TT.ui.toast(err(e)); });
+    });
+  }
+
+  /* ---------- 찾기 · 물어보기 ---------- */
+  function hl(s, terms){ var h = esc(s); terms.forEach(function(t){ if(!t) return; h = h.replace(new RegExp(esc(t).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), function(m){ return "<mark>" + m + "</mark>"; }); }); return h; }
+  function showHits(hits, q, head){
+    var terms = q.split(/\s+/).filter(Boolean);
+    return (head || "") + (hits.length ? '<div class="list">' + hits.map(function(h){
+      return '<div class="hit"><div class="hh"><span>' + icon(((items.filter(function(i){ return i.id === h.id; })[0]) || {}).name || "") + "</span><b>" + esc(h.title) + '</b><span class="chip">' + esc(h.cat) + "</span>" + (h.latest ? "" : '<span class="chip old">보관</span>') + (h.page ? '<span class="pg">' + esc(pg(h.page)) + "</span>" : "") + '<button type="button" class="btn" data-get="' + h.id + '" style="padding:3px 9px;font-size:12px">⬇</button></div><div class="sn">' + hl(h.snip, terms) + "</div></div>";
+    }).join("") + "</div>" : '<div class="empty"><div class="big">🤔</div><div>찾는 말이 들어 있는 자료가 없습니다. 다른 말로 찾아보세요.<br><span class="muted">(.hwp·스캔 PDF는 내용을 읽을 수 없어 자료 이름으로만 찾습니다)</span></div></div>');
+  }
+  $("sf").onsubmit = function(e){
+    e.preventDefault(); var q = $("q").value.trim(); if(!q){ drawList(); return; }
+    $("body").innerHTML = '<div class="empty"><div class="big">🔎</div><div>찾는 중…</div></div>';
+    post({action: "libsearch", q: q}).then(function(r){ $("body").innerHTML = showHits(r.hits || [], q); $("info").textContent = "'" + q + "' " + (r.hits || []).length + "곳 · 최신 판을 먼저 보여 줍니다"; }).catch(function(e2){ $("body").innerHTML = '<div class="empty"><div>' + esc(err(e2)) + "</div></div>"; });
+  };
+  $("ask").onclick = function(){
+    var q = $("q").value.trim(); if(!q){ TT.ui.toast("물어볼 말을 찾기 칸에 적어 주세요. (예: 체험학습 신청 기한)"); return; }
+    var keys = q.split(/\s+/).map(function(w){ return w.replace(/[?？.!,]+$/, "").replace(/(인가요|하나요|되나요|나요|까요|에서는|에서|에게|으로|은요|는요|은|는|이|가|을|를|에|의|도|로|와|과|요)$/, ""); })
+      .filter(function(t){ return t.length >= 2 && !/^(어떻게|언제|무엇|뭐|왜|어디|얼마|있|하|되)/.test(t); }).slice(0, 3).join(" ") || q;
+    $("body").innerHTML = '<div class="empty"><div class="big">🤖</div><div>자료실에서 찾고 답을 쓰는 중… (10~40초)</div></div>';
+    post({action: "libask", q: keys, question: q}).then(function(r){
+      $("body").innerHTML = showHits(r.hits || [], keys, '<div class="ans"><h3>🤖 자료실 근거로 쓴 답 (꼭 원문을 확인하세요)</h3>' + esc(r.text || "") + "</div>");
+    }).catch(function(e){ $("body").innerHTML = '<div class="empty"><div>' + esc(err(e)) + "</div></div>"; });
+  };
+
+  /* ---------- 글자 뽑기 (이 기기 안에서) ---------- */
+  function unzip(buf){
+    var v = new DataView(buf), u8 = new Uint8Array(buf), e = -1;
+    for(var i = u8.length - 22; i >= Math.max(0, u8.length - 70000); i--){ if(v.getUint32(i, true) === 0x06054b50){ e = i; break; } }
+    if(e < 0) throw new Error("zip");
+    var n = v.getUint16(e + 10, true), p = v.getUint32(e + 16, true), out = {}, dec = new TextDecoder();
+    for(var k = 0; k < n; k++){
+      var m = v.getUint16(p + 10, true), cs = v.getUint32(p + 20, true), nl = v.getUint16(p + 28, true), xl = v.getUint16(p + 30, true), cl = v.getUint16(p + 32, true), off = v.getUint32(p + 42, true);
+      var name = dec.decode(u8.subarray(p + 46, p + 46 + nl)), lo = off + 30 + v.getUint16(off + 26, true) + v.getUint16(off + 28, true);
+      out[name] = {m: m, d: u8.subarray(lo, lo + cs)}; p += 46 + nl + xl + cl;
+    }
+    return out;
+  }
+  async function entry(z, name){
+    var e = z[name]; if(!e) return "";
+    if(e.m === 0) return new TextDecoder().decode(e.d);
+    var s = new Blob([e.d]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+    return new TextDecoder().decode(await new Response(s).arrayBuffer());
+  }
+  function xmlText(x, tag, para){
+    x = x.replace(new RegExp("</" + para + ">", "g"), "\n").replace(new RegExp("<" + tag + "(?:\\s[^>]*)?>([\\s\\S]*?)</" + tag + ">", "g"), function(m, t){ return "\u0001" + t + "\u0002"; });
+    var out = "", re = /\u0001([\s\S]*?)\u0002|\n/g, mm;
+    while((mm = re.exec(x))) out += mm[1] != null ? mm[1].replace(/<[^>]+>/g, "") : "\n";
+    return out.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&").replace(/\n{3,}/g, "\n\n");
+  }
+  function chunks(t, label){ var out = [], size = 1800, i = 0, n = 1; t = t.trim(); while(i < t.length){ var j = Math.min(t.length, i + size), k = t.lastIndexOf("\n", j); if(k > i + 600 && j < t.length) j = k; out.push({p: label + " " + n++, t: t.slice(i, j)}); i = j; } return out; }
+  async function extract(file, buf, say){
+    var ext = (file.name.match(/\.(\w+)$/) || [])[1] || ""; ext = ext.toLowerCase();
+    if(ext === "pdf"){
+      var base = new URL("../../shared/vendor/pdfjs/", location.href).href;
+      var pdfjs = await import(base + "pdf.min.mjs"); pdfjs.GlobalWorkerOptions.workerSrc = base + "pdf.worker.min.mjs";
+      var doc = await pdfjs.getDocument({data: new Uint8Array(buf.slice(0)), cMapUrl: base + "cmaps/", cMapPacked: true, isEvalSupported: false, useSystemFonts: false}).promise, out = [];
+      for(var i = 1; i <= Math.min(doc.numPages, 1500); i++){
+        if(i % 10 === 1) say("PDF 글자 읽는 중… " + i + " / " + doc.numPages + "쪽");
+        var tc = await (await doc.getPage(i)).getTextContent(), s = tc.items.map(function(it){ return (it.str || "") + (it.hasEOL ? "\n" : ""); }).join("");
+        if(s.replace(/\s/g, "").length) out.push({p: i, t: s});
+      }
+      return out;
+    }
+    if(ext === "hwpx" || ext === "docx" || ext === "xlsx" || ext === "pptx"){
+      var z = unzip(buf), names = Object.keys(z), t = "";
+      if(ext === "hwpx"){ var sec = names.filter(function(n){ return /^Contents\/section\d+\.xml$/i.test(n); }).sort(); for(var a = 0; a < sec.length; a++) t += xmlText(await entry(z, sec[a]), "hp:t", "hp:p") + "\n"; return chunks(t, "부분"); }
+      if(ext === "docx"){ t = xmlText(await entry(z, "word/document.xml"), "w:t", "w:p"); return chunks(t, "부분"); }
+      if(ext === "pptx"){ var sl = names.filter(function(n){ return /^ppt\/slides\/slide\d+\.xml$/.test(n); }).sort(function(x, y){ return +x.match(/\d+/)[0] - +y.match(/\d+/)[0]; }), out2 = [];
+        for(var b = 0; b < sl.length; b++){ var st = xmlText(await entry(z, sl[b]), "a:t", "a:p"); if(st.trim()) out2.push({p: (b + 1) + "번 슬라이드", t: st}); } return out2; }
+      if(ext === "xlsx"){ t = xmlText(await entry(z, "xl/sharedStrings.xml"), "t", "si"); return chunks(t, "부분"); }
+    }
+    if(ext === "txt" || ext === "csv" || ext === "md"){ var u8 = new Uint8Array(buf), txt; try{ txt = new TextDecoder("utf-8", {fatal: true}).decode(u8); }catch(e){ txt = new TextDecoder("euc-kr").decode(u8); } return chunks(txt, "부분"); }
+    return [];
+  }
+  /* 개인정보 꼴 검사: 명렬표 학생 이름(3글자 이상), 휴대폰·전화, 주민번호, 이메일 */
+  function scan(pages){
+    var t = pages.map(function(p){ return p.t; }).join("\n"), found = [];
+    var names = []; TT.roster.classes().forEach(function(c){ c.students.forEach(function(s){ if(s.name && s.name.length >= 3 && names.indexOf(s.name) < 0) names.push(s.name); }); });
+    var hitN = names.filter(function(n){ return t.indexOf(n) >= 0; });
+    if(hitN.length) found.push("우리 학교 학생 이름 " + hitN.length + "명 (" + hitN.slice(0, 3).map(function(n){ return n[0] + "○" + n.slice(2); }).join(", ") + (hitN.length > 3 ? " …" : "") + ")");
+    var ph = (t.match(/01[016789][-.\s]?\d{3,4}[-.\s]?\d{4}/g) || []).length; if(ph) found.push("휴대폰 번호 꼴 " + ph + "개");
+    var rr = (t.match(/\b\d{6}-?[1-4]\d{6}\b/g) || []).length; if(rr) found.push("주민등록번호 꼴 " + rr + "개");
+    var em = (t.match(/[\w.+-]+@[\w-]+\.[\w.]+/g) || []).length; if(em) found.push("이메일 주소 " + em + "개");
+    return found;
+  }
+
+  /* ---------- 올리기 ---------- */
+  function upload(){
+    var d = document.createElement("dialog"); d.className = "up"; var f = document.createElement("form"); d.appendChild(f); document.body.appendChild(d);
+    d.addEventListener("close", function(){ d.remove(); });
+    var sc = TT.school.load(), file = null, buf = null, pages = [];
+    f.innerHTML = '<h2>＋ 자료 올리기</h2><p>규정집·교육계획서·기재요령·서식처럼 <b>개인정보가 없는</b> 자료만 올려 주세요. PDF·HWPX·워드·엑셀·파워포인트는 내용까지 찾을 수 있게 이 기기에서 글자를 뽑아 둡니다(옛 .hwp·스캔 PDF는 이름으로만 찾음). 한 파일 20MB까지.</p>'
+      + '<label class="f">파일<input type="file" id="uF" accept=".pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.zip"></label>'
+      + '<div class="st" id="uS" hidden></div>'
+      + '<label class="f">자료 이름<input type="text" id="uT" maxlength="80" placeholder="예: 2026 학교생활기록부 기재요령(중학교)"></label>'
+      + '<div class="g2"><label class="f">갈래<select id="uC">' + CATS.map(function(c){ return "<option>" + c + "</option>"; }).join("") + '</select></label><label class="f">올린 사람<input type="text" id="uB" maxlength="30" value="' + esc(sc.teacher || "") + '" placeholder="예: 교무부 ○○○"></label></div>'
+      + '<label class="f">한 줄 설명 (선택)<input type="text" id="uD" maxlength="200" placeholder="예: 교육부 배포본, 3월 개정 반영"></label>'
+      + '<label class="f">이전 판 바꾸기 (선택) <small>— 고르면 그 자료는 "보관"으로 넘어갑니다</small><select id="uR"><option value="">새 자료</option>' + items.filter(function(x){ return x.latest; }).map(function(x){ return '<option value="' + x.id + '">' + esc(x.cat + " · " + x.title) + "</option>"; }).join("") + "</select></label>"
+      + '<div class="acts"><label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="uOk"> 개인정보가 없는 자료임을 확인했습니다</label><div class="r"><button type="button" class="btn" id="uX">취소</button><button type="submit" class="btn primary" id="uGo" disabled>올리기</button></div></div>';
+    var S = f.querySelector("#uS"), go = f.querySelector("#uGo");
+    function say(t, cls){ S.hidden = false; S.className = "st" + (cls ? " " + cls : ""); S.textContent = t; }
+    function ready(){ go.disabled = !(file && buf && f.querySelector("#uOk").checked && f.querySelector("#uT").value.trim()); }
+    f.querySelector("#uF").onchange = async function(){
+      file = this.files[0]; buf = null; pages = []; ready(); if(!file) return;
+      if(file.size > 20 * 1024 * 1024){ say("20MB보다 큰 파일은 올릴 수 없습니다. PDF로 나누거나 줄여 주세요.", "warn"); file = null; return; }
+      if(!f.querySelector("#uT").value) f.querySelector("#uT").value = file.name.replace(/\.\w+$/, "");
+      say("파일을 읽는 중…");
+      try{
+        buf = await file.arrayBuffer();
+        pages = await extract(file, buf, say);
+        var w = scan(pages), total = pages.reduce(function(a, p){ return a + p.t.length; }, 0);
+        if(w.length) say("⚠ 개인정보로 보이는 내용: " + w.join(" · ") + " — 정말 올려도 되는 자료인지 확인해 주세요.", "warn");
+        else say(pages.length ? "✔ 글자를 읽었습니다: " + (/\.pdf$/i.test(file.name) ? pages.length + "쪽 · " : "") + total.toLocaleString() + "자 (내용으로 찾을 수 있어요)" : "이 형식은 내용을 읽지 못해 자료 이름·설명으로만 찾을 수 있습니다.", pages.length ? "ok" : "");
+      }catch(e){ pages = []; say("내용을 읽지 못했습니다(" + (e && e.message || e) + "). 이름·설명으로만 찾을 수 있게 올릴 수 있어요."); }
+      ready();
+    };
+    f.querySelector("#uOk").onchange = ready; f.querySelector("#uT").oninput = ready;
+    f.querySelector("#uX").onclick = function(){ d.close(); };
+    f.onsubmit = function(e){
+      e.preventDefault(); if(go.disabled) return;
+      go.disabled = true; say("올리는 중… (큰 파일은 1분쯤 걸려요)");
+      var fr = new FileReader();
+      fr.onload = function(){
+        var tok = Array.prototype.map.call(crypto.getRandomValues(new Uint8Array(16)), function(b){ return ("0" + b.toString(16)).slice(-2); }).join("");
+        post({action: "libup", name: file.name, mime: file.type || "application/octet-stream", data: String(fr.result).split(",")[1], title: f.querySelector("#uT").value.trim(), cat: f.querySelector("#uC").value, by: f.querySelector("#uB").value.trim(), desc: f.querySelector("#uD").value.trim(), replace: f.querySelector("#uR").value, tok: tok, pages: pages})
+          .then(function(r){ var o = mine(); o.mine[r.id] = tok; TT.store.set("tt_lib_v1", o); d.close(); TT.ui.toast("올렸습니다. 이제 구성원 모두가 찾아볼 수 있어요."); load(); })
+          .catch(function(e2){ say("올리지 못했습니다: " + err(e2), "warn"); go.disabled = false; });
+      };
+      fr.readAsDataURL(file);
+    };
+    d.showModal();
+  }
+  $("upBtn").onclick = upload;
+
+  function closeMenu(){ $("more").open = false; }
+  document.addEventListener("click", function(e){ if(!$("more").contains(e.target)) closeMenu(); });
+  $("mReload").onclick = function(){ closeMenu(); load(); };
+  $("mAdmin").onclick = function(){ closeMenu(); TT.ui.prompt("관리자 비밀번호 (업무판 스크립트 속성 LIB_ADMIN)", "", "브라우저 창을 닫으면 잊습니다", function(v){ admin = v; sessionStorage.setItem("tt_lib_admin", v); drawList(); TT.ui.toast("관리자 모드: 모든 자료에 🗑이 보입니다. 맞는 비밀번호일 때만 지워집니다."); }); };
+
+  if(!B.url || !/^https:\/\/script\.google\.com\//.test(B.url)){
+    $("body").innerHTML = '<div class="empty"><div class="big">📅</div><div><b>학교 업무판을 먼저 연결해 주세요.</b><br>자료실 파일은 학교 업무판 계정의 구글 드라이브에 저장됩니다.<br>첫 화면 ⋯ → 학교 업무판 연결에서 주소와 공용 비밀번호를 넣으세요.</div><a class="btn primary" href="../../">첫 화면으로</a></div>';
+    $("upBtn").disabled = true; drawNav();
+  } else load();
+})();
+</script>
+</body>
+</html>
