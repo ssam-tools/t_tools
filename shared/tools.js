@@ -11,7 +11,8 @@
    🧭 생활지도  🗣️ 상담  📄 결석신고서  ✉️ 학부모 문자  🏅 가산점  🎓 진학 추천  📑 생기부 도우미  📎 파일 합치기
    📅 학교 업무판  📝 내 할 일  ☁️ 동기화(보관함)  🏫 교실 기기  🏷️ 학교·선생님 설정  💾 백업  🖼️ 그림 저장  🔒 개인정보 보호 안내  📖 지금 차시
    🗃️ 문장 은행  🧾 기록 마감 점검표  🗂️ 상담 카드  🖨 인쇄
-   🎒 학급(묶음)  📊 수행평가  📦 제출물 체크  🧹 1인 1역·당번  🪑 자리 바꾸기 */
+   🎒 학급(묶음)  📊 수행평가  📦 제출물 체크  🧹 1인 1역·당번  🪑 자리 바꾸기
+   💼 업무(묶음)  📆 연간 업무  🤖 AI·문서 도우미 (📃 학습지·문항 📏 채점 기준 📨 가정통신문 🏛️ 공문 🗒️ 회의록 💬 민원 답변 ✒️ 세특 다듬기 ✨ 자유 요청 🗄️ 보관함) */
 var TT_TOOLS = [
   {id:"roster", icon:"👥", gicon:"🎒", short:"학급", sub:"명렬표", card:"학급", name:"학급 명렬표",     desc:"명렬표(사진·메모·학생 카드) · 제출물 체크 · 1인 1역·당번.",           scope:"all",  href:"apps/roster/", ready:true, room:true},
   {id:"photo",  icon:"📷", short:"사진 이름", sub:"사진 이름", in:"roster", name:"나이스 사진 이름", desc:"반 사진을 명렬표 순서대로 이름(번호)로 바꾸고 용량도 줄입니다.",                       scope:"home", href:"apps/photo/",  ready:true},
@@ -27,5 +28,7 @@ var TT_TOOLS = [
   {id:"record", icon:"📑", short:"생기부", name:"생기부 도우미", desc:"모인 학생 기록을 영역별로 보며 초안 쓰기 · 나이스 글자 수 · 유의 낱말 점검.", scope:"all", href:"apps/record/", ready:true},
   {id:"bonus",  icon:"🏅", short:"가산점", name:"가산점 자동 입력", desc:"수상경력·창체 파일을 올리면 가산점 양식을 자동으로 채웁니다.", scope:"home", href:"apps/bonus/",  ready:true},
   {id:"advisor",icon:"🎓", short:"진학 추천", name:"고교 진학 추천",   desc:"성적을 분석해 지원 가능한 고등학교를 살펴봅니다.",             scope:"home", href:"apps/advisor/", ready:true},
+  {id:"year",   icon:"📆", gicon:"💼", short:"업무", sub:"연간 업무", card:"업무", name:"연간 업무", desc:"연간 업무 달력(해마다 돌아오는 일 → 첫 화면 달력) · AI·문서 도우미(학습지·채점 기준·가정통신문·공문·회의록·민원).", scope:"all", href:"apps/year/", ready:true},
+  {id:"ai",     icon:"🤖", short:"AI·문서", sub:"AI·문서 도우미", in:"year", name:"AI·문서 도우미", desc:"개인정보를 가린 AI 요청문, 가정통신문·공문 틀, 보관함.", scope:"all", href:"apps/ai/", ready:true},
   {id:"merge",  icon:"📎", short:"파일 합치기", name:"파일 합치기",     desc:"한글·엑셀 파일 여러 개를 하나로 합치는 윈도우 프로그램을 내려받습니다.", scope:"all",  file:"downloads/FileMerge.exe", ready:true}
 ];

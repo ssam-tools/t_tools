@@ -352,6 +352,9 @@
       var Sb = TT.store.get("tt_submit_v1", null), cl = TT.roster.classes(), over = 0;          // 마감이 지났는데 미제출이 남은 제출물
       if(Sb && Array.isArray(Sb.items)) Sb.items.forEach(function(it){ if(!it.due || it.due >= ymd) return; var c = cl.filter(function(x){ return x.id === it.cls; })[0]; if(!c) return; var mk = (Sb.m || {})[it.id] || {}; if(c.students.some(function(s){ return !mk[s.no]; })) over++; });
       if(over) h += '<a class="al" href="apps/submit/" title="마감이 지났는데 미제출 학생이 있는 제출물">📦 미제출 ' + over + "건</a>";
+      var Yr = TT.store.get("tt_year_v1", null), t0 = new Date(), ay = t0.getMonth() >= 1 ? t0.getFullYear() : t0.getFullYear() - 1, cm = t0.getMonth() + 1;   // 연간 업무: 이번 달 남은 일
+      var ym = Yr && Array.isArray(Yr.items) ? Yr.items.filter(function(it){ return it.m === cm && !(Yr.done || {})[ay + "|" + it.id]; }).length : 0;
+      if(ym) h += '<a class="al mid" href="apps/year/" title="연간 업무: 이번 달에 남은 일">📆 이번 달 ' + ym + "건</a>";
     }catch(err){}
     box.innerHTML = h;
     var t = $("alTodo"); if(t) t.onclick = function(){ var i = document.getElementById("tdText"); if(i) i.focus(); };

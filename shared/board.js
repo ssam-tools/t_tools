@@ -71,6 +71,11 @@
     var out = d && Array.isArray(d.items) ? d.items.filter(function(x){ return x.date && !x.done; }) : [];
     var G = TT.store.get("tt_guide_v1", null);                                       // 생활지도 상담 후속 확인일 (번호만 표시)
     if(G && Array.isArray(G.counsel)) G.counsel.forEach(function(c){ if(c.next && !c.done) out.push({date: c.next, text: c.sid + "번 상담 후속 확인", ic: "🗣️"}); });
+    var Yr = TT.store.get("tt_year_v1", null), t0 = new Date(), ay = t0.getMonth() >= 1 ? t0.getFullYear() : t0.getFullYear() - 1;   // 연간 업무 (학년도 2월~1월)
+    if(Yr && Array.isArray(Yr.items)) Yr.items.forEach(function(it){
+      if(!it.d || (Yr.done || {})[ay + "|" + it.id]) return;
+      var y = it.m === 1 ? ay + 1 : ay; out.push({date: y + "-" + ("0" + it.m).slice(-2) + "-" + ("0" + it.d).slice(-2), text: it.title, ic: "📆"});
+    });
     var Sb = TT.store.get("tt_submit_v1", null), cl = TT.roster.classes();          // 제출물 마감 (미제출이 남은 것만)
     if(Sb && Array.isArray(Sb.items)) Sb.items.forEach(function(it){
       if(!it.due) return; var c = cl.filter(function(x){ return x.id === it.cls; })[0]; if(!c) return;

@@ -125,7 +125,7 @@
     <div class="bytes"><span id="byteTxt"></span><span class="muted" id="saved"></span></div>
     <div class="meter" id="meter"><i></i></div>
     <ul class="warns" id="warns"></ul>
-    <div class="row"><button type="button" class="btn" id="prev">◀ 이전</button><button type="button" class="btn" id="bank" title="학생 정보 없는 나만의 표현 모음">🗃️ 문장 은행</button><button type="button" class="btn primary" id="copy">📋 복사 (나이스에 붙여 넣기)</button><button type="button" class="btn" id="next">다음 ▶</button></div>
+    <div class="row"><button type="button" class="btn" id="prev">◀ 이전</button><button type="button" class="btn" id="bank" title="학생 정보 없는 나만의 표현 모음">🗃️ 문장 은행</button><button type="button" class="btn" id="toAI" title="이름을 가린 초안·근거를 AI·문서 도우미로 보내 다듬습니다">🤖 AI로 다듬기</button><button type="button" class="btn primary" id="copy">📋 복사 (나이스에 붙여 넣기)</button><button type="button" class="btn" id="next">다음 ▶</button></div>
   </section>
 </main>
 <footer>
@@ -275,6 +275,15 @@
       save(); d.close(); drawAll(); TT.ui.toast("설정을 저장했습니다.");
     };
     d.showModal();
+  };
+
+  /* ---------- 🤖 AI로 다듬기: 초안(없으면 이 영역 근거 기록)을 AI·문서 도우미로 (주소가 아닌 이 창의 임시 저장소로 넘김) ---------- */
+  $("toAI").onclick = function(){
+    flush(); var s = stus()[sel]; if(!s) return;
+    var t = draftOf(stuKey(s)) || recsOf(stuKey(s)).map(function(r){ return "- " + r.text; }).join("\n");
+    if(!t.trim()){ TT.ui.toast("초안이나 근거 기록이 없습니다."); return; }
+    sessionStorage.setItem("tt_ai_handoff", JSON.stringify({kind: "saeteuk", k: stuKey(s), area: area, areaName: N.area(area), lim: D.limits[area], label: cls.name + " " + s.no + "번", text: t}));
+    location.href = "../ai/?t=saeteuk";
   };
 
   /* ---------- 🗃️ 문장 은행: 학생 정보 없는 나만의 표현 ("tt_phrases_v1") ---------- */
