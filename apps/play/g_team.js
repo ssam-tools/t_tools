@@ -134,7 +134,7 @@
         var row = h("div", "qrow"); var nb = h("button", "bigbtn y", BS.i >= 25 ? "끝!" : "🎱 다음 공"), sb = h("button", "bigbtn k", "👀 답"), bb = h("button", "bigbtn g", "🎉 빙고!"); nb.type = sb.type = bb.type = "button"; nb.disabled = BS.i >= 25; sb.disabled = !cur;
         nb.onclick = function(){ BS.i++; BS.curShown = false; K.S.drum(.9); draw(); var b = L.querySelector(".ball"); b.classList.add("roll"); setTimeout(K.S.pop, 900); };
         sb.onclick = function(){ BS.curShown = true; K.S.pop(); draw(); };
-        bb.onclick = function(){ K.S.win(); K.fireworks(4); K.big("🎉 빙고!", "답이 맞는지 확인해요 (지금까지 " + BS.i + "문제)", "#c2410c", 2200); setTimeout(function(){ award(aw.value, "🎉 빙고를 외친 모둠은?"); }, 2300); };
+        bb.onclick = function(){ K.S.win(); K.fireworks(4); K.big("🎉 빙고!", "답이 맞는지 확인해요 (지금까지 " + BS.i + "문제)", "#c2410c", 2200); K.later(function(){ award(aw.value, "🎉 빙고를 외친 모둠은?"); }, 2300); };
         row.appendChild(sb); row.appendChild(nb); row.appendChild(bb); L.appendChild(row);
       }
       R.appendChild(h("b", "", "빙고판에 적을 수 (" + 25 + "개)")); R.appendChild(pool);
@@ -300,7 +300,7 @@
     }
     function choose(o, b){
       if(GS.done) return;
-      if(o === GS.g.ans){ GS.done = true; b.classList.add("ok"); K.S.good(); var r = b.getBoundingClientRect(); K.confetti(r.left + r.width / 2, r.top + r.height / 2, 50); setTimeout(function(){ award(aw.value); }, 700); }
+      if(o === GS.g.ans){ GS.done = true; b.classList.add("ok"); K.S.good(); var r = b.getBoundingClientRect(); K.confetti(r.left + r.width / 2, r.top + r.height / 2, 50); K.later(function(){ award(aw.value); }, 700); }
       else { b.classList.add("no"); K.S.bad(); K.shake(b); }
     }
     if(GS && GS.kind === kind && GS.dir === dir) draw(); else next();

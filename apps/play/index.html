@@ -155,6 +155,7 @@
   function go(id){ if(location.hash.slice(1) !== id) history.replaceState(null, "", id ? "#" + id : location.pathname); show(id); }
   function show(id){
     if(cleanup){ try{ cleanup(); }catch(e){} cleanup = null; }
+    K.bump();
     Array.prototype.forEach.call(document.querySelectorAll("dialog[open]"), function(d){ if(!d.classList.contains("keep")) d.close(); });
     var fx = document.getElementById("fx"); if(fx) fx.innerHTML = "";
     var g = K.games.filter(function(x){ return x.id === id; })[0]; cur = g ? g.id : null;

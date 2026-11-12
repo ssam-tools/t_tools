@@ -139,6 +139,9 @@ var K = (function(){
   /* 놀이 설정 (이 기기): tt_play_v1 — 보물 상자·돌림판 칸 등 선생님이 고친 것 */
   function pref(k, v){ var o = TT.store.get("tt_play_v1", null) || {}; if(v === undefined) return o[k]; o[k] = v; TT.store.set("tt_play_v1", o); }
   function game(g){ games.push(g); }
+  /* 놀이를 옮기면 예약해 둔 일(상 주기 창 등)은 하지 않습니다 */
+  var epoch = 0;
+  function later(fn, ms){ var e = epoch; return setTimeout(function(){ if(e === epoch) fn(); }, ms); }
 
   return {
     C: C, h: h, btn: btn, rnd: rnd, ri: ri, pick: pick, shuffle: shuffle, gcd: gcd, sleep: sleep, sg: sg,
@@ -146,6 +149,6 @@ var K = (function(){
     layer: layer, confetti: confetti, fireworks: fireworks, shake: shake, flash: flash, big: big, timer: timer, rollDice: rollDice, DIE: DIE,
     teams: teams, add: add, setScore: setScore, turn: function(){ return turn; }, setTurn: setTurn, nextTurn: nextTurn, setCount: setCount, resetScores: resetScores, rename: rename, setClass: setClass,
     on: function(f){ listeners.push(f); }, off: function(f){ listeners = listeners.filter(function(x){ return x !== f; }); }, askTeam: askTeam, TCOL: TCOL,
-    game: game, games: games, css: css, pref: pref
+    game: game, games: games, later: later, bump: function(){ epoch++; }, css: css, pref: pref
   };
 })();

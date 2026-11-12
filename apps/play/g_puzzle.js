@@ -257,7 +257,7 @@
         if(ok){
           els.forEach(function(x){ x.classList.add("ok"); }); K.S.good(); var r = els[1].getBoundingClientRect(); K.confetti(r.left + r.width / 2, r.top, 50); found++;
           var P = pick3.slice(); pick3 = [];
-          if(toTeam) setTimeout(function(){ K.askTeam("🔷 찾은 모둠은?", function(t){ K.add(t, 1); }); }, 500);
+          if(toTeam) K.later(function(){ K.askTeam("🔷 찾은 모둠은?", function(t){ K.add(t, 1); }); }, 500);
           setTimeout(function(){
             if(mode === "shape"){ P.sort(function(a, b){ return b - a; }); if(board.length > 12 || !deck.length){ P.forEach(function(x){ board.splice(x, 1); }); } else { P.forEach(function(x){ board[x] = deck.pop(); }); } while(!findSet(board) && deck.length) board = board.concat(deck.splice(0, 3)); if(!findSet(board)){ K.S.win(); K.fireworks(5); K.big("🎉 끝!", "찾은 묶음 " + found + "개", "#2e9d5b", 2600); } }
             else { P.forEach(function(x){ board[x].gone = true; }); if(found >= 4){ K.S.win(); K.fireworks(5); K.big("🎉 모두 찾았어요!", null, "#2e9d5b", 2200); } }

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 막습니다. 예외: 학교 업무판(구글 앱스 스크립트) — 이수증은 학교 구글 드라이브 비공개 폴더에 저장됩니다. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>의무연수 취합 · 쌤 노트</title>
+<!--
+  📜 의무연수 취합: 법정의무연수 "꾸러미" 이수증(파일) 또는 이수번호를 교직원이 한 번만 내면, 연수 담당자들이 한 번에 모두 가져갑니다.
+  · 교직원: 자기 이름 고르기 → 이수증 PDF·사진 또는 이수번호 → 내기. 자기 제출만 확인할 수 있습니다(이 기기에 남은 표로).
+  · 담당자(업무판 스크립트 속성 TRAIN_ADMIN 비밀번호): 📋 현황(미제출자), 📥 이수번호 엑셀, 📥 이수증 모두(압축), ⚙️ 교직원 명단·연수 목록, 🗑 올해 자료 지우기.
+  · 저장: 업무판 시트 "의무연수_설정"·"의무연수_제출", 드라이브 비공개 폴더 "쌤노트_의무연수"(자료실과 따로).
+  · 이 기기: "tt_train_v1" {me: 교직원 id, tok: 내 제출 확인용 표}
+-->
+<style>
+  header{align-items:center}
+  .bar{flex-wrap:wrap}
+  main{display:flex;flex-direction:column!important;gap:10px;padding:12px!important}
+  .info{font-size:13.5px;color:#33404d;background:var(--accent-soft);border-radius:10px;padding:8px 12px}
+  .info b{color:var(--accent)}
+  .two{flex:1;min-height:0;display:grid;grid-template-columns:minmax(220px,320px) minmax(0,1fr);gap:12px}
+  .box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:0}
+  .box h2{font-size:15px;font-weight:900}
+  .box input[type=search],.box input[type=text]{font:inherit;font-size:15px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%}
+  .names{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:3px}
+  .names button{font:inherit;font-size:14.5px;text-align:left;border:1px solid transparent;background:#f6f8fa;border-radius:9px;padding:6px 10px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+  .names button small{color:var(--sub)}
+  .names button[aria-pressed=true]{background:var(--accent);color:#fff}.names button[aria-pressed=true] small{color:#dbe9f7}
+  .me{font-size:clamp(20px,3.6vh,28px);font-weight:900}
+  .drop{border:2px dashed #b9c9dc;border-radius:14px;padding:16px;text-align:center;color:var(--sub);font-size:14px;cursor:pointer}
+  .drop.on{border-color:var(--accent);background:var(--accent-soft)}
+  .drop b{color:var(--ink)}
+  .st{border-radius:12px;padding:10px 14px;font-size:14.5px;font-weight:700}
+  .st.ok{background:var(--ok-soft);color:var(--ok)}.st.no{background:#f3f4f6;color:#5b6773}.st.warn{background:var(--danger-soft);color:var(--danger)}
+  .go{display:flex;justify-content:flex-end;gap:8px;margin-top:auto}
+  .go .btn{font-size:16px;padding:10px 20px}
+  /* 담당자 */
+  .adm{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+  .arow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .arow .sp{flex:1}
+  .cnt{font-size:clamp(17px,3vh,22px);font-weight:900}
+  .cnt .r{color:var(--danger)}
+  .tbl{flex:1;min-height:0;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th{position:sticky;top:0;background:#f3f6f9;font-size:12.5px;color:var(--sub);text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+  td{padding:6px 10px;border-bottom:1px solid #eef2f6}
+  tr.miss td{color:var(--danger)}
+  td .btn{padding:3px 9px;font-size:12.5px}
+  .set{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:12px}
+  .set textarea{flex:1;min-height:0;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;resize:none}
+  .muted{font-size:12.5px;color:var(--sub);line-height:1.5}
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--sub);text-align:center}
+  .empty .big{font-size:44px}
+  @media (max-width:760px){ .two,.set{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} .names{max-height:240px} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>📜 의무연수 취합</h1>
+  </div>
+  <div class="bar">
+    <div class="seg" id="mode"><button type="button" data-m="me" aria-pressed="true">✍️ 내 이수증 내기</button><button type="button" data-m="adm" aria-pressed="false">🔑 담당자</button></div>
+  </div>
+</header>
+<main class="panel" id="m"></main>
+<footer>
+  <span id="foot">꾸러미 이수증 하나로 여러 법정의무연수를 한 번에 냅니다</span>
+  <span class="priv">🔒 이수증·명단은 담당자 비밀번호로만 열람 · 학년도가 끝나면 지워 주세요</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); }, m = $("m");
+  var B = TT.store.get("tt_board_v1", null) || {}, conf = null, mode = "me", admin = sessionStorage.getItem("tt_train_admin") || "", A = null, filt = "all", aTab = "list";
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function my(){ var o = TT.store.get("tt_train_v1", null) || {}; if(!o.tok){ o.tok = Array.prototype.map.call(crypto.getRandomValues(new Uint8Array(16)), function(b){ return ("0" + b.toString(16)).slice(-2); }).join(""); TT.store.set("tt_train_v1", o); } return o; }
+  function post(o){
+    return fetch(B.url, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(Object.assign({pw: B.pw}, o))})
+      .then(function(r){ return r.json(); }).then(function(r){ if(!r || !r.ok) throw new Error((r && r.error) || "오류"); return r; });
+  }
+  function err(e){ var s = String(e && e.message || e); return s === "AUTH" ? "업무판 비밀번호가 맞지 않습니다" : /지원하지 않는 요청/.test(s) ? "업무판 Code.gs가 예전 것입니다 (12단계 Code.gs로 바꾸고 새 버전으로 배포)" : s; }
+  function wait(t){ m.innerHTML = '<div class="empty"><div class="big">⏳</div><div>' + esc(t || "불러오는 중…") + "</div></div>"; }
+  function courseLine(c){ return c && c.courses && c.courses.length ? (c.year ? "<b>" + esc(c.year) + "</b> " : "") + "꾸러미 하나로 대신하는 연수: " + c.courses.map(function(x){ return esc(x.name) + (x.owner ? " <small>(" + esc(x.owner) + ")</small>" : ""); }).join(" · ") : "담당자가 연수 목록을 아직 넣지 않았습니다."; }
+
+  /* ================= 교직원: 내 이수증 내기 ================= */
+  function meView(){
+    wait();
+    post({action: "trinfo"}).then(function(r){ conf = r; drawMe(); }).catch(function(e){ m.innerHTML = '<div class="empty"><div class="big">⚠️</div><div>' + esc(err(e)) + "</div></div>"; });
+  }
+  function drawMe(){
+    var o = my(), staff = conf.staff || [];
+    if(!staff.length){ m.innerHTML = '<div class="info">' + courseLine(conf) + '</div><div class="empty"><div class="big">📜</div><div><b>아직 교직원 명단이 없습니다.</b><br>연수 담당 선생님이 🔑 담당자 → ⚙️ 설정에서 교직원 명단을 넣으면 시작할 수 있어요.</div></div>'; return; }
+    m.innerHTML = '<div class="info">' + courseLine(conf) + '</div><div class="two"><div class="box"><h2>① 내 이름 고르기</h2><input type="search" id="q" placeholder="이름이나 부서로 찾기" autocomplete="off"><div class="names" id="names"></div></div>'
+      + '<div class="box" id="form"></div></div>';
+    $("q").oninput = names; names(); form();
+  }
+  function names(){
+    var o = my(), q = ($("q").value || "").trim(), box = $("names"); box.innerHTML = "";
+    (conf.staff || []).filter(function(s){ return !q || (s.name + " " + s.dept).indexOf(q) >= 0; }).forEach(function(s){
+      var b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-pressed", String(o.me === s.id)); b.innerHTML = "<span>" + esc(s.name) + "</span><small>" + esc(s.dept) + "</small>";
+      b.onclick = function(){ var x = my(); x.me = s.id; TT.store.set("tt_train_v1", x); names(); form(); }; box.appendChild(b);
+    });
+  }
+  var file = null;
+  function form(){
+    var o = my(), f = $("form"), s = (conf.staff || []).filter(function(x){ return x.id === o.me; })[0]; file = null;
+    if(!s){ f.innerHTML = '<div class="empty"><div class="big">👈</div><div>왼쪽에서 내 이름을 골라 주세요.</div></div>'; return; }
+    f.innerHTML = '<div class="me">' + esc(s.name) + ' <small style="font-size:14px;color:var(--sub)">' + esc(s.dept) + '</small></div><div class="st no" id="st">제출 여부 확인 중…</div>'
+      + '<h2>② 이수증 파일 또는 이수번호 (둘 중 하나만 내도 돼요)</h2>'
+      + '<label class="drop" id="drop"><input type="file" id="f" accept=".pdf,.jpg,.jpeg,.png" hidden><b>📄 이수증 파일 고르기</b> (PDF·사진, 10MB까지)<br>또는 여기로 끌어다 놓기</label>'
+      + '<input type="text" id="num" maxlength="60" placeholder="이수번호 (예: 2026-123456)" autocomplete="off">'
+      + '<p class="muted">이수증은 학교 구글 드라이브의 비공개 폴더에 저장되고 연수 담당자만 볼 수 있습니다. 다시 내면 앞의 것으로 바뀝니다.</p>'
+      + '<div class="go"><button type="button" class="btn primary" id="send">📤 내기</button></div>';
+    var drop = $("drop");
+    function pick(fl){ if(!fl) return; if(fl.size > 10 * 1024 * 1024){ TT.ui.toast("10MB보다 큰 파일은 낼 수 없습니다."); return; } file = fl; drop.classList.add("on"); drop.innerHTML = "<b>✔ " + esc(fl.name) + "</b> (" + Math.max(1, Math.round(fl.size / 1024)) + "KB) · 다른 파일로 바꾸려면 누르기"; drop.appendChild($("f") || (function(){ var i = document.createElement("input"); i.type = "file"; i.id = "f"; i.hidden = true; i.accept = ".pdf,.jpg,.jpeg,.png"; return i; })()); }
+    drop.addEventListener("change", function(e){ if(e.target.id === "f") pick(e.target.files[0]); });
+    drop.addEventListener("dragover", function(e){ e.preventDefault(); drop.classList.add("on"); });
+    drop.addEventListener("drop", function(e){ e.preventDefault(); pick(e.dataTransfer.files[0]); });
+    post({action: "trmine", staffId: s.id, tok: o.tok}).then(function(r){
+      var st = $("st"); if(!st) return;
+      if(r.done){ st.className = "st ok"; st.textContent = "✔ 냈습니다 (" + r.at + ")" + (r.num ? " · 이수번호 " + r.num : "") + (r.fileName ? " · 이수증 파일 있음" : ""); }
+      else { st.className = "st no"; st.textContent = "아직 내지 않았거나, 다른 기기에서 냈습니다. (다시 내면 앞의 것으로 바뀌어요)"; }
+    }).catch(function(){});
+    $("send").onclick = function(){
+      var num = $("num").value.trim(), btn = this; if(!file && !num){ TT.ui.toast("이수증 파일을 고르거나 이수번호를 적어 주세요."); return; }
+      btn.disabled = true; btn.textContent = "내는 중…";
+      function send(data){
+        post({action: "trsubmit", staffId: s.id, num: num, data: data || "", fileName: file ? file.name : "", mime: file ? file.type : "", tok: o.tok})
+          .then(function(){ TT.ui.toast("냈습니다. 담당자들이 한 번에 가져갑니다. 수고하셨어요!"); form(); })
+          .catch(function(e){ TT.ui.toast("내지 못했습니다: " + err(e)); btn.disabled = false; btn.textContent = "📤 내기"; });
+      }
+      if(file){ var fr = new FileReader(); fr.onload = function(){ send(String(fr.result).split(",")[1]); }; fr.readAsDataURL(file); } else send("");
+    };
+  }
+
+  /* ================= 담당자 ================= */
+  function admView(){
+    if(!admin){ askAdmin(); return; }
+    wait("담당자 자료를 불러오는 중…");
+    post({action: "tradmin", admin: admin}).then(function(r){ A = r; drawAdm(); }).catch(function(e){
+      if(/담당자 비밀번호/.test(String(e.message))){ admin = ""; sessionStorage.removeItem("tt_train_admin"); }
+      m.innerHTML = '<div class="empty"><div class="big">🔑</div><div>' + esc(err(e)) + '</div><button type="button" class="btn primary" id="re">담당자 비밀번호 넣기</button></div>'; var re = $("re"); if(re) re.onclick = askAdmin;
+    });
+  }
+  function askAdmin(){
+    m.innerHTML = '<div class="empty"><div class="big">🔑</div><div><b>연수 담당자만 볼 수 있습니다.</b><br>업무판 스크립트 속성 TRAIN_ADMIN에 넣은 담당자 비밀번호를 넣어 주세요.<br><span class="muted">(이 창을 닫으면 잊습니다)</span></div><button type="button" class="btn primary" id="ak">비밀번호 넣기</button></div>';
+    $("ak").onclick = function(){ TT.ui.prompt("담당자 비밀번호", "", "", function(v){ admin = v; sessionStorage.setItem("tt_train_admin", v); admView(); }); };
+  }
+  function rows(){
+    var sub = {}; (A.subs || []).forEach(function(x){ sub[x.staffId] = x; });
+    return (A.conf.staff || []).map(function(s){ return {s: s, x: sub[s.id] || null}; });
+  }
+  function drawAdm(){
+    var R = rows(), done = R.filter(function(r){ return r.x; }).length;
+    m.innerHTML = '<div class="info">' + courseLine(A.conf) + '</div><div class="adm"><div class="arow"><div class="seg" id="at"><button type="button" data-t="list" aria-pressed="' + (aTab === "list") + '">📋 현황</button><button type="button" data-t="set" aria-pressed="' + (aTab === "set") + '">⚙️ 교직원 명단·연수 목록</button></div>'
+      + (aTab === "list" ? '<span class="cnt">제출 ' + done + ' / ' + R.length + (R.length - done ? ' <span class="r">(미제출 ' + (R.length - done) + ")</span>" : " 🎉") + '</span><span class="sp"></span><button type="button" class="btn" id="cp">📋 미제출자 복사</button><button type="button" class="btn" id="csv">📥 이수번호 엑셀</button><button type="button" class="btn primary" id="zip">📥 이수증 모두 받기</button>' : '<span class="sp"></span><button type="button" class="btn" id="wipe" style="color:var(--danger)">🗑 올해 제출 자료 모두 지우기</button>')
+      + '</div><div id="ab" style="flex:1;min-height:0;display:flex;flex-direction:column"></div></div>';
+    $("at").onclick = function(e){ var b = e.target.closest("button"); if(!b) return; aTab = b.dataset.t; drawAdm(); };
+    if(aTab === "list") drawList(R); else drawSet();
+  }
+  function drawList(R){
+    var ab = $("ab");
+    ab.innerHTML = '<div class="arow" style="margin-bottom:6px"><div class="seg" id="ft"><button type="button" data-f="all">전체</button><button type="button" data-f="miss">미제출</button><button type="button" data-f="done">제출</button></div></div><div class="tbl"><table><thead><tr><th>부서</th><th>이름</th><th>이수번호</th><th>이수증</th><th>낸 때</th></tr></thead><tbody id="tb"></tbody></table></div>';
+    Array.prototype.forEach.call($("ft").children, function(b){ b.setAttribute("aria-pressed", String(b.dataset.f === filt)); b.onclick = function(){ filt = b.dataset.f; drawList(R); }; });
+    var L = R.filter(function(r){ return filt === "all" || (filt === "miss" ? !r.x : !!r.x); });
+    $("tb").innerHTML = L.length ? L.map(function(r){ return '<tr class="' + (r.x ? "" : "miss") + '"><td>' + esc(r.s.dept) + "</td><td><b>" + esc(r.s.name) + "</b></td><td>" + (r.x ? esc(r.x.num || "—") : "미제출") + "</td><td>" + (r.x && r.x.file ? '<button type="button" class="btn" data-get="' + esc(r.s.id) + '">⬇ 받기</button>' : "") + "</td><td>" + (r.x ? esc(r.x.at) : "") + "</td></tr>"; }).join("") : '<tr><td colspan="5" style="text-align:center;color:var(--sub);padding:20px">해당하는 사람이 없습니다.</td></tr>';
+    $("tb").onclick = function(e){ var b = e.target.closest("[data-get]"); if(!b) return; b.disabled = true; getFile(b.dataset.get).then(function(f){ save(new Blob([f.bytes], {type: f.mime}), f.name); }).catch(function(e2){ TT.ui.toast(err(e2)); }).then(function(){ b.disabled = false; }); };
+    $("cp").onclick = function(){ var miss = R.filter(function(r){ return !r.x; }); if(!miss.length){ TT.ui.toast("모두 냈습니다! 🎉"); return; }
+      var t = "[법정의무연수 이수증 제출 안내] 아직 내지 않은 선생님 " + miss.length + "명: " + miss.map(function(r){ return r.s.name; }).join(", ") + " — 쌤 노트 📜 의무연수 취합에서 꾸러미 이수증 또는 이수번호를 내 주세요.";
+      navigator.clipboard.writeText(t).then(function(){ TT.ui.toast("복사했습니다. 메신저에 붙여 넣으세요."); }, function(){ TT.ui.toast(t); }); };
+    $("csv").onclick = function(){
+      var q = function(v){ v = String(v == null ? "" : v); if(/^[=+\-@]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; };
+      var lines = [["부서", "이름", "제출", "이수번호", "이수증 파일", "낸 때"].concat((A.conf.courses || []).map(function(c){ return c.name; })).map(q).join(",")];
+      R.forEach(function(r){ lines.push([r.s.dept, r.s.name, r.x ? "제출" : "미제출", r.x ? r.x.num : "", r.x && r.x.file ? r.x.fileName : "", r.x ? r.x.at : ""].concat((A.conf.courses || []).map(function(){ return r.x ? "이수(꾸러미)" : ""; })).map(q).join(",")); });
+      save(new Blob(["﻿" + lines.join("\r\n")], {type: "text/csv;charset=utf-8"}), "training_" + (A.conf.year || "list") + ".csv");
+    };
+    $("zip").onclick = function(){
+      var L2 = R.filter(function(r){ return r.x && r.x.file; }), btn = this; if(!L2.length){ TT.ui.toast("받을 이수증 파일이 없습니다."); return; }
+      btn.disabled = true; var out = [], i = 0;
+      (function next(){
+        if(i >= L2.length){ save(makeZip(out), "training_certificates_" + (A.conf.year || "all") + ".zip"); btn.disabled = false; btn.textContent = "📥 이수증 모두 받기"; TT.ui.toast(out.length + "개를 한 압축 파일로 받았습니다."); return; }
+        btn.textContent = "받는 중… " + (i + 1) + " / " + L2.length;
+        getFile(L2[i].s.id).then(function(f){ out.push(f); }).catch(function(){}).then(function(){ i++; next(); });
+      })();
+    };
+  }
+  function drawSet(){
+    var c = A.conf, ab = $("ab");
+    ab.innerHTML = '<div class="set"><div class="box"><h2>학년도와 연수 목록</h2><input type="text" id="yr" maxlength="10" placeholder="학년도 (예: 2026)" value="' + esc(c.year || new Date().getFullYear()) + '"><p class="muted">한 줄에 하나: <b>연수 이름, 담당 부서·담당자</b><br>꾸러미 이수증 하나로 이 연수들을 모두 낸 것으로 봅니다.</p><textarea id="cs" placeholder="성희롱·성폭력 예방, 교무부&#10;아동학대 예방, 생활부&#10;장애인식 개선, 특수교육부&#10;청렴, 행정실&#10;개인정보 보호, 정보부&#10;안전교육, 안전부"></textarea></div>'
+      + '<div class="box"><h2>교직원 명단</h2><p class="muted">엑셀이나 학교 교직원 명부에서 <b>이름 · 부서</b> 두 칸을 복사해 붙여 넣으세요 (한 줄에 한 사람, 칸은 탭·쉼표). 이름과 부서만 넣고, 생년월일·연락처는 넣지 마세요.</p><textarea id="sf" placeholder="김수학	3학년부&#10;이과학	교무부"></textarea><div class="arow"><span class="muted" id="sn"></span><span class="sp"></span><button type="button" class="btn primary" id="sv">💾 저장</button></div></div></div>';
+    $("cs").value = (c.courses || []).map(function(x){ return x.name + (x.owner ? ", " + x.owner : ""); }).join("\n");
+    $("sf").value = (c.staff || []).map(function(x){ return x.name + "\t" + x.dept; }).join("\n");
+    function parse(){
+      var seen = {}, out = [];
+      $("sf").value.split(/\r?\n/).forEach(function(l){ var p = l.split(/\t|,/).map(function(x){ return x.trim(); }).filter(Boolean); if(!p.length) return;
+        var name = p[0], dept = p[1] || ""; if(/^(이름|성명)$/.test(name)) return; if(!/[가-힣a-zA-Z]/.test(name)) return;
+        var id = dept + "|" + name; seen[id] = (seen[id] || 0) + 1; if(seen[id] > 1) id += "#" + seen[id]; out.push({id: id, name: name.slice(0, 30), dept: dept.slice(0, 30)}); });
+      return out;
+    }
+    function count(){ var S = parse(), had = {}; (c.staff || []).forEach(function(x){ had[x.id] = 1; }); var gone = (c.staff || []).filter(function(x){ return !S.some(function(y){ return y.id === x.id; }); }).length;
+      $("sn").textContent = S.length + "명" + (gone ? " · 빠지는 사람 " + gone + "명 (이미 낸 자료는 현황에서 안 보임)" : ""); }
+    $("sf").oninput = count; count();
+    $("sv").onclick = function(){
+      var S = parse(), C = $("cs").value.split(/\r?\n/).map(function(l){ var p = l.split(/,|\t/); return {name: (p[0] || "").trim(), owner: p.slice(1).join(",").trim()}; }).filter(function(x){ return x.name; });
+      if(!S.length){ TT.ui.toast("교직원 명단을 넣어 주세요."); return; }
+      post({action: "trsetup", admin: admin, year: $("yr").value.trim(), courses: C, staff: S}).then(function(){ TT.ui.toast("저장했습니다. 이제 교직원이 이름을 골라 낼 수 있어요."); aTab = "list"; admView(); }).catch(function(e){ TT.ui.toast(err(e)); });
+    };
+    $("wipe").onclick = function(){ TT.ui.confirm("올해 제출 자료 모두 지우기", "모든 교직원의 이수증 파일(드라이브 휴지통으로)과 이수번호를 지웁니다. 담당자들이 모두 받아 간 뒤에 하세요. 교직원 명단과 연수 목록은 남습니다.", "모두 지우기", function(){
+      post({action: "trwipe", admin: admin}).then(function(r){ TT.ui.toast(r.removed + "건을 지웠습니다."); aTab = "list"; admView(); }).catch(function(e){ TT.ui.toast(err(e)); }); }); };
+  }
+  function getFile(id){ return post({action: "trget", admin: admin, staffId: id}).then(function(r){ var b = atob(r.data), u = new Uint8Array(b.length); for(var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return {name: r.name, mime: r.mime, bytes: u}; }); }
+  function save(blob, name){ var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
+  /* 압축 파일 만들기(저장 방식, 파일 이름 UTF-8 표시 — 윈도우 10 이상 탐색기에서 한글 이름 그대로) */
+  var CRC = (function(){ var t = new Uint32Array(256); for(var n = 0; n < 256; n++){ var c = n; for(var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(u){ var c = 0xFFFFFFFF; for(var i = 0; i < u.length; i++) c = CRC[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+  function makeZip(files){
+    var enc = new TextEncoder(), parts = [], cen = [], off = 0, used = {};
+    files.forEach(function(f){
+      var nm = f.name; while(used[nm]) nm = nm.replace(/(\.\w+)?$/, "_2$1"); used[nm] = 1;
+      var name = enc.encode(nm), crc = crc32(f.bytes), sz = f.bytes.length, h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true); h.setUint32(14, crc, true); h.setUint32(18, sz, true); h.setUint32(22, sz, true); h.setUint16(26, name.length, true);
+      parts.push(new Uint8Array(h.buffer), name, f.bytes);
+      var c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint32(16, crc, true); c.setUint32(20, sz, true); c.setUint32(24, sz, true); c.setUint16(28, name.length, true); c.setUint32(42, off, true);
+      cen.push(new Uint8Array(c.buffer), name); off += 30 + name.length + sz;
+    });
+    var cs = cen.reduce(function(a, b){ return a + b.length; }, 0), e = new DataView(new ArrayBuffer(22));
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cs, true); e.setUint32(16, off, true);
+    return new Blob(parts.concat(cen, [new Uint8Array(e.buffer)]), {type: "application/zip"});
+  }
+
+  $("mode").onclick = function(e){ var b = e.target.closest("button"); if(!b) return; mode = b.dataset.m; Array.prototype.forEach.call(this.children, function(x){ x.setAttribute("aria-pressed", String(x === b)); }); if(mode === "me") meView(); else admView(); };
+  if(!B.url || !/^https:\/\/script\.google\.com\//.test(B.url)){
+    m.innerHTML = '<div class="empty"><div class="big">📅</div><div><b>학교 업무판을 먼저 연결해 주세요.</b><br>이수증은 학교 업무판 계정의 구글 드라이브 비공개 폴더에 저장됩니다.<br>첫 화면 ⋯ → 학교 업무판 연결에서 주소와 공용 비밀번호를 넣으세요.</div><a class="btn primary" href="../../">첫 화면으로</a></div>';
+    $("mode").hidden = true;
+  } else meView();
+})();
+</script>
+</body>
+</html>

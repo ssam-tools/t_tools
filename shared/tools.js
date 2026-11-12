@@ -16,6 +16,7 @@
    🔢 문항 생성기  ✅ 형성평가  🔁 보충  🎯 이원목적분류표  ⏳ 진도·시수
    📊 수행평가  📦 제출물 체크  🧹 1인 1역·당번  🪑 자리 바꾸기
    📆 연간 업무  🤖 AI·문서 도우미 (📃 학습지·문항 📏 채점 기준 📨 가정통신문 🏛️ 공문 🗒️ 회의록 💬 민원 답변 ✒️ 세특 다듬기 ✨ 자유 요청 🗄️ 보관함)  🔎 학교 자료실
+   📜 의무연수 취합
    🎮 수학 놀이터 (🎁 보물 상자 💣 숫자 폭탄 🎡 돌림판 🛤️ 주사위 말판 🏇 주사위 합 경주 🃏 하이·로우 🏁 퀴즈 배틀 🎱 수학 빙고 ➕ 숫자 만들기 🕵️ 수 탐정 📈 그래프 맞히기 🔲 스도쿠 🔷 세 장 찾기 🎴 짝 맞추기 🗼 하노이 탑 🪄 마방진 🔥 성냥개비 식) */
 var TT_CATS = [
   {id:"teach", icon:"📚", name:"교과지도",   desc:"시간표 · 수업 기록 · 수업 도구 · 모둠 · 수행평가"},
@@ -48,5 +49,6 @@ var TT_TOOLS = [
   {id:"year",   icon:"📆", cat:"work",  short:"연간 업무", name:"연간 업무", desc:"해마다 돌아오는 일 · 학사일정 붙여 넣기 → 첫 화면 달력.", href:"apps/year/", ready:true},
   {id:"ai",     icon:"🤖", cat:"work",  short:"AI·문서", name:"AI·문서 도우미", desc:"개인정보를 가린 AI 요청문, 가정통신문·공문 틀, 보관함.", href:"apps/ai/", ready:true},
   {id:"lib",    icon:"🔎", cat:"work",  short:"자료실", name:"학교 자료실", desc:"규정집·교육계획서·기재요령·서식을 누구나 올리고 내용까지 찾기 (몇 쪽인지).", href:"apps/lib/", ready:true},
+  {id:"train",  icon:"📜", cat:"work",  short:"의무연수", name:"의무연수 취합", desc:"꾸러미 이수증·이수번호를 한 번 내면 연수 담당자들이 한 번에 모아 갑니다.", href:"apps/train/", ready:true},
   {id:"merge",  icon:"📎", cat:"work",  short:"파일 합치기", name:"파일 합치기", desc:"한글·엑셀 파일 여러 개를 하나로 합치는 윈도우 프로그램을 내려받습니다.", file:"downloads/FileMerge.exe", ready:true}
 ];
