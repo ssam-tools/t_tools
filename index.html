@@ -67,7 +67,25 @@
   .tset{color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap}
 
   /* 이번 주 업무 띠 (shared/board.js) */
-  .toprow{flex:1 1 0;display:flex;gap:clamp(8px,1.4vh,12px);min-height:clamp(176px,30vh,260px)}   /* 위(이번 주·내 할 일)와 아래(갈래 카드)가 반씩 */
+  .toprow{flex:none;display:flex;gap:clamp(8px,1.4vh,12px);height:clamp(112px,17vh,170px)}   /* 접으면 이번 주 한 줄, 펼치면 2주 */
+  .toprow.wk2{height:clamp(176px,25vh,230px)}
+  .toprow.wk2 ~ main#grid{min-height:clamp(220px,34vh,999px)}
+  @media (min-width:761px){
+    .toprow:not(.wk2) .bweeks{grid-template-rows:minmax(0,1fr)}
+    .toprow:not(.wk2) .bweeks>:nth-child(n+7){display:none}
+  }
+  /* 오늘 칸 3개 (shared/today.js): 다음 수업 · 오늘 챙길 것 · 종례·할 일 */
+  .tdrow{flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(8px,1.2vw,12px);height:clamp(88px,13vh,130px)}
+  .tdy{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:clamp(6px,1.1vh,10px) 12px;display:flex;flex-direction:column;gap:3px;min-height:0;overflow:hidden}
+  #tdLesson{border-left:4px solid var(--accent)}#tdCheck{border-left:4px solid var(--star)}#tdTodo{border-left:4px solid var(--ok)}
+  .tdh{display:flex;align-items:center;gap:6px;font-size:clamp(14px,1.9vh,16.5px);font-weight:800}
+  .tdh a{color:inherit;text-decoration:none}.tdh a:hover{text-decoration:underline}
+  .tdn{margin-left:auto;font-size:11.5px;font-weight:800;background:var(--danger-soft);color:var(--danger);border-radius:999px;padding:1px 8px}
+  .tdb{flex:1;min-height:0;overflow:hidden}
+  .tdl{font-size:clamp(13px,1.75vh,15px);line-height:1.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tdl small{color:var(--sub)}.tdl .now{color:var(--accent);font-weight:800}.tdl .nx{color:var(--sub);font-weight:800}.tdl.ok{color:var(--ok);font-weight:800}
+  .tdx{font-size:clamp(12px,1.6vh,13.5px);color:#8a95a1;line-height:1.5}.tdx a{color:var(--accent);font-weight:700}
+  .tdm{font-size:11.5px;color:var(--accent);font-weight:700}
   .board{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;
     padding:clamp(7px,1.3vh,11px) clamp(10px,1.6vw,14px);display:flex;flex-direction:column;gap:clamp(4px,.8vh,7px)}
   .board.setup{flex-direction:row;align-items:center;gap:10px;font-size:13.5px;color:var(--sub)}
@@ -104,7 +122,7 @@
   .bnone{font-size:12px;color:#aab3bd}
   .bn{font-size:12.5px;color:var(--ok);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* 내 할 일 (shared/mytodo.js) — 이 기기에만 저장, 나만 보기 */
-  .mytodo{flex:0 0 clamp(240px,26vw,400px);min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;
+  .mytodo{flex:0 0 clamp(210px,21vw,320px);min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;
     padding:clamp(7px,1.3vh,11px) 12px;display:flex;flex-direction:column;gap:5px}
   .board[hidden] + .mytodo{flex:1}
   .th{display:flex;align-items:center;gap:6px;font-size:clamp(14.5px,2vh,17px)}
@@ -160,8 +178,32 @@
   .tr.dim{opacity:.5}
   .soon{display:flex;flex-wrap:wrap;gap:4px}.soon span{font-size:12px;font-weight:700;border:1px dashed #c9d2dc;border-radius:8px;padding:3px 7px;color:var(--sub)}
   #cat-math{background:#fbfaf6}
+  /* 6단계: 자주 쓰는 도구 8개 ↔ 전체 도구 (사용 횟수 tt_ui_v1.tools) */
+  .gh{flex:none;display:flex;align-items:center;gap:8px;min-width:0;margin-bottom:-2px}
+  .gtab{display:inline-flex;background:#eceff3;border-radius:999px;padding:2px;flex:none}
+  .gtab button{font:inherit;font-size:13px;font-weight:800;border:0;background:none;color:#4a5560;border-radius:999px;padding:4px 12px;cursor:pointer;white-space:nowrap}
+  .gtab button.on{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(30,60,100,.15)}
+  .gtab small{font-weight:700;opacity:.7}
+  .ghr{display:flex;gap:5px;align-items:center;min-width:0;overflow:hidden;white-space:nowrap;font-size:12px;font-weight:700;color:#7a5a00}
+  .ghr .tbs{padding:2px 8px;font-size:12px}
+  .ghh{margin-left:auto;font-size:11.5px;color:var(--sub);white-space:nowrap}
+  main#grid.fav{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));min-height:clamp(150px,24vh,999px)}
+  .fv{position:relative;display:flex;min-height:0;min-width:0}
+  .fv.dim{opacity:.5}
+  .fv .tb{background:var(--card);border-radius:14px;gap:clamp(8px,1vw,12px);padding:clamp(6px,1.2vh,12px) clamp(10px,1.2vw,16px)}
+  .fv .tb span{font-size:clamp(24px,4.2vh,38px)}
+  .fv .fn{display:flex;flex-direction:column;min-width:0;gap:2px}
+  .fv .fn b{font-size:clamp(14.5px,2.1vh,18px)}
+  .fv .fn i{font-style:normal;font-size:clamp(11.5px,1.55vh,13px);color:var(--sub);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .tr{position:relative}
+  .pin{position:absolute;top:1px;left:1px;z-index:3;font:inherit;font-size:10px;line-height:1;border:0;border-radius:999px;padding:3px;background:#fff;box-shadow:0 0 0 1px var(--line);cursor:pointer;opacity:0;filter:grayscale(1)}
+  .pin.on{opacity:1;filter:none}
+  .fv:hover .pin,.tr:hover .pin,.pin:focus-visible{opacity:1}
+  .pin:not(.on):hover{filter:none}
+  @media (hover:none){ .pin{opacity:.45} .pin.on{opacity:1} }
   @media (max-width:1100px) and (min-width:761px){ main#grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:minmax(0,1fr)} }
   @media (max-width:760px){ main#grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;flex:none;min-height:0} .toprow{flex:none} .cat{overflow:hidden} .tl2{overflow:visible;grid-template-rows:none;grid-auto-rows:auto} .tr{flex-wrap:wrap} .tbs{padding:4px 8px} }
+  @media (max-width:760px){ main#grid.fav{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:minmax(56px,auto)} .fv .fn i,.ghh,.ghr{display:none} }
   /* 쌤 노트 제목 · 학교 설정 · 알림 · 빠른 기록 */
   .sch{font:inherit;font-size:12px;font-weight:700;border:1px dashed var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 10px;cursor:pointer;vertical-align:middle}
   .qrec{font:inherit;font-size:13.5px;font-weight:800;border:0;border-radius:10px;padding:8px 12px;cursor:pointer;background:#efe7fa;color:#5b2f99}
@@ -196,13 +238,15 @@
   @media (max-width:760px){
     body{height:auto;min-height:100dvh;overflow:auto}   /* 휴대폰 첫 화면은 위쪽 칸이 있어 아래로 넘겨 봅니다 */
     main{flex:none;grid-template-rows:none;grid-auto-rows:minmax(72px,auto)}
-    .toprow{flex-direction:column;height:auto}
+    .toprow,.toprow.wk2{flex-direction:column;height:auto}
     .mytodo{flex:none;max-height:32vh}
+    .tdrow{grid-template-columns:1fr;height:auto}.tdy{max-height:7.5em}
     .board.setup{flex-wrap:wrap}
     .bh .sm,.bh .bst:empty{display:none}
     .bweeks{grid-template-columns:1fr;grid-template-rows:none}
     .bwk,.bhint{display:none}
     .bd:not(.focus):not(.focus2){display:none}
+    .wkTog{display:none}
     .bdl{max-height:6.2em}
     header{flex-direction:column;align-items:stretch;gap:8px}
     .bar .seg{flex:1}.seg button{flex:1;padding:7px 8px}
@@ -216,6 +260,7 @@
     <p class="lead"><span id="leadTxt">학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다.</span> <a class="home" id="homeChip" href="apps/roster/"></a><span id="alerts"></span></p>
   </div>
   <div class="bar">
+    <button type="button" class="qrec" id="qFind" hidden title="학생·도구 찾기, 한 줄로 할 일·종례 바구니·학생 기록 넣기 (Ctrl+K)">🔎 찾기·입력 <small style="opacity:.6">Ctrl+K</small></button>
     <button type="button" class="qrec" id="qRec" title="학생을 골라 본 것·한 것을 한 줄 남깁니다 (생기부 자료)">✍️ 학생 기록</button>
     <details class="more" id="more">
       <summary aria-label="더 보기">⋯</summary>
@@ -234,11 +279,18 @@
   </div>
 </header>
 
+<div id="today" class="tdrow" aria-label="오늘"></div>
+
 <div class="toprow">
   <section id="board" class="board" hidden aria-label="이번 주 학교 업무"></section>
   <section id="mytodo" class="mytodo" aria-label="내 할 일 (나만 보기)"></section>
 </div>
 
+<div class="gh" id="gridHead">
+  <div class="gtab" role="tablist"><button type="button" data-v="fav">⭐ 자주 쓰는 도구</button><button type="button" data-v="all">🗂️ 전체 도구 <small id="gAllN"></small></button></div>
+  <span class="ghr" id="ghRec"></span>
+  <span class="ghh" id="ghHint"></span>
+</div>
 <main id="grid"></main>
 
 <footer>
@@ -294,6 +346,7 @@
 <script src="shared/guidelogic.js"></script>
 <script src="shared/board.js"></script>
 <script src="shared/mytodo.js"></script>
+<script src="shared/today.js"></script>
 <script>
 (function(){
   "use strict";
@@ -318,9 +371,9 @@
         var a = document.createElement(t.file ? "button" : "a"); a.className = "tb";
         if(t.file){ a.type = "button"; a.onclick = function(){ askDownload(t); }; } else a.href = t.href;
         a.innerHTML = "<span>" + t.icon + "</span><b>" + t.name + "</b>" + (t.file ? '<small class="pc">PC 프로그램</small>' : "");
-        a.title = a.title || t.desc; row.appendChild(a); N++;
+        a.title = a.title || t.desc; a.dataset.tid = t.id; row.appendChild(a); row.appendChild(pinBtn(t.id)); N++;
         TT_TOOLS.filter(function(x){ return x.in === t.id && x.ready && (!TT.classroom || x.room); }).forEach(function(x){
-          var k = document.createElement("a"); k.className = "tbs"; k.href = x.href; k.textContent = x.icon + " " + x.short; k.title = x.name + " · " + x.desc; row.appendChild(k); N++;
+          var k = document.createElement("a"); k.className = "tbs"; k.href = x.href; k.textContent = x.icon + " " + x.short; k.title = x.name + " · " + x.desc; k.dataset.tid = x.id; row.appendChild(k); N++;
         });
         box.appendChild(row);
       });
@@ -332,16 +385,100 @@
       grid.appendChild(el);
     });
       var mx = 1; Array.prototype.forEach.call(grid.querySelectorAll(".tl2"), function(b){ mx = Math.max(mx, b.querySelectorAll(".tr").length); }); grid.style.setProperty("--n", mx);
-      $("count").textContent = "도구 " + N + "개 · v" + TT.VERSION;
     }catch(err){
       grid.innerHTML = '<div class="cat" style="grid-column:1/-1;align-items:center;justify-content:center;text-align:center"><b>도구 목록을 불러오지 못했습니다.</b><span class="cd">새로 올린 파일이 아직 다 받아지지 않았을 수 있어요. 잠시 뒤 Ctrl+F5(새로 고침)를 눌러 주세요.</span></div>';
     }
   }
+
+  /* ── 6단계: 자주 쓰는 도구 8개 (직접 📌 고정 + 사용 횟수로 자동) ↔ 전체 도구(갈래 카드 5장) ──
+     사용 횟수는 첫 화면에서 도구를 열 때(단추·찾기·오늘 칸 링크) 셉니다 → tt_ui_v1.tools = {use:{id:{n,t}}, pin:[id], view:"fav"|"all"}
+     도구(apps/*)는 고치지 않으므로, 도구 안에서 다른 도구로 옮겨 간 것은 세지 않습니다. */
+  var UIK = "tt_ui_v1", FAVN = 8, DEF = ["timetable","journal","roster","tardy","class","record","advisor","ai","year","submit"];
+  function tu(){ var u = TT.store.get(UIK, {}) || {}; var g = u.tools = u.tools || {}; g.use = g.use || {}; g.pin = Array.isArray(g.pin) ? g.pin : []; return u; }
+  function byId(id){ if(typeof TT_TOOLS === "undefined") return null; for(var i = 0; i < TT_TOOLS.length; i++) if(TT_TOOLS[i].id === id) return TT_TOOLS[i]; return null; }
+  function okTool(t){ return !!t && t.ready && !!(t.href || t.file) && (!TT.classroom || t.room); }
+  function toolOf(h){
+    if(!h || typeof TT_TOOLS === "undefined") return "";
+    h = h.replace(/^\.\//, ""); var h0 = h.split("#")[0].split("?")[0], hit = "";
+    TT_TOOLS.forEach(function(t){ if(t.href && t.href === h) hit = t.id; });
+    if(!hit) TT_TOOLS.forEach(function(t){ if(!hit && t.href === h0) hit = t.id; });
+    return hit;
+  }
+  function today0(){ var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function noteUse(id){ var u = tu(), r = u.tools.use[id] || {n: 0}; r.n = (r.n || 0) + 1; r.t = today0(); u.tools.use[id] = r; TT.store.set(UIK, u); }
+  function onOpen(e){
+    if(e.type === "auxclick" && e.button !== 1) return;
+    var a = e.target && e.target.closest ? e.target.closest("[data-tid], a[href]") : null; if(!a || a.classList.contains("pin")) return;
+    var id = a.dataset.tid || toolOf(a.getAttribute("href")); if(id) noteUse(id);
+  }
+  TT.noteTool = noteUse;   // 찾기(Ctrl+K, today.js)로 연 도구도 셈
+  document.addEventListener("click", onOpen, true); document.addEventListener("auxclick", onOpen, true);
+
+  function favList(){
+    var u = tu(), out = u.tools.pin.filter(function(id){ return okTool(byId(id)); }).slice(0, FAVN), now = new Date(today0()).getTime();
+    Object.keys(u.tools.use).filter(function(id){ return okTool(byId(id)) && out.indexOf(id) < 0; }).map(function(id){
+      var r = u.tools.use[id], age = r.t ? (now - new Date(r.t).getTime()) / 864e5 : 999;
+      return {id: id, s: (r.n || 0) * (age <= 30 ? 1 : 0.5) + (age <= 7 ? 2 : 0)};   // 요즘 쓴 도구를 조금 더 앞으로
+    }).sort(function(a, b){ return b.s - a.s; }).forEach(function(x){ if(out.length < FAVN) out.push(x.id); });
+    DEF.concat(TT_TOOLS.map(function(t){ return t.id; })).forEach(function(id){
+      var t = byId(id); if(out.length < FAVN && okTool(t) && out.indexOf(id) < 0 && !t.in && !(t.home && !hasHome)) out.push(id);
+    });
+    return out;
+  }
+  function pinBtn(id){
+    var on = tu().tools.pin.indexOf(id) >= 0, b = document.createElement("button");
+    b.type = "button"; b.className = "pin" + (on ? " on" : ""); b.textContent = "📌";
+    b.title = on ? "고정 풀기" : "자주 쓰는 도구에 고정 (" + FAVN + "개까지)"; b.setAttribute("aria-label", b.title);
+    b.onclick = function(e){
+      e.preventDefault(); e.stopPropagation();
+      var u = tu(), P = u.tools.pin.filter(function(x){ return okTool(byId(x)); }), i = P.indexOf(id);
+      if(i >= 0) P.splice(i, 1);
+      else if(P.length >= FAVN){ TT.ui.toast("고정은 " + FAVN + "개까지예요. 다른 도구의 📌를 먼저 풀어 주세요."); return; }
+      else P.push(id);
+      u.tools.pin = P; TT.store.set(UIK, u); drawTools();
+      if(i < 0) TT.ui.toast("📌 자주 쓰는 도구에 고정했어요.");
+    };
+    return b;
+  }
+  /* 이달·시험 전 추천 중 자주 쓰는 8개에 없는 것 → 위쪽 띠에 작은 단추 (표시는 today.js markRec 가 함께 칠함) */
+  function recMissing(fav){
+    var d = new Date(), cm = d.getMonth() + 1, td = today0(), C = TT.store.get("tt_calendar_v1", null), ev = C && Array.isArray(C.events) ? C.events : [];
+    var ex = ev.filter(function(e){ return e.k === "exam" && e.d >= td; }).map(function(e){ return Math.round((new Date(e.d) - new Date(td)) / 864e5); }).sort(function(a, b){ return a - b; })[0];
+    return TT_TOOLS.filter(function(t){ return okTool(t) && t.href && fav.indexOf(t.id) < 0 && ((t.months || []).indexOf(cm) >= 0 || (t.exam && ex != null && ex <= t.exam)); });
+  }
+  function drawFav(){
+    grid.textContent = ""; var F = favList(), P = tu().tools.pin;
+    F.forEach(function(id){
+      var t = byId(id), w = document.createElement("div"); w.className = "fv" + (t.home && !hasHome ? " dim" : "");
+      if(t.home && !hasHome) w.title = "우리 반(★)을 지정하면 쓸 수 있어요 · 명렬표에서 지정";
+      var a = document.createElement(t.file ? "button" : "a"); a.className = "tb"; a.dataset.tid = t.id;
+      if(t.file){ a.type = "button"; a.onclick = function(){ askDownload(t); }; } else a.href = t.href;
+      a.innerHTML = "<span>" + t.icon + '</span><div class="fn"><b></b><i></i></div>' + (t.file ? '<small class="pc">PC 프로그램</small>' : "");
+      a.querySelector("b").textContent = t.name; a.querySelector("i").textContent = t.desc; a.title = t.desc;
+      w.appendChild(a); w.appendChild(pinBtn(t.id)); grid.appendChild(w);
+    });
+    var R = recMissing(F), rc = $("ghRec"); rc.textContent = "";
+    if(R.length){ rc.appendChild(document.createTextNode("이달 추천 ▸"));
+      R.slice(0, 3).forEach(function(t){ var k = document.createElement("a"); k.className = "tbs"; k.href = t.href; k.dataset.tid = t.id; k.textContent = t.icon + " " + t.short; k.title = t.name + " · " + t.desc; rc.appendChild(k); }); }
+    $("ghHint").textContent = P.length ? "📌 고정 " + P.length + "개 · 나머지는 많이 쓴 순서" : "많이 쓴 순서로 바뀌어요 · 📌로 고정";
+  }
+  function drawTools(){
+    var u = tu(), v = u.tools.view === "all" ? "all" : "fav";
+    if(typeof TT_TOOLS === "undefined"){ drawCats(); return; }
+    var tot = TT_TOOLS.filter(okTool).length; $("gAllN").textContent = tot;
+    $("count").textContent = "도구 " + tot + "개 · v" + TT.VERSION;
+    Array.prototype.forEach.call($("gridHead").querySelectorAll(".gtab button"), function(b){ var on = b.dataset.v === v; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); });
+    grid.classList.toggle("fav", v === "fav");
+    if(v === "fav"){ try{ drawFav(); }catch(err){ v = "all"; grid.classList.remove("fav"); } }
+    if(v === "all"){ $("ghRec").textContent = ""; $("ghHint").textContent = "📌를 누르면 자주 쓰는 도구에 고정"; drawCats(); }
+  }
+  Array.prototype.forEach.call($("gridHead").querySelectorAll(".gtab button"), function(b){
+    b.onclick = function(){ var u = tu(); u.tools.view = b.dataset.v; TT.store.set(UIK, u); drawTools(); };
+  });
   if(typeof TT_CATS === "undefined"){
     var fix = document.createElement("script"); fix.src = "shared/tools.js?v=" + Date.now();
-    fix.onload = function(){ if(typeof TT_CATS !== "undefined") drawCats(); else drawCats(); };
-    fix.onerror = drawCats; document.head.appendChild(fix);
-  } else drawCats();
+    fix.onload = drawTools; fix.onerror = drawTools; document.head.appendChild(fix);
+  } else drawTools();
 
   /* 쌤 노트 제목: 학교 이름은 "학교·선생님 설정" 한 곳에서 (TT.school) */
   function showTitle(){
@@ -392,7 +529,7 @@
   /* 자동 알림: 생활지도·내 할 일에서 지금 챙길 것만 작은 표시로 (눌러서 바로 이동) */
   function showAlerts(){
     var box = $("alerts"), h = "";
-    if(TT.classroom){ box.innerHTML = ""; return; }
+    if(TT.classroom || window.TT_TODAY){ box.innerHTML = ""; return; }   // 2단계부터 오늘 칸 "오늘 챙길 것"(shared/today.js)이 이 알림을 보여 줌
     function e(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
     try{
       var G = TT.store.get("tt_guide_v1", null), home = TT.roster.home(), L = window.Logic;
@@ -429,7 +566,7 @@
       if(over) h += '<a class="al" href="apps/submit/" title="마감이 지났는데 미제출 학생이 있는 제출물">📦 미제출 ' + over + "건</a>";
       var Yr = TT.store.get("tt_year_v1", null), t0 = new Date(), ay = t0.getMonth() >= 2 ? t0.getFullYear() : t0.getFullYear() - 1, cm = t0.getMonth() + 1;   // 연간 업무: 이번 달 남은 일
       var ym = Yr && Array.isArray(Yr.items) ? Yr.items.filter(function(it){ return it.m === cm && !(Yr.done || {})[ay + "|" + it.id]; }).length : 0;
-      if(ym) h += '<a class="al mid" href="apps/year/" title="연간 업무: 이번 달에 남은 일">📆 이번 달 ' + ym + "건</a>";
+      if(ym) h += '<a class="al mid" href="apps/year/" title="연간 업무: 이번 달에 남은 일">📆 연간 업무 ' + ym + "건 남음</a>";
       var Pc = TT.store.get("tt_mpace_v1", null);                                         // 진도·시수: 목표일까지 진도가 모자란 반
       if(Pc && Pc.short > 0 && Pc.to && Pc.to >= ymd) h += '<a class="al" href="apps/mpace/" title="시험 범위까지 남은 수업이 모자란 반">⏳ 진도 부족 ' + Pc.short + "반</a>";
     }catch(err){}

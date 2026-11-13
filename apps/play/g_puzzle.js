@@ -284,7 +284,8 @@
     var lis = function(ev){ if(ev.type !== "score") turnRow(); }; K.on(lis);
     function start(){
       var types = K.BG.filter(function(t){ return t.g <= g && t.g >= g - 1; }), seen = {}, pairs = [], guard = 0;
-      while(pairs.length < 8 && guard++ < 999){ var r = pick(types).f(); if(seen[r[1]]) continue; seen[r[1]] = 1; pairs.push(r); }
+      while(pairs.length < 8 && guard++ < 999){ var r = pick(types).f(); if(seen[r[1]]) continue; if(guard < 500 && K.recent.seen("memory", r[0])) continue; seen[r[1]] = 1; pairs.push(r); }
+      pairs.forEach(function(p){ K.recent.add("memory", p[0], 60); });
       cards = []; pairs.forEach(function(p, k){ cards.push({k: k, t: p[0]}); cards.push({k: k, t: sg(p[1])}); }); cards = K.shuffle(cards); up = []; got = 0; lock = false;
       mem.style.gridTemplateRows = "repeat(4,1fr)"; draw(); K.S.whoosh(); turnRow();
     }
@@ -347,11 +348,12 @@
     ctl.appendChild(os); ctl.appendChild(ls); ctl.appendChild(btn("🔄 새 문제", "primary", start));
     var wrap = h("div", "pz"), grid = h("div", "ms"), side = h("div", "pzside"), tray = h("div", "tray"), info = h("div", "hint"); side.appendChild(tray); side.appendChild(info); wrap.appendChild(grid); wrap.appendChild(side); el.appendChild(wrap);
     function start(){
-      var g = LOSHU.map(function(r){ return r.slice(); }), t = ri(0, 7);
+      var keep0 = lv === 1 ? 4 : lv === 2 ? 2 : 0, pk = K.fresh("magic" + off + "|" + lv, function(){ return {t: ri(0, 7), ids: K.shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]).slice(0, keep0)}; }, function(x){ return x.t + "|" + x.ids.slice().sort().join(""); }, 30);
+      var g = LOSHU.map(function(r){ return r.slice(); }), t = pk.t;
       for(var i = 0; i < t % 4; i++) g = g[0].map(function(_, c){ return g.map(function(r){ return r[c]; }).reverse(); });
       if(t >= 4) g = g.map(function(r){ return r.slice().reverse(); });
       sol = g.map(function(r){ return r.map(function(v){ return v + off; }); });
-      var keep = lv === 1 ? 4 : lv === 2 ? 2 : 0, ids = K.shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]).slice(0, keep);
+      var ids = pk.ids;
       given = {}; ids.forEach(function(i){ given[i] = 1; }); cur = sol.map(function(r, a){ return r.map(function(v, b){ return given[a * 3 + b] ? v : null; }); }); chosen = null; draw();
     }
     function sums(){ var S = [], v = function(r, c){ return cur[r][c]; }, full = function(a){ return a.every(function(x){ return x != null; }) ? a.reduce(function(p, q){ return p + q; }, 0) : null; };
@@ -401,7 +403,7 @@
     var P, held = null, solved = 0;
     ctl.appendChild(btn("↩ 되돌리기", "", function(){ P.sets = P.start.slice(); held = null; draw(); })); ctl.appendChild(btn("💡 정답 보기", "", answer)); ctl.appendChild(btn("🔄 새 문제", "primary", start));
     var w = h("div", "mt"), box = h("div"), info = h("div", "hint"), sc = h("div", "score2"); box.style.cssText = "width:100%;display:flex;justify-content:center"; w.appendChild(sc); w.appendChild(box); w.appendChild(info); el.appendChild(w);
-    function start(){ P = makeMatch(); held = null; draw(); K.S.whoosh(); }
+    function start(){ P = K.fresh("match", makeMatch, function(x){ return x.sets.join("|"); }, 40); held = null; draw(); K.S.whoosh(); }
     var POS = {a: [0, 0, 1], b: [1, 0, 0], c: [1, 1, 0], d: [0, 2, 1], e: [0, 1, 0], f: [0, 0, 0], g: [0, 1, 1]};
     function stick(x, y, horiz, cls, data){
       var L = 52, T = 9, r = horiz ? '<rect x="' + (x + 6) + '" y="' + (y - T / 2) + '" width="' + (L - 12) + '" height="' + T + '" rx="3"' : '<rect x="' + (x - T / 2) + '" y="' + (y + 6) + '" width="' + T + '" height="' + (L - 12) + '" rx="3"';

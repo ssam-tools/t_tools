@@ -85,7 +85,7 @@
     function draw(){ var c = QS.cur; no.textContent = "문제 " + QS.n; q.innerHTML = c.q; an.innerHTML = c.shown ? "정답: " + c.a : ""; an.hidden = !c.shown; }
     function next(){
       var pool = /^mix/.test(QS.type) ? MG.T.filter(function(t){ return t.g === +QS.type.slice(3); }) : [MG.type(QS.type)];
-      var t = pick(pool); QS.n++; QS.cur = MG.make(t.id, QS.lv, QS.seed + "|" + QS.n); QS.cur.shown = false;
+      QS.n++; QS.cur = K.fresh("quiz", function(){ var t = pick(pool); return MG.make(t.id, QS.lv, QS.seed + "|" + QS.n + "|" + K.rnd(1e9)); }, function(x){ return x.q; }, 80); QS.cur.shown = false;   /* 최근 80문제와 겹치지 않게 */
       draw(); box.style.animation = "none"; void box.offsetWidth; box.style.animation = "dealin .45s"; K.S.whoosh();
       if(T) T.stop(); tm.innerHTML = ""; tm.classList.remove("over"); if(QS.sec) T = K.timer(tm, QS.sec, function(){ K.big("⏰ 시간 끝!", "정답을 확인해요", "#d64545", 1300); });
     }
@@ -116,7 +116,8 @@
     function make(){
       var g = +gs.value, types = BG.filter(function(t){ return !g || t.g === g || (g >= 2 && t.g === g - 1 && Math.random() < .3); }), seen = {}, qs = [], guard = 0;
       if(!types.length) types = BG;
-      while(qs.length < 25 && guard++ < 3000){ var t = pick(types), r = t.f(); if(seen[r[1]] || Math.abs(r[1]) > 99) continue; seen[r[1]] = 1; qs.push({q: r[0], a: r[1]}); }
+      while(qs.length < 25 && guard++ < 3000){ var t = pick(types), r = t.f(); if(seen[r[1]] || Math.abs(r[1]) > 99) continue; if(guard < 1500 && K.recent.seen("bingo", r[0])) continue; seen[r[1]] = 1; qs.push({q: r[0], a: r[1]}); }
+      qs.forEach(function(x){ K.recent.add("bingo", x.q, 120); });   /* 지난 빙고에 나온 문제는 되도록 다시 내지 않음 */
       BS = {qs: K.shuffle(qs), i: 0, phase: "ready", show: false};
     }
     function draw(){
@@ -179,7 +180,8 @@
         nums = [0, 0, 0, 0].map(function(){ return lv === 1 ? ri(1, 9) : lv === 2 ? ri(1, 13) : (ri(1, 9) * (Math.random() < .4 ? -1 : 1)); });
         target = lv === 1 ? 24 : lv === 2 ? ri(10, 36) : ri(-12, 24);
         s = solve(nums, target, 6);
-      } while(!s.length && g++ < 400);
+      } while((!s.length || (g < 300 && K.recent.seen("make", nums.slice().sort().join(",") + ">" + target))) && g++ < 400);
+      K.recent.add("make", nums.slice().sort().join(",") + ">" + target, 60);
       MK = {nums: nums, target: target, sols: s, show: false}; draw(true);
       K.S.whoosh(); if(T) T.stop(); tm.innerHTML = ""; T = K.timer(tm, 90, function(){ K.big("⏰ 시간 끝!", "풀이를 확인해요", "#d64545", 1300); });
     }
@@ -231,7 +233,7 @@
     var cb = btn("🔢 후보 보기", "", function(){ showC = !showC; cb.classList.toggle("primary", showC); draw(); });
     ctl.appendChild(ns); ctl.appendChild(cb); ctl.appendChild(btn("🔄 새 사건", "primary", newCase));
     var wrap = h("div", "det"), cl = h("div", "clues"), cand = h("div", "cand"); wrap.appendChild(cl); wrap.appendChild(cand); el.appendChild(wrap);
-    function newCase(){ var p = null, x, g = 0; while(!p && g++ < 200){ x = ri(2, N); p = plan(x, N); } DS = {x: x, plan: p, open: 1, solved: false, N: N}; K.S.whoosh(); draw(); }
+    function newCase(){ var p = null, x, g = 0; while((!p || (g < 150 && K.recent.seen("detect" + N, x))) && g++ < 200){ x = ri(2, N); p = plan(x, N); } K.recent.add("detect" + N, x, Math.round(N * .4)); DS = {x: x, plan: p, open: 1, solved: false, N: N}; K.S.whoosh(); draw(); }
     function pts(){ return Math.max(1, DS.plan.length + 2 - DS.open); }
     function draw(){
       cl.innerHTML = ""; cand.innerHTML = "";
@@ -286,7 +288,7 @@
     ctl.appendChild(seg([["g2f", "그래프 → 식"], ["f2g", "식 → 그래프"]], dir, function(v){ dir = v; K.pref("gDir", v); next(); }));
     var aw = awardSel("gAward"); ctl.appendChild(aw); ctl.appendChild(btn("⏭ 다음", "primary", function(){ next(); }));
     var wrap = h("div", "gq"); el.appendChild(wrap);
-    function next(){ GS = {g: genGraph(kind), kind: kind, dir: dir, done: false}; K.S.whoosh(); draw(); }
+    function next(){ GS = {g: K.fresh("graph" + kind, function(){ return genGraph(kind); }, function(x){ return x.ans.t; }, 25), kind: kind, dir: dir, done: false}; K.S.whoosh(); draw(); }
     function draw(){
       wrap.innerHTML = ""; var G = GS.g;
       if(GS.dir === "g2f"){

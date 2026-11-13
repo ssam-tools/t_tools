@@ -143,7 +143,59 @@ var K = (function(){
   var epoch = 0;
   function later(fn, ms){ var e = epoch; return setTimeout(function(){ if(e === epoch) fn(); }, ms); }
 
+  /* ---------- 같은 문제 되풀이 막기 ----------
+     놀이마다 최근에 낸 문제의 열쇠(글자)를 이 기기에 기억해 두고(tt_play_v1.recent, 놀이당 최대 60개),
+     새 문제를 만들 때 최근 것과 겹치면 다시 만듭니다. 그래서 수업마다 같은 문제가 같은 순서로 나오지 않습니다.
+     fresh(놀이, 만들기함수, 열쇠함수) → 겹치지 않는 새 문제 (끝내 못 찾으면 마지막 것) */
+  function recentList(key){ var o = pref("recent") || {}; return o[key] || []; }
+  function remember(key, k, keep){ var o = pref("recent") || {}, a = o[key] || []; k = String(k); a = a.filter(function(x){ return x !== k; }); a.push(k); o[key] = a.slice(-(keep || 60)); pref("recent", o); }
+  function seen(key, k){ return recentList(key).indexOf(String(k)) >= 0; }
+  function fresh(key, make, keyOf, keep){
+    var last = null, tries = 0, R = recentList(key);
+    while(tries++ < 80){ var x = make(); if(x == null) continue; last = x; var k = String(keyOf ? keyOf(x) : JSON.stringify(x)); if(R.indexOf(k) < 0){ remember(key, k, keep); return x; } }
+    if(last != null) remember(key, keyOf ? keyOf(last) : JSON.stringify(last), keep);
+    return last;
+  }
+
+  /* ---------- 여러 놀이가 같이 쓰는 화면 조각 ---------- */
+  /* 차례 표시 줄 (모둠 점수와 같은 차례). row.cleanup()으로 정리 */
+  function turnRow(onPick){
+    var row = h("div", "turnrow");
+    function draw(){
+      row.innerHTML = ""; row.appendChild(h("span", "", "차례"));
+      teams().forEach(function(t){ var b = h("button", t.i === turn ? "on" : "", t.name); b.type = "button"; b.style.background = t.color; b.onclick = function(){ setTurn(t.i); if(onPick) onPick(t.i); }; row.appendChild(b); });
+    }
+    var f = function(ev){ if(ev.type !== "score") draw(); }; listeners.push(f); draw();
+    row.cleanup = function(){ listeners = listeners.filter(function(x){ return x !== f; }); }; return row;
+  }
+  /* 여러 개 중 하나 고르는 단추 묶음 */
+  function seg(opts, val, onChange){
+    var s = h("div", "seg"); opts.forEach(function(o){ var b = h("button", "", o[1]); b.type = "button"; b.setAttribute("aria-pressed", String(o[0] === val)); b.onclick = function(){ Array.prototype.forEach.call(s.children, function(x){ x.setAttribute("aria-pressed", "false"); }); b.setAttribute("aria-pressed", "true"); onChange(o[0]); }; s.appendChild(b); }); return s;
+  }
+  /* 맞힌 모둠에게 주는 상: 점수 또는 운 게임 기회 */
+  var AWARDS = [["1", "+1"], ["2", "+2"], ["3", "+3"], ["dice", "🎲 주사위만큼"], ["box", "🎁 상자 열기"], ["wheel", "🎡 돌림판"]];
+  function awardSel(key){ var s = h("select"); s.title = "맞힌 모둠에게 주는 상"; AWARDS.forEach(function(a){ var o = h("option", "", "맞히면 " + a[1]); o.value = a[0]; s.appendChild(o); }); s.value = pref(key) || "1"; s.onchange = function(){ pref(key, s.value); }; return s; }
+  function award(kind, title){
+    askTeam(title || "✅ 맞힌 모둠은?", function(i){
+      var T = teams()[i];
+      if(/^\d$/.test(kind)){ add(i, +kind); S.good(); big("+" + kind, T.name + " 정답!", T.color, 1200); return; }
+      if(kind === "dice"){ var d = h("span", "die", "🎲"), b = h("div", "bigmsg"); b.appendChild(d); layer().appendChild(b);
+        rollDice(d).then(function(v){ setTimeout(function(){ b.remove(); add(i, v[0]); big("+" + v[0], T.name + " 주사위!", T.color, 1300); }, 700); }); return; }
+      setTurn(i); S.fanfare(); location.hash = kind;
+    });
+  }
+  /* "+3", "−2", "×2", "꽝"처럼 적힌 결과를 모둠 t에 적용 (사다리·돌림판 같은 결과 칸) */
+  function applyPrize(c, ti){
+    var t = teams()[ti], m; if(!t) return;
+    if((m = String(c).match(/^\+(\d+)/))){ add(ti, +m[1]); big(c, t.name, "#2e9d5b", 1500); return; }
+    if((m = String(c).match(/^[−-](\d+)/))){ add(ti, -m[1]); big(c, t.name, "#d64545", 1500); return; }
+    if(/^×2/.test(c)){ add(ti, Math.max(0, t.score)); S.win(); big("×2 🔥", t.name + " 점수 두 배!", "#9b5de5", 1600); return; }
+    if(/꽝/.test(c)){ S.sad(); big("꽝 😝", t.name, "#56606b", 1400); return; }
+    S.fanfare(); big(c, t.name, "#4c8bf5", 1600);
+  }
+
   return {
+    recent: {list: recentList, add: remember, seen: seen}, fresh: fresh, turnRow: turnRow, seg: seg, awardSel: awardSel, award: award, applyPrize: applyPrize,
     C: C, h: h, btn: btn, rnd: rnd, ri: ri, pick: pick, shuffle: shuffle, gcd: gcd, sleep: sleep, sg: sg,
     S: S, tone: tone, noise: noise, sound: function(v){ if(v != null){ C.sound = !!v; save(); } return C.sound; },
     layer: layer, confetti: confetti, fireworks: fireworks, shake: shake, flash: flash, big: big, timer: timer, rollDice: rollDice, DIE: DIE,
