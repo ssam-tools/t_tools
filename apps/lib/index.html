@@ -62,6 +62,20 @@
   .up .warn{background:var(--danger-soft);color:var(--danger);font-weight:700}
   .up .ok{background:var(--ok-soft);color:var(--ok)}
   .up .acts{display:flex;justify-content:space-between;margin-top:12px;gap:8px;align-items:center}.up .acts .r{display:flex;gap:6px}
+  /* PDF 바로 보기 */
+  dialog.pv{width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#525659}
+  dialog.pv[open]{display:flex;flex-direction:column}
+  .pvh{display:flex;gap:6px;align-items:center;background:#fff;padding:8px 12px;border-bottom:1px solid var(--line);flex:none;flex-wrap:wrap}
+  .pvh b{flex:1;min-width:120px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pvh .btn{padding:5px 10px;font-size:13px}
+  .pvh .pn{font-size:13px;color:var(--sub);font-weight:700;min-width:70px;text-align:center}
+  .pvh input{width:52px;font:inherit;font-size:13px;text-align:center;border:1px solid var(--line);border-radius:8px;padding:4px}
+  .pvb{flex:1;min-height:0;overflow:auto;padding:12px 0}
+  .pvp{margin:0 auto 12px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.35);position:relative}
+  .pvp canvas{display:block;width:100%;height:100%}
+  .pvp::before{content:attr(data-n);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#c3cad2;font-size:22px;font-weight:800}
+  .pvp.done::before{display:none}
+  .pvmsg{color:#fff;text-align:center;margin-top:30vh;font-size:15px}
   @media (max-width:760px){ main{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} .bar{justify-content:flex-start} }
 </style>
 </head>
@@ -101,7 +115,8 @@
     return fetch(B.url, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(Object.assign({pw: B.pw}, o))})
       .then(function(r){ return r.json(); }).then(function(r){ if(!r || !r.ok) throw new Error((r && r.error) || "오류"); return r; });
   }
-  function err(e){ var m = String(e && e.message || e); return m === "AUTH" ? "업무판 비밀번호가 맞지 않습니다" : /지원하지 않는 요청/.test(m) ? "업무판 Code.gs가 예전 것입니다 (10단계 Code.gs로 바꾸고 새 버전으로 배포)" : m; }
+  function err(e){ var m = String(e && e.message || e); return m === "AUTH" ? "업무판 비밀번호가 맞지 않습니다" : /지원하지 않는 요청/.test(m) ? "업무판 Code.gs가 예전 것입니다 (10단계 Code.gs로 바꾸고 새 버전으로 배포)"
+      : /DriveApp|auth\/drive|권한/.test(m) ? "업무판 계정이 구글 드라이브 사용을 아직 허락하지 않았습니다. 업무판 담당자가 앱스 스크립트 편집기에서 '드라이브권한승인' 함수를 한 번 실행해 [허용]을 누른 뒤, [배포 → 배포 관리 → 수정 → 새 버전]으로 다시 배포해 주세요." : m; }
 
   /* ---------- 목록 ---------- */
   function load(){
@@ -119,23 +134,125 @@
   function drawList(){
     var my = mine().mine, L = items.filter(function(x){ return (cat === "전체" || x.cat === cat) && (!onlyNew || x.latest); }).sort(function(a, b){ return a.at < b.at ? 1 : -1; });
     $("body").innerHTML = L.length ? '<div class="list">' + L.map(function(x){
-      return '<div class="it"><span class="ic">' + icon(x.name) + '</span><div class="mn"><div class="tt" title="' + esc(x.name) + '">' + esc(x.title) + '</div><div class="mt"><span class="chip">' + esc(x.cat) + "</span>" + (x.latest ? '<span class="chip new">최신</span>' : '<span class="chip old">보관</span>') + (x.pages ? '<span class="chip idx">내용 검색' + (/\.pdf$/i.test(x.name) ? " " + x.pages + "쪽" : "") + "</span>" : '<span class="chip">이름으로만 검색</span>') + "<span>" + esc(x.by || "") + "</span><span>" + esc(x.at) + "</span><span>" + kb(x.size) + "</span>" + (x.desc ? "<span>" + esc(x.desc) + "</span>" : "") + '</div></div><button type="button" class="btn" data-get="' + x.id + '">⬇ 내려받기</button>' + (my[x.id] || admin ? '<button type="button" class="btn" data-del="' + x.id + '" title="' + (my[x.id] ? "내가 올린 자료" : "관리자") + '">🗑</button>' : "") + "</div>";
+      return '<div class="it"><span class="ic">' + icon(x.name) + '</span><div class="mn"><div class="tt" title="' + esc(x.name) + '">' + esc(x.title) + '</div><div class="mt"><span class="chip">' + esc(x.cat) + "</span>" + (x.latest ? '<span class="chip new">최신</span>' : '<span class="chip old">보관</span>') + (x.pages ? '<span class="chip idx">내용 검색' + (/\.pdf$/i.test(x.name) ? " " + x.pages + "쪽" : "") + "</span>" : '<span class="chip">이름으로만 검색</span>') + "<span>" + esc(x.by || "") + "</span><span>" + esc(x.at) + "</span><span>" + kb(x.size) + "</span>" + (x.desc ? "<span>" + esc(x.desc) + "</span>" : "") + '</div></div>' + (isPdf(x.name) ? '<button type="button" class="btn" data-view="' + x.id + '">👁 보기</button>' : "") + '<button type="button" class="btn" data-get="' + x.id + '">⬇ 내려받기</button>' + (my[x.id] || admin ? '<button type="button" class="btn" data-del="' + x.id + '" title="' + (my[x.id] ? "내가 올린 자료" : "관리자") + '">🗑</button>' : "") + "</div>";
     }).join("") + "</div>" : '<div class="empty"><div class="big">🔎</div><div><b>' + (items.length ? "이 갈래에 자료가 없습니다." : "아직 올라온 자료가 없습니다.") + '</b><br>규정집, 교육계획서, 생활기록부 기재요령, 자주 쓰는 서식처럼<br>구성원이 가끔 찾아보는 자료를 올려 주세요. PDF·HWPX·워드·엑셀은 내용까지 찾을 수 있어요.</div><button type="button" class="btn primary" id="up2">＋ 자료 올리기</button></div>';
     var u2 = $("up2"); if(u2) u2.onclick = upload;
     $("info").textContent = "자료 " + items.filter(function(x){ return x.latest; }).length + "개 (보관 " + items.filter(function(x){ return !x.latest; }).length + ") · 누구나 올리고 내려받습니다";
   }
   $("body").addEventListener("click", function(e){
+    var v = e.target.closest("[data-view]"); if(v){ view(v.dataset.view, +v.dataset.page || 1, v); return; }
     var g = e.target.closest("[data-get]"); if(g){ download(g.dataset.get, g); return; }
     var d = e.target.closest("[data-del]"); if(d){ del(d.dataset.del); }
   });
+  /* 받은 파일은 마지막 하나만 기억해 둡니다(보기 → 내려받기 때 다시 받지 않도록) */
+  var last = null;
+  function isPdf(n){ return /\.pdf$/i.test(String(n || "")); }
+  function fetchFile(id){
+    if(last && last.id === id) return Promise.resolve(last);
+    return post({action: "libget", id: id}).then(function(r){
+      var bin = atob(r.data), u8 = new Uint8Array(bin.length); for(var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      last = {id: id, name: r.name, mime: r.mime, u8: u8}; return last;
+    });
+  }
+  function saveFile(f){
+    var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([f.u8], {type: f.mime || "application/octet-stream"})); a.download = f.name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  }
   function download(id, btn){
     var t = btn.textContent; btn.textContent = "받는 중…"; btn.disabled = true;
-    post({action: "libget", id: id}).then(function(r){
-      var bin = atob(r.data), u8 = new Uint8Array(bin.length); for(var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-      var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([u8], {type: r.mime || "application/octet-stream"})); a.download = r.name; document.body.appendChild(a); a.click();
-      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 2000);
-    }).catch(function(e){ TT.ui.toast("내려받지 못했습니다: " + err(e)); }).then(function(){ btn.textContent = t; btn.disabled = false; });
+    fetchFile(id).then(saveFile).catch(function(e){ TT.ui.toast("내려받지 못했습니다: " + err(e)); }).then(function(){ btn.textContent = t; btn.disabled = false; });
   }
+
+  /* ---------- PDF 바로 보기 (이 기기에서 pdf.js로 그림 · 보이는 쪽 근처만 그려서 가볍게) ---------- */
+  var PV = null;
+  function pvBox(){
+    if(PV) return PV;
+    var d = document.createElement("dialog"); d.className = "pv";
+    d.innerHTML = '<div class="pvh"><b id="pvT"></b><button type="button" class="btn" id="pvPrev" title="이전 쪽">▲</button><span class="pn"><input id="pvN" inputmode="numeric" aria-label="쪽 번호"> / <span id="pvC">0</span>쪽</span><button type="button" class="btn" id="pvNext" title="다음 쪽">▼</button>'
+      + '<button type="button" class="btn" id="pvOut" title="작게">－</button><span class="pn" id="pvZ" style="min-width:44px">100%</span><button type="button" class="btn" id="pvIn" title="크게">＋</button><button type="button" class="btn" id="pvPage" title="한 쪽이 화면에 다 들어오게">한 쪽 맞춤</button><button type="button" class="btn" id="pvFit" title="화면 폭에 맞춰 크게">폭 맞춤</button>'
+      + '<button type="button" class="btn" id="pvDl">⬇ 내려받기</button><button type="button" class="btn primary" id="pvX">닫기 ✕</button></div><div class="pvb" id="pvB"></div>';
+    document.body.appendChild(d);
+    PV = {d: d, B: d.querySelector("#pvB"), doc: null, w: 0, h: 0, z: 1, fit: 1, wraps: [], io: null, task: 0};
+    var q = function(s){ return d.querySelector(s); };
+    q("#pvX").onclick = function(){ d.close(); };
+    d.addEventListener("close", function(){ if(PV.io) PV.io.disconnect(); if(PV.lt){ try{ PV.lt.destroy(); }catch(e){} PV.lt = null; } PV.doc = null; PV.B.textContent = ""; PV.task++; });
+    q("#pvIn").onclick = function(){ zoom(Math.min(4, PV.z * 1.2)); };
+    q("#pvOut").onclick = function(){ zoom(Math.max(0.3, PV.z / 1.2)); };
+    q("#pvPage").onclick = function(){ zoom(1); };
+    q("#pvFit").onclick = function(){ zoom(fitW() / PV.fit); };
+    q("#pvDl").onclick = function(){ if(last) saveFile(last); };
+    q("#pvPrev").onclick = function(){ go(curPage() - 1); };
+    q("#pvNext").onclick = function(){ go(curPage() + 1); };
+    q("#pvN").onchange = function(){ go(parseInt(this.value, 10) || 1); };
+    PV.B.addEventListener("scroll", function(){ q("#pvN").value = curPage(); }, {passive: true});
+    d.addEventListener("keydown", function(e){
+      if(e.target.id === "pvN") return;
+      if(e.key === "PageDown" || e.key === "ArrowRight"){ e.preventDefault(); go(curPage() + 1); }
+      else if(e.key === "PageUp" || e.key === "ArrowLeft"){ e.preventDefault(); go(curPage() - 1); }
+      else if((e.key === "+" || e.key === "=") && e.ctrlKey){ e.preventDefault(); q("#pvIn").click(); }
+      else if(e.key === "-" && e.ctrlKey){ e.preventDefault(); q("#pvOut").click(); }
+    });
+    return PV;
+  }
+  function fitW(){ return Math.max(0.3, (PV.B.clientWidth - 32) / PV.w); }
+  function fitP(){ return Math.min(fitW(), Math.max(0.3, (PV.B.clientHeight - 24) / PV.h), 3); }   // 한 쪽이 다 보이게
+  function curPage(){
+    var t = PV.B.scrollTop + PV.B.clientHeight * 0.3, w = PV.wraps;
+    for(var i = 0; i < w.length; i++) if(w[i].offsetTop + w[i].offsetHeight > t) return i + 1;
+    return w.length;
+  }
+  function go(n){ var w = PV.wraps; if(!w.length) return; n = Math.max(1, Math.min(w.length, n)); PV.B.scrollTop = w[n - 1].offsetTop - 12; PV.d.querySelector("#pvN").value = n; }
+  function layout(){
+    var s = PV.fit * PV.z, keep = curPage();
+    PV.d.querySelector("#pvZ").textContent = Math.round(PV.z * 100) + "%";
+    PV.wraps.forEach(function(w){ w.style.width = Math.round(PV.w * s) + "px"; w.style.height = Math.round((w._r || PV.h / PV.w) * PV.w * s) + "px"; if(w._s !== s){ w.classList.remove("done"); w.textContent = ""; w._s = 0; } });
+    if(PV.io){ PV.io.disconnect(); PV.wraps.forEach(function(w){ PV.io.observe(w); }); }
+    return keep;
+  }
+  function zoom(z){ var keep = curPage(); PV.z = z; layout(); go(keep); }
+  function draw(w){
+    var s = PV.fit * PV.z, task = PV.task; if(w._s === s || w._busy) return;
+    w._busy = true;
+    PV.doc.getPage(+w.dataset.n).then(function(page){
+      if(task !== PV.task) return;
+      var vp1 = page.getViewport({scale: 1}); w._r = vp1.height / vp1.width;
+      w.style.height = Math.round(w._r * PV.w * s) + "px";
+      var dpr = Math.min(2, window.devicePixelRatio || 1), vp = page.getViewport({scale: (PV.w * s / vp1.width) * dpr});
+      var c = document.createElement("canvas"); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+      return page.render({canvasContext: c.getContext("2d"), viewport: vp}).promise.then(function(){
+        if(task !== PV.task || s !== PV.fit * PV.z) return;
+        w.textContent = ""; w.appendChild(c); w.classList.add("done"); w._s = s;
+      });
+    }).catch(function(){}).then(function(){ w._busy = false; });
+  }
+  function view(id, page, btn){
+    var x = items.filter(function(i){ return i.id === id; })[0] || {}, P = pvBox(), task = ++P.task;
+    P.d.querySelector("#pvT").textContent = "📕 " + (x.title || "자료");
+    P.d.querySelector("#pvC").textContent = x.pages || "…"; P.d.querySelector("#pvN").value = "";
+    P.B.innerHTML = '<div class="pvmsg">⏳ 자료를 받는 중…</div>'; P.wraps = []; P.z = 1;
+    if(!P.d.open) P.d.showModal();
+    fetchFile(id).then(async function(f){
+      if(task !== P.task) return;
+      P.B.innerHTML = '<div class="pvmsg">⏳ 쪽을 준비하는 중…</div>';
+      var base = new URL("../../shared/vendor/pdfjs/", location.href).href;
+      var pdfjs = await import(base + "pdf.min.mjs"); pdfjs.GlobalWorkerOptions.workerSrc = base + "pdf.worker.min.mjs";
+      var lt = pdfjs.getDocument({data: f.u8.slice(), cMapUrl: base + "cmaps/", cMapPacked: true, isEvalSupported: false}), doc = await lt.promise;
+      if(task !== P.task){ try{ lt.destroy(); }catch(e){} return; }
+      P.doc = doc; P.lt = lt;
+      var p1 = (await doc.getPage(1)).getViewport({scale: 1});
+      P.w = p1.width; P.h = p1.height;
+      P.fit = fitP();
+      P.B.textContent = "";
+      for(var i = 1; i <= doc.numPages; i++){ var w = document.createElement("div"); w.className = "pvp"; w.dataset.n = i; P.B.appendChild(w); P.wraps.push(w); }
+      P.d.querySelector("#pvC").textContent = doc.numPages;
+      P.io = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting) draw(e.target); }); }, {root: P.B, rootMargin: "1200px 0px"});
+      layout(); go(page || 1);
+    }).catch(function(e){
+      if(task !== P.task) return;
+      P.B.innerHTML = '<div class="pvmsg">⚠️ 열지 못했습니다: ' + esc(err(e)) + "<br><br>⬇ 내려받기로 받아서 열어 보세요.</div>";
+    });
+  }
+  window.addEventListener("resize", function(){ if(PV && PV.d.open && PV.doc){ var k = curPage(); PV.fit = fitP(); layout(); go(k); } });
   function del(id){
     var x = items.filter(function(i){ return i.id === id; })[0]; if(!x) return;
     TT.ui.confirm("자료 지우기", "'" + x.title + "'을(를) 자료실에서 지웁니다. 드라이브 휴지통으로 옮겨집니다.", "지우기", function(){
@@ -148,7 +265,7 @@
   function showHits(hits, q, head){
     var terms = q.split(/\s+/).filter(Boolean);
     return (head || "") + (hits.length ? '<div class="list">' + hits.map(function(h){
-      return '<div class="hit"><div class="hh"><span>' + icon(((items.filter(function(i){ return i.id === h.id; })[0]) || {}).name || "") + "</span><b>" + esc(h.title) + '</b><span class="chip">' + esc(h.cat) + "</span>" + (h.latest ? "" : '<span class="chip old">보관</span>') + (h.page ? '<span class="pg">' + esc(pg(h.page)) + "</span>" : "") + '<button type="button" class="btn" data-get="' + h.id + '" style="padding:3px 9px;font-size:12px">⬇</button></div><div class="sn">' + hl(h.snip, terms) + "</div></div>";
+      return '<div class="hit"><div class="hh"><span>' + icon(((items.filter(function(i){ return i.id === h.id; })[0]) || {}).name || "") + "</span><b>" + esc(h.title) + '</b><span class="chip">' + esc(h.cat) + "</span>" + (h.latest ? "" : '<span class="chip old">보관</span>') + (h.page ? '<span class="pg">' + esc(pg(h.page)) + "</span>" : "") + (isPdf(((items.filter(function(i){ return i.id === h.id; })[0]) || {}).name) ? '<button type="button" class="btn" data-view="' + h.id + '" data-page="' + esc(h.page || "") + '" style="padding:3px 9px;font-size:12px">👁 ' + (/^\d+$/.test(h.page) ? h.page + "쪽 보기" : "보기") + "</button>" : "") + '<button type="button" class="btn" data-get="' + h.id + '" style="padding:3px 9px;font-size:12px">⬇</button></div><div class="sn">' + hl(h.snip, terms) + "</div></div>";
     }).join("") + "</div>" : '<div class="empty"><div class="big">🤔</div><div>찾는 말이 들어 있는 자료가 없습니다. 다른 말로 찾아보세요.<br><span class="muted">(.hwp·스캔 PDF는 내용을 읽을 수 없어 자료 이름으로만 찾습니다)</span></div></div>');
   }
   $("sf").onsubmit = function(e){

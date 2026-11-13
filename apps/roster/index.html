@@ -22,8 +22,19 @@
   저장되는 정보는 학년·반·번호·이름뿐이며, 이 기기 브라우저에만 저장됩니다.
 -->
 <style>
-  #list{flex:1;min-width:0;display:grid;grid-auto-flow:column;gap:6px 14px;justify-content:start;align-content:start;overflow:auto}
-  .row{display:flex;gap:4px;align-items:stretch;min-width:0}
+  #list{flex:1;min-width:0;display:grid;grid-auto-flow:column;gap:8px 10px;align-content:start;overflow:auto}
+  /* 학생 한 명 = 카드 한 칸: [큰 사진] [번호·이름·단추 / 메모] */
+  .row{display:flex;gap:8px;align-items:stretch;min-width:0;min-height:0;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px}
+  .row:hover{border-color:#b9cde4}
+  .row .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;justify-content:center}
+  .row .top{display:flex;gap:4px;align-items:stretch;height:34px;flex:none}
+  .row .top input{height:100%;box-sizing:border-box}
+  .row .mm{flex:1 1 auto;min-height:0;max-height:76px;width:100%;box-sizing:border-box;font:inherit;font-size:13.5px;line-height:1.4;color:#6a4a00;background:#fffdf3;border:1px dashed #ecdca8;border-radius:8px;padding:4px 8px;resize:none;overflow:hidden}
+  .row .mm:focus{outline:2px solid #e6c65a;overflow:auto;background:#fff}
+  .row .mm:placeholder-shown{background:transparent;border-color:#e6eaef}
+  .row .mm::placeholder{color:#b4bcc5}
+  #list.tight .row .mm{display:none}
+  #list.tight .row .top{height:auto;flex:1}
   .row input{
     font:inherit;font-size:15px;border:1px solid var(--line);border-radius:8px;padding:0 8px;min-width:0;
     background:#fbfcfd;color:var(--ink)
@@ -35,7 +46,9 @@
   .del{flex:none;width:26px;border:0;background:transparent;color:#a0a9b3;font-size:18px;cursor:pointer;border-radius:6px}
   .del:hover{background:var(--danger-soft);color:var(--danger)}
   /* 학생 사진·카드 (사진은 이 기기에만, 메모·기록은 shared/notes.js) */
-  .ph{flex:none;width:30px;border-radius:6px;object-fit:cover;background:#eef1f4;cursor:pointer;border:0;padding:0}
+  .ph{flex:none;height:100%;aspect-ratio:3/4;width:auto;border-radius:8px;object-fit:cover;object-position:center top;background:#eef1f4;cursor:pointer;border:0;padding:0;display:block}
+  span.ph{display:flex;align-items:center;justify-content:center;color:#c3cad2;font-size:22px}
+  span.ph::before{content:"👤";filter:grayscale(1);opacity:.45}
   .cardb{flex:none;position:relative;width:32px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font-size:14px;padding:0;color:var(--sub)}
   .cardb:hover{border-color:#7a4fb5;background:#f5f0fc}
   .cardb.has{border-color:#cdb8ea;background:#f5f0fc}
@@ -48,16 +61,20 @@
   #impPrev{font-size:13px;color:var(--ok);font-weight:700;min-height:20px;margin-top:8px}
   #printTitle{display:none}
   @media (max-width:640px){
-    .row .no{width:36px}
-    .row input{font-size:14px;padding:0 5px}
-    .del{width:20px}
+    #list{gap:5px 6px}
+    .row{padding:3px;gap:4px;border-radius:9px}
+    .row .no{width:30px}
+    .row input{font-size:14px;padding:0 4px}
+    .cardb{width:26px}
+    .del{width:20px;display:none}
+    .row:focus-within .del{display:block}   /* 휴대폰: 이름을 누르고 있을 때만 × 표시 */
   }
   @media print{
     #printTitle{display:block;font-size:20px;font-weight:800;margin-bottom:10px}
     #list{display:block!important;column-count:3;overflow:visible}
-    .row{break-inside:avoid;margin-bottom:4px}
+    .row{break-inside:avoid;margin-bottom:4px;border:0;padding:0}
     .row input{border:0;background:none;font-size:14px;padding:2px 4px}
-    .del,.cardb,.ph{display:none}
+    .del,.cardb,.ph,.row .mm{display:none}
   }
 </style>
 </head>
@@ -187,19 +204,24 @@
   function layout(){
     var n = cur().students.length;
     if(!n) return;
+    /* 화면 전체를 채우도록 칸 수를 고릅니다: 카드가 가로:세로 약 3:1 일 때 가장 크게 보이는 열 수 */
     var W = list.clientWidth, H = list.clientHeight;
-    var mobile = W < 520, rg = 6, cg = 14;
-    var minColW = mobile ? 118 : 170, minRow = mobile ? 32 : 34, maxRow = 46;
+    var mobile = W < 520, rg = mobile ? 5 : 8, cg = mobile ? 6 : 10;
+    var minColW = mobile ? 150 : 230, minRow = mobile ? 34 : 46, maxRow = 170;
     var maxCols = Math.max(1, Math.floor((W + cg) / (minColW + cg)));
-    var cols = maxCols, c, rows;
+    var best = 1, bestScore = -1, c, rows;
     for(c = 1; c <= maxCols; c++){
       rows = Math.ceil(n / c);
-      if(rows * minRow + (rows-1) * rg <= H){ cols = c; break; }
+      var cw = (W - (c-1) * cg) / c, ch = (H - (rows-1) * rg) / rows;
+      if(ch < minRow && c < maxCols) continue;                // 세로가 모자라면 열을 늘림
+      var score = Math.min(Math.min(ch, maxRow), cw / 3);
+      if(score > bestScore + 0.5){ best = c; bestScore = score; }
     }
-    rows = Math.ceil(n / cols);
+    rows = Math.ceil(n / best);
     var rowH = Math.max(minRow, Math.min(maxRow, Math.floor((H - (rows-1) * rg) / rows)));
+    list.classList.toggle("tight", rowH < 84);                // 칸이 낮으면 메모 줄은 숨기고 📇 단추에 표시
     list.style.gridTemplateRows = "repeat(" + rows + ", " + rowH + "px)";
-    list.style.gridTemplateColumns = "repeat(" + cols + ", minmax(0, " + (mobile ? "1fr" : "250px") + "))";
+    list.style.gridTemplateColumns = "repeat(" + best + ", minmax(0, 1fr))";
   }
 
   function renderList(){
@@ -215,9 +237,18 @@
       b.maxLength = 20; b.autocomplete = "off"; b.setAttribute("aria-label", s.no + "번 이름");
       var d = document.createElement("button"); d.type = "button"; d.className = "del";
       d.textContent = "×"; d.title = "삭제"; d.setAttribute("aria-label", s.no + "번 삭제");
-      row.appendChild(a); row.appendChild(b);
-      if(!TT.classroom){ var cb = document.createElement("button"); cb.type = "button"; cb.className = "cardb"; cb.textContent = "📇"; cb.title = "학생 카드: 사진·메모·기록"; cb.setAttribute("aria-label", s.no + "번 학생 카드"); row.appendChild(cb); }
-      row.appendChild(d);
+      var body = document.createElement("div"); body.className = "body";
+      var top = document.createElement("div"); top.className = "top";
+      top.appendChild(a); top.appendChild(b);
+      if(!TT.classroom){ var cb = document.createElement("button"); cb.type = "button"; cb.className = "cardb"; cb.textContent = "📇"; cb.title = "학생 카드: 사진·메모·기록"; cb.setAttribute("aria-label", s.no + "번 학생 카드"); top.appendChild(cb); }
+      top.appendChild(d);
+      body.appendChild(top);
+      if(!TT.classroom){   // 수업 화면(학생에게 보이는 화면)에서는 메모를 그리지 않음
+        var m = document.createElement("textarea"); m.className = "mm"; m.rows = 2; m.maxLength = 200; m.autocomplete = "off";
+        m.placeholder = "메모 (Enter로 저장)"; m.setAttribute("aria-label", s.no + "번 메모");
+        body.appendChild(m);
+      }
+      row.appendChild(body);
       list.appendChild(row);
     });
     var has = c.students.length > 0;
@@ -238,6 +269,8 @@
       b.className = "cardb" + (n || mm ? " has" : "") + (mm ? " memo" : "");
       b.innerHTML = "📇" + (n ? "<sup>" + n + "</sup>" : "");
       b.title = (mm ? "메모: " + mm + "\n" : "") + "기록 " + n + "건 · 눌러서 학생 카드";
+      var mi = row.querySelector(".mm");
+      if(mi && document.activeElement !== mi){ mi.value = mm || ""; mi.title = mm || "눌러서 메모 쓰기"; }
     });
     urls.forEach(function(u){ URL.revokeObjectURL(u); }); urls = [];
     var pre = c.grade && c.cls ? c.grade + "-" + c.cls + "-" : c.id + "-";
@@ -246,7 +279,7 @@
       Array.prototype.forEach.call(list.children, function(row){
         var s = c.students[+row.dataset.i], blob = s && all[pre + s.no], old = row.querySelector(".ph");
         if(old) old.remove();
-        if(!blob){ if(Object.keys(all).some(function(k){ return k.indexOf(pre) === 0; })){ var e0 = document.createElement("span"); e0.className = "ph"; row.insertBefore(e0, row.firstChild); } return; }
+        if(!blob){ if(Object.keys(all).some(function(k){ return k.indexOf(pre) === 0; })){ var e0 = document.createElement("span"); e0.className = "ph"; e0.title = "사진 없음 · 학생 카드 열기"; row.insertBefore(e0, row.firstChild); } return; }
         var u = URL.createObjectURL(blob); urls.push(u);
         var img = document.createElement("img"); img.className = "ph"; img.src = u; img.alt = ""; img.title = "학생 카드 열기";
         row.insertBefore(img, row.firstChild);
@@ -379,27 +412,39 @@
     var f = e.dataTransfer.files[0]; if(f) handleFile(f);
   });
   /* ================= 학생 편집 ================= */
+  function idx(el){ return +el.closest(".row").dataset.i; }
   list.addEventListener("input", function(e){
     if(!e.target.classList.contains("nm")) return;
-    cur().students[+e.target.parentNode.dataset.i].name = e.target.value; saveSoon();
+    cur().students[idx(e.target)].name = e.target.value; saveSoon();
   });
+  /* 메모: 칸을 벗어나거나 Enter 를 누르면 학생 카드 메모와 같은 곳(TT.notes)에 저장 */
+  function saveMemo(el){
+    var c = cur(), s = c.students[idx(el)]; if(!s) return;
+    var k = TT.notes.key(c, s), v = el.value.trim();
+    if(v === (TT.notes.memo(k) || "")) return;
+    TT.notes.setMemo(k, v, s.name);
+    window.dispatchEvent(new CustomEvent("tt-notes-change"));
+    toast(v ? (s.name || s.no + "번") + " 메모를 저장했습니다." : "메모를 지웠습니다.");
+  }
+  list.addEventListener("focusout", function(e){ if(e.target.classList.contains("mm")) saveMemo(e.target); });
   list.addEventListener("change", function(e){
     if(!e.target.classList.contains("no")) return;
-    var c = cur(), i = +e.target.parentNode.dataset.i, v = parseInt(e.target.value, 10);
+    var c = cur(), i = idx(e.target), v = parseInt(e.target.value, 10);
     if(!isFinite(v) || v < 1){ e.target.value = c.students[i].no; return; }
     c.students[i].no = v; c.students.sort(byNo); save(); renderAll();
   });
   list.addEventListener("click", function(e){
     var cb = e.target.closest(".cardb, .ph");
-    if(cb){ var cc = cur(), st = cc.students[+cb.parentNode.dataset.i]; if(st) TT.notes.card(cc, st); return; }
+    if(cb){ var cc = cur(), st = cc.students[idx(cb)]; if(st) TT.notes.card(cc, st); return; }
     if(!e.target.classList.contains("del")) return;
-    var snap = clone(D), c = cur(), i = +e.target.parentNode.dataset.i, s = c.students[i];
+    var snap = clone(D), c = cur(), i = idx(e.target), s = c.students[i];
     c.students.splice(i, 1); save(); renderAll();
     toast((s.name || (s.no + "번")) + " 삭제했습니다.", undoAll(snap));
   });
   list.addEventListener("keydown", function(e){
     if(e.key !== "Enter") return;
-    var t = e.target, row = t.parentNode;
+    var t = e.target, row = t.closest(".row");
+    if(t.classList.contains("mm")){ e.preventDefault(); t.blur(); return; }
     if(t.classList.contains("no")){ e.preventDefault(); row.querySelector(".nm").focus(); return; }
     if(!t.classList.contains("nm")) return;
     e.preventDefault();
