@@ -150,8 +150,8 @@ var TTAuto = (function(){
       when: function(c, days){ return firstOf(c, /방학/, days, "off").map(function(e){ return {key: e.d, due: e.d, n: "D-" + diff(e.d, c.td), ev: e}; }); },
       read: function(c, o){ var N = TT.store.get("tt_notes_v1", null), n = N && Array.isArray(N.recs) ? N.recs.length : 0; return {ev: o.ev, recs: n}; },
       make: function(d){
-        return {title: "학기말 생기부 마감 점검 · " + d.ev.t + " " + md(d.ev.d), links: [{href: "apps/record/", label: "📑 생기부 도우미"}, {href: "apps/tardy/", label: "🧭 출결"}],
-          text: d.ev.t + " (" + md(d.ev.d) + ") 전에 끝낼 것\n\n□ 교과 세특 — 글자 수·유의 낱말 점검 (모인 학생 기록 " + d.recs + "건)\n□ 행동특성 및 종합의견\n□ 창체(자율·동아리·진로) 기록\n□ 출결 마감 · 결석신고서 정리\n□ 기록 마감 점검표 확인"};
+        return {title: "학기말 생기부 마감 점검 · " + d.ev.t + " " + md(d.ev.d), links: [{href: "apps/record/?neis=1", label: "🔍 나이스 기재 점검"}, {href: "apps/record/", label: "📑 생기부 도우미"}, {href: "apps/tardy/", label: "🧭 출결"}],
+          text: d.ev.t + " (" + md(d.ev.d) + ") 전에 끝낼 것\n\n□ 교과 세특 — 글자 수·유의 낱말 점검 (모인 학생 기록 " + d.recs + "건)\n□ 행동특성 및 종합의견\n□ 창체(자율·동아리·진로) 기록\n□ 출결 마감 · 결석신고서 정리\n□ 나이스 기재 점검 — 나이스 세특·행특 파일을 넣어 빈칸·글자 수 초과·초안과 다른 학생 확인\n□ 기록 마감 점검표 확인"};
       },
       end: ["done", "copy"] },
 

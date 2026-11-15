@@ -2,8 +2,7 @@
    ① 제출물 마감이 지나면 미제출 번호를 종례 바구니에 자동으로 넣고(이름 없이 번호만), 사흘이 지나도 안 내면 학부모 문자 초안을 준비
    ② 무단지각이 쌓이면(주 N회·연속) 상담 기록 초안(상담 계기·후속 확인일)과 학부모 문자를 준비 → [상담일지에 초안 넣기]
    ③ 결석 뒤 결석신고서를 아직 안 만들었으면 학생별 정리 + 서류 제출 안내 문자를 준비
-   ④ 달마다 출결 마감 며칠 전 → 나이스 출결 현황 파일과 쌤 노트 기록 맞춰 보기(출결·결석계 화면)
-   ⑤ 오늘 수업이 끝났는데 수업 기록장에 기록이 없는 교시 → [모두 진도 +1] 한 번에 (첫 화면 다음 수업 칸에도 [진도 +1])
+   ④ 오늘 수업이 끝났는데 수업 기록장에 기록이 없는 교시 → [모두 진도 +1] 한 번에 (첫 화면 다음 수업 칸에도 [진도 +1])
    모두 이 기기 안에서만 계산합니다. 첫 화면 카드 제목에는 숫자만 쓰고, 이름은 눌러 연 미리보기에만 나옵니다. */
 var TTFollow = (function(){
   "use strict";
@@ -169,23 +168,6 @@ var TTFollow = (function(){
           }).join("\n\n") + "\n\n결석신고서는 출결·결석계 화면에서 학생·기간·사유가 이미 채워져 있습니다."};
       },
       end: ["copy", "done"] },
-
-    { id: "att-close", icon: "🔍", name: "출결 마감 전 나이스 대조", days: 3,
-      desc: "달마다 마지막 수업일 며칠 전에, 나이스 출결 현황 파일과 쌤 노트 출결 기록이 다른 학생을 찾아보라고 알려 줍니다.",
-      when: function(c, days){
-        if(!TT.roster.home() || !guide()) return [];
-        var t = c.now, last = new Date(t.getFullYear(), t.getMonth() + 1, 0), g = 0;
-        while(!c.school(last) && g++ < 20) last = add(last, -1);
-        var k = diff(ymd(last), c.td); if(k < 0 || k > days) return [];
-        return [{key: c.td.slice(0, 7), due: ymd(last), n: k ? "D-" + k : "오늘"}];
-      },
-      read: function(c, o){ return o; },
-      make: function(d){
-        var m = +d.key.slice(5);
-        return {title: m + "월 출결 마감 점검", links: [{href: "apps/tardy/?tab=stats&nice=1", label: "🔍 나이스와 맞춰 보기"}],
-          text: m + "월 출결 마감 (" + md(d.due) + ") 전에\n\n□ 나이스 → 출결 → 학급별(학생별) 출결 현황을 엑셀로 내려받기\n□ 출결·결석계 → 🔍 나이스와 맞춰 보기에 파일 넣기 → 다른 학생만 확인\n□ 결석신고서·증빙 서류 빠진 것 챙기기\n□ 나이스 출결 마감"};
-      },
-      end: ["done"] },
 
     { id: "lesson-miss", icon: "✏️", name: "수업 기록 빠짐 → 진도 +1", days: null,
       desc: "오늘 끝난 수업 중 수업 기록장에 기록이 없는 교시를 모아, 한 번에 '진행 완료'(진도 +1)로 기록합니다.",
