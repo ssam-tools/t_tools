@@ -208,9 +208,9 @@
           wk.forEach(function(d){ if(d > td) return; var r = T[d] && T[d][no]; if(!r) return;   // 이번 주 지각·결석
             if(r.t === "A") mark(no, "abs"); else if(L.isTardy(T, hol, no, d)) mark(no, "late"); });
           var cur = null;                                              // 결석신고서: 이어진 같은 구분 결석을 한 건으로
-          Object.keys(T).filter(function(d){ var r = T[d][no]; return r && r.t === "A"; }).sort().forEach(function(d){
-            var k = T[d][no].k || "un";
-            if(cur && cur.k === k && L.nextSchoolDay(cur.end, hol) === d) cur.end = d;
+          Object.keys(T).filter(function(d){ var r = T[d][no]; return r && (r.t === "A" || (r.t === "L" && r.o)); }).sort().forEach(function(d){   // 병결·인정결·인정조퇴·인정지각
+            var r0 = T[d][no], k = r0.t === "L" ? "late" : (r0.k === "ok" || r0.k === "early") ? r0.k : "sick";
+            if(cur && cur.k === k && (k === "sick" || k === "ok") && L.nextSchoolDay(cur.end, hol) === d) cur.end = d;
             else{ cur = {k: k, start: d, end: d}; if(!rep[no + "|" + d]) reps++; }
           });
         });

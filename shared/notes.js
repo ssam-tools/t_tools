@@ -178,7 +178,7 @@
      성적은 고교 진학 추천(tt_advisor_v1), 출결·상담은 생활지도(tt_guide_v1, 우리 반만), 기록·메모는 학생 기록에서 가져옵니다. */
   function sheet(c, s){
     var k = N.key(c, s), sc = TT.school.load(), h = "", home = R.home(), isHome = home && home.id === c.id;
-    var AK = {sick: "병결", ok: "인정결", un: "미인정결", etc: "기타결"};
+    var AK = {sick: "병결", ok: "인정결", early: "인정조퇴", un: "미인정결", etc: "기타결"};
     h += '<div class="bar"><button type="button" class="p" data-a="print">🖨 인쇄</button><button type="button" data-a="close">닫기</button><span class="muted">🔒 학생 개인정보가 들어 있습니다. 상담 뒤 인쇄물은 파기해 주세요.</span></div>';
     h += "<h1>🗂️ 상담 카드 · " + esc(c.name) + " " + s.no + "번 " + esc(s.name || "") + "</h1>";
     h += '<div class="muted">' + esc(sc.name || "") + (sc.teacher ? " · 담임 " + esc(sc.teacher) : "") + " · " + new Date().toLocaleDateString("ko-KR") + " 기준</div>";

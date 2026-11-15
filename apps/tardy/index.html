@@ -12,7 +12,8 @@
 <!--
   학생 생활지도(출결 포함)  — 예전 이름: 지각 관리 노트
   · 명단: 학급 명렬표의 "우리 반"(TT.roster.home). 프로그램 안에 학생 이름을 넣어 두지 않습니다.
-  · 출결: 지각·결석과 사유만 입력. 인정 관련 구분(병결·인정결·인정조퇴·인정지각)은 결석신고서에서만 고릅니다.
+  · 출결: 지각(무단)·결석(병결)·인정(인정결·인정조퇴·인정지각) 3가지로 입력. 결석 사유·인정 사유는 결석신고서에 그대로 들어갑니다.
+  · 자료 모양(다른 화면과 호환): 무단지각 {t:'L'}, 인정지각 {t:'L',o:true}, 병결 {t:'A',k:'sick'}, 인정결 {t:'A',k:'ok'}, 인정조퇴 {t:'A',k:'early'}
   · 표시 기준: 무단 지각 연속 2일 이상(주황), 한 주 3회 이상(빨강) — 설정에서 바꿀 수 있음.
   · 결석신고서: 같은 학생의 이어진 결석을 한 건으로 묶어 양식(absence-form.hwpx)에 자동으로 채우고, 한글 파일로 저장하거나 인쇄합니다.
   · 저장: "tt_guide_v1" (이 기기 브라우저에만, 전체 백업에 포함). 예전 "tt_attend_v1"·"tt_counsel_v1" 자료는 처음 열 때 옮겨 옵니다.
@@ -20,7 +21,7 @@
 <style>
 :root{
   --bg:#f3f5f8; --surface:#fff; --ink:#18202b; --muted:#5a6676; --line:#d9e0e8;
-  --accent:#1f5fbf; --accent-soft:#e4edfb; --cL:#2a3a52; --cA:#6a3d8f; --on:#fff;
+  --accent:#1f5fbf; --accent-soft:#e4edfb; --cL:#2a3a52; --cA:#6a3d8f; --cR:#1f7a68; --on:#fff;
   --caution:#9a5200; --caution-bg:#fff3de; --caution-fill:#f0a93b; --caution-on:#2b1a00;
   --alert:#b3261e; --alert-bg:#fdeae8; --alert-fill:#c4372e; --alert-on:#fff; --good:#1d6b45;
 }
@@ -69,7 +70,8 @@ main{flex:1;min-height:0;overflow:hidden}
 .pill-caution{background:var(--caution-fill);border-color:var(--caution-fill);color:var(--caution-on)}
 .pill-good{color:var(--good);border-color:var(--good)}
 .pill-A{color:var(--cA);border-color:var(--cA)}
-.t-L{--c:var(--cL)} .t-A{--c:var(--cA)}
+.t-L{--c:var(--cL)} .t-A{--c:var(--cA)} .t-R{--c:var(--cR)}
+.pill-R{color:var(--cR);border-color:var(--cR)}
 /* 입력 */
 .daybar,.modebar{flex:none;display:flex;gap:6px;align-items:center}
 .daybar input[type=date]{flex:1;min-width:0;text-align:center;font-weight:700}
@@ -144,7 +146,7 @@ main{flex:1;min-height:0;overflow:hidden}
 .todo li{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:8px}
 .todo li:first-child{border-top:0;padding-top:0}
 /* 학생 */
-.kv{flex:none;display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.kv{flex:none;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 @media (max-width:600px){.kv{grid-template-columns:repeat(3,1fr)}}
 .kv div{border:1px solid var(--line);border-radius:10px;padding:3px 8px;background:var(--surface)}
 .kv b{display:block;font-size:18px;line-height:1.2}
@@ -252,10 +254,11 @@ table.plain{width:100%;border-collapse:collapse;font-size:13.5px}
 'use strict';
 const L = Logic;
 const KEY = 'tt_guide_v1';
-const TYPES = { L: '지각', A: '결석' };
-const TKEYS = ['L', 'A'];
-const AK = { sick: '병결', ok: '인정결', un: '미인정결', etc: '기타결' };            // 결석 구분
-const AKEYS = ['sick', 'ok', 'un', 'etc'];
+const TYPES = { L: '지각', A: '결석', R: '인정' };
+const TKEYS = ['L', 'A', 'R'];
+const AK = { sick: '병결', ok: '인정결', early: '인정조퇴', late: '인정지각' };   // 결석신고서 구분
+const RKEYS = ['ok', 'early', 'late'];                                              // 인정 구분
+const R_REASONS = ['교외체험학습', '경조사', '법정 감염병', '학교 대표 활동', '천재지변', '기타 인정 사유'];
 const ABS_REASONS = ['감기·몸살', '복통·장염', '두통', '병원 진료', '가족 경조사', '체험학습', '가정 사정', '연락 없음'];
 const EVID = ['진단서', '진료확인서', '처방전', '학부모 확인서', '체험학습 보고서', '기타 증빙', '증빙 없음'];
 const REASONS = ['늦잠', '교통·이동', '건강 문제', '가정 사정', '학교생활 어려움', '기타'];
@@ -296,6 +299,7 @@ function normalize(o) {
   ['att', 'meta', 'holidays', 'reports', 'guardians'].forEach(k => { if (o[k] && typeof o[k] === 'object') b[k] = o[k]; });
   b.counsel = Array.isArray(o.counsel) ? o.counsel : [];
   b.settings = Object.assign(b.settings, o.settings || {});
+  b.settings.countApproved = false;   // 표시 기준은 무단 지각만
   return b;
 }
 function lsGet(k) { try { const s = localStorage.getItem(k); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
@@ -325,17 +329,24 @@ if (!lsGet(KEY)) persist();
 { const sc = TT.school.load(); if (sc.name) S.settings.school = sc.name; if (sc.teacher) S.settings.teacher = sc.teacher; }   // 학교 이름·담임 이름은 공통 설정(첫 화면 ⋯ → 학교·선생님 설정)과 같은 값
 
 const startDate = () => { const t = today(); return L.isSchoolDay(t, S.holidays) ? t : L.prevSchoolDay(t, S.holidays); };
-let view = { tab: (['entry','week','student','stats','counsel','report','settings'].indexOf(new URLSearchParams(location.search).get('tab')) >= 0 ? new URLSearchParams(location.search).get('tab') : 'entry'), date: startDate(), monday: L.weekStart(today()), filter: 'all', range: 'all', logStudent: '', sel: '', mode: 'L', ok: false, rmonth: 'all' };
+let view = { tab: (['entry','week','student','stats','counsel','report','settings'].indexOf(new URLSearchParams(location.search).get('tab')) >= 0 ? new URLSearchParams(location.search).get('tab') : 'entry'), date: startDate(), monday: L.weekStart(today()), filter: 'all', range: 'all', logStudent: '', sel: '', mode: 'L', rk: 'ok', ok: false, rmonth: 'all' };
 const opt = () => ({ weekN: +S.settings.weekN || 3, runN: +S.settings.runN || 2 });
 const stu = id => students().find(x => x.id === String(id));
 function nm(st) { if (!st) return '(명단에 없는 학생)'; const n = st.name; return S.settings.mask && n ? n[0] + '○'.repeat(Math.max(1, n.length - 1)) : n; }
 const wkStat = (no, mon) => L.weekStatus(S.att, S.holidays, String(no), mon, opt());
 const rec = (no, d) => (S.att[d] || {})[no];
-const recLabel = r => !r ? '' : r.t === 'L' ? (r.o ? '인정지각' : '지각') : '결석';   // 결석 구분은 결석신고서에서만 보임
+/* 기록 → 구분: Lu(무단지각) sick(병결) ok(인정결) early(인정조퇴) late(인정지각) */
+const kindOf = r => !r ? '' : r.t === 'L' ? (r.o ? 'late' : 'Lu') : (r.k === 'ok' || r.k === 'early') ? r.k : 'sick';
+/* 기록 → 입력 버튼: L(지각) A(결석) R(인정) */
+const grpOf = r => { const k = kindOf(r); return !k ? '' : k === 'Lu' ? 'L' : k === 'sick' ? 'A' : 'R'; };
+/* 구분 → 기록 (사유·증빙은 그대로 이어 받음) */
+const mkRec = (k, base) => { const b = base || {}, x = k === 'late' ? { t: 'L', o: true } : k === 'Lu' ? { t: 'L' } : { t: 'A', k }; if (b.r) x.r = b.r; if (b.ev) x.ev = b.ev; if (b.m && x.t === 'L') x.m = b.m; return x; };
+const recLabel = r => { const k = kindOf(r); return !k ? '' : k === 'Lu' ? '지각' : k === 'sick' ? '결석' : AK[k]; };
+const cellCh = r => ({ L: '지', A: '결', R: '인' })[grpOf(r)] || '';
 
 /* ---------- 화면 ---------- */
 function render() {
-  L.cfg.countApproved = !!S.settings.countApproved;
+  L.cfg.countApproved = false;
   document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === view.tab)));
   const nRep = episodes().filter(e => !S.reports[e.key]).length;
   $('#tabReport').innerHTML = '결석신고서' + (nRep ? `<span class="bd">${nRep}</span>` : '');
@@ -355,15 +366,15 @@ function renderEntry() {
   const d = view.date, info = dayInfo(d), mon = L.weekStart(d), list = students();
   const day = S.att[d] || {}, done = !!(S.meta[d] && S.meta[d].d);
   const n = list.length, cols = n <= 16 ? 4 : n <= 40 ? 5 : 6;
-  const cnt = { Lu: 0, Lo: 0, A: 0 };
-  list.forEach(s => { const r = day[s.no]; if (!r) return; if (r.t === 'L') r.o ? cnt.Lo++ : cnt.Lu++; else cnt.A++; });
+  const cnt = { L: 0, A: 0, R: 0 };
+  list.forEach(s => { const g = grpOf(day[s.no]); if (g) cnt[g]++; });
   let body;
   if (!info.ok) body = `<div class="empty">${esc(info.msg)}<br>위 화살표로 수업일을 넘겨 보세요.</div>`;
   else body = `<div class="chips2" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${list.map(st => {
-    const r = day[st.no], w = wkStat(st.no, mon), t = r ? r.t : '';
+    const r = day[st.no], w = wkStat(st.no, mon), t = grpOf(r);
     const flag = w.alert ? `주${w.count}회` : w.caution ? `연속${Math.max.apply(null, w.runs.map(x => x.len))}일` : '';
-    const lab = r ? recLabel(r) + (r.t === 'A' && r.r ? '·' + r.r : '') : flag;
-    const cls = 'chip2' + (r ? ` has t-${t}${r.t === 'L' && r.o ? ' appr' : ''}` : '') + (w.alert ? ' f-alert' : w.caution ? ' f-caution' : '');
+    const lab = r ? recLabel(r) + (t !== 'L' && r.r ? '·' + r.r : '') : flag;
+    const cls = 'chip2' + (r ? ` has t-${t}` : '') + (w.alert ? ' f-alert' : w.caution ? ' f-caution' : '');
     return `<button class="${cls}" data-act="mark" data-no="${st.no}" aria-label="${esc(nm(st))} ${st.no}번 ${esc(lab || '정상')}"><span class="cn">${st.no}</span><span class="cname">${esc(nm(st))}</span><span class="cst">${esc(lab)}</span></button>`;
   }).join('')}</div>`;
   return `<div class="view">
@@ -372,7 +383,7 @@ function renderEntry() {
       <button class="btn" data-act="dstep" data-s="1" aria-label="다음 수업일">▶</button><button class="btn" data-act="dtoday">오늘</button></div>
     <div class="modebar">${TKEYS.map(k => `<button class="seg t-${k}" data-act="mode" data-m="${k}" aria-pressed="${view.mode === k}">${TYPES[k]}</button>`).join('')}</div>
     ${body}
-    <div class="foot2"><div class="counts"><span>지각 <b>${cnt.Lu + cnt.Lo}</b></span><span>결석 <b>${cnt.A}</b></span><span class="small">학생을 누르면 표시되고, 한 번 더 누르면 지워집니다.</span></div>
+    <div class="foot2"><div class="counts"><span>지각 <b>${cnt.L}</b></span><span>결석 <b>${cnt.A}</b></span><span>인정 <b>${cnt.R}</b></span><span class="small">학생을 누르면 표시되고, 한 번 더 누르면 지워집니다.</span></div>
       ${info.ok ? `<button class="donebtn" data-act="done" aria-pressed="${done}">${done ? '입력 완료 ✓' : '입력 끝'}</button>` : ''}</div>
   </div>`;
 }
@@ -388,10 +399,10 @@ function renderWeek() {
   const body = shown.map(({ st, w }) => {
     const cells = days.map(d => {
       if (!L.isSchoolDay(d, S.holidays)) return `<div><button class="dc" disabled title="${esc(S.holidays[d] || '휴일')}">휴</button></div>`;
-      const r = rec(st.no, d), t = r ? r.t : '';
+      const r = rec(st.no, d), t = grpOf(r);
       const tardy = t === 'L' && L.isTardy(S.att, S.holidays, String(st.no), d);
-      const cls = r ? `dc has t-${t}${t === 'L' && r.o ? ' appr' : ''}` + (tardy ? (w.alert ? ' c-alert' : w.runDates.has(d) ? ' c-caution' : '') + (w.runDates.has(d) ? ' run' : '') : '') : 'dc';
-      return `<div><button class="${cls}" data-act="cell" data-no="${st.no}" data-date="${d}" title="${esc(recLabel(r) + (r && r.r ? ' · ' + r.r : ''))}">${r ? (t === 'L' ? '지' : '결') : ''}</button></div>`;
+      const cls = r ? `dc has t-${t}` + (tardy ? (w.alert ? ' c-alert' : w.runDates.has(d) ? ' c-caution' : '') + (w.runDates.has(d) ? ' run' : '') : '') : 'dc';
+      return `<div><button class="${cls}" data-act="cell" data-no="${st.no}" data-date="${d}" title="${esc(recLabel(r) + (r && r.r ? ' · ' + r.r : ''))}">${cellCh(r)}</button></div>`;
     }).join('');
     const stt = w.alert ? `<span class="st pill-alert">주 ${w.count}회</span>` : w.caution ? `<span class="st pill-caution">연속 ${Math.max.apply(null, w.runs.map(x => x.len))}일</span>` : '';
     return `<div class="wkrow row-${w.level}"><div class="nm"><button data-act="student" data-sid="${st.id}"><span class="no">${st.no}</span>${esc(nm(st))}</button></div>${cells}<div class="sum">${w.count}</div><div>${stt}</div></div>`;
@@ -407,10 +418,10 @@ function renderWeek() {
         <button class="tile t-caution" data-act="filter" data-f="caution" aria-pressed="${view.filter === 'caution'}"><b>${nCaution}</b><span>연속 ${o.runN}일 이상</span></button>
         <button class="tile" data-act="filter" data-f="all" aria-pressed="${view.filter === 'all'}"><b>${total}</b><span>무단지각 (전체 ${students().length}명)</span></button></div>
       <div class="wkgrid">${head}${body || '<div class="empty" style="margin:8px">조건에 맞는 학생이 없습니다.</div>'}</div>
-      <div class="legend"><span><i class="sw" style="background:var(--cL)"></i>지각</span><span><i class="sw" style="border:2px solid var(--cL)"></i>인정지각</span><span><i class="sw" style="background:var(--cA)"></i>결석</span>
+      <div class="legend"><span><i class="sw" style="background:var(--cL)"></i>지각</span><span><i class="sw" style="background:var(--cA)"></i>결석</span><span><i class="sw" style="background:var(--cR)"></i>인정</span>
         <span><i class="sw" style="background:var(--caution-fill)"></i>연속 무단지각</span><span><i class="sw" style="background:var(--alert-fill)"></i>주간 기준 이상</span></div></div>
     <div class="side"><section class="card"><h2>확인할 학생</h2>${todos.length ? `<ul class="todo">${todos.join('')}</ul>` : '<p class="muted small" style="margin:0">지금 확인할 학생이 없습니다.</p>'}</section>
-      <section class="card small muted">칸을 누르면 그 날 출결을 고칠 수 있습니다. 표시 기준은 <b>무단 지각</b>만 셉니다(설정에서 바꿀 수 있음).</section></div></div></div>`;
+      <section class="card small muted">칸을 누르면 그 날 출결을 고칠 수 있습니다. 표시 기준은 <b>무단 지각</b>만 셉니다.</section></div></div></div>`;
 }
 function todoList(rows, mon) {
   const todos = [], td = today();
@@ -428,10 +439,10 @@ function todoList(rows, mon) {
 }
 
 function typeCounts(no, inR) {
-  const c = { Lu: 0, Lo: 0, sick: 0, ok: 0, un: 0, etc: 0, A: 0 };
+  const c = { Lu: 0, sick: 0, ok: 0, early: 0, late: 0 };
   Object.keys(S.att).forEach(d => {
     const r = (S.att[d] || {})[no]; if (!r || !L.isSchoolDay(d, S.holidays) || !inR(d)) return;
-    if (r.t === 'L') { if (r.o) c.Lo++; else c.Lu++; } else if (r.t === 'A') { c.A++; c[r.k || 'un']++; }
+    c[kindOf(r)]++;
   });
   return c;
 }
@@ -455,8 +466,8 @@ function renderStudent() {
     const cells = L.weekDates(m).map(d => {
       if (!L.isSchoolDay(d, S.holidays)) return `<button class="cc hol" disabled title="${esc(S.holidays[d] || '휴일')}"><small>${mdShort(d)}</small>휴</button>`;
       if (d > td) return `<button class="cc" disabled><small>${mdShort(d)}</small></button>`;
-      const r = rec(no, d), t = r ? r.t : '';
-      return `<button class="cc${r ? ` has t-${t}${t === 'L' && r.o ? ' appr' : ''}` : ''}${csDates.has(d) ? ' cs' : ''}" data-act="cell" data-no="${no}" data-date="${d}" title="${esc(r && r.r ? r.r : '')}"><small>${mdShort(d)}</small>${esc(recLabel(r))}</button>`;
+      const r = rec(no, d), t = grpOf(r);
+      return `<button class="cc${r ? ` has t-${t}` : ''}${csDates.has(d) ? ' cs' : ''}" data-act="cell" data-no="${no}" data-date="${d}" title="${esc(r && r.r ? r.r : '')}"><small>${mdShort(d)}</small>${esc(recLabel(r))}</button>`;
     }).join('');
     return `<div class="wl ${w.alert ? 'f-alert' : w.caution ? 'f-caution' : ''}">${mdShort(m)}~${w.alert ? ' 주' + w.count : w.caution ? ' 연속' : ''}</div>${cells}`;
   }).join('');
@@ -467,8 +478,8 @@ function renderStudent() {
     <div class="row" style="flex:none;flex-wrap:nowrap"><button class="btn" data-act="sstep" data-s="-1" ${idx <= 0 ? 'disabled' : ''} aria-label="이전 학생">◀</button>
       <select id="stuSel" data-chg="stuSel" aria-label="학생 선택" style="font-weight:700">${list.map(s => `<option value="${s.id}" ${s.id === st.id ? 'selected' : ''}>${s.no}번 ${esc(nm(s))}</option>`).join('')}</select>
       <button class="btn" data-act="sstep" data-s="1" ${idx >= list.length - 1 ? 'disabled' : ''} aria-label="다음 학생">▶</button></div>
-    <div class="kv"><div><b>${c.Lu}</b><span>무단지각</span></div><div><b>${c.Lo}</b><span>인정지각</span></div><div><b>${c.sick}</b><span>병결</span></div>
-      <div><b>${c.ok}</b><span>인정결</span></div><div><b>${c.un + c.etc}</b><span>미인정·기타결</span></div><div><b>${Math.floor(c.Lu / 3)}일</b><span>무단지각 3회=1일</span></div></div>
+    <div class="kv"><div><b>${c.Lu}</b><span>무단지각</span></div><div><b>${c.sick}</b><span>병결</span></div>
+      <div><b>${c.ok}</b><span>인정결</span></div><div><b>${c.early}</b><span>인정조퇴</span></div><div><b>${c.late}</b><span>인정지각</span></div></div>
     <div class="split two"><div class="main"><h3 style="margin:0;flex:none">최근 8주 출결 <span class="muted small" style="font-weight:400">칸을 누르면 수정 · 파란 점은 상담한 날</span></h3>
       <div class="cal scroll" style="flex:1;grid-auto-rows:minmax(30px,1fr)">${cal}</div></div>
     <div class="side"><div class="row spread" style="flex:none"><h3 style="margin:0">상담 기록 ${logs.length}건</h3><button class="btn btn-sm btn-primary" data-act="counsel-new" data-sid="${st.id}">상담일지 쓰기</button></div>
@@ -495,17 +506,17 @@ function renderStats() {
     const byDow = [0, 0, 0, 0, 0, 0, 0]; dates.forEach(d => byDow[L.dow(d)]++);
     let top = 1; for (let i = 2; i <= 5; i++) if (byDow[i] > byDow[top]) top = i;
     return { s, c, aw, runs, top: dates.length ? `${L.KD[top]}(${byDow[top]})` : '-', byDow, logs: S.counsel.filter(x => x.sid === s.id).length };
-  }).sort((a, b) => b.c.Lu - a.c.Lu || b.c.A - a.c.A || a.s.no - b.s.no);
+  }).sort((a, b) => b.c.Lu - a.c.Lu || (b.c.sick + b.c.ok + b.c.early + b.c.late) - (a.c.sick + a.c.ok + a.c.early + a.c.late) || a.s.no - b.s.no);
   const dow = [0, 0, 0, 0, 0]; rows.forEach(r => { for (let i = 1; i <= 5; i++) dow[i - 1] += r.byDow[i]; });
   const mx = Math.max(1, ...dow), sum = dow.reduce((a, b) => a + b, 0);
-  const T = rows.reduce((a, r) => ({ Lu: a.Lu + r.c.Lu, Lo: a.Lo + r.c.Lo, A: a.A + r.c.A }), { Lu: 0, Lo: 0, A: 0 });
+  const T = rows.reduce((a, r) => { Object.keys(a).forEach(k => { a[k] += r.c[k]; }); return a; }, { Lu: 0, sick: 0, ok: 0, early: 0, late: 0 });
   const sel = `<select id="rangeSel" data-chg="range" style="width:auto" aria-label="기간">${[['all', '전체 기간'], ['month', '이번 달'], ['last', '지난 달'], ['4w', '최근 4주']].map(([v, t]) => `<option value="${v}" ${view.range === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
-  return `<div class="view"><div class="row spread" style="flex:none"><div class="row">${sel}<span class="small muted">무단지각 <b>${T.Lu}</b> · 인정지각 <b>${T.Lo}</b> · 결석 <b>${T.A}</b></span></div>
+  return `<div class="view"><div class="row spread" style="flex:none"><div class="row">${sel}<span class="small muted">무단지각 <b>${T.Lu}</b> · 병결 <b>${T.sick}</b> · 인정결 <b>${T.ok}</b> · 인정조퇴 <b>${T.early}</b> · 인정지각 <b>${T.late}</b></span></div>
     <span class="row"><button class="btn btn-sm" data-act="att-csv">출결 표(CSV) 저장</button></span></div>
-    <div class="split two"><div class="main"><div class="card scroll" style="flex:1;padding:6px 10px"><table class="plain"><thead><tr><th>학생</th><th>무단지각</th><th>인정지각</th><th>병결</th><th>인정결</th><th>미인정결</th><th>주${o.weekN}회+</th><th>연속</th><th>많은 요일</th><th>상담</th><th>3회=1일</th></tr></thead>
-      <tbody>${rows.map(r => `<tr><td><button class="btn btn-sm" style="border:0;background:none;padding:0;font-weight:700" data-act="student" data-sid="${r.s.id}">${r.s.no} ${esc(nm(r.s))}</button></td><td>${r.c.Lu}</td><td>${r.c.Lo}</td><td>${r.c.sick}</td><td>${r.c.ok}</td><td>${r.c.un + r.c.etc}</td><td>${r.aw}주</td><td>${r.runs}회</td><td>${esc(r.top)}</td><td>${r.logs}</td><td>${Math.floor(r.c.Lu / 3)}일</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="split two"><div class="main"><div class="card scroll" style="flex:1;padding:6px 10px"><table class="plain"><thead><tr><th>학생</th><th>무단지각</th><th>병결</th><th>인정결</th><th>인정조퇴</th><th>인정지각</th><th>주${o.weekN}회+</th><th>연속</th><th>많은 요일</th><th>상담</th></tr></thead>
+      <tbody>${rows.map(r => `<tr><td><button class="btn btn-sm" style="border:0;background:none;padding:0;font-weight:700" data-act="student" data-sid="${r.s.id}">${r.s.no} ${esc(nm(r.s))}</button></td><td>${r.c.Lu}</td><td>${r.c.sick}</td><td>${r.c.ok}</td><td>${r.c.early}</td><td>${r.c.late}</td><td>${r.aw}주</td><td>${r.runs}회</td><td>${esc(r.top)}</td><td>${r.logs}</td></tr>`).join('')}</tbody></table></div></div>
     <div class="side"><section class="card"><h3>요일별 무단지각 (${sum}회)</h3><div class="bars">${dow.map((n, i) => `<div class="b"><span>${n}</span><i style="height:${Math.round(n / mx * 62)}px"></i><span>${L.KD[i + 1]}</span></div>`).join('')}</div></section>
-      <section class="card small muted">“3회=1일”은 무단 지각 3회를 결석 1일로 보는 일반 기준의 단순 계산입니다. 실제 처리는 학교 규정과 나이스를 따르세요.</section></div></div></div>`;
+      <section class="card small muted">주${o.weekN}회+·연속·많은 요일은 <b>무단 지각</b>만 셉니다. 실제 처리는 학교 규정과 나이스를 따르세요.</section></div></div></div>`;
 }
 
 function renderCounsel() {
@@ -530,11 +541,11 @@ function episodes() {
   const out = [];
   students().forEach(st => {
     const no = String(st.no);
-    const ds = Object.keys(S.att).filter(d => { const r = S.att[d][no]; return r && r.t === 'A'; }).sort();
+    const ds = Object.keys(S.att).filter(d => { const k = kindOf(S.att[d][no]); return k && k !== 'Lu'; }).sort();
     let cur = null;
     ds.forEach(d => {
-      const r = S.att[d][no], k = r.k || 'un';
-      if (cur && cur.kind === k && L.nextSchoolDay(cur.end, S.holidays) === d) { cur.end = d; cur.days.push(d); if (r.r && cur.reasons.indexOf(r.r) < 0) cur.reasons.push(r.r); if (r.ev && cur.ev.indexOf(r.ev) < 0) cur.ev.push(r.ev); }
+      const r = S.att[d][no], k = kindOf(r);
+      if (cur && cur.kind === k && (k === 'sick' || k === 'ok') && L.nextSchoolDay(cur.end, S.holidays) === d) { cur.end = d; cur.days.push(d); if (r.r && cur.reasons.indexOf(r.r) < 0) cur.reasons.push(r.r); if (r.ev && cur.ev.indexOf(r.ev) < 0) cur.ev.push(r.ev); }
       else { cur = { no, st, kind: k, start: d, end: d, days: [d], reasons: r.r ? [r.r] : [], ev: r.ev ? [r.ev] : [] }; out.push(cur); }
     });
   });
@@ -548,14 +559,14 @@ function renderReports() {
   const rows = list.map(e => {
     const made = S.reports[e.key];
     return `<tr><td class="l"><b>${e.st.no} ${esc(nm(e.st))}</b></td><td class="l">${mdk(e.start)}${e.days.length > 1 ? ' ~ ' + mdk(e.end) : ''}</td><td>${e.days.length}일</td>
-      <td class="l"><span class="pill pill-A">${esc(AK[e.kind])}</span></td><td class="l" style="white-space:normal">${esc(e.reasons.join(', ') || '—')}</td>
+      <td class="l"><span class="pill ${e.kind === 'sick' ? 'pill-A' : 'pill-R'}">${esc(AK[e.kind])}</span></td><td class="l" style="white-space:normal">${esc(e.reasons.join(', ') || '—')}</td>
       <td class="l">${made ? `<span class="pill pill-good">작성 ${esc(mdShort(made.made || today()))}</span>` : '<span class="pill pill-caution">미작성</span>'}</td>
       <td style="white-space:nowrap">${made ? '' : sms('absdoc', e.st.no, e.start, mdk(e.start) + (e.days.length > 1 ? ' ~ ' + mdk(e.end) : '') + ' ' + AK[e.kind], '제출 안내')} <button class="btn btn-sm ${made ? '' : 'btn-primary'}" data-act="report-open" data-key="${esc(e.key)}">${made ? '열기' : '결석신고서 작성'}</button></td></tr>`;
   }).join('');
-  return `<div class="view"><div class="row spread" style="flex:none"><div class="row">${msel}<span class="small muted">같은 학생의 이어진 결석(같은 구분)은 한 장으로 묶입니다. 결석 사유는 입력 화면·주간 표에서 칸을 눌러 고치고, 구분(병결·인정결 등)은 결석신고서에서 고릅니다.</span></div>
+  return `<div class="view"><div class="row spread" style="flex:none"><div class="row">${msel}<span class="small muted">병결·인정결은 이어진 날을 한 장으로 묶고, 인정조퇴·인정지각은 하루씩 만듭니다. 사유는 입력 화면·주간 표에서 칸을 눌러 고칩니다.</span></div>
     <button class="btn" data-act="report-blank">빈 결석신고서</button></div>
     <div class="card scroll" style="flex:1;padding:6px 10px">${list.length ? `<table class="plain"><thead><tr><th>학생</th><th class="l">기간</th><th>일수</th><th class="l">구분</th><th class="l">사유</th><th class="l">상태</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
-      : '<div class="empty" style="border:0">결석 기록이 없습니다.<br>입력 화면에서 “결석”을 고르고 학생을 누르면 사유와 함께 기록됩니다.</div>'}</div>
+      : '<div class="empty" style="border:0">결석·인정 기록이 없습니다.<br>입력 화면에서 “결석” 또는 “인정”을 고르고 학생을 누르면 사유와 함께 기록됩니다.</div>'}</div>
     <div class="small muted" style="flex:none">🔒 결석신고서에는 학생 이름이 들어갑니다. 저장한 파일은 학교 업무용 PC에서만 다뤄 주세요.</div></div>`;
 }
 
@@ -566,8 +577,7 @@ function renderSettings() {
       명단이 바뀌면 <a href="../roster/">학급 명렬표</a>에서 고치세요. 기록은 학생 <b>번호</b> 기준으로 저장됩니다.</p></section>
     <section class="card"><h2>표시 기준 (무단 지각)</h2><div class="grid2">
       <div><label class="f" for="runN">연속 지각 (수업일)</label><input type="number" id="runN" min="2" max="5" value="${opt().runN}" data-chg="runN"></div>
-      <div><label class="f" for="weekN">한 주 지각 (회)</label><input type="number" id="weekN" min="2" max="5" value="${opt().weekN}" data-chg="weekN"></div></div>
-      <label class="row" style="gap:8px;margin-top:10px"><input type="checkbox" data-chg="cApp" ${S.settings.countApproved ? 'checked' : ''}> 인정 지각도 기준에 포함 (기본: 무단 지각만)</label></section>
+      <div><label class="f" for="weekN">한 주 지각 (회)</label><input type="number" id="weekN" min="2" max="5" value="${opt().weekN}" data-chg="weekN"></div></div></section>
     <section class="card"><h2>결석신고서에 들어갈 정보</h2><div class="grid2">
       <div><label class="f" for="sSchool">학교 이름</label><input type="text" id="sSchool" data-chg="school" value="${esc(S.settings.school)}" placeholder="예: ○○중학교" maxlength="20"></div>
       <div><label class="f" for="sTeacher">담임 이름</label><input type="text" id="sTeacher" data-chg="teacher" value="${esc(S.settings.teacher)}" maxlength="10"></div></div>
@@ -624,8 +634,8 @@ function behNote(c) {
 function recModal(no, d, quick) {
   if (quick === undefined) quick = recCtx && recCtx.no === no && recCtx.d === d ? recCtx.quick : false;
   recCtx = { no, d, quick };
-  const st = stu(no), r = rec(no, d) || null, t = r ? r.t : '';
-  let h = `<div class="head"><div><h2 style="margin:0">${esc(nm(st))} <span class="muted small">${st ? st.no + '번' : ''}</span></h2><div class="sub">${mdk(d)}${quick ? ' · 결석' : ''}</div></div><button class="btn btn-sm" data-act="close">닫기</button></div>
+  const st = stu(no), r = rec(no, d) || null, t = grpOf(r), k = kindOf(r);
+  let h = `<div class="head"><div><h2 style="margin:0">${esc(nm(st))} <span class="muted small">${st ? st.no + '번' : ''}</span></h2><div class="sub">${mdk(d)}${quick ? ' · ' + TYPES[t] : ''}</div></div><button class="btn btn-sm" data-act="close">닫기</button></div>
     ${quick ? '' : `<label class="f">출결</label><div class="row" style="flex-wrap:nowrap"><button class="seg" data-act="rec-type" data-t="" aria-pressed="${!r}">정상</button>${TKEYS.map(k => `<button class="seg t-${k}" data-act="rec-type" data-t="${k}" aria-pressed="${t === k}">${TYPES[k]}</button>`).join('')}</div>`}`;
   if (t === 'L') h += `<label class="f">지각 사유</label><div class="chips">${REASONS.map(x => `<button type="button" class="chip" data-act="rec-reason" data-r="${esc(x)}" aria-pressed="${r.r === x}">${esc(x)}</button>`).join('')}</div>
     <label class="f" for="rec-min">늦은 시간(분, 선택)</label><input type="number" id="rec-min" min="0" max="240" value="${r.m || ''}" data-chg="rec-min" style="max-width:140px">`;
@@ -634,9 +644,15 @@ function recModal(no, d, quick) {
     <div class="chips" style="margin-top:6px">${ABS_REASONS.map(x => `<button type="button" class="chip" data-act="rec-areason" data-r="${esc(x)}" aria-pressed="${r.r === x}">${esc(x)}</button>`).join('')}</div>
     <label class="f">증빙 서류</label><div class="chips">${EVID.map(x => `<button type="button" class="chip" data-act="rec-ev" data-r="${esc(x)}" aria-pressed="${r.ev === x}">${esc(x)}</button>`).join('')}</div>
     <div class="row" style="justify-content:flex-end;margin-top:12px">${sms('abs', no, d, '', '결석 확인 문자')}<button class="btn btn-primary" data-act="close">확인</button></div>`;
+  if (t === 'R') h += `<label class="f">인정 구분</label><div class="row" style="flex-wrap:nowrap">${RKEYS.map(x => `<button class="seg t-R" data-act="rec-rkind" data-k="${x}" aria-pressed="${k === x}">${AK[x]}</button>`).join('')}</div>
+    <label class="f" for="rec-r">인정 사유 <span class="muted small">(결석신고서 인정 사유에 그대로 들어갑니다)</span></label>
+    <input type="text" id="rec-r" data-chg="rec-r" value="${esc(r.r || '')}" maxlength="40" placeholder="예: 가족 여행 교외체험학습">
+    <div class="chips" style="margin-top:6px">${R_REASONS.map(x => `<button type="button" class="chip" data-act="rec-areason" data-r="${esc(x)}" aria-pressed="${r.r === x}">${esc(x)}</button>`).join('')}</div>
+    <label class="f">증빙 서류</label><div class="chips">${EVID.map(x => `<button type="button" class="chip" data-act="rec-ev" data-r="${esc(x)}" aria-pressed="${r.ev === x}">${esc(x)}</button>`).join('')}</div>
+    <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn btn-primary" data-act="close">확인</button></div>`;
   if (t === 'L') h += `<div class="row" style="justify-content:flex-end;margin-top:12px">${sms('late', no, d, r.m ? r.m + '분 늦음' : '', '지각 안내 문자')}<button class="btn btn-primary" data-act="close">확인</button></div>`;
   openModal(h);
-  if (t === 'A' && !r.r) setTimeout(() => { const i = $('#rec-r'); if (i) i.focus(); }, 30);
+  if ((t === 'A' || t === 'R') && !r.r) setTimeout(() => { const i = $('#rec-r'); if (i) i.focus(); }, 30);
 }
 
 function counselModal(sid, id) {
@@ -684,13 +700,14 @@ const KD = L.KD;
 function reportDefaults(e) {
   const g = HOME && HOME.grade != null ? HOME.grade : '', c = HOME && HOME.cls != null ? HOME.cls : '';
   const st = e ? e.st : null, s = e ? L.parse(e.start) : new Date(), t = e ? L.parse(e.end) : new Date();
-  const reason = e ? (e.reasons.join(', ') || (e.kind === 'sick' ? '질병' : '')) : '';
-  const box = e ? ({ sick: 'sick', ok: 'ok', un: '', etc: '' })[e.kind] : 'sick';
+  const box = e ? e.kind : 'sick', why = e ? e.reasons.join(', ') : '';
+  const reason = e ? (why || (box === 'sick' ? '질병' : '')) : '';
+  const part = box === 'early' || box === 'late';   // 조퇴·지각은 교시·시간을 직접 넣음
   const subm = e ? (L.nextSchoolDay(e.end, S.holidays) <= today() ? L.nextSchoolDay(e.end, S.holidays) : today()) : today();
   return {
-    box, boxReason: box === 'ok' ? reason : '', grade: String(g), cls: String(c), no: st ? String(st.no) : '', name: st ? st.name : '',
+    box, boxReason: box === 'sick' ? '' : why, grade: String(g), cls: String(c), no: st ? String(st.no) : '', name: st ? st.name : '',
     reason, y1: String(s.getFullYear()), m1: String(s.getMonth() + 1), d1: String(s.getDate()), w1: KD[s.getDay()], p1: '',
-    m2: String(t.getMonth() + 1), d2: String(t.getDate()), w2: KD[t.getDay()], p2: '', amount: e ? String(e.days.length) : '', unit: '일', what: '결석',
+    m2: String(t.getMonth() + 1), d2: String(t.getDate()), w2: KD[t.getDay()], p2: '', amount: e && !part ? String(e.days.length) : '', unit: part ? '시간' : '일', what: box === 'early' ? '조퇴' : box === 'late' ? '지각' : '결석',
     submit: subm, self: st ? st.name : '', guardian: st ? (S.guardians[st.no] || '') : '', confirm: S.settings.confirm || '학부모와의 통화', confirmDate: today(),
     teacher: S.settings.teacher || '', school: S.settings.school || '', evidence: e ? e.ev.join(', ') : ''
   };
@@ -734,8 +751,8 @@ function keepReport(f) {
   if (f.school && !S.settings.school) S.settings.school = f.school;
   if (RC.key) {
     S.reports[RC.key] = { f, made: today() };
-    const e = episodes().find(x => x.key === RC.key), k = ({ sick: 'sick', ok: 'ok' })[f.box];   // 구분은 결석신고서에서만 정함
-    if (e && k) e.days.forEach(d => { const r = S.att[d] && S.att[d][e.no]; if (r && r.t === 'A') r.k = k; });
+    const e = episodes().find(x => x.key === RC.key), k = AK[f.box] ? f.box : '';   // 결석신고서에서 구분을 바꾸면 출결 기록도 같이 바뀜
+    if (e && k && k !== e.kind) e.days.forEach(d => { const r = S.att[d] && S.att[d][e.no]; if (r) S.att[d][e.no] = mkRec(k, r); });
   }
   persist();
 }
@@ -856,14 +873,14 @@ const A = {
     const before = wkStat(no, L.weekStart(d)).level;
     if (m === 'L') {
       let nr;
-      if (cur && cur.t === 'L') nr = null;
+      if (grpOf(cur) === 'L') nr = null;
       else nr = { t: 'L' };
       setRec(no, d, nr); render(); if (nr) afterDelta(no, d, before);
     } else {
-      if (cur && cur.t === 'A') { setRec(no, d, null); render(); return; }
-      const prev = rec(no, L.prevSchoolDay(d, S.holidays));                 // 어제도 결석이면 같은 구분·사유를 이어 씀
-      const nr = prev && prev.t === 'A' ? { t: 'A', k: prev.k || 'un', r: prev.r || '', ev: prev.ev || '' } : { t: 'A', k: 'sick' };
-      setRec(no, d, nr); render();
+      if (grpOf(cur) === m) { setRec(no, d, null); render(); return; }
+      const k = m === 'A' ? 'sick' : (view.rk || 'ok'), prev = rec(no, L.prevSchoolDay(d, S.holidays));
+      const nr = mkRec(k, prev && kindOf(prev) === k ? prev : null);   // 어제도 같은 구분이면 사유·증빙을 이어 씀
+      setRec(no, d, nr); render(); if (k === 'late') afterDelta(no, d, before);
       recModal(no, d, true);
     }
   },
@@ -878,11 +895,11 @@ const A = {
   'rec-type': t => {
     const { no, d } = recCtx, ty = t.dataset.t, cur = rec(no, d);
     if (!ty) setRec(no, d, null);
-    else if (!cur || cur.t !== ty) setRec(no, d, ty === 'A' ? { t: 'A', k: 'sick' } : { t: 'L' });
+    else if (grpOf(cur) !== ty) setRec(no, d, mkRec(ty === 'A' ? 'sick' : ty === 'R' ? (view.rk || 'ok') : 'Lu', cur));
     render(); recModal(no, d);
   },
   'rec-reason': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; const n = Object.assign({}, cur); if (n.r === t.dataset.r) delete n.r; else n.r = t.dataset.r; setRec(no, d, n); recModal(no, d); },
-  'rec-kind': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; setRec(no, d, Object.assign({}, cur, { k: t.dataset.k })); render(); recModal(no, d); },
+  'rec-rkind': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; view.rk = t.dataset.k; setRec(no, d, mkRec(t.dataset.k, cur)); render(); recModal(no, d); },
   'rec-areason': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; setRec(no, d, Object.assign({}, cur, { r: t.dataset.r })); render(); recModal(no, d); },
   'rec-ev': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; const n = Object.assign({}, cur); n.ev = n.ev === t.dataset.r ? '' : t.dataset.r; setRec(no, d, n); recModal(no, d); },
   'todo-open': () => todoModal(),
@@ -945,7 +962,6 @@ const C = {
   rmonth: t => { view.rmonth = t.value; render(); },
   runN: t => { S.settings.runN = Math.min(5, Math.max(2, +t.value || 2)); persist(); render(); },
   weekN: t => { S.settings.weekN = Math.min(5, Math.max(2, +t.value || 3)); persist(); render(); },
-  cApp: t => { S.settings.countApproved = !!t.checked; persist(); render(); },
   school: t => { S.settings.school = t.value.trim(); TT.school.save({ name: S.settings.school }); persist(); },
   teacher: t => { S.settings.teacher = t.value.trim(); TT.school.save({ teacher: S.settings.teacher }); persist(); },
   confirm: t => { S.settings.confirm = t.value; persist(); },
