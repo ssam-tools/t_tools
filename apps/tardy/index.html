@@ -742,7 +742,7 @@ function reportModal(key) {
       <fieldset style="grid-column:1/-1"><legend>내용</legend>${inp('reason', '위 학생은 ( ? )으로 인하여')}
         <div class="grid4">${inp('y1', '시작 연도')}${inp('m1', '월')}${inp('d1', '일')}${inp('w1', '요일')}</div>
         <div class="grid4">${inp('p1', '시작 교시', '', 'placeholder="예: 1"')}${inp('m2', '끝난 월')}${inp('d2', '일')}${inp('w2', '요일')}</div>
-        <div class="grid4">${inp('p2', '끝난 교시', '', 'placeholder="예: 7"')}${inp('amount', '기간')}<div><label class="f">단위</label>${rad('unit', ['일', '교시'])}</div></div><div><label class="f">신고 <span class="muted small">(구분과 같이 바뀝니다)</span></label>${rad('what', ['병결', '인정결', '인정조퇴', '인정지각'])}</div></fieldset>
+        <div class="grid4" style="grid-template-columns:minmax(0,.7fr) minmax(0,.7fr) auto auto;align-items:end">${inp('p2', '끝난 교시', '', 'placeholder="예: 7"')}${inp('amount', '기간')}<div><label class="f">단위</label>${rad('unit', ['일', '교시'])}</div><div><label class="f">신고</label>${rad('what', ['병결', '인정결', '인정조퇴', '인정지각'])}</div></div></fieldset>
       <fieldset><legend>제출</legend><div class="grid2"><div><label class="f" for="r-submit">제출일</label><input type="date" id="r-submit" data-r="submit" value="${esc(f.submit)}"></div>${inp('self', '본인')}</div>
         ${inp('guardian', '보호자 (이 학생 보호자 이름으로 기억함)')}<p class="small muted" style="margin:6px 0 0">증빙: ${esc(f.evidence || '—')}</p></fieldset>
       <fieldset><legend>담임 확인서</legend><label class="f">확인 방법</label>${rad('confirm', CONFIRM)}
