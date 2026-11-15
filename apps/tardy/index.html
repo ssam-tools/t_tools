@@ -344,6 +344,9 @@ const mkRec = (k, base) => { const b = base || {}, x = k === 'late' ? { t: 'L', 
 /* 마지막 교시: 월·수·금 6교시, 화·목 7교시 */
 const lastP = d => { const w = L.dow(d); return w === 2 || w === 4 ? 7 : 6; };
 /* 인정조퇴: 고른 교시 ~ 마지막 교시, 인정지각: 1교시 ~ 고른 교시 */
+/* 결석신고서 신고·단위는 구분을 따라감: 신고 = 구분 이름, 단위 = 결석은 일, 조퇴·지각은 교시 */
+const WHAT = k => AK[k] || '병결';
+const UNIT = k => k === 'early' || k === 'late' ? '교시' : '일';
 const pRange = (k, p, d) => k === 'early' ? [p, lastP(d)] : [1, p];
 const recLabel = r => { const k = kindOf(r); return !k ? '' : k === 'Lu' ? '지각' : k === 'sick' ? '결석' : AK[k]; };
 const cellCh = r => ({ L: '지', A: '결', R: '인' })[grpOf(r)] || '';
@@ -714,7 +717,7 @@ function reportDefaults(e) {
   return {
     box, boxReason: box === 'sick' ? '' : why, grade: String(g), cls: String(c), no: st ? String(st.no) : '', name: st ? st.name : '',
     reason, y1: String(s.getFullYear()), m1: String(s.getMonth() + 1), d1: String(s.getDate()), w1: KD[s.getDay()], p1: pr ? String(pr[0]) : '',
-    m2: String(t.getMonth() + 1), d2: String(t.getDate()), w2: KD[t.getDay()], p2: pr ? String(pr[1]) : '', amount: pr ? String(pr[1] - pr[0] + 1) : e && !part ? String(e.days.length) : '', unit: part ? '교시' : '일', what: box === 'early' ? '조퇴' : box === 'late' ? '지각' : '결석',
+    m2: String(t.getMonth() + 1), d2: String(t.getDate()), w2: KD[t.getDay()], p2: pr ? String(pr[1]) : '', amount: pr ? String(pr[1] - pr[0] + 1) : e && !part ? String(e.days.length) : '', unit: UNIT(box), what: WHAT(box),
     submit: subm, self: st ? st.name : '', guardian: st ? (S.guardians[st.no] || '') : '', confirm: S.settings.confirm || '학부모와의 통화', confirmDate: today(),
     teacher: S.settings.teacher || '', school: S.settings.school || '', evidence: e ? e.ev.join(', ') : ''
   };
@@ -724,6 +727,8 @@ function reportModal(key) {
   const e = key ? episodes().find(x => x.key === key) : null;
   const saved = key && S.reports[key] ? S.reports[key].f : null;
   const f = Object.assign(reportDefaults(e), saved || {});
+  if (!AK[f.box]) f.box = 'sick';
+  f.what = WHAT(f.box); f.unit = UNIT(f.box);   // 예전에 저장한 신고서도 구분에 맞춤
   if (!f.teacher) f.teacher = S.settings.teacher || ''; if (!f.school) f.school = S.settings.school || '';
   RC = { key, f };
   const inp = (id, label, cls, extra) => `<div><label class="f" for="r-${id}">${label}</label><input type="text" id="r-${id}" data-r="${id}" value="${esc(f[id])}" class="${f[id] ? 'auto' : ''} ${cls || ''}" ${extra || ''}></div>`;
@@ -737,7 +742,7 @@ function reportModal(key) {
       <fieldset style="grid-column:1/-1"><legend>내용</legend>${inp('reason', '위 학생은 ( ? )으로 인하여')}
         <div class="grid4">${inp('y1', '시작 연도')}${inp('m1', '월')}${inp('d1', '일')}${inp('w1', '요일')}</div>
         <div class="grid4">${inp('p1', '시작 교시', '', 'placeholder="예: 1"')}${inp('m2', '끝난 월')}${inp('d2', '일')}${inp('w2', '요일')}</div>
-        <div class="grid4">${inp('p2', '끝난 교시', '', 'placeholder="예: 7"')}${inp('amount', '기간')}<div><label class="f">단위</label>${rad('unit', ['일', '시간', '교시'])}</div><div><label class="f">신고</label>${rad('what', ['결석', '지각', '조퇴'])}</div></div></fieldset>
+        <div class="grid4">${inp('p2', '끝난 교시', '', 'placeholder="예: 7"')}${inp('amount', '기간')}<div><label class="f">단위</label>${rad('unit', ['일', '교시'])}</div></div><div><label class="f">신고 <span class="muted small">(구분과 같이 바뀝니다)</span></label>${rad('what', ['병결', '인정결', '인정조퇴', '인정지각'])}</div></fieldset>
       <fieldset><legend>제출</legend><div class="grid2"><div><label class="f" for="r-submit">제출일</label><input type="date" id="r-submit" data-r="submit" value="${esc(f.submit)}"></div>${inp('self', '본인')}</div>
         ${inp('guardian', '보호자 (이 학생 보호자 이름으로 기억함)')}<p class="small muted" style="margin:6px 0 0">증빙: ${esc(f.evidence || '—')}</p></fieldset>
       <fieldset><legend>담임 확인서</legend><label class="f">확인 방법</label>${rad('confirm', CONFIRM)}
@@ -983,7 +988,16 @@ document.addEventListener('click', e => {
   if (t && A[t.dataset.act]) { e.preventDefault(); A[t.dataset.act](t); return; }
   if (e.target.id === 'modal') { closeModal(); render(); }
 });
-document.addEventListener('change', e => { const t = e.target.closest('[data-chg]'); if (t && C[t.dataset.chg]) C[t.dataset.chg](t); });
+document.addEventListener('change', e => {
+  const t = e.target.closest('[data-chg]'); if (t && C[t.dataset.chg]) C[t.dataset.chg](t);
+  /* 결석신고서: 구분 ↔ 신고 함께 바뀜, 단위는 구분을 따라감 */
+  const n = e.target.name;
+  if (n === 'r-box' || n === 'r-what') {
+    const k = n === 'r-box' ? e.target.value : Object.keys(AK).find(x => AK[x] === e.target.value);
+    const set = (nm, v) => { const el = document.querySelector(`#sheet input[name="${nm}"][value="${v}"]`); if (el) el.checked = true; };
+    set('r-box', k); set('r-what', WHAT(k)); set('r-unit', UNIT(k));
+  }
+});
 document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.r !== undefined) e.target.classList.remove('auto'); });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !$('#modal').hidden) { closeModal(); render(); }
