@@ -70,11 +70,13 @@
   /* 반마다 목표일까지 남은 수업 수 (오늘 포함, 오늘은 아직 끝나지 않은 교시만) */
   function remain(cc, to){
     if(!T || !T.slots || !to) return null;
-    var per = {}; Object.keys(T.slots).forEach(function(k){ var s = T.slots[k]; if(+s.cls === cc){ var w = +k.split("-")[0]; (per[w] = per[w] || []).push(+k.split("-")[1]); } });
+    function perOf(S){ var o = {}; Object.keys(S).forEach(function(k){ var s = S[k]; if(+s.cls === cc){ var w = +k.split("-")[0]; (o[w] = o[w] || []).push(+k.split("-")[1]); } }); return o; }
+    var base = perOf(T.slots), wk = {};                       // 14단계: 수업 교체로 그 주에만 바뀐 시간표(weeks)도 셈
     var d = new Date(), end = parse(to), n = 0, now = d.getHours() * 60 + d.getMinutes(), first = true, g = 0;
     d = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     while(d < end && g++ < 400){
-      var w = d.getDay(), k = key(d);
+      var w = d.getDay(), k = key(d), mon = TT.timetable.monday(d);
+      var per = T.weeks && T.weeks[mon] ? (wk[mon] = wk[mon] || perOf(T.weeks[mon].slots)) : base;
       if(w >= 1 && w <= 5 && !skip[k] && per[w]){
         per[w].forEach(function(p){
           if(first){ var t = (T.periods || []).filter(function(x){ return +x.n === p; })[0]; if(t){ var a = t.t.split(":"); if(+a[0] * 60 + +a[1] + 45 <= now) return; } }

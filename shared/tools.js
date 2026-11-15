@@ -18,7 +18,7 @@
    🔢 문항 생성기  ✅ 형성평가  🔁 보충  🎯 이원목적분류표  ⏳ 진도·시수
    📊 수행평가  📦 제출물 체크  🧹 1인 1역·당번  🪑 자리 바꾸기
    📆 연간 업무  🤖 AI·문서 도우미 (📃 학습지·문항 📏 채점 기준 📨 가정통신문 🏛️ 공문 🗒️ 회의록 💬 민원 답변 ✒️ 세특 다듬기 ✨ 자유 요청 🗄️ 보관함)  🔎 학교 자료실
-   📜 의무연수 취합
+   📜 의무연수 취합  🧳 학기초 세팅
    🎮 수학 놀이터 (🎁 보물 상자 💣 숫자 폭탄 🎡 돌림판 🛤️ 주사위 말판 🏇 주사위 합 경주 🃏 하이·로우 🏁 퀴즈 배틀 🎱 수학 빙고 ➕ 숫자 만들기 🕵️ 수 탐정 📈 그래프 맞히기 🔲 스도쿠 🔷 세 장 찾기 🎴 짝 맞추기 🗼 하노이 탑 🪄 마방진 🔥 성냥개비 식) */
 var TT_CATS = [
   {id:"teach", icon:"📚", name:"교과지도",   desc:"시간표 · 수업 기록 · 수업 도구 · 모둠 · 수행평가"},
@@ -28,7 +28,7 @@ var TT_CATS = [
   {id:"math",  icon:"🧮", name:"수학",       desc:"문항 생성 · 형성평가·보충 · 이원목적분류표 · 진도 · 수학 놀이터", soon:["📐 도형·그래프 그리기","📉 통계 실험","📚 고교 대비 자료실"]}
 ];
 var TT_TOOLS = [
-  {id:"timetable",icon:"🕘", cat:"teach", short:"내 시간표", name:"내 시간표", desc:"컴시간알리미 시간표를 붙여 넣으면 오늘 수업·수업 기록장에 자동으로 쓰입니다.", href:"apps/timetable/", ready:true, room:true},
+  {id:"timetable",icon:"🕘", cat:"teach", short:"내 시간표", name:"내 시간표", desc:"컴시간 시간표를 붙여 넣으면 오늘 수업·수업 기록장에 쓰입니다. 수업 교체는 그 주에만 반영.", href:"apps/timetable/", ready:true, room:true},
   {id:"journal",icon:"📒", cat:"teach", short:"수업 기록장", name:"수업 기록장", desc:"수업 진도와 학생 활동을 반별로 기록합니다.", href:"apps/journal/", ready:true, room:true},
   {id:"class",  icon:"🧰", cat:"teach", short:"수업 도구", name:"수업 도구", desc:"칠판(모눈·좌표평면) · 뽑기 · 타이머 · 모둠 점수 · 소음 신호등.", href:"apps/class/", ready:true, room:true},
   {id:"group",  icon:"🧩", cat:"teach", short:"모둠 편성", name:"모둠 편성", desc:"조건에 맞게 모둠과 좌석을 편성합니다.", href:"apps/group/", ready:true, room:true, months:[3]},
@@ -52,5 +52,6 @@ var TT_TOOLS = [
   {id:"ai",     icon:"🤖", cat:"work",  short:"AI·문서", name:"AI·문서 도우미", desc:"개인정보를 가린 AI 요청문, 가정통신문·공문 틀, 보관함.", href:"apps/ai/", ready:true},
   {id:"lib",    icon:"🔎", cat:"work",  short:"자료실", name:"학교 자료실", desc:"규정집·교육계획서·기재요령·서식을 누구나 올리고 내용까지 찾기 (몇 쪽인지).", href:"apps/lib/", ready:true},
   {id:"train",  icon:"📜", cat:"work",  short:"의무연수", name:"의무연수 취합", desc:"꾸러미 이수증·이수번호를 한 번 내면 연수 담당자들이 한 번에 모아 갑니다.", href:"apps/train/", ready:true},
+  {id:"setup",  icon:"🧳", cat:"work",  short:"학기초 세팅", name:"학기초 세팅", desc:"담당자가 명렬·교직원·학사일정·전체 시간표·학교 정보를 잠근 파일 하나로 → 선생님은 불러와 내 이름만 고르면 끝.", href:"apps/setup/", ready:true, months:[2,3]},
   {id:"merge",  icon:"📎", cat:"work",  short:"파일 합치기", name:"파일 합치기", desc:"한글·엑셀 파일 여러 개를 하나로 합치는 윈도우 프로그램을 내려받습니다.", file:"downloads/FileMerge.exe", ready:true}
 ];

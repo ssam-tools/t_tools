@@ -251,6 +251,46 @@
     header{flex-direction:column;align-items:stretch;gap:8px}
     .bar .seg{flex:1}.seg button{flex:1;padding:7px 8px}
   }
+  /* ── 첫 화면 개편 (시안): 오늘 칸을 크고 또렷하게, 도구는 한 줄로 ── */
+  .tdrow{height:auto;flex:1 1 auto;min-height:clamp(190px,34vh,300px);max-height:350px}
+  body:not(.allv) .toprow:not(.wk2){height:auto;flex:1 1 auto;min-height:clamp(100px,15vh,150px);max-height:250px}
+  .tbig b{background:none;padding:0}
+  .tdy{border-radius:16px;padding:clamp(8px,1.4vh,14px) clamp(12px,1.2vw,18px);gap:4px}
+  #tdLesson,#tdCheck,#tdTodo{border-left:1px solid var(--line)}
+  #tdLesson{border-top:6px solid var(--accent)}#tdCheck{border-top:6px solid var(--star)}#tdTodo{border-top:6px solid var(--ok)}
+  .tdh{font-size:clamp(16px,2.5vh,20px)}
+  .tdn{font-size:13px;padding:2px 10px}
+  .tdl{font-size:clamp(14px,2.05vh,16.5px);line-height:1.65}
+  .tdl .ls b{background:#fff3a8;border-radius:3px;padding:0 3px}
+  .tdm{font-size:13px}
+  #today .tdk{font-size:clamp(14px,2vh,16px);line-height:1.7}
+  #today .tdk .n{font-size:13px;padding:1px 9px}
+  #today .tdy.tdf{background:var(--card);border:3px solid var(--fc,var(--ok));box-shadow:0 6px 18px rgba(30,60,100,.16)}
+  #tdLesson.tdf{--fc:var(--accent)}#tdCheck.tdf{--fc:var(--star)}#tdTodo.tdf{--fc:var(--ok)}
+  #today .tdmode{font-size:12.5px;padding:2px 10px;background:var(--fc,var(--ok));border-color:var(--fc,var(--ok));color:#fff}
+  .toprow{height:clamp(100px,15vh,150px)}
+  /* 도구: 자주 쓰는 도구는 한 줄 띠, 전체 도구는 갈래 카드 */
+  .tbar{display:flex;flex-direction:column;gap:clamp(6px,1vh,10px);flex:1 1 0;min-height:0}
+  .tbar.fav{flex:none;flex-direction:row;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 8px}
+  .tbar.fav .gh{margin:0;flex:none}.tbar.fav .ghr,.tbar.fav .ghh{display:none}
+  .tbar.fav main#grid.fav{display:flex;flex:1 1 auto;min-width:0;min-height:0;gap:6px;overflow:hidden;grid-template-columns:none;grid-template-rows:none}
+  .tbar.fav .fv{flex:none}
+  .tbar.fav .fv .tb{background:#f3f6f9;border:1px solid #e3e9ef;border-radius:10px;padding:7px 12px;gap:6px}
+  .tbar.fav .fv .tb:hover{background:var(--accent-soft);border-color:var(--accent)}
+  .tbar.fav .fv .tb span{font-size:20px}.tbar.fav .fv .fn b{font-size:15px}.tbar.fav .fv .fn i{display:none}
+  .tbar.fav a.fv.rec{align-items:center;gap:5px;text-decoration:none;color:#7a5a00;background:var(--star-soft);border:1px dashed var(--star);border-radius:10px;padding:6px 10px;font-size:13.5px;white-space:nowrap}
+  .tbar.fav a.fv.rec span{font-size:17px}
+  body.allv .tdrow{flex:none;min-height:0;height:clamp(112px,16vh,150px)}
+  body.allv .toprow:not(.wk2){height:clamp(92px,12.5vh,140px)}
+  body.allv .tbig .tclk{font-size:clamp(26px,4.4vh,40px)}body.allv .tbig.td8 b{font-size:clamp(20px,3.2vh,28px)}
+  .fpick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+  .fopt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer;text-align:left;color:var(--ink)}
+  .fopt.on{border-color:var(--accent);background:var(--accent-soft)}
+  .fopt b{font-size:17px}.fopt span{font-size:15px}.fopt small{font-size:12px;color:var(--sub)}
+  .fopt[data-f="soft"] b,.fopt[data-f="soft"] span{font-family:"SN Gowun Dodum","함초롬돋움","Malgun Gothic",sans-serif}
+  .fopt[data-f="neat"] b,.fopt[data-f="neat"] span{font-family:"SN Gowun Batang","함초롬바탕","바탕",serif}
+  .fopt[data-f="cute"] b,.fopt[data-f="cute"] span{font-family:"SN Jua","HY엽서M","Malgun Gothic",sans-serif;font-weight:400}
+  @media (max-width:760px){ .tdrow{height:auto} .tbar.fav{flex-wrap:wrap} .tbar.fav main#grid.fav{flex-wrap:wrap} }
 </style>
 </head>
 <body>
@@ -267,6 +307,9 @@
       <div class="menu">
         <button type="button" id="mHelp">처음 사용 안내</button>
         <button type="button" id="mSchool">학교·선생님 설정</button>
+        <a href="apps/setup/">🧳 학기초 세팅 (세팅 파일)</a>
+        <button type="button" id="mAuto">✨ 자동 준비 설정</button>
+        <button type="button" id="mFont">🔤 화면 글꼴</button>
         <button type="button" id="mBoard">학교 업무판 연결</button>
         <button type="button" id="mInstall" hidden>앱으로 설치</button>
         <hr>
@@ -286,12 +329,14 @@
   <section id="mytodo" class="mytodo" aria-label="내 할 일 (나만 보기)"></section>
 </div>
 
+<div id="tbar" class="tbar">
 <div class="gh" id="gridHead">
   <div class="gtab" role="tablist"><button type="button" data-v="fav">⭐ 자주 쓰는 도구</button><button type="button" data-v="all">🗂️ 전체 도구 <small id="gAllN"></small></button></div>
   <span class="ghr" id="ghRec"></span>
   <span class="ghh" id="ghHint"></span>
 </div>
 <main id="grid"></main>
+</div>
 
 <footer>
   <span class="priv">🔒 입력한 자료는 이 기기의 브라우저에만 저장되며, 밖으로 전송되지 않습니다.</span>
@@ -307,6 +352,7 @@
     <label class="f">학교 로고 <small>(선택 · 제목 옆에 보여요. 흰 바탕은 자동으로 투명하게)</small></label>
     <div class="logo"><img id="sLogoImg" alt="" hidden><span class="none" id="sLogoNone">없음</span><input type="file" id="sLogo" accept="image/png,image/jpeg,image/webp" hidden><button type="button" class="btn" id="sLogoPick">🖼️ 그림 고르기</button><button type="button" class="btn" id="sLogoDel" hidden>지우기</button></div>
     <p class="muted" id="sPrev"></p>
+    <p class="sm">교장 · 주소 · 전화 · 컴시간 학교 코드는 <a href="apps/setup/?make">🧳 학기초 세팅</a>에서 넣습니다.</p>
     <div class="acts"><span></span><div class="r"><button type="button" class="btn" id="sCancel">취소</button><button type="submit" class="btn primary">저장</button></div></div>
   </form>
 </dialog>
@@ -315,7 +361,8 @@
   <form method="dialog">
     <h2>처음 사용 안내</h2>
     <ol>
-      <li><b>학급 명렬표</b>에서 나이스 학생 명단 파일(엑셀)을 올립니다. 학년·반이 자동으로 등록됩니다.</li>
+      <li>학교 담당 선생님께 <b>학교 세팅 파일</b>과 비밀 문구를 받았다면 <b>🧳 학기초 세팅</b>에서 불러오고 내 이름만 고르면 명렬·학사일정·내 시간표·학교 정보가 한 번에 들어갑니다.</li>
+      <li>세팅 파일이 없으면 <b>학급 명렬표</b>에서 나이스 학생 명단 파일(엑셀)을 올립니다. 학년·반이 자동으로 등록됩니다.</li>
       <li>담임이라면 ★ 버튼으로 <b>우리 반</b>을 지정합니다.</li>
       <li>⋯ 메뉴의 <b>학교·선생님 설정</b>에 학교 이름을 넣으면 제목·결석신고서·문자에 함께 쓰입니다.</li>
       <li>수업·생활지도 중 본 것은 <b>✍️ 학생 기록</b>으로 한 줄씩 남기세요. 명렬표의 📇 학생 카드에 모여 생기부 쓸 때 꺼내 봅니다.</li>
@@ -346,6 +393,7 @@
 <script src="shared/guidelogic.js"></script>
 <script src="shared/board.js"></script>
 <script src="shared/mytodo.js"></script>
+<script src="shared/auto.js"></script>
 <script src="shared/today.js"></script>
 <script>
 (function(){
@@ -454,10 +502,11 @@
       var a = document.createElement(t.file ? "button" : "a"); a.className = "tb"; a.dataset.tid = t.id;
       if(t.file){ a.type = "button"; a.onclick = function(){ askDownload(t); }; } else a.href = t.href;
       a.innerHTML = "<span>" + t.icon + '</span><div class="fn"><b></b><i></i></div>' + (t.file ? '<small class="pc">PC 프로그램</small>' : "");
-      a.querySelector("b").textContent = t.name; a.querySelector("i").textContent = t.desc; a.title = t.desc;
+      a.querySelector("b").textContent = t.short || t.name; a.querySelector("i").textContent = t.desc; a.title = t.name + " · " + t.desc;
       w.appendChild(a); w.appendChild(pinBtn(t.id)); grid.appendChild(w);
     });
     var R = recMissing(F), rc = $("ghRec"); rc.textContent = "";
+    R.slice(0, 2).forEach(function(t){ var k = document.createElement("a"); k.className = "fv rec"; k.href = t.href; k.dataset.tid = t.id; k.title = "이달 추천 · " + t.name; k.innerHTML = "<span></span><b></b>"; k.firstChild.textContent = t.icon; k.lastChild.textContent = t.short || t.name; grid.appendChild(k); });
     if(R.length){ rc.appendChild(document.createTextNode("이달 추천 ▸"));
       R.slice(0, 3).forEach(function(t){ var k = document.createElement("a"); k.className = "tbs"; k.href = t.href; k.dataset.tid = t.id; k.textContent = t.icon + " " + t.short; k.title = t.name + " · " + t.desc; rc.appendChild(k); }); }
     $("ghHint").textContent = P.length ? "📌 고정 " + P.length + "개 · 나머지는 많이 쓴 순서" : "많이 쓴 순서로 바뀌어요 · 📌로 고정";
@@ -468,7 +517,7 @@
     var tot = TT_TOOLS.filter(okTool).length; $("gAllN").textContent = tot;
     $("count").textContent = "도구 " + tot + "개 · v" + TT.VERSION;
     Array.prototype.forEach.call($("gridHead").querySelectorAll(".gtab button"), function(b){ var on = b.dataset.v === v; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); });
-    grid.classList.toggle("fav", v === "fav");
+    grid.classList.toggle("fav", v === "fav"); $("tbar").classList.toggle("fav", v === "fav"); document.body.classList.toggle("allv", v === "all");
     if(v === "fav"){ try{ drawFav(); }catch(err){ v = "all"; grid.classList.remove("fav"); } }
     if(v === "all"){ $("ghRec").textContent = ""; $("ghHint").textContent = "📌를 누르면 자주 쓰는 도구에 고정"; drawCats(); }
   }
@@ -587,9 +636,10 @@
   /* 명렬표에서 지정한 우리 반(담임)을 보여 줍니다. */
   function showHome(){
     var chip = $("homeChip"), d = TT.roster.load(), h = TT.roster.home(d);
+    chip.href = "apps/roster/";
     if(h){ chip.textContent = "★ 우리 반: " + h.name; chip.className = "home"; }
     else if(TT.roster.has(d)){ chip.textContent = "우리 반 미지정 · 명렬표에서 ★로 지정"; chip.className = "home none"; }
-    else{ chip.textContent = "① 먼저 명렬표에 나이스 파일을 올려 주세요 →"; chip.className = "home none"; }
+    else{ chip.textContent = "① 학교 세팅 파일 불러오기 (또는 명렬표에 나이스 파일) →"; chip.className = "home none"; chip.href = "apps/setup/"; }   // 14단계
   }
 
   /* 백업 알림: 마지막 백업 날짜를 보여 주고, 30일이 지나면(또는 한 번도 안 했으면) 눌러서 바로 백업하게 합니다. */
@@ -609,6 +659,24 @@
   $("mHelp").onclick = function(){ closeMenu(); $("dlgHelp").showModal(); };
   $("mSchool").onclick = function(){ closeMenu(); openSchool(); };
   $("mBackup").onclick = function(){ closeMenu(); TT.backup.save(); showBackup(); };
+  $("mAuto").onclick = function(){ closeMenu(); if(window.TTAuto) TTAuto.settings(); };
+  /* 화면 글꼴 4가지 (TT.font, shared/fonts.css) */
+  $("mFont").onclick = function(){
+    closeMenu();
+    var d = document.createElement("dialog"), cur = TT.font.get();
+    d.innerHTML = '<form><h2>🔤 화면 글꼴</h2><p>모든 도구 화면에 함께 바뀝니다. 이 기기에만 저장됩니다.</p><div class="fpick"></div><div class="acts"><span></span><div class="r"><button type="submit" class="btn primary">닫기</button></div></div></form>';
+    var box = d.querySelector(".fpick");
+    TT.font.list.forEach(function(f){
+      var b = document.createElement("button"); b.type = "button"; b.className = "fopt" + (f.id === cur ? " on" : ""); b.dataset.f = f.id;
+      b.innerHTML = '<b></b><span>오후 2:50 · 11월 16일 월요일</span><small></small>';
+      b.querySelector("b").textContent = f.name; b.querySelector("small").textContent = f.desc;
+      b.onclick = function(){ TT.font.set(f.id); Array.prototype.forEach.call(box.children, function(x){ x.classList.toggle("on", x === b); }); };
+      box.appendChild(b);
+    });
+    document.body.appendChild(d); d.addEventListener("close", function(){ d.remove(); });
+    d.querySelector("form").onsubmit = function(e){ e.preventDefault(); d.close(); };
+    d.showModal();
+  };
   $("mNewYear").onclick = function(){ closeMenu(); TT.backup.newYear(function(){ showHome(); showBackup(); showTitle(); showAlerts(); }); };
   $("mRestore").onclick = function(){ closeMenu(); TT.backup.pick(function(){ location.reload(); }); };
   var installEvt = null;

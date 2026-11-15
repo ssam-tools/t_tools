@@ -14,6 +14,9 @@
   내 수업 시간표. 컴시간알리미(교사용) 화면의 시간표 표를 복사해 붙여 넣으면 자동으로 읽습니다.
   컴시간 서버에 직접 접속하지 않습니다(붙여 넣은 내용만 읽음). 교사 이름은 저장하지 않습니다.
   · 저장: "tt_timetable_v1" (이 기기 브라우저에만, 전체 백업에 포함) → 첫 화면 "오늘 수업", 수업 기록장이 함께 씁니다.
+  · 14단계: [기본 | 이번 주 | 다음 주]. 수업 교체는 컴시간교사.kr 화면을 통째로 복사해 붙여 넣으면 그 주에만 반영(기본 시간표는 그대로).
+    컴시간 사이트는 http 주소라 https인 쌤 노트 안에 끼워 넣을 수 없어(브라우저가 막음), 화면 왼쪽 절반 새 창으로 엽니다.
+    칸을 누르면 반·과목 단추로 바로 고칩니다(빠른 격자 입력).
 -->
 <style>
   main{gap:12px}
@@ -45,6 +48,19 @@
   .msg{font-size:13px;font-weight:700;min-height:1.3em}
   .msg.ok{color:var(--ok)} .msg.err{color:var(--danger)}
   .row{display:flex;gap:6px;flex-wrap:wrap}
+  .cell.chg{background:#fff1d6!important;border:2px solid #e0a526!important}
+  .cell.chg::after{content:"바뀜";font-size:10px;font-weight:800;color:#8a5a00;line-height:1}
+  .cell.gone{border:2px dashed #e0a526;color:#8a5a00}
+  .tt thead th small{font-weight:400;font-size:11.5px}
+  .vseg button small{font-weight:400;font-size:11.5px;margin-left:3px}
+  .comci{display:flex;gap:6px;flex-wrap:wrap}
+  .comci .btn{font-size:13px;padding:6px 10px}
+  .pend{display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:#fff6d6;border:1px solid #e0a526;border-radius:10px;padding:6px 8px;font-size:13px;font-weight:700}
+  .pend .btn{font-size:13px;padding:5px 10px}
+  .pk{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .pk button{font:inherit;font-size:15px;font-weight:700;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;min-width:62px}
+  .pk button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .pk.s button{font-size:13.5px;min-width:0;padding:6px 10px}
   @media (max-width:760px){
     body{height:auto;min-height:100dvh;overflow:auto}
     main{flex-direction:column}
@@ -62,10 +78,13 @@
     <h1>🕘 내 시간표</h1>
   </div>
   <div class="bar">
+    <div class="seg vseg" id="vseg" role="tablist"><button type="button" data-v="base" aria-pressed="true">기본</button><button type="button" data-v="0" aria-pressed="false">이번 주<small id="w0"></small></button><button type="button" data-v="1" aria-pressed="false">다음 주<small id="w1"></small></button></div>
     <span class="sm" id="upd"></span>
     <details class="more" id="more">
       <summary aria-label="더 보기">⋯</summary>
       <div class="menu">
+        <button type="button" id="mReset" hidden>이 주를 기본 시간표로 되돌리기</button>
+        <button type="button" id="mCode">컴시간 학교 코드 바꾸기</button>
         <button type="button" id="mClear" class="danger">시간표 모두 지우기</button>
       </div>
     </details>
@@ -78,24 +97,23 @@
     <div class="sum" id="sum"></div>
   </div>
   <div class="side">
-    <h2>📋 컴시간에서 가져오기</h2>
-    <ol>
-      <li>컴시간알리미 <b>교사용</b> 화면에서 내 이름을 고릅니다.</li>
-      <li>시간표 표를 마우스로 <b>끌어서 선택</b>하고 <b>Ctrl+C</b></li>
-      <li>아래 칸을 누르고 <b>Ctrl+V</b> → 자동으로 채워집니다.</li>
-    </ol>
+    <h2 id="sTitle">📋 컴시간에서 가져오기</h2>
+    <div class="comci"><button type="button" class="btn primary" id="cOpen" title="컴시간교사.kr을 화면 왼쪽 절반 창으로 엽니다">🌐 컴시간 열기</button><button type="button" class="btn" id="cCode" title="컴시간 학교 코드를 복사합니다">📋 코드 복사</button></div>
+    <ol id="sHow"></ol>
+    <div class="pend" id="pend" hidden><span id="pendTxt"></span><span style="margin-left:auto"></span><button type="button" class="btn" id="pNo">취소</button><button type="button" class="btn primary" id="pOk">반영</button></div>
     <textarea class="paste" id="paste" placeholder="여기에 붙여 넣기 (Ctrl+V)" aria-label="컴시간 시간표 붙여 넣기"></textarea>
     <div class="msg" id="msg"></div>
-    <p class="sm">칸을 누르면 직접 고칠 수 있고, 교시 번호를 누르면 시작 시각을 바꿀 수 있습니다. 시간표가 바뀌면 다시 붙여 넣으세요.</p>
+    <p class="sm" id="sTip"></p>
   </div>
 </main>
 
 <footer>
   <span>첫 화면의 <b>오늘 수업</b>과 <b>수업 기록장</b>이 이 시간표를 씁니다.</span>
-  <span class="priv">🔒 이 기기에만 저장 · 컴시간에 접속하지 않음</span>
+  <span class="priv">🔒 이 기기에만 저장 · 붙여 넣은 내용만 읽음</span>
 </footer>
 
 <script src="../../shared/tt.js"></script>
+<script src="../../shared/comci.js"></script>
 <script>
 (function(){
   "use strict";
@@ -103,140 +121,186 @@
   var DAYS = ["월","화","수","목","금"];
   var DEF_TIMES = ["09:00","09:55","10:50","11:45","13:30","14:25","15:20","16:15"];
   var GRADE_COL = {1:"#e3f3ea", 2:"#fff1d6", 3:"#e6f0fa"};
+  var TTT = TT.timetable, same = TTT.same, parseCell = TTComci.parseCell, pad5 = TTComci.pad5;
 
   function blank(){ return {v:1, periods: DEF_TIMES.slice(0,7).map(function(t,i){ return {n:i+1, t:t}; }), slots:{}, updatedAt:0}; }
-  var T = TT.timetable.load() || blank();
+  var T = TTT.load() || blank();
+  var view = "base", pending = null;                            // view: "base" 또는 이번 주에서 몇 주 뒤(0, 1 …)
 
-  function save(){ T.updatedAt = Date.now(); TT.store.set(TT.timetable.KEY, T); render(); }
+  function save(){ T.updatedAt = Date.now(); TT.store.set(TTT.KEY, T); render(); }
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function pad(n){ return ("0" + n).slice(-2); }
+  function ymd(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function parseYmd(k){ var a = k.split("-"); return new Date(+a[0], a[1] - 1, +a[2]); }
+  var thisMon = (function(){ var d = new Date(), w = d.getDay(); if(w === 0 || w === 6) d.setDate(d.getDate() + (w === 6 ? 2 : 1)); return TTT.monday(d); })();   // 주말에는 다가오는 주가 "이번 주"
+  function monOf(v){ var d = parseYmd(thisMon); d.setDate(d.getDate() + 7 * v); return ymd(d); }
+  function md(k, plus){ var d = parseYmd(k); d.setDate(d.getDate() + (plus || 0)); return (d.getMonth() + 1) + "/" + d.getDate(); }
+  function isWeek(){ return view !== "base"; }
+  function curMon(){ return isWeek() ? monOf(view) : null; }
+  function slotsNow(){ if(pending) return pending.slots; return isWeek() ? TTT.week(curMon()) : T.slots; }
+  function msg(cls, t){ $("msg").className = "msg " + cls; $("msg").textContent = t; }
 
-  /* 칸 글자 → {code, cls, subj}. "304 수학", "3-4 수학", "수학 304" 모두 됩니다. */
-  function parseCell(text){
-    var s = String(text || "").replace(/\s+/g, " ").trim();
-    if(!s) return null;
-    var m = s.match(/(\d)\s*-\s*(\d{1,2})(?!\d)/) || s.match(/(?:^|\D)(\d)(\d{2})(?!\d)/);
-    var code = "", cls = null;
-    if(m){ cls = (+m[1]) * 100 + (+m[2]); code = String(cls); s = s.replace(m[0].replace(/^\D/, ""), " "); }
-    var subj = s.replace(/\s+/g, " ").trim();
-    if(!code){ code = subj.split(" ")[0]; subj = subj.split(" ").slice(1).join(" "); }
-    return {code: code.slice(0, 12), cls: cls, subj: subj.slice(0, 12)};
-  }
+  /* ---------- 보기: 기본 | 이번 주 | 다음 주 ---------- */
+  $("w0").textContent = md(monOf(0)) + "~"; $("w1").textContent = md(monOf(1)) + "~";
+  $("vseg").addEventListener("click", function(e){
+    var b = e.target.closest("button[data-v]"); if(!b) return;
+    pending = null; view = b.getAttribute("data-v") === "base" ? "base" : +b.getAttribute("data-v"); msg("", ""); render();
+  });
 
-  /* ---------- 붙여 넣은 내용 읽기 ---------- */
-  var PERIOD_RE = /^\s*(\d{1,2})\s*\(\s*(\d{1,2}:\d{2})\s*\)/;
-  function dayIndex(t){ var c = String(t).trim().charAt(0); return DAYS.indexOf(c); }
+  /* ---------- 컴시간 열기 · 학교 코드 ---------- */
+  function code(){ return TT.school.load().comci; }
+  function askCode(cb){
+    TT.ui.prompt("컴시간 학교 코드 (교사용 시간표를 볼 때 넣는 번호)", code(), "예: 12345", function(v){
+      v = v.replace(/\s+/g, ""); TT.school.save({comci: v}); if(cb) cb(v);
+    });
+  }
+  function copy(t, okMsg){
+    (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t) : Promise.reject())
+      .then(function(){ TT.ui.toast(okMsg); }, function(){ TT.ui.prompt("아래 코드를 복사하세요 (Ctrl+C)", t, "", function(){}); });
+  }
+  $("cCode").onclick = function(){ var c = code(); if(!c) return askCode(function(v){ copy(v, "학교 코드 " + v + "를 복사했습니다. 컴시간 화면에서 Ctrl+V 하세요."); }); copy(c, "학교 코드 " + c + "를 복사했습니다. 컴시간 화면에서 Ctrl+V 하세요."); };
+  $("mCode").onclick = function(){ $("more").open = false; askCode(function(v){ TT.ui.toast(v ? "학교 코드를 저장했습니다." : "학교 코드를 지웠습니다."); }); };
+  function openComci(){
+    var W = screen.availWidth || 1280, H = screen.availHeight || 800, half = Math.floor(W / 2);
+    var w = window.open(TTComci.WEB, "ssam_comci", "left=0,top=0,width=" + half + ",height=" + H);
+    if(!w){ TT.ui.toast("새 창이 막혔어요. 주소창 오른쪽의 팝업 차단 표시를 눌러 허용해 주세요."); return; }
+    try{ window.moveTo(half, 0); window.resizeTo(W - half, H); }catch(e){}   // 앱으로 설치해 쓰면 쌤 노트 창이 오른쪽 절반으로 옮겨 갑니다
+    var c = code(); if(c) copy(c, "컴시간을 왼쪽에 열고 학교 코드(" + c + ")를 복사해 두었어요. 코드 칸에 Ctrl+V 하세요.");
+  }
+  $("cOpen").onclick = function(){ if(code()) return openComci(); askCode(function(){ openComci(); }); };
 
-  function fromHtml(html){
-    var doc = new DOMParser().parseFromString(html, "text/html");
-    var tables = doc.querySelectorAll("table"), best = null;
-    Array.prototype.forEach.call(tables, function(tb){
-      var rows = Array.prototype.filter.call(tb.rows, function(r){ return r.cells.length && PERIOD_RE.test(r.cells[0].textContent); });
-      if(rows.length && (!best || rows.length > best.rows.length)) best = {tb: tb, rows: rows};
-    });
-    if(!best) return null;
-    var cols = [0,1,2,3,4];
-    Array.prototype.some.call(best.tb.rows, function(r){
-      var idx = Array.prototype.map.call(r.cells, function(c){ return dayIndex(c.textContent); });
-      if(idx.filter(function(i){ return i >= 0; }).length >= 3){ cols = idx.slice(1); return true; }
-      return false;
-    });
-    return best.rows.map(function(r){
-      var m = r.cells[0].textContent.match(PERIOD_RE), cells = [];
-      for(var i = 1; i < r.cells.length; i++){
-        var c = r.cells[i]; c.querySelectorAll("br").forEach(function(b){ b.replaceWith(" "); });
-        cells.push({d: cols[i-1] != null ? cols[i-1] : i-1, text: c.textContent});
-      }
-      return {n: +m[1], t: m[2], cells: cells};
-    });
+  /* ---------- 붙여 넣기 ---------- */
+  function guessMon(dates){
+    var d = Object.keys(dates || {})[0]; if(d == null) return null;
+    var a = dates[d].split("-"), now = new Date(), y = now.getFullYear(), dt = new Date(y, +a[0] - 1, +a[1]);
+    if(dt - now > 200 * 86400000) dt.setFullYear(y - 1); else if(now - dt > 200 * 86400000) dt.setFullYear(y + 1);
+    dt.setDate(dt.getDate() - (+d));                                 // 그 요일 → 월요일
+    return ymd(dt);
   }
-  function fromText(text){
-    text = String(text).replace(/\r/g, "");
-    var re = /(?:^|\n)\s*(\d{1,2})\s*\(\s*(\d{1,2}:\d{2})\s*\)/g, hits = [], m;
-    while((m = re.exec(text))) hits.push({n: +m[1], t: m[2], start: m.index, end: re.lastIndex});
-    if(!hits.length || text.indexOf("\t") < 0) return null;
-    var head = text.slice(0, hits[0].start).split("\t").map(dayIndex), cols = [0,1,2,3,4];
-    if(head.filter(function(i){ return i >= 0; }).length >= 3) cols = head.filter(function(i){ return i >= 0; });
-    return hits.map(function(h, k){
-      var chunk = text.slice(h.end, k + 1 < hits.length ? hits[k+1].start : text.length);
-      var parts = chunk.split("\t").slice(1);
-      return {n: h.n, t: h.t, cells: parts.slice(0, cols.length).map(function(p, i){ return {d: cols[i], text: p}; })};
-    });
+  /* 전체 교사가 한 표에 있는 화면이면 내 이름 줄만 */
+  function mineFromTable(html, text){
+    var rows = html && /<table/i.test(html) ? TTComci.htmlRows(html) : String(text || "").replace(/\r/g, "").split("\n").map(function(l){ return l.split("\t"); });
+    var r = TTComci.teachers(rows), me = TT.school.load().teacher;
+    if(!r) return null;
+    var t = r.teachers.filter(function(x){ return x.name === me || x.name.indexOf(me + "(") === 0; })[0];
+    if(!t) return {err: me ? "붙여 넣은 표에서 " + me + " 선생님 줄을 찾지 못했어요." : "선생님이 여럿인 표예요. 첫 화면 ⋯ → 학교·선생님 설정에 내 이름을 넣으면 내 줄만 골라 읽습니다."};
+    return {slots: t.slots, count: Object.keys(t.slots).length, periods: null, dates: {}};
   }
-  function apply(rows){
-    var periods = [], slots = {}, count = 0;
-    rows.forEach(function(r){
-      periods.push({n: r.n, t: pad5(r.t)});
-      r.cells.forEach(function(c){
-        if(c.d < 0 || c.d > 4) return;
-        var v = parseCell(c.text);
-        if(v){ slots[(c.d + 1) + "-" + r.n] = v; count++; }
-      });
-    });
-    var maxUsed = Object.keys(slots).reduce(function(a, k){ return Math.max(a, +k.split("-")[1]); }, 0);
-    periods = periods.filter(function(p){ return p.n <= Math.max(maxUsed, 7); });
-    return {periods: periods, slots: slots, count: count};
-  }
-  function pad5(t){ var a = t.split(":"); return (a[0].length < 2 ? "0" : "") + a[0] + ":" + a[1]; }
+  function diffKeys(a, b){ var u = {}; Object.keys(a).concat(Object.keys(b)).forEach(function(k){ if(!same(a[k], b[k])) u[k] = 1; }); return Object.keys(u).sort(); }
 
   $("paste").addEventListener("paste", function(e){
     var cd = e.clipboardData; if(!cd) return;
-    var html = cd.getData("text/html"), text = cd.getData("text/plain");
-    var rows = (html && fromHtml(html)) || (text && fromText(text));
     e.preventDefault();
-    var msg = $("msg");
-    if(!rows || !rows.length){
-      msg.className = "msg err";
-      msg.textContent = "시간표를 찾지 못했어요. 교시(1(08:50) …)가 보이는 표 전체를 끌어서 복사해 주세요.";
-      return;
+    var html = cd.getData("text/html"), text = cd.getData("text/plain");
+    var rows = TTComci.grid(html, text), r = rows ? TTComci.toSlots(rows) : null;
+    if(r) r.dates = rows.dates;
+    if(!r || !r.count){ var m = mineFromTable(html, text); if(m && m.err) return msg("err", m.err); if(m) r = m; }
+    if(!r) return msg("err", "시간표를 찾지 못했어요. 교시(1(09:00) …)가 보이는 표 전체를 복사해 주세요. 컴시간 화면에서 Ctrl+A → Ctrl+C 해도 됩니다.");
+    if(!r.count) return msg("err", "표는 찾았지만 수업이 하나도 없어요. 내 이름을 고른 화면인지 확인해 주세요.");
+    $("paste").value = "";
+    var hasBase = Object.keys(T.slots).length, mon = guessMon(r.dates);
+    /* 기본 시간표 넣기 (처음이거나, 기본 보기에서 날짜 없는 시간표를 넣을 때) */
+    if(!hasBase || (!isWeek() && !mon)){
+      var go = function(){ if(r.periods) T.periods = r.periods; T.slots = r.slots; T.weeks = {}; save(); msg("ok", "✔ 기본 시간표 수업 " + r.count + "시간을 가져왔습니다."); };
+      return hasBase ? TT.ui.confirm("기본 시간표 바꾸기", "학기 내내 쓰는 기본 시간표를 붙여 넣은 시간표(수업 " + r.count + "시간)로 바꿀까요? 수업 교체 한 주만 바꾸려면 위에서 '이번 주'를 고르세요.", "바꾸기", go) : go();
     }
-    var r = apply(rows);
-    if(!r.count){ msg.className = "msg err"; msg.textContent = "표는 찾았지만 수업이 하나도 없어요. 내 이름을 고른 화면인지 확인해 주세요."; return; }
-    var had = Object.keys(T.slots).length;
-    function go(){
-      T.periods = r.periods; T.slots = r.slots; save();
-      msg.className = "msg ok"; msg.textContent = "✔ 수업 " + r.count + "시간을 가져왔습니다.";
-      $("paste").value = "";
-    }
-    if(had) TT.ui.confirm("시간표 바꾸기", "지금 시간표를 붙여 넣은 시간표(수업 " + r.count + "시간)로 바꿀까요?", "바꾸기", go);
-    else go();
+    /* 그 주에만: 바뀐 교시를 노랗게 보여 주고 [반영] */
+    if(!mon) mon = curMon();
+    var off = Math.round((parseYmd(mon) - parseYmd(thisMon)) / (7 * 86400000));
+    view = off;
+    var d = diffKeys(r.slots, T.slots), had = TTT.changed(mon);
+    if(!d.length && !had){ pending = null; render(); return msg("ok", "✔ " + md(mon) + " 주는 기본 시간표와 같습니다. 바뀐 교시가 없어요."); }
+    var mine = Object.keys(r.slots).filter(function(k){ return same(r.slots[k], T.slots[k]); }).length;
+    pending = {mon: mon, slots: r.slots, keys: d, odd: Object.keys(r.slots).length >= 4 && mine / Object.keys(r.slots).length < 0.3};
+    render(); msg("", "");
   });
-  $("paste").addEventListener("input", function(){ if(this.value.trim()){ $("msg").className = "msg err"; $("msg").textContent = "Ctrl+V로 붙여 넣어 주세요. (직접 입력은 왼쪽 칸을 누르세요)"; this.value = ""; } });
+  $("paste").addEventListener("input", function(){ if(this.value.trim()){ msg("err", "Ctrl+V로 붙여 넣어 주세요. (직접 고치려면 왼쪽 칸을 누르세요)"); this.value = ""; } });
+  $("pNo").onclick = function(){ pending = null; render(); msg("", "반영하지 않았습니다."); };
+  $("pOk").onclick = function(){
+    var p = pending; pending = null;
+    TTT.setWeek(p.mon, p.slots); T = TTT.load();
+    render(); msg("ok", "✔ " + md(p.mon) + "~" + md(p.mon, 4) + " 주에만 반영했습니다(" + p.keys.length + "교시). 기본 시간표는 그대로예요.");
+  };
+
+  /* ---------- 칸 고치기: 반·과목 단추 (빠른 격자 입력) ---------- */
+  function choices(){
+    var cls = {}, subj = {};
+    Object.keys(T.slots).forEach(function(k){ var s = T.slots[k]; if(s.cls) cls[s.cls] = 1; if(s.subj) subj[s.subj] = (subj[s.subj] || 0) + 1; });
+    TT.roster.classes().forEach(function(c){ if(c.grade != null && c.cls != null) cls[c.grade * 100 + c.cls] = 1; });
+    var my = TT.school.load().subject; if(my) subj[my] = (subj[my] || 0) + 0.5;
+    return {cls: Object.keys(cls).map(Number).sort(function(a, b){ return a - b; }), subj: Object.keys(subj).sort(function(a, b){ return subj[b] - subj[a]; })};
+  }
+  function editCell(k){
+    var a = k.split("-"), S = slotsNow(), s = S[k], ch = choices(), pickS = (s && s.subj) || ch.subj[0] || "";
+    var where = isWeek() ? md(curMon(), a[0] - 1) + " " : "";
+    var d = document.createElement("dialog");
+    d.innerHTML = '<form><h2>' + where + DAYS[a[0]-1] + "요일 " + a[1] + "교시" + (isWeek() ? " <small style=\"font-size:13px;color:var(--sub)\">(이 주에만)</small>" : "") + "</h2>"
+      + (ch.subj.length > 1 ? '<div class="pk s" id="pkS">' + ch.subj.map(function(x){ return '<button type="button" data-s="' + esc(x) + '"' + (x === pickS ? ' class="on"' : "") + ">" + esc(x) + "</button>"; }).join("") + "</div>" : "")
+      + '<div class="pk" id="pkC">' + ch.cls.map(function(c){ return '<button type="button" data-c="' + c + '"' + (s && s.cls === c ? ' class="on"' : "") + ">" + c + "</button>"; }).join("") + "</div>"
+      + (ch.cls.length ? '<p class="sm">반을 누르면 바로 저장됩니다.</p>' : '<p class="sm">반 단추는 명렬표나 시간표가 있으면 생깁니다. 직접 입력을 눌러 주세요.</p>')
+      + '<div class="acts"><button type="button" class="btn" data-x="del">비우기</button><div class="r"><button type="button" class="btn" data-x="txt">직접 입력</button><button type="button" class="btn" data-x="no">닫기</button></div></div></form>';
+    document.body.appendChild(d);
+    d.addEventListener("close", function(){ d.remove(); });
+    function put(v){
+      if(isWeek() && !pending){ var c = JSON.parse(JSON.stringify(S)); if(v) c[k] = v; else delete c[k]; TTT.setWeek(curMon(), c); T = TTT.load(); render(); }
+      else if(pending){ if(v) pending.slots[k] = v; else delete pending.slots[k]; pending.keys = diffKeys(pending.slots, T.slots); render(); }
+      else { if(v) T.slots[k] = v; else delete T.slots[k]; save(); }
+      d.close();
+    }
+    d.addEventListener("click", function(e){
+      var b = e.target.closest("button"); if(!b) return;
+      if(b.hasAttribute("data-s")){ pickS = b.getAttribute("data-s"); d.querySelectorAll("#pkS button").forEach(function(x){ x.classList.toggle("on", x === b); }); return; }
+      if(b.hasAttribute("data-c")){ var c = +b.getAttribute("data-c"); return put({code: String(c), cls: c, subj: pickS}); }
+      var x = b.getAttribute("data-x");
+      if(x === "no") d.close();
+      if(x === "del") put(null);
+      if(x === "txt"){ d.close(); TT.ui.prompt(DAYS[a[0]-1] + "요일 " + a[1] + "교시 (예: 304 수학 · 비우려면 - 입력)", s ? s.code + " " + s.subj : "", "304 수학", function(v){ if(v === "-" || v === "0") return put(null); var r = parseCell(v); if(r) put(r); }); }
+    });
+    d.showModal();
+  }
 
   /* ---------- 화면 ---------- */
   function render(){
-    var w = new Date().getDay(), now = TT.timetable.now();
-    var h = "<thead><tr><th></th>" + DAYS.map(function(d, i){ return '<th class="' + (i + 1 === w ? "today" : "") + '">' + d + "</th>"; }).join("") + "</tr></thead><tbody>";
+    var wk = isWeek(), mon = curMon(), S = slotsNow(), now = !wk || mon === thisMon ? TTT.now() : null;
+    var todayW = new Date().getDay(), showToday = !wk ? true : mon === thisMon;
+    Array.prototype.forEach.call($("vseg").querySelectorAll("button"), function(b){ var v = b.getAttribute("data-v"); b.setAttribute("aria-pressed", String(v === "base" ? !wk : wk && +v === view)); });
+    var h = "<thead><tr><th></th>" + DAYS.map(function(d, i){ return '<th class="' + (showToday && i + 1 === todayW ? "today" : "") + '">' + d + (wk ? " <small>" + md(mon, i) + "</small>" : "") + "</th>"; }).join("") + "</tr></thead><tbody>";
     T.periods.forEach(function(p, pi){
       h += '<tr><th scope="row"><button type="button" data-p="' + pi + '" title="시작 시각 바꾸기"><b>' + p.n + "교시</b><small>" + esc(p.t) + "</small></button></th>";
       for(var d = 1; d <= 5; d++){
-        var k = d + "-" + p.n, s = T.slots[k], g = s && s.cls ? Math.floor(s.cls / 100) : 0;
-        var cur = now && now.key === k;
-        h += '<td><button type="button" class="cell' + (s ? " has" : "") + (cur ? " now" : "") + '" data-k="' + k + '"'
+        var k = d + "-" + p.n, s = S[k], b = T.slots[k], g = s && s.cls ? Math.floor(s.cls / 100) : 0;
+        var chg = wk && !same(s, b), cur = now && now.key === k;
+        h += '<td><button type="button" class="cell' + (s ? " has" : "") + (chg ? (s ? " chg" : " gone") : "") + (cur ? " now" : "") + '" data-k="' + k + '"'
           + (s ? ' style="--c:' + (GRADE_COL[g] || "#eef0f6") + '"' : "")
-          + ' aria-label="' + DAYS[d-1] + "요일 " + p.n + "교시 " + (s ? esc(s.code + " " + s.subj) : "비어 있음") + '">'
-          + (s ? "<b>" + esc(s.code) + "</b><small>" + esc(s.subj) + "</small>" : "+") + "</button></td>";
+          + ' aria-label="' + DAYS[d-1] + "요일 " + p.n + "교시 " + (s ? esc(s.code + " " + s.subj) : "비어 있음") + (chg ? " (바뀜)" : "") + '"'
+          + (chg ? ' title="기본: ' + (b ? esc(b.code + " " + b.subj) : "빈 시간") + '"' : "") + ">"
+          + (s ? "<b>" + esc(s.code) + "</b><small>" + esc(s.subj) + "</small>" : chg ? "<small>수업 빠짐</small>" : "+") + "</button></td>";
       }
       h += "</tr>";
     });
-    h += "</tbody>";
-    $("tt").innerHTML = h;
+    $("tt").innerHTML = h + "</tbody>";
     var by = {}, total = 0;
-    Object.keys(T.slots).forEach(function(k){ var s = T.slots[k]; by[s.code] = (by[s.code] || 0) + 1; total++; });
-    var keys = Object.keys(by).sort();
-    $("sum").innerHTML = total ? "주 " + total + "시간 · " + keys.map(function(c){ return '<span class="p">' + esc(c) + " " + by[c] + "</span>"; }).join("")
+    Object.keys(S).forEach(function(k){ var s = S[k]; by[s.code] = (by[s.code] || 0) + 1; total++; });
+    var keys = Object.keys(by).sort(), nchg = wk ? diffKeys(S, T.slots).length : 0;
+    $("sum").innerHTML = total ? (wk ? "<b>" + md(mon) + "~" + md(mon, 4) + "</b> · " : "기본 · ") + "주 " + total + "시간 · " + keys.map(function(c){ return '<span class="p">' + esc(c) + " " + by[c] + "</span>"; }).join("")
+        + (wk ? (nchg ? ' · <span class="p" style="background:#fff1d6">바뀜 ' + nchg + "</span>" : " · 기본과 같음") : "")
       : "아직 시간표가 없습니다. 오른쪽에 컴시간 시간표를 붙여 넣거나 칸을 눌러 직접 넣으세요.";
-    $("upd").textContent = T.updatedAt ? "마지막 변경 " + new Date(T.updatedAt).toLocaleDateString("ko-KR") : "";
+    $("upd").textContent = T.updatedAt ? "기본 " + new Date(T.updatedAt).toLocaleDateString("ko-KR") : "";
+    $("mReset").hidden = !(wk && TTT.changed(mon));
+    /* 오른쪽 안내 */
+    $("pend").hidden = !pending;
+    if(pending) $("pendTxt").textContent = (pending.odd ? "⚠ 다른 선생님 시간표 같아요 · " : "") + md(pending.mon) + " 주 바뀐 교시 " + pending.keys.length + "개 (노란 칸)";
+    $("sTitle").textContent = wk ? "🔁 수업 교체 반영 (" + md(mon) + "~" + md(mon, 4) + ")" : "📋 기본 시간표 가져오기";
+    $("sHow").innerHTML = wk
+      ? "<li><b>🌐 컴시간 열기</b> → 학교 코드 넣고 내 이름 고르기</li><li>컴시간 화면 아무 곳이나 누르고 <b>Ctrl+A → Ctrl+C</b> (통째로)</li><li>아래 칸에 <b>Ctrl+V</b> → 바뀐 교시만 노랗게 → <b>[반영]</b></li>"
+      : "<li><b>🌐 컴시간 열기</b> → 학교 코드 넣고 내 이름 고르기</li><li>시간표 표를 끌어서 고르거나 <b>Ctrl+A</b> → <b>Ctrl+C</b></li><li>아래 칸에 <b>Ctrl+V</b> → 자동으로 채워집니다.</li>";
+    $("sTip").textContent = wk ? "이 주에만 적용되고 기본 시간표는 그대로입니다. 칸을 누르면 이 주만 고칩니다(반 단추 한 번). 첫 화면 다음 수업 · 수업 기록장 · 진도·시수에 함께 반영됩니다."
+      : "칸을 누르면 반 단추로 바로 고치고, 교시 번호를 누르면 시작 시각을 바꿉니다. 수업 교체는 위에서 '이번 주'나 '다음 주'를 고르세요.";
   }
 
   $("tt").addEventListener("click", function(e){
     var c = e.target.closest("[data-k]"), p = e.target.closest("[data-p]");
-    if(c){
-      var k = c.getAttribute("data-k"), s = T.slots[k], a = k.split("-");
-      TT.ui.prompt(DAYS[a[0]-1] + "요일 " + a[1] + "교시 (예: 304 수학 · 비우려면 - 입력)", s ? s.code + " " + s.subj : "", "304 수학", function(v){
-        if(v === "-" || v === "0"){ delete T.slots[k]; save(); return; }
-        var r = parseCell(v); if(r){ T.slots[k] = r; save(); }
-      });
-    }
+    if(c) editCell(c.getAttribute("data-k"));
     if(p){
       var i = +p.getAttribute("data-p"), per = T.periods[i];
       TT.ui.prompt(per.n + "교시 시작 시각 (예: 08:50)", per.t, "08:50", function(v){
@@ -245,11 +309,14 @@
       });
     }
   });
+  $("mReset").onclick = function(){ $("more").open = false; var m = curMon(); TTT.clearWeek(m); T = TTT.load(); pending = null; render(); TT.ui.toast(md(m) + " 주를 기본 시간표로 되돌렸습니다."); };
   $("mClear").onclick = function(){
     $("more").open = false;
-    TT.ui.confirm("시간표 지우기", "내 시간표를 모두 지웁니다. 수업 기록장의 시간표는 그대로 남습니다.", "지우기", function(){ T = blank(); save(); });
+    TT.ui.confirm("시간표 지우기", "내 시간표(기본·주마다 바뀐 것)를 모두 지웁니다. 수업 기록장의 시간표는 그대로 남습니다.", "지우기", function(){ T = blank(); pending = null; save(); });
   };
   document.addEventListener("click", function(e){ if(!$("more").contains(e.target)) $("more").open = false; });
+  window.addEventListener("storage", function(e){ if(e.key === TTT.KEY){ T = TTT.load() || blank(); render(); } });
+  if(/[?&]week=1/.test(location.search)) view = 0;
   render();
   setInterval(render, 60000);
 })();

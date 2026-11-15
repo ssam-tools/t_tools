@@ -365,10 +365,10 @@ const isInternal=t=>TAGS.some(g=>g.internal&&g.tags.indexOf(t)>=0);
 const nameOf=(c,no)=>{const s=(S.students[c]||[]).find(x=>x.no===no);return S.hideNames||!s?no+'번':s.name;};
 const labelOf=(c,no)=>{const s=(S.students[c]||[]).find(x=>x.no===no);return S.hideNames||!s?cs(c)+' '+no+'번':s.name+' ('+cs(c)+' '+no+'번)';};
 const progN=c=>{const p=S.prog[c];return p?p.n:0;};
-function periodFor(c){const now=new Date(),w=now.getDay();if(w<1||w>5)return 0;const m=nowMin();let best=0;PERIODS.forEach(p=>{if(S.tt[w+'-'+p.n]===c&&m>=toMin(p.t))best=p.n;});return best;}
+function periodFor(c){const now=new Date(),w=now.getDay();if(w<1||w>5)return 0;const m=nowMin();let best=0;PERIODS.forEach(p=>{if(TWn()[w+'-'+p.n]===c&&m>=toMin(p.t))best=p.n;});return best;}
 function defaultClass(){
   const now=new Date(),w=now.getDay();
-  if(w>=1&&w<=5){const m=nowMin();for(const p of PERIODS){const c=S.tt[w+'-'+p.n];if(!c)continue;if(m<=toMin(p.e))return c;}}
+  if(w>=1&&w<=5){const m=nowMin();for(const p of PERIODS){const c=TWn()[w+'-'+p.n];if(!c)continue;if(m<=toMin(p.e))return c;}}
   return S.lastCls||301;
 }
 function addRecord(c,no,tags,text,star){
@@ -399,7 +399,7 @@ function toast(msg,undo){
 function classChips(withDot){
   const w=new Date().getDay();
   return '<div class="cgrid" role="group" aria-label="반 선택">'+CLS.map(c=>{
-    const has=withDot&&w>=1&&w<=5&&PERIODS.some(p=>S.tt[w+'-'+p.n]===c);
+    const has=withDot&&w>=1&&w<=5&&PERIODS.some(p=>TWn()[w+'-'+p.n]===c);
     return '<button class="cchip '+(ui.cls===c?'on':'')+'" data-act="cls" data-c="'+c+'" aria-pressed="'+(ui.cls===c)+'">'+cs(c)+(has?'<span class="dot" aria-hidden="true"></span>':'')+'</button>';
   }).join('')+'</div>';
 }
@@ -444,11 +444,12 @@ function vToday(){
     h+='<button class="day '+(k===dk?'on':'')+' '+(k===todayK?'today':'')+'" data-act="pickDate" data-k="'+k+'" aria-pressed="'+(k===dk)+'"><span>'+DAY[i+1]+'</span><b>'+d.getDate()+'</b></button>';
   }
   h+='<button class="nav-btn" data-act="weekShift" data-d="7" aria-label="다음주">›</button></div>';
-  const slots=PERIODS.filter(p=>S.tt[w+'-'+p.n]);
+  const TW=ttWeek(mon);                                   /* 14단계: 수업 교체로 그 주에만 바뀐 시간표 */
+  const slots=PERIODS.filter(p=>TW[w+'-'+p.n]);
   const done=slots.filter(p=>S.taught[dk+'|'+p.n]).length;
   h+='<div class="sec-h"><h2>'+(dk===todayK?'오늘 · ':fmtMD(dk)+' · ')+DAY[w]+'요일</h2><span class="meta">'+(slots.length?'수업 '+slots.length+' · 체크 '+done:'')+'</span></div>';
   if(!slots.length)h+='<div class="empty"><p>이 날은 수업이 없어요.</p><button class="btn sm" data-act="openTT">시간표 편집</button></div>';
-  else h+='<div class="stack">'+slots.map(p=>slotCard(dk,p,S.tt[w+'-'+p.n])).join('')+'</div>';
+  else h+='<div class="stack">'+slots.map(p=>slotCard(dk,p,TW[w+'-'+p.n])).join('')+'</div>';
   h+='<div class="row-end"><button class="btn" data-act="openTT">주간 시간표 보기·편집</button></div>';
   return h;
 }
@@ -477,7 +478,7 @@ function vProgress(){return GRADES.map(gradeBlock).join('');}
 /* ---------- 화면: 기록 ---------- */
 function ctxLine(c){
   const w=new Date().getDay(),L=lessons(gradeOf(c)),n=progN(c),nx=L[n];
-  const ps=(w>=1&&w<=5)?PERIODS.filter(p=>S.tt[w+'-'+p.n]===c):[];
+  const ps=(w>=1&&w<=5)?PERIODS.filter(p=>TWn()[w+'-'+p.n]===c):[];
   return esc((ps.length?'오늘 '+ps.map(p=>p.n+'교시').join('·'):'오늘 이 반 수업 없음')+' · 진도 '+n+'/'+L.length+(nx?' · 다음 '+nx.title:' · 모두 완료'));
 }
 function vRecord(){
@@ -788,6 +789,9 @@ document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.datase
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!ui.sheet&&ui.tab==='today')render();});
 
+/* 그 주 시간표: 내 시간표(tt_timetable_v1)에 그 주에만 바뀐 것(weeks)이 있으면 그것, 없으면 기본(S.tt) */
+function ttWeek(mon){try{const T=JSON.parse(localStorage.getItem('tt_timetable_v1')||'null'),W=T&&T.weeks&&T.weeks[mon];if(!W||!W.slots)return S.tt;const o={};Object.keys(W.slots).forEach(k=>{const c=W.slots[k]&&W.slots[k].cls;if(c&&CLS.includes(c))o[k]=c;});return o;}catch(e){return S.tt;}}
+const TWn=()=>ttWeek(mondayOf(dkey(new Date())));
 /* ---------- 시작 ---------- */
 S=load();try{const C0=TT.store.get("tt_class_v1",null);if(C0&&typeof C0.mask==="boolean"&&C0.mask!==!!S.hideNames){S.hideNames=C0.mask;save();}}catch(e){}
 /* 내 시간표(tt_timetable_v1, "내 시간표" 도구)가 있으면 교시 시각과 시간표를 그대로 씁니다.

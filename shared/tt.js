@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.17.0";
+  var VERSION = "0.20.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -587,51 +587,81 @@ var TT = (function(){
   })();
 
   /* ---------- 내 시간표 (apps/timetable 에서 입력, "tt_timetable_v1") ----------
-     slots: {"요일-교시": {code:"304", cls:304, subj:"수학"}}  (요일 1=월 … 5=금)
+     slots: {"요일-교시": {code:"304", cls:304, subj:"수학"}}  (요일 1=월 … 5=금)  ← 기본 시간표(학기 내내)
+     weeks: {"2026-11-16"(그 주 월요일): {slots:{…}, at}}  ← 수업 교체로 그 주에만 바뀐 시간표(14단계). 기본 시간표는 그대로 둡니다.
      periods: [{n:1, t:"08:50"}, …]  수업 길이는 45분으로 계산합니다. */
   var timetable = (function(){
     var KEY = "tt_timetable_v1", LEN = 45;
     function toMin(t){ var a = String(t).split(":"); return (+a[0]) * 60 + (+a[1]); }
     function hm(m){ return pad(Math.floor(m / 60)) + ":" + pad(m % 60); }
     function load(){ var t = store.get(KEY, null); return t && t.slots && Array.isArray(t.periods) ? t : null; }
+    function ymdOf(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+    function monday(date){ var d = new Date(date || new Date()); d = new Date(d.getFullYear(), d.getMonth(), d.getDate()); var w = d.getDay(); d.setDate(d.getDate() - (w === 0 ? 6 : w - 1)); return ymdOf(d); }
+    function same(a, b){ return !a && !b || !!(a && b && a.code === b.code && (a.subj || "") === (b.subj || "")); }
+    function weekSlots(t, mon){ var w = t && t.weeks && t.weeks[mon]; return w && w.slots ? w.slots : (t ? t.slots : {}); }
     function day(date){
       var t = load(); date = date || new Date();
       var w = date.getDay(); if(!t || w < 1 || w > 5) return [];
+      var mon = monday(date), S = weekSlots(t, mon), changed = S !== t.slots;
       return t.periods.map(function(p){
-        var s = t.slots[w + "-" + p.n]; if(!s) return null;
+        var k = w + "-" + p.n, s = S[k]; if(!s) return null;
         var st = toMin(p.t);
-        return {key: w + "-" + p.n, n: p.n, t: p.t, e: hm(st + LEN), start: st, end: st + LEN, code: s.code, cls: s.cls, subj: s.subj};
+        return {key: k, n: p.n, t: p.t, e: hm(st + LEN), start: st, end: st + LEN, code: s.code, cls: s.cls, subj: s.subj, chg: changed && !same(s, t.slots[k])};
       }).filter(Boolean);
     }
     function nowMin(){ var d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
     return {
-      KEY: KEY, load: load, day: day,
+      KEY: KEY, load: load, day: day, monday: monday, same: same,
       has: function(){ var t = load(); return !!(t && Object.keys(t.slots).length); },
       now: function(){ var m = nowMin(); return day().filter(function(s){ return m >= s.start && m < s.end; })[0] || null; },     // 지금 수업 중
-      next: function(){ var m = nowMin(); return day().filter(function(s){ return s.start > m; })[0] || null; }                    // 오늘 남은 다음 수업
+      next: function(){ var m = nowMin(); return day().filter(function(s){ return s.start > m; })[0] || null; },                  // 오늘 남은 다음 수업
+      /* 그 주 시간표 (바뀐 게 없으면 기본 시간표) */
+      week: function(mon){ return weekSlots(load(), mon); },
+      changed: function(mon){ var t = load(); return !!(t && t.weeks && t.weeks[mon]); },
+      /* 그 주에만 바꾸기. 기본과 같아지면 지움. 5주 지난 기록은 정리 */
+      setWeek: function(mon, slots){
+        var t = load(); if(!t) return false;
+        var diff = Object.keys(slots).concat(Object.keys(t.slots)).some(function(k){ return !same(slots[k], t.slots[k]); });
+        t.weeks = t.weeks || {};
+        if(diff) t.weeks[mon] = {slots: slots, at: Date.now()}; else delete t.weeks[mon];
+        var old = monday(new Date(Date.now() - 35 * 86400000));
+        Object.keys(t.weeks).forEach(function(k){ if(k < old) delete t.weeks[k]; });
+        t.weekAt = Date.now(); return store.set(KEY, t);
+      },
+      clearWeek: function(mon){ var t = load(); if(!t || !t.weeks) return; delete t.weeks[mon]; t.weekAt = Date.now(); store.set(KEY, t); }
     };
   })();
 
   /* 보관함 동기화 화면(설정창·교실 모드·상태 표시)은 따로 불러옵니다 */
   /* ---------- 학교·선생님 설정 ("tt_school_v1") ----------
      학교 이름은 여기 한 곳에만 넣으면 첫 화면 제목, 결석신고서, 학부모 문자에 함께 쓰입니다. */
+  var SCH_TXT = {principal: 10, addr: 60, tel: 20, comci: 12, subject: 12, hb: 16};   // 14단계: 교장·주소·전화·컴시간 학교 코드·내 교과
   var school = {
     load: function(){
       var o = store.get("tt_school_v1", null) || {};
       var name = String(o.name || "").trim();
       if(!name){ var b = store.get("tt_board_v1", null) || {}; name = String(b.school || "").trim(); }
       var logo = /^data:image\/(png|jpeg|webp);base64,/.test(o.logo || "") && o.logo.length < 200000 ? o.logo : "";
-      return {name: name, teacher: String(o.teacher || "").trim(), logo: logo};
+      var out = {name: name, teacher: String(o.teacher || "").trim(), logo: logo};
+      Object.keys(SCH_TXT).forEach(function(k){ out[k] = String(o[k] || "").trim(); });
+      return out;
     },
     save: function(o){
       var c = store.get("tt_school_v1", null) || {};
       if(o.name != null) c.name = String(o.name).trim().slice(0, 20);
       if(o.teacher != null) c.teacher = String(o.teacher).trim().slice(0, 10);
       if(o.logo != null) c.logo = /^data:image\/(png|jpeg|webp);base64,/.test(o.logo) && o.logo.length < 200000 ? o.logo : "";   // 학교 로고(선택, 작게 줄인 그림)
+      Object.keys(SCH_TXT).forEach(function(k){ if(o[k] != null) c[k] = String(o[k]).trim().slice(0, SCH_TXT[k]); });
       c.updatedAt = Date.now(); store.set("tt_school_v1", c);
     },
     short: function(){ return school.load().name.replace(/\s+/g, "").replace(/학교$/, ""); },   // 마산서중학교 → 마산서중
     title: function(){ var s = school.short(); return (s ? s + " " : "") + "쌤 노트"; }
+  };
+  /* 교직원 명렬 ("tt_staff_v1", 14단계 학기초 세팅에서 넣음): {v:1, list:[{name, dept, pos, subj, tel}]} */
+  var staff = {
+    KEY: "tt_staff_v1",
+    load: function(){ var o = store.get("tt_staff_v1", null); return o && Array.isArray(o.list) ? o.list : []; },
+    save: function(list){ return store.set("tt_staff_v1", {v: 1, list: list, at: Date.now()}); }
   };
 
   /* ---------- 학생 기록 ("tt_notes_v1") ----------
@@ -760,7 +790,23 @@ var TT = (function(){
     };
   })();
 
+  /* ---------- 화면 글꼴 (tt_ui_v1.font) — 모든 화면에 같은 글꼴. 글꼴 정의는 shared/fonts.css ---------- */
+  var font = (function(){
+    var LIST = [
+      {id: "basic", name: "기본", desc: "맑은 고딕 · 가장 또렷함"},
+      {id: "soft", name: "부드럽게", desc: "고운돋움 · 따뜻하고 편안함"},
+      {id: "neat", name: "단정하게", desc: "고운바탕 · 차분한 명조"},
+      {id: "cute", name: "귀엽게", desc: "제목은 주아 · 교실 화면에 좋음"}
+    ];
+    function get(){ var u = store.get("tt_ui_v1", {}) || {}; return LIST.some(function(f){ return f.id === u.font; }) ? u.font : "basic"; }
+    function apply(id){ if(id === "basic") delete document.documentElement.dataset.font; else document.documentElement.dataset.font = id; }
+    try{ var l = document.createElement("link"); l.rel = "stylesheet"; l.href = BASE + "shared/fonts.css"; document.head.appendChild(l); }catch(e){}
+    apply(get());
+    window.addEventListener("storage", function(e){ if(e.key === "tt_ui_v1") apply(get()); });
+    return {list: LIST, get: get, set: function(id){ var u = store.get("tt_ui_v1", {}) || {}; u.font = id; store.set("tt_ui_v1", u); apply(id); }};
+  })();
+
   (function(){ var s = document.createElement("script"); s.src = BASE + "shared/vaultui.js"; s.defer = true; document.head.appendChild(s); })();
 
-  return { VERSION: VERSION, BASE: BASE, classroom: classroom, store: store, roster: roster, timetable: timetable, school: school, notes: notes, photos: photos, file: {toRows: fileToRows, readXlsx: readXlsx, userErr: userErr, zip: makeZip}, util: util, ui: ui, backup: backup };
+  return { VERSION: VERSION, BASE: BASE, classroom: classroom, store: store, roster: roster, timetable: timetable, school: school, staff: staff, font: font, notes: notes, photos: photos, file: {toRows: fileToRows, readXlsx: readXlsx, userErr: userErr, zip: makeZip}, util: util, ui: ui, backup: backup };
 })();

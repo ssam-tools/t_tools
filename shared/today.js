@@ -62,10 +62,10 @@
   if(TT.classroom){ box.hidden = true; return; }
 
   /* ── 오늘 칸 3개 ── */
-  function card(id, icon, title, href, body, badge){
+  function card(id, icon, title, href, body, badge, side){
     return '<section class="tdy" id="' + id + '"><div class="tdh">'
       + (href ? '<a href="' + href + '">' + icon + " " + title + "</a>" : "<b>" + icon + " " + title + "</b>")
-      + (badge ? '<span class="tdn">' + badge + "</span>" : "") + "</div>"
+      + (side || "") + (badge ? '<span class="tdn">' + badge + "</span>" : "") + "</div>"
       + '<div class="tdb">' + body + "</div></section>";
   }
   function hint(s){ return '<p class="tdx">' + s + "</p>"; }
@@ -74,7 +74,17 @@
        + 수업이 끝났는데 기록이 없으면 "기록 안 함 → 진도 +1"(누르면 수업 기록장으로 이동해 '진행 완료'를 누름). */
   (function(){
     var st = document.createElement("style");
-    st.textContent = ".tdl .ls{color:var(--sub,#5b6775)}.tdl .ls b{color:var(--ink,#1f2a37);font-weight:700}"
+    st.textContent = ".tbig{display:flex;align-items:baseline;gap:8px;line-height:1.05;margin:2px 0 4px}"
+      + ".tbig .ap{font-size:clamp(14px,2vh,18px);font-weight:700;color:var(--sub,#5b6773)}"
+      + ".tbig .tclk{font-size:clamp(34px,6.4vh,58px);font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;font-family:var(--fh,inherit)}"
+      + ".tbig .tleft{margin-left:auto;font-size:clamp(13px,1.9vh,15.5px);font-weight:700;color:var(--accent,#2f6fb5);white-space:nowrap}.tbig .tleft b{font-size:1.45em}"
+      + ".tbig.td8 b{font-size:clamp(24px,4.2vh,36px);font-weight:800;letter-spacing:-.02em;font-family:var(--fh,inherit)}.tbig.td8 .dw{font-size:clamp(16px,2.6vh,22px);font-weight:800;color:var(--accent,#2f6fb5)}.tbig.td8 .dw.we{color:var(--danger,#b3261e)}"
+      + ".tev{align-self:flex-start;font-size:clamp(12.5px,1.7vh,14px);font-weight:700;color:#6a3fa0;background:#f3ecfb;border-radius:8px;padding:2px 10px;margin-bottom:4px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+      + ".tds{margin-left:auto;font-size:13px;font-weight:700;color:var(--sub,#5b6773)}.tds + .tdn{margin-left:6px}"
+      + ".tdrd{display:flex;align-items:center;gap:8px;width:100%;border:2px solid var(--ok,#2e7d4f);background:var(--ok-soft,#e3f3ea);border-radius:12px;padding:6px 10px;margin:2px 0 6px;font:inherit;text-align:left;cursor:pointer;color:var(--ink,#1d2733)}"
+      + ".tdrd:hover{background:#d3ecdd}.tdrd .k{flex:none;background:var(--ok,#2e7d4f);color:#fff;font-size:13px;font-weight:800;border-radius:999px;padding:2px 10px}"
+      + ".tdrd .t{flex:1;min-width:0;font-size:clamp(13.5px,1.9vh,16px);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tdrd .go{flex:none;font-size:14px;font-weight:800;color:var(--ok,#2e7d4f)}"
+      + ".tdl .ls{color:var(--sub,#5b6775)}.tdl .ls b{color:var(--ink,#1f2a37);font-weight:700}"
       + "a.tdl{display:block;color:inherit;text-decoration:none}a.tdl:hover{text-decoration:underline}"
       + "a.tdl.miss{color:var(--danger,#c62828);font-weight:700}a.tdl.miss small{color:var(--danger,#c62828);font-weight:400;opacity:.8}";
     document.head.appendChild(st);
@@ -102,11 +112,22 @@
     return '<div class="tdl"><span class="ls">' + (P.last ? "지난 " + esc(P.last) + " → " : "") + "이번 <b>" + esc(P.now) + "</b></span></div>";
   }
   function memoLine(P){ return P && P.memo ? '<div class="tdl"><span class="ls">📝 ' + esc(P.memo.replace(/\s+/g, " ")) + "</span></div>" : ""; }
+  /* 개편: 다음 수업 칸 맨 위에 지금 시각을 크게 + 다음 교시까지 남은 분 */
+  function clockHead(cur, nx, weekday, m){
+    var d = new Date(), H = d.getHours(), left = "";
+    if(cur) left = cur.n + "교시 끝까지 <b>" + (cur.end - m) + "</b>분";
+    else if(nx && nx.start - m <= 180) left = nx.n + "교시까지 <b>" + (nx.start - m) + "</b>분";
+    else if(weekday && m < closeMin(d.getDay()) && m >= 480) left = "종례까지 <b>" + (closeMin(d.getDay()) - m) + "</b>분";
+    return '<div class="tbig"><span class="ap">' + (H < 12 ? "오전" : "오후") + '</span><b class="tclk">' + ((H % 12) || 12) + ":" + pad(d.getMinutes()) + "</b>"
+      + (left ? '<span class="tleft">' + left + "</span>" : "") + "</div>";
+  }
+  function closeTag(){ var w = new Date().getDay(); if(w < 1 || w > 5) return ""; var c = closeMin(w); return '<span class="tds">종례 ' + Math.floor(c / 60) + ":" + pad(c % 60) + "</span>"; }
   function lesson(){
     var TTT = TT.timetable;
-    if(!TTT.has()) return card("tdLesson", "🕘", "다음 수업", "", hint('<a href="apps/timetable/">내 시간표</a>를 넣으면 지금·다음 수업이 여기에 나옵니다.'));
     var d = new Date(), w = d.getDay(), weekday = w >= 1 && w <= 5, h = "", td = ymd(d), m = d.getHours() * 60 + d.getMinutes();
+    if(!TTT.has()) return card("tdLesson", "🕘", "다음 수업", "", clockHead(null, null, weekday, m) + hint('<a href="apps/timetable/">내 시간표</a>를 넣으면 지금·다음 수업이 여기에 나옵니다.'), "", closeTag());
     var cur = weekday ? TTT.now() : null, nx = weekday ? TTT.next() : null, J = journal();
+    h += clockHead(cur, nx, weekday, m);
     /* 수업 끝 기록 알림: 오늘 끝난 수업 중 수업 기록장에 '진행 완료'도 '수업 없음'도 없는 교시 */
     var miss = weekday && J ? TTT.day(d).filter(function(s){ return s.end <= m && !(J.taught || {})[td + "|" + s.n]; }) : [];
     if(miss.length){
@@ -115,15 +136,16 @@
         + f.n + "교시 " + esc(f.code) + " 기록 안 함 → 진도 +1" + (miss.length > 1 ? " <small>외 " + (miss.length - 1) + "개</small>" : "") + "</a>";
     }
     var focus = cur || nx;                                            // 지금 수업이 있으면 그 반, 없으면 다음 반의 진도를 보여 줌
-    if(cur) h += '<div class="tdl"><span class="now">● 지금</span> <b>' + cur.n + "교시 " + esc(cur.code) + "</b> <small>~" + cur.e + "</small></div>";
+    function chg(s){ return s.chg ? ' <small title="수업 교체로 이번 주에만 바뀐 수업" style="color:#8a5a00;font-weight:800">🔁 바뀜</small>' : ""; }   // 14단계
+    if(cur) h += '<div class="tdl"><span class="now">● 지금</span> <b>' + cur.n + "교시 " + esc(cur.code) + "</b>" + chg(cur) + " <small>~" + cur.e + "</small></div>";
     if(cur && J){ var Pc = progOf(J, cur, td); h += progLine(Pc) + (nx ? "" : memoLine(Pc)); }
-    if(nx) h += '<div class="tdl"><span class="nx">▶ 다음</span> <b>' + nx.n + "교시 " + esc(nx.code) + "</b> <small>" + nx.t + "</small></div>";
+    if(nx) h += '<div class="tdl"><span class="nx">▶ 다음</span> <b>' + nx.n + "교시 " + esc(nx.code) + "</b>" + chg(nx) + " <small>" + nx.t + "</small></div>";
     if(nx && J && (!cur || !miss.length)){ var Pn = progOf(J, nx, td); h += progLine(Pn) + (cur ? "" : memoLine(Pn)); }
     if(focus && !J) h += hint('<a href="apps/journal/">수업 기록장</a>을 쓰면 지난 진도와 메모가 여기에 나옵니다.');
     if(!cur && !nx) h += weekday && TTT.day(d).length ? (miss.length ? "" : '<div class="tdl ok">✔ 오늘 수업 끝' + (J ? " · 기록 완료" : "") + "</div>")
                          + (J ? "" : hint("수업 기록을 남겼는지 확인해 보세요."))
                        : hint(weekday ? "오늘은 수업이 없습니다." : "주말입니다. 월요일 수업은 위쪽 시간표 줄에서 볼 수 있어요.");
-    return card("tdLesson", "🕘", "다음 수업", "apps/journal/", h, miss.length ? "기록 " + miss.length : "");
+    return card("tdLesson", "🕘", "다음 수업", "apps/journal/", h, miss.length ? "기록 " + miss.length : "", closeTag());
   }
 
   /* ② 오늘 챙길 것 (2단계) — 예전 위쪽 알림 칩을 목록+숫자 배지로 옮기고,
@@ -136,6 +158,8 @@
       + ".tdk .n{flex:none;font-size:11.5px;font-weight:800;border-radius:999px;padding:0 7px;background:var(--star-soft,#fff3cc);color:#7a5a00}"
       + ".tdk.hi .n{background:var(--danger-soft,#fde8e8);color:var(--danger,#c62828)}.tdk.dd .n{background:var(--accent-soft,#e6f0fb);color:var(--accent,#2f6fb3)}"
       + "button.tdn{border:0;font-family:inherit;cursor:pointer}"
+      + ".tdk.rd .n{background:var(--ok-soft,#e3f3ea);color:var(--ok,#2e7d4f)}.tdk.rd .tt{font-weight:700}"
+      + ".tdn.rd{background:var(--ok-soft,#e3f3ea);color:var(--ok,#2e7d4f);margin-left:auto;margin-right:4px}"
       + ".tdpop{position:fixed;z-index:60;width:min(340px,92vw);max-height:60vh;overflow:auto;background:var(--card,#fff);border:1px solid var(--line,#dde3ea);border-radius:12px;box-shadow:0 10px 28px rgba(30,60,100,.18);padding:10px 12px;font-size:13.5px;line-height:1.6}"
       + ".tdpop h4{font-size:14px;margin:0 0 4px}.tdpop .r{display:flex;gap:6px;padding:3px 0;border-top:1px solid var(--line,#eef1f4)}.tdpop .r:first-of-type{border-top:0}"
       + ".tdpop .r b{flex:none}.tdpop .r span{color:var(--sub,#5b6775)}.tdpop .r a{color:inherit;text-decoration:none;display:flex;gap:6px;flex:1}.tdpop .r a:hover{text-decoration:underline}"
@@ -161,7 +185,7 @@
   function dayDiff(a, b){ var p = a.split("-"), q = b.split("-"); return Math.round((new Date(+p[0], p[1]-1, +p[2]) - new Date(+q[0], q[1]-1, +q[2])) / 86400000); }
   function md(s){ return (+s.slice(5, 7)) + "/" + (+s.slice(8)); }
 
-  var lastItems = [], lastStu = [];
+  var lastItems = [], lastStu = [], lastAuto = [];
   /* 챙길 일 모으기 → [{ic, t, n, href|pop, lv:"hi"|"mid"|"dd", tip}] (위쪽일수록 급함) */
   function collect(){
     var out = [], td = ymd(new Date()), stu = {};
@@ -241,6 +265,7 @@
   function item(x, i){
     var inner = '<span class="tt">' + x.ic + " " + esc(x.t) + '</span><span class="n">' + esc(x.n) + "</span>";
     var cls = "tdk " + (x.lv || "mid"), tip = ' title="' + esc(x.tip || "") + '"';
+    if(x.auto != null) return '<button type="button" class="' + cls + '" data-auto="' + x.auto + '"' + tip + ">" + inner + "</button>";   // 15단계 준비됨
     if(x.pop) return '<button type="button" class="' + cls + '" data-pop="' + x.pop + '"' + tip + ">" + inner + "</button>";
     if(x.href) return '<a class="' + cls + '" href="' + x.href + '"' + tip + ">" + inner + "</a>";
     return '<span class="' + cls + '"' + tip + " style=\"cursor:default\">" + inner + "</span>";
@@ -249,13 +274,24 @@
     var L = lastItems = collect();
     if(md && md.id === "morning" && TT.roster.home())                   // 4단계: 조회 전에는 출결을 맨 위에
       L.unshift({ic: "🧭", t: "조회: 출결 확인", n: "지금", href: "apps/tardy/", lv: "hi", tip: "조회 시간 — 지각·결석을 출결·결석계에 적어 두세요"});
-    if(!L.length) return card("tdCheck", "📋", "오늘 챙길 것", "", '<div class="tdl ok">✔ 지금 챙길 일이 없습니다</div>'
-      + hint("상담·결석신고서·미제출·연간 업무·시험 D-day가 생기면 여기에 모입니다."));
+    /* 15단계: "준비됨" 카드 (shared/auto.js) — 급한 순서로 3개까지, 나머지는 [더 보기] */
+    /* 개편: 칸 맨 위에 오늘 날짜를 크게 + 그날 학사일정 */
+    var now = new Date(), tdk = ymd(now), C0 = TT.store.get("tt_calendar_v1", null);
+    var evs = (C0 && C0.events || []).filter(function(e){ return e.d === tdk; }).map(function(e){ return e.t; });
+    var head = '<div class="tbig td8"><b>' + (now.getMonth() + 1) + "월 " + now.getDate() + '일</b><span class="dw' + (now.getDay() % 6 === 0 ? " we" : "") + '">' + "일월화수목금토".charAt(now.getDay()) + "요일</span></div>"
+      + (evs.length ? '<div class="tev" title="오늘 학사일정">📌 ' + esc(evs.join(" · ")) + "</div>" : "");
+    /* 15단계 "준비됨" (shared/auto.js) — 눈에 띄는 초록 단추 하나로. 하나면 바로 열고, 여럿이면 급한 순서 목록 */
+    var A = lastAuto = window.TTAuto ? TTAuto.ready() : [];
+    var rd = A.length ? '<button type="button" class="tdrd" data-auto="' + (A.length === 1 ? 0 : "more") + '" title="쌤 노트가 준비해 둔 일 · 눌러서 확인 → 복사·인쇄·저장"><span class="k">✨ 준비됨 ' + A.length + '</span><span class="t">'
+      + esc(A.slice(0, 3).map(function(x){ return x.o.name || x.r.name; }).join(" · ")) + (A.length > 3 ? " 외 " + (A.length - 3) : "") + '</span><span class="go">확인 ›</span></button>' : "";
+    if(!L.length) return card("tdCheck", "📋", "오늘 챙길 것", "", head + rd + (A.length ? "" : '<div class="tdl ok">✔ 지금 챙길 일이 없습니다</div>'));
     var urgent = L.filter(function(x){ return x.lv !== "dd"; }).length;
-    var badge = '<button type="button" class="tdn" data-pop="all" title="챙길 일 전체 보기">' + (urgent ? urgent + "건" : "전체") + " ▾</button>";
-    return card("tdCheck", "📋", "오늘 챙길 것", "", '<div class="tdg">' + L.map(item).join("") + "</div>").replace("</div><div class=\"tdb\">", badge + "</div><div class=\"tdb\">");
+    var badge = '<button type="button" class="tdn" data-pop="all" title="챙길 일 전체 보기">' + (urgent ? "급한 일 " + urgent : "전체") + " ▾</button>";
+    return card("tdCheck", "📋", "오늘 챙길 것", "", head + rd + '<div class="tdg">' + L.map(item).join("") + "</div>").replace("</div><div class=\"tdb\">", badge + "</div><div class=\"tdb\">");
   }
   box.addEventListener("click", function(e){
+    var au = e.target.closest("[data-auto]");
+    if(au && window.TTAuto){ closePop(); var v = au.dataset.auto; if(v === "more") TTAuto.list(); else if(lastAuto[+v]) TTAuto.open(lastAuto[+v]); return; }
     var b = e.target.closest("[data-pop]"); if(!b) return;
     if(popEl && popEl.dataset.k === b.dataset.pop){ closePop(); return; }
     if(b.dataset.pop === "stu"){
@@ -421,7 +457,60 @@
     document.head.appendChild(st);
   })();
 
-  var dlg = null, inp, list, rows = [], sel = 0;
+  var dlg = null, inp, list, rows = [], sel = 0, pasted = null;
+
+  /* ── 16단계: 에듀파인 공문 · 쿨메신저 글을 붙여 넣으면 날짜와 할 일을 찾아 줌 ──
+     공문: 접수 목록 줄(제목 · 처리기한)을 줄마다 → [공문] 할 일(마감일) → 마감 3일 전 "공문 마감" 준비됨 카드(auto.js doc-due)
+     쿨메신저: 문장마다 날짜(11/20, 11월 20일, 다음 주 화요일, 내일 …)가 있으면 그 날 할 일로. 모두 이 기기 안에서만. */
+  function findDates(t){
+    var out = [], t0 = new Date(), Y = t0.getFullYear(), m, re;
+    function push(y, mo, d, i){ if(mo < 1 || mo > 12 || d < 1 || d > 31) return; var x = new Date(y || Y, mo - 1, d); if(!y && x < addDays(t0, -60)) x.setFullYear(Y + 1); out.push({d: ymd(x), i: i}); }
+    re = /(20\d{2})\s*[-.\/년]\s*(\d{1,2})\s*[-.\/월]\s*(\d{1,2})\s*일?\.?/g; while((m = re.exec(t))) push(+m[1], +m[2], +m[3], m.index);
+    var t2 = t.replace(/(20\d{2})\s*[-.\/년]\s*(\d{1,2})\s*[-.\/월]\s*(\d{1,2})\s*일?\.?/g, function(x){ return x.replace(/\d/g, "#"); });
+    re = /(^|[^\d#:])(\d{1,2})\s*월\s*(\d{1,2})\s*일/g; while((m = re.exec(t2))) push(0, +m[2], +m[3], m.index);
+    re = /(^|[^\d#:.])(\d{1,2})\s*[\/.]\s*(\d{1,2})(?![\d:])\.?\s*(\([월화수목금토일]\))?/g; while((m = re.exec(t2))){ if(+m[2] <= 12) push(0, +m[2], +m[3], m.index); }
+    if(!out.length){ var pd = parseDate(t.replace(/[,.!?]/g, " ")); if(pd.date) out.push({d: pd.date, i: 0}); }
+    return out;
+  }
+  function cleanTitle(t){
+    return t.replace(/(20\d{2})\s*[-.\/년]\s*\d{1,2}\s*[-.\/월]\s*\d{1,2}\s*일?\.?/g, " ").replace(/\d{1,2}\s*월\s*\d{1,2}\s*일\s*(\([월화수목금토일]\))?/g, " ").replace(/(^|\s)\d{1,2}\s*[\/.]\s*\d{1,2}\.?\s*(\([월화수목금토일]\))?/g, " ")
+      .replace(/[가-힣A-Za-z]+-\d{3,}/g, " ").replace(/(처리\s*)?기한|마감\s*:?|접수\s*:?/g, " ").replace(/^[\s\-*·•※▶■□○●>]+/, "").replace(/\s{2,}/g, " ").trim().slice(0, 70);
+  }
+  function scanPaste(text){
+    text = String(text).replace(/\r/g, "");
+    var doc = /에듀파인|문서\s*번호|처리\s*기한|접수|기안|[가-힣]+-\d{3,}/.test(text) || text.split("\n").filter(function(l){ return l.split("\t").length >= 3; }).length >= 2;
+    var td = ymd(new Date()), out = [], seen = {};
+    var parts = doc ? text.split("\n") : text.split(/\n|(?<=[.!?])\s+|(?<=다\.)/);
+    var subj = doc ? "" : cleanTitle((text.split("\n").filter(function(l){ return l.trim() && !findDates(l).length; })[0] || "").replace(/^\s*\[[^\]]*\]\s*/, "")).replace(/\s*안내\s*$/, "");
+    parts.forEach(function(line){
+      line = line.trim(); if(line.length < 4) return;
+      var ds = findDates(line); if(!ds.length) return;
+      var fut = ds.filter(function(x){ return x.d >= td; }).sort(function(a, b){ return a.d < b.d ? -1 : 1; });
+      var dd = /기한|마감|까지/.test(line) ? (fut.length ? fut[fut.length - 1].d : ds[ds.length - 1].d) : (fut[0] || ds[0]).d;
+      if(dd < ymd(addDays(new Date(), -1))) return;
+      var title = doc ? cleanTitle(line.split("\t").sort(function(a, b){ return b.trim().length - a.trim().length; })[0] || line) : cleanTitle(line);
+      var tm = /(\d{1,2}:\d{2})/.exec(line); if(tm && title.indexOf(tm[1]) < 0) title += " " + tm[1];
+      title = title.replace(/^(까지|부터|에|은|는)\s*/, "").replace(/[.。]\s*$/, "").replace(/\s*(해\s*)?주시기\s*바랍니다$|\s*해\s*주세요$|\s*바랍니다$/, "");
+      if(subj && title.indexOf(subj) < 0 && title.length < 40) title = title + " · " + subj;
+      if(!title || seen[title + dd]) return; seen[title + dd] = 1;
+      out.push({text: (doc ? "[공문] " : "") + title, date: dd, src: doc ? "공문" : "쿨메신저"});
+    });
+    return {doc: doc, items: out.slice(0, 12)};
+  }
+  function addMany(L){
+    var M = TT.store.get("tt_mytodo_v1", null); M = M && Array.isArray(M.items) ? M : {items: []};
+    L.forEach(function(x){ M.items.push({id: uid(), text: x.text.slice(0, 120), date: x.date, done: false, created: Date.now(), src: x.src}); });
+    TT.store.set("tt_mytodo_v1", M); pasted = null;
+    closeFind(); window.dispatchEvent(new CustomEvent("tt-mytodo-change", {detail: "paste"})); render();
+    TT.ui.toast("📝 내 할 일에 " + L.length + "건 넣었습니다" + (L.some(function(x){ return x.src === "공문"; }) ? " · 공문은 마감 3일 전 '준비됨'으로 다시 알려 드려요." : "."));
+  }
+  function pasteRows(){
+    var P = pasted, R = [{h: "📋 붙여 넣은 " + (P.doc ? "공문" : "글") + "에서 찾은 할 일 " + P.items.length + "건"}];
+    if(!P.items.length) return [{h: "📋 붙여 넣은 글에서 날짜가 있는 할 일을 찾지 못했습니다"}];
+    if(P.items.length > 1) R.push({ic: "✅", tx: "<b>모두 내 할 일에 넣기</b>", sub: P.items.length + "건", go: function(){ addMany(P.items); }});
+    P.items.forEach(function(x){ R.push({ic: x.src === "공문" ? "🏛️" : "💬", tx: esc(x.text), sub: dLabel(x.date), go: function(){ addMany([x]); }}); });
+    return R;
+  }
   function students(){
     var out = []; try{ TT.roster.classes().forEach(function(c){ (c.students || []).forEach(function(s){ if(s.name) out.push({c: c, s: s}); }); }); }catch(e){}
     var h = TT.roster.home(); if(h) out.sort(function(a, b){ return (b.c.id === h.id) - (a.c.id === h.id); });
@@ -429,6 +518,7 @@
   }
   /* 입력에 맞는 줄 만들기: [{h:머리글} | {ic, tx, sub, go:fn, btns:[[이름, fn]]}] */
   function build(q){
+    if(pasted) return pasteRows();
     var R = [], qq = q.trim(), low = qq.toLowerCase(); if(!qq) return bagRows();
     var act = [], m0 = qq.match(/^종례\s*[:：]?\s*(.+)$/);
     if(m0){
@@ -494,10 +584,14 @@
       dlg = document.createElement("dialog"); dlg.id = "tdFind";
       dlg.innerHTML = '<input type="text" placeholder="학생·도구 찾기, 또는 한 줄 입력 (예: 다음주 화 상담 / 종례: 가정통신문 회수)" autocomplete="off" spellcheck="false" aria-label="찾기·빠른 입력">'
         + '<div class="fl"></div><div class="ft"><b>↑↓</b> 고르기 · <b>Enter</b> 실행 · <b>Esc</b> 닫기<br>'
-        + '<b>종례:</b> 로 시작 → 종례 바구니 · 날짜(오늘·내일·다음주 화·11/20) → 내 할 일 · 학생 이름으로 시작 → 학생 기록 · 🔒 이 기기 안에서만 찾고 저장</div>';
+        + '<b>공문·쿨메신저 글 붙여 넣기</b> → 날짜와 할 일을 찾아 줌 · <b>종례:</b> 로 시작 → 종례 바구니 · 날짜(오늘·내일·다음주 화·11/20) → 내 할 일 · 학생 이름으로 시작 → 학생 기록 · 🔒 이 기기 안에서만 찾고 저장</div>';
       document.body.appendChild(dlg);
       inp = dlg.querySelector("input"); list = dlg.querySelector(".fl");
-      inp.addEventListener("input", function(){ sel = 0; draw(); });
+      inp.addEventListener("input", function(){ pasted = null; sel = 0; draw(); });
+      inp.addEventListener("paste", function(e){                     // 16단계: 여러 줄·긴 글은 할 일 찾기로
+        var t = e.clipboardData && e.clipboardData.getData("text/plain"); if(!t || (t.indexOf("\n") < 0 && t.length < 60)) return;
+        e.preventDefault(); pasted = scanPaste(t); inp.value = ""; inp.placeholder = "붙여 넣은 글 · 아래에서 고르세요 (글자를 치면 취소)"; sel = 0; draw();
+      });
       inp.addEventListener("keydown", function(e){
         var pick = rows.filter(function(r){ return !r.h && !r.bag; });
         if(e.key === "ArrowDown"){ e.preventDefault(); sel = (sel + 1) % Math.max(1, pick.length); draw(); }
@@ -511,7 +605,7 @@
       });
       dlg.addEventListener("click", function(e){ if(e.target === dlg) closeFind(); });
     }
-    inp.value = ""; sel = 0; draw();
+    inp.value = ""; pasted = null; inp.placeholder = "학생·도구 찾기, 또는 한 줄 입력 (예: 다음주 화 상담 / 종례: 가정통신문 회수)"; sel = 0; draw();
     if(!dlg.open) dlg.showModal(); inp.focus();
   }
   function closeFind(){ if(dlg && dlg.open) dlg.close(); }
@@ -538,7 +632,9 @@
   window.TT_TODAY = {render: render};
   window.addEventListener("pageshow", render);
   window.addEventListener("tt-mytodo-change", render);
-  window.addEventListener("storage", function(e){ if(!e.key || /^tt_(timetable|mytodo|guide|submit|calendar|year|mpace|journal|roster|close)_v1$/.test(e.key)) render(); });
-  setInterval(function(){ if(document.visibilityState === "visible") render(); }, 60000);
+  window.addEventListener("tt-auto-change", render);
+  window.addEventListener("storage", function(e){ if(!e.key || /^tt_(timetable|mytodo|guide|submit|calendar|year|mpace|journal|roster|close|auto)_v1$/.test(e.key)) render(); });
+  (function tick(){ setTimeout(function(){ if(document.visibilityState === "visible") render(); tick(); }, 60500 - Date.now() % 60000); })();   // 분이 바뀔 때마다 (시각 표시)
+  document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "visible") render(); });
   render();
 })();

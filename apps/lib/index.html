@@ -121,7 +121,7 @@
   /* ---------- 목록 ---------- */
   function load(){
     $("body").innerHTML = '<div class="empty"><div class="big">⏳</div><div>자료 목록을 불러오는 중…</div></div>';
-    post({action: "liblist"}).then(function(r){ items = r.items || []; drawNav(); drawList(); }).catch(function(e){ $("body").innerHTML = '<div class="empty"><div class="big">⚠️</div><div><b>자료실을 열지 못했습니다.</b><br>' + esc(err(e)) + "</div></div>"; });
+    post({action: "liblist"}).then(function(r){ items = r.items || []; drawNav(); drawList(); openFromUrl(); }).catch(function(e){ $("body").innerHTML = '<div class="empty"><div class="big">⚠️</div><div><b>자료실을 열지 못했습니다.</b><br>' + esc(err(e)) + "</div></div>"; });
     post({action: "aiinfo"}).then(function(r){ canAsk = !!r.enabled; $("ask").hidden = !canAsk; }).catch(function(){});
   }
   function drawNav(){
@@ -134,7 +134,7 @@
   function drawList(){
     var my = mine().mine, L = items.filter(function(x){ return (cat === "전체" || x.cat === cat) && (!onlyNew || x.latest); }).sort(function(a, b){ return a.at < b.at ? 1 : -1; });
     $("body").innerHTML = L.length ? '<div class="list">' + L.map(function(x){
-      return '<div class="it"><span class="ic">' + icon(x.name) + '</span><div class="mn"><div class="tt" title="' + esc(x.name) + '">' + esc(x.title) + '</div><div class="mt"><span class="chip">' + esc(x.cat) + "</span>" + (x.latest ? '<span class="chip new">최신</span>' : '<span class="chip old">보관</span>') + (x.pages ? '<span class="chip idx">내용 검색' + (/\.pdf$/i.test(x.name) ? " " + x.pages + "쪽" : "") + "</span>" : '<span class="chip">이름으로만 검색</span>') + "<span>" + esc(x.by || "") + "</span><span>" + esc(x.at) + "</span><span>" + kb(x.size) + "</span>" + (x.desc ? "<span>" + esc(x.desc) + "</span>" : "") + '</div></div>' + (isPdf(x.name) ? '<button type="button" class="btn" data-view="' + x.id + '">👁 보기</button>' : "") + '<button type="button" class="btn" data-get="' + x.id + '">⬇ 내려받기</button>' + (my[x.id] || admin ? '<button type="button" class="btn" data-del="' + x.id + '" title="' + (my[x.id] ? "내가 올린 자료" : "관리자") + '">🗑</button>' : "") + "</div>";
+      return '<div class="it"><span class="ic">' + icon(x.name) + '</span><div class="mn"><div class="tt" title="' + esc(x.name) + '">' + esc(x.title) + '</div><div class="mt"><span class="chip">' + esc(x.cat) + "</span>" + (x.latest ? '<span class="chip new">최신</span>' : '<span class="chip old">보관</span>') + (x.pages ? '<span class="chip idx">내용 검색' + (/\.pdf$/i.test(x.name) ? " " + x.pages + "쪽" : "") + "</span>" : '<span class="chip">이름으로만 검색</span>') + "<span>" + esc(x.by || "") + "</span><span>" + esc(day(x.at)) + "</span><span>" + kb(x.size) + "</span>" + (x.desc ? "<span>" + esc(x.desc) + "</span>" : "") + '</div></div>' + (isPdf(x.name) ? '<button type="button" class="btn" data-view="' + x.id + '">👁 보기</button>' : "") + '<button type="button" class="btn" data-get="' + x.id + '">⬇ 내려받기</button>' + (my[x.id] || admin ? '<button type="button" class="btn" data-del="' + x.id + '" title="' + (my[x.id] ? "내가 올린 자료" : "관리자") + '">🗑</button>' : "") + "</div>";
     }).join("") + "</div>" : '<div class="empty"><div class="big">🔎</div><div><b>' + (items.length ? "이 갈래에 자료가 없습니다." : "아직 올라온 자료가 없습니다.") + '</b><br>규정집, 교육계획서, 생활기록부 기재요령, 자주 쓰는 서식처럼<br>구성원이 가끔 찾아보는 자료를 올려 주세요. PDF·HWPX·워드·엑셀은 내용까지 찾을 수 있어요.</div><button type="button" class="btn primary" id="up2">＋ 자료 올리기</button></div>';
     var u2 = $("up2"); if(u2) u2.onclick = upload;
     $("info").textContent = "자료 " + items.filter(function(x){ return x.latest; }).length + "개 (보관 " + items.filter(function(x){ return !x.latest; }).length + ") · 누구나 올리고 내려받습니다";
@@ -146,6 +146,38 @@
   });
   /* 받은 파일은 마지막 하나만 기억해 둡니다(보기 → 내려받기 때 다시 받지 않도록) */
   var last = null;
+  /* 시트가 날짜를 'Fri Nov 13 2026 …'처럼 바꿔 버린 경우 2026-11-13 으로 */
+  function day(s){ s = String(s || ""); if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10); var d = new Date(s); return isNaN(d) ? s : d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+
+  /* ---------- 바로가기 링크 ----------
+     apps/lib/?id=자료id&page=9&side=r     정확히 그 자료
+     apps/lib/?find=2026 문제 -해설&page=9   자료 이름에 2026·문제가 있고 해설은 없는 최신 자료
+     side=l / side=r : 두 단으로 된 쪽에서 왼쪽·오른쪽 단을 크게 */
+  var opened = false;
+  function openFromUrl(){
+    if(opened) return; opened = true;
+    var u = new URLSearchParams(location.search), id = u.get("id"), find = u.get("find"), page = parseInt(u.get("page"), 10) || 1, side = u.get("side");
+    if(!id && !find) return;
+    var x = id ? items.filter(function(i){ return i.id === id; })[0] : pick(find);
+    if(!x){ TT.ui.toast("자료실에서 " + (find ? "'" + find + "'" : "그 자료") + "을(를) 찾지 못했습니다. 자료 이름에 연도와 '문제'·'해설'을 넣어 올려 주세요."); return; }
+    if(!isPdf(x.name)){ TT.ui.toast("PDF가 아니라 바로 볼 수 없습니다. ⬇ 내려받기를 눌러 주세요."); return; }
+    view(x.id, page, null, side);
+  }
+  function pick(find){
+    var words = String(find).toLowerCase().split(/\s+/).filter(Boolean);
+    var L = items.filter(function(x){
+      var t = (x.title + " " + x.name).toLowerCase().replace(/\s+/g, "");
+      return words.every(function(w){ return w[0] === "-" ? t.indexOf(w.slice(1)) < 0 : w.split("|").some(function(a){ return t.indexOf(a) >= 0; }); });
+    });
+    L.sort(function(a, b){ return (b.latest - a.latest) || (a.at < b.at ? 1 : -1); });
+    return L[0];
+  }
+  function linkOf(id, page, side){
+    var u = new URL(location.href); u.search = ""; u.hash = "";
+    u.searchParams.set("id", id); if(page > 1) u.searchParams.set("page", page); if(side) u.searchParams.set("side", side);
+    return u.href;
+  }
+
   function isPdf(n){ return /\.pdf$/i.test(String(n || "")); }
   function fetchFile(id){
     if(last && last.id === id) return Promise.resolve(last);
@@ -170,7 +202,7 @@
     var d = document.createElement("dialog"); d.className = "pv";
     d.innerHTML = '<div class="pvh"><b id="pvT"></b><button type="button" class="btn" id="pvPrev" title="이전 쪽">▲</button><span class="pn"><input id="pvN" inputmode="numeric" aria-label="쪽 번호"> / <span id="pvC">0</span>쪽</span><button type="button" class="btn" id="pvNext" title="다음 쪽">▼</button>'
       + '<button type="button" class="btn" id="pvOut" title="작게">－</button><span class="pn" id="pvZ" style="min-width:44px">100%</span><button type="button" class="btn" id="pvIn" title="크게">＋</button><button type="button" class="btn" id="pvPage" title="한 쪽이 화면에 다 들어오게">한 쪽 맞춤</button><button type="button" class="btn" id="pvFit" title="화면 폭에 맞춰 크게">폭 맞춤</button>'
-      + '<button type="button" class="btn" id="pvDl">⬇ 내려받기</button><button type="button" class="btn primary" id="pvX">닫기 ✕</button></div><div class="pvb" id="pvB"></div>';
+      + '<button type="button" class="btn" id="pvLink" title="지금 보는 쪽으로 바로 열리는 주소를 복사합니다(학교 업무판 비밀번호가 있는 선생님만 열림)">🔗 이 쪽 링크</button><button type="button" class="btn" id="pvDl">⬇ 내려받기</button><button type="button" class="btn primary" id="pvX">닫기 ✕</button></div><div class="pvb" id="pvB"></div>';
     document.body.appendChild(d);
     PV = {d: d, B: d.querySelector("#pvB"), doc: null, w: 0, h: 0, z: 1, fit: 1, wraps: [], io: null, task: 0};
     var q = function(s){ return d.querySelector(s); };
@@ -181,6 +213,12 @@
     q("#pvPage").onclick = function(){ zoom(1); };
     q("#pvFit").onclick = function(){ zoom(fitW() / PV.fit); };
     q("#pvDl").onclick = function(){ if(last) saveFile(last); };
+    q("#pvLink").onclick = function(){
+      if(!last) return;
+      var side = PV.B.scrollWidth > PV.B.clientWidth + 20 ? (PV.B.scrollLeft > (PV.B.scrollWidth - PV.B.clientWidth) / 2 ? "r" : "l") : "";
+      var url = linkOf(last.id, curPage(), side);
+      (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(function(){ TT.ui.toast("링크를 복사했습니다 (" + curPage() + "쪽" + (side ? (side === "r" ? " 오른쪽 단" : " 왼쪽 단") : "") + ")"); }, function(){ TT.ui.prompt("이 주소를 복사하세요", url, "", function(){}); });
+    };
     q("#pvPrev").onclick = function(){ go(curPage() - 1); };
     q("#pvNext").onclick = function(){ go(curPage() + 1); };
     q("#pvN").onchange = function(){ go(parseInt(this.value, 10) || 1); };
@@ -225,7 +263,7 @@
       });
     }).catch(function(){}).then(function(){ w._busy = false; });
   }
-  function view(id, page, btn){
+  function view(id, page, btn, side){
     var x = items.filter(function(i){ return i.id === id; })[0] || {}, P = pvBox(), task = ++P.task;
     P.d.querySelector("#pvT").textContent = "📕 " + (x.title || "자료");
     P.d.querySelector("#pvC").textContent = x.pages || "…"; P.d.querySelector("#pvN").value = "";
@@ -246,7 +284,11 @@
       for(var i = 1; i <= doc.numPages; i++){ var w = document.createElement("div"); w.className = "pvp"; w.dataset.n = i; P.B.appendChild(w); P.wraps.push(w); }
       P.d.querySelector("#pvC").textContent = doc.numPages;
       P.io = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting) draw(e.target); }); }, {root: P.B, rootMargin: "1200px 0px"});
-      layout(); go(page || 1);
+      if(side === "l" || side === "r"){ P.z = Math.max(1, (Math.min(P.B.clientWidth - 32, 820) / (P.w * 0.52)) / P.fit); layout(); }   // 한 단이 화면 폭에 차게
+      else layout();
+      go(page || 1);
+      if(side === "r") P.B.scrollLeft = P.B.scrollWidth; else P.B.scrollLeft = 0;
+      P.side = side || "";
     }).catch(function(e){
       if(task !== P.task) return;
       P.B.innerHTML = '<div class="pvmsg">⚠️ 열지 못했습니다: ' + esc(err(e)) + "<br><br>⬇ 내려받기로 받아서 열어 보세요.</div>";
