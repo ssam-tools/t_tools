@@ -340,7 +340,11 @@ const kindOf = r => !r ? '' : r.t === 'L' ? (r.o ? 'late' : 'Lu') : (r.k === 'ok
 /* 기록 → 입력 버튼: L(지각) A(결석) R(인정) */
 const grpOf = r => { const k = kindOf(r); return !k ? '' : k === 'Lu' ? 'L' : k === 'sick' ? 'A' : 'R'; };
 /* 구분 → 기록 (사유·증빙은 그대로 이어 받음) */
-const mkRec = (k, base) => { const b = base || {}, x = k === 'late' ? { t: 'L', o: true } : k === 'Lu' ? { t: 'L' } : { t: 'A', k }; if (b.r) x.r = b.r; if (b.ev) x.ev = b.ev; if (b.m && x.t === 'L') x.m = b.m; return x; };
+const mkRec = (k, base) => { const b = base || {}, x = k === 'late' ? { t: 'L', o: true } : k === 'Lu' ? { t: 'L' } : { t: 'A', k }; if (b.r) x.r = b.r; if (b.ev) x.ev = b.ev; if (b.m && x.t === 'L') x.m = b.m; if (b.p && (k === 'early' || k === 'late')) x.p = b.p; return x; };
+/* 마지막 교시: 월·수·금 6교시, 화·목 7교시 */
+const lastP = d => { const w = L.dow(d); return w === 2 || w === 4 ? 7 : 6; };
+/* 인정조퇴: 고른 교시 ~ 마지막 교시, 인정지각: 1교시 ~ 고른 교시 */
+const pRange = (k, p, d) => k === 'early' ? [p, lastP(d)] : [1, p];
 const recLabel = r => { const k = kindOf(r); return !k ? '' : k === 'Lu' ? '지각' : k === 'sick' ? '결석' : AK[k]; };
 const cellCh = r => ({ L: '지', A: '결', R: '인' })[grpOf(r)] || '';
 
@@ -373,7 +377,7 @@ function renderEntry() {
   else body = `<div class="chips2" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${list.map(st => {
     const r = day[st.no], w = wkStat(st.no, mon), t = grpOf(r);
     const flag = w.alert ? `주${w.count}회` : w.caution ? `연속${Math.max.apply(null, w.runs.map(x => x.len))}일` : '';
-    const lab = r ? recLabel(r) + (t !== 'L' && r.r ? '·' + r.r : '') : flag;
+    const lab = r ? recLabel(r) + (r.p && t === 'R' ? '(' + r.p + '교시)' : '') + (t !== 'L' && r.r ? '·' + r.r : '') : flag;
     const cls = 'chip2' + (r ? ` has t-${t}` : '') + (w.alert ? ' f-alert' : w.caution ? ' f-caution' : '');
     return `<button class="${cls}" data-act="mark" data-no="${st.no}" aria-label="${esc(nm(st))} ${st.no}번 ${esc(lab || '정상')}"><span class="cn">${st.no}</span><span class="cname">${esc(nm(st))}</span><span class="cst">${esc(lab)}</span></button>`;
   }).join('')}</div>`;
@@ -546,7 +550,7 @@ function episodes() {
     ds.forEach(d => {
       const r = S.att[d][no], k = kindOf(r);
       if (cur && cur.kind === k && (k === 'sick' || k === 'ok') && L.nextSchoolDay(cur.end, S.holidays) === d) { cur.end = d; cur.days.push(d); if (r.r && cur.reasons.indexOf(r.r) < 0) cur.reasons.push(r.r); if (r.ev && cur.ev.indexOf(r.ev) < 0) cur.ev.push(r.ev); }
-      else { cur = { no, st, kind: k, start: d, end: d, days: [d], reasons: r.r ? [r.r] : [], ev: r.ev ? [r.ev] : [] }; out.push(cur); }
+      else { cur = { no, st, kind: k, p: r.p || 0, start: d, end: d, days: [d], reasons: r.r ? [r.r] : [], ev: r.ev ? [r.ev] : [] }; out.push(cur); }
     });
   });
   out.forEach(e => { e.key = e.no + '|' + e.start; });
@@ -645,6 +649,8 @@ function recModal(no, d, quick) {
     <label class="f">증빙 서류</label><div class="chips">${EVID.map(x => `<button type="button" class="chip" data-act="rec-ev" data-r="${esc(x)}" aria-pressed="${r.ev === x}">${esc(x)}</button>`).join('')}</div>
     <div class="row" style="justify-content:flex-end;margin-top:12px">${sms('abs', no, d, '', '결석 확인 문자')}<button class="btn btn-primary" data-act="close">확인</button></div>`;
   if (t === 'R') h += `<label class="f">인정 구분</label><div class="row" style="flex-wrap:nowrap">${RKEYS.map(x => `<button class="seg t-R" data-act="rec-rkind" data-k="${x}" aria-pressed="${k === x}">${AK[x]}</button>`).join('')}</div>
+    ${k === 'early' || k === 'late' ? `<label class="f">${k === 'early' ? '몇 교시부터 조퇴했나요?' : '몇 교시까지 지각했나요?'} <span class="muted small">${r.p ? (k === 'early' ? `→ 결석신고서: ${r.p}교시부터 ${lastP(d)}교시까지` : `→ 결석신고서: 1교시부터 ${r.p}교시까지`) : '(결석신고서 교시 칸에 자동으로 들어갑니다)'}</span></label>
+    <div class="row" style="flex-wrap:nowrap">${[1, 2, 3, 4, 5, 6, 7].map(n => `<button class="seg t-R" data-act="rec-p" data-p="${n}" aria-pressed="${+r.p === n}">${n}</button>`).join('')}</div>` : ''}
     <label class="f" for="rec-r">인정 사유 <span class="muted small">(결석신고서 인정 사유에 그대로 들어갑니다)</span></label>
     <input type="text" id="rec-r" data-chg="rec-r" value="${esc(r.r || '')}" maxlength="40" placeholder="예: 가족 여행 교외체험학습">
     <div class="chips" style="margin-top:6px">${R_REASONS.map(x => `<button type="button" class="chip" data-act="rec-areason" data-r="${esc(x)}" aria-pressed="${r.r === x}">${esc(x)}</button>`).join('')}</div>
@@ -702,12 +708,13 @@ function reportDefaults(e) {
   const st = e ? e.st : null, s = e ? L.parse(e.start) : new Date(), t = e ? L.parse(e.end) : new Date();
   const box = e ? e.kind : 'sick', why = e ? e.reasons.join(', ') : '';
   const reason = e ? (why || (box === 'sick' ? '질병' : '')) : '';
-  const part = box === 'early' || box === 'late';   // 조퇴·지각은 교시·시간을 직접 넣음
+  const part = box === 'early' || box === 'late';   // 조퇴·지각은 교시로
+  const pr = part && e && e.p ? pRange(box, e.p, e.start) : null;
   const subm = e ? (L.nextSchoolDay(e.end, S.holidays) <= today() ? L.nextSchoolDay(e.end, S.holidays) : today()) : today();
   return {
     box, boxReason: box === 'sick' ? '' : why, grade: String(g), cls: String(c), no: st ? String(st.no) : '', name: st ? st.name : '',
-    reason, y1: String(s.getFullYear()), m1: String(s.getMonth() + 1), d1: String(s.getDate()), w1: KD[s.getDay()], p1: '',
-    m2: String(t.getMonth() + 1), d2: String(t.getDate()), w2: KD[t.getDay()], p2: '', amount: e && !part ? String(e.days.length) : '', unit: part ? '시간' : '일', what: box === 'early' ? '조퇴' : box === 'late' ? '지각' : '결석',
+    reason, y1: String(s.getFullYear()), m1: String(s.getMonth() + 1), d1: String(s.getDate()), w1: KD[s.getDay()], p1: pr ? String(pr[0]) : '',
+    m2: String(t.getMonth() + 1), d2: String(t.getDate()), w2: KD[t.getDay()], p2: pr ? String(pr[1]) : '', amount: pr ? String(pr[1] - pr[0] + 1) : e && !part ? String(e.days.length) : '', unit: part ? '교시' : '일', what: box === 'early' ? '조퇴' : box === 'late' ? '지각' : '결석',
     submit: subm, self: st ? st.name : '', guardian: st ? (S.guardians[st.no] || '') : '', confirm: S.settings.confirm || '학부모와의 통화', confirmDate: today(),
     teacher: S.settings.teacher || '', school: S.settings.school || '', evidence: e ? e.ev.join(', ') : ''
   };
@@ -730,7 +737,7 @@ function reportModal(key) {
       <fieldset style="grid-column:1/-1"><legend>내용</legend>${inp('reason', '위 학생은 ( ? )으로 인하여')}
         <div class="grid4">${inp('y1', '시작 연도')}${inp('m1', '월')}${inp('d1', '일')}${inp('w1', '요일')}</div>
         <div class="grid4">${inp('p1', '시작 교시', '', 'placeholder="예: 1"')}${inp('m2', '끝난 월')}${inp('d2', '일')}${inp('w2', '요일')}</div>
-        <div class="grid4">${inp('p2', '끝난 교시', '', 'placeholder="예: 7"')}${inp('amount', '기간')}<div><label class="f">단위</label>${rad('unit', ['일', '시간'])}</div><div><label class="f">신고</label>${rad('what', ['결석', '지각', '조퇴'])}</div></div></fieldset>
+        <div class="grid4">${inp('p2', '끝난 교시', '', 'placeholder="예: 7"')}${inp('amount', '기간')}<div><label class="f">단위</label>${rad('unit', ['일', '시간', '교시'])}</div><div><label class="f">신고</label>${rad('what', ['결석', '지각', '조퇴'])}</div></div></fieldset>
       <fieldset><legend>제출</legend><div class="grid2"><div><label class="f" for="r-submit">제출일</label><input type="date" id="r-submit" data-r="submit" value="${esc(f.submit)}"></div>${inp('self', '본인')}</div>
         ${inp('guardian', '보호자 (이 학생 보호자 이름으로 기억함)')}<p class="small muted" style="margin:6px 0 0">증빙: ${esc(f.evidence || '—')}</p></fieldset>
       <fieldset><legend>담임 확인서</legend><label class="f">확인 방법</label>${rad('confirm', CONFIRM)}
@@ -899,6 +906,7 @@ const A = {
     render(); recModal(no, d);
   },
   'rec-reason': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; const n = Object.assign({}, cur); if (n.r === t.dataset.r) delete n.r; else n.r = t.dataset.r; setRec(no, d, n); recModal(no, d); },
+  'rec-p': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; const n = Object.assign({}, cur); n.p = +t.dataset.p; setRec(no, d, n); render(); recModal(no, d); },
   'rec-rkind': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; view.rk = t.dataset.k; setRec(no, d, mkRec(t.dataset.k, cur)); render(); recModal(no, d); },
   'rec-areason': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; setRec(no, d, Object.assign({}, cur, { r: t.dataset.r })); render(); recModal(no, d); },
   'rec-ev': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; const n = Object.assign({}, cur); n.ev = n.ev === t.dataset.r ? '' : t.dataset.r; setRec(no, d, n); recModal(no, d); },
