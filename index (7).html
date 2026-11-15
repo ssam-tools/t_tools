@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>제출물 체크 · 쌤 노트</title>
+<!--
+  제출물 체크: 동의서·가정통신문 회신·신청서 등을 학생별로 표시하고 미제출자만 모아 봅니다.
+  · 저장 "tt_submit_v1" {items:[{id, cls(학급 id), title, due, at}], m:{항목id:{번호:"y"(제출)|"x"(해당 없음)}}}  표시 없음 = 미제출
+  · 마감일은 첫 화면 2주 달력에 "📦 제목 마감 · 미제출 n명"으로 보입니다(나만 보기).
+-->
+<style>
+  header{align-items:center}
+  main{display:grid!important;grid-template-columns:minmax(220px,280px) minmax(0,1fr);gap:10px;padding:10px!important}
+  .col{min-height:0;display:flex;flex-direction:column;gap:8px}
+  .items{list-style:none;overflow:auto;min-height:0;flex:1;display:flex;flex-direction:column;gap:4px}
+  .items button{width:100%;text-align:left;font:inherit;border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 10px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+  .items button[aria-current=true]{border-color:var(--accent);background:var(--accent-soft)}
+  .items .t{font-weight:800;font-size:14px}
+  .items .s{font-size:12px;color:var(--sub);display:flex;gap:6px;align-items:center}
+  .miss{font-weight:800;color:var(--danger)}.all{font-weight:800;color:var(--ok)}
+  .late{color:var(--danger);font-weight:700}
+  .new{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:8px}
+  .new input{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:6px 9px;width:100%}
+  .new .row{display:flex;gap:6px}
+  .grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));grid-auto-rows:minmax(40px,1fr);gap:6px;overflow:auto;align-content:start}
+  .st{font:inherit;font-size:15px;font-weight:700;border:1.5px solid var(--line);background:#fff;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:6px;padding:4px 9px;color:var(--ink);min-height:40px}
+  .st i{font-style:normal;color:var(--sub);font-size:12px;width:20px;text-align:right}
+  .st b{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .st .mk{font-size:13px}
+  .st.y{background:var(--ok-soft);border-color:#9fd3b4;color:var(--ok)}
+  .st.x{background:#f3f4f6;border-style:dashed;color:#9aa5b1}
+  .st.n{border-color:#f0b4ae}
+  .head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .head h2{font-size:16px;font-weight:800}
+  .head .sp{flex:1}
+  .head .btn{padding:6px 10px;font-size:13px}
+  .seg button{padding:6px 12px}
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--sub);text-align:center}
+  .empty .big{font-size:40px}
+  @media (max-width:760px){ main{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>📦 제출물 체크</h1>
+  </div>
+  <div class="bar">
+    <select id="clsSel" aria-label="학급 선택"></select>
+  </div>
+</header>
+<main class="panel" id="m">
+  <section class="col" aria-label="제출물 목록">
+    <ul class="items" id="items"></ul>
+    <form class="new" id="fNew">
+      <input id="nTitle" maxlength="40" placeholder="새 제출물 (예: 현장체험학습 동의서)" required>
+      <div class="row"><input id="nDue" type="date" title="마감일 (선택)" style="flex:1"><button type="submit" class="btn primary">＋ 만들기</button></div>
+    </form>
+  </section>
+  <section class="col" aria-label="학생별 제출 여부" id="right"></section>
+</main>
+<footer>
+  <span>학생을 누르면 제출 ✔ → 해당 없음 → 미제출 순으로 바뀝니다</span>
+  <span class="priv">🔒 이 기기(와 내 보관함)에만 저장</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var KEY = "tt_submit_v1";
+  var S = TT.store.get(KEY, null) || {}; S.v = 1; S.items = S.items || []; S.m = S.m || {};
+  function save(){ S.updatedAt = Date.now(); TT.store.set(KEY, S); }
+  var cls = null, cur = null, view = "all";
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function ymd(){ var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth()+1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function md(s){ var a = String(s).split("-"); return (+a[1]) + "/" + (+a[2]); }
+  function mine(){ return S.items.filter(function(x){ return cls && x.cls === cls.id; }).sort(function(a, b){ return (b.due || b.at) > (a.due || a.at) ? 1 : -1; }); }
+  function marks(id){ return S.m[id] = S.m[id] || {}; }
+  function missing(it){ var mk = marks(it.id); return cls.students.filter(function(s){ return !mk[s.no]; }); }
+
+  function drawItems(){
+    var L = mine();
+    if(!L.some(function(x){ return x.id === cur; })) cur = L.length ? L[0].id : null;
+    $("items").innerHTML = L.length ? L.map(function(it){
+      var n = missing(it).length, late = it.due && it.due < ymd() && n;
+      return '<li><button type="button" data-id="' + it.id + '" aria-current="' + (it.id === cur) + '"><span class="t">' + esc(it.title) + '</span><span class="s">' + (it.due ? '<span class="' + (late ? "late" : "") + '">마감 ' + md(it.due) + "</span>" : "마감 없음") + (n ? '<span class="miss">미제출 ' + n + "명</span>" : '<span class="all">✔ 모두 냄</span>') + "</span></button></li>";
+    }).join("") : '<li class="muted" style="padding:8px">아직 없습니다. 아래에서 만들어 주세요.</li>';
+  }
+  $("items").onclick = function(e){ var b = e.target.closest("button"); if(!b) return; cur = b.dataset.id; drawItems(); drawRight(); };
+  $("fNew").onsubmit = function(e){
+    e.preventDefault(); if(!cls) return;
+    var it = {id: TT.util.uid(), cls: cls.id, title: $("nTitle").value.trim().slice(0, 40), due: $("nDue").value || "", at: ymd()};
+    if(!it.title) return; S.items.push(it); save(); cur = it.id; $("nTitle").value = ""; $("nDue").value = ""; drawItems(); drawRight();
+  };
+
+  function drawRight(){
+    var R = $("right"), it = S.items.filter(function(x){ return x.id === cur; })[0];
+    if(!cls){ TT.ui.needRoster(R); return; }
+    if(!it){ R.innerHTML = '<div class="empty"><div class="big">📦</div><div><b>제출물을 만들어 주세요.</b><br>동의서, 가정통신문 회신, 신청서처럼 학생별로 받는 것을 체크합니다.<br>마감일을 넣으면 첫 화면 달력에도 보입니다.</div></div>'; return; }
+    var mk = marks(it.id), miss = missing(it), yes = cls.students.filter(function(s){ return mk[s.no] === "y"; }).length;
+    var list = cls.students.filter(function(s){ return view === "all" || !mk[s.no]; });
+    R.innerHTML = '<div class="head"><h2>' + esc(it.title) + '</h2><span class="muted">' + (it.due ? "마감 " + md(it.due) + " · " : "") + "제출 " + yes + " · 미제출 <b class=\"miss\">" + miss.length + "</b></span><span class=\"sp\"></span>"
+      + '<div class="seg"><button type="button" data-v="all" aria-pressed="' + (view === "all") + '">모두</button><button type="button" data-v="miss" aria-pressed="' + (view === "miss") + '">미제출만</button></div>'
+      + '<button type="button" class="btn" data-a="copy">미제출 번호 복사</button><button type="button" class="btn" data-a="allY">남은 학생 모두 제출</button><button type="button" class="btn" data-a="edit">✎</button><button type="button" class="btn" data-a="del">🗑</button></div>'
+      + '<div class="grid">' + list.map(function(s){ var v = mk[s.no] || "n"; return '<button type="button" class="st ' + v + '" data-no="' + s.no + '"><i>' + s.no + "</i><b>" + esc(s.name || "") + '</b><span class="mk">' + (v === "y" ? "✔" : v === "x" ? "—" : "") + "</span></button>"; }).join("") + "</div>"
+      + (miss.length ? '<div class="muted">미제출 학생 안내 문자: ' + miss.slice(0, 12).map(function(s){ return '<a class="btn" style="padding:2px 8px;font-size:12px" href="../parent/?' + new URLSearchParams({k: "sub", no: String(s.no), d: it.due || ymd(), x: it.title, c: cls.id}).toString() + '">✉️ ' + s.no + "</a>"; }).join(" ") + (miss.length > 12 ? " …" : "") + "</div>" : "");
+    R.querySelector(".seg").onclick = function(e){ var b = e.target.closest("button"); if(b){ view = b.dataset.v; drawRight(); } };
+    R.querySelector(".grid").onclick = function(e){
+      var b = e.target.closest(".st"); if(!b) return; var no = b.dataset.no, v = mk[no];
+      if(!v) mk[no] = "y"; else if(v === "y") mk[no] = "x"; else delete mk[no];
+      save(); drawItems(); drawRight();
+    };
+    R.querySelector("[data-a=copy]").onclick = function(){
+      var t = it.title + " 미제출: " + (miss.map(function(s){ return s.no + "번"; }).join(", ") || "없음");
+      if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(function(){ TT.ui.toast("복사했습니다: " + t); });
+      else TT.ui.toast(t);
+    };
+    R.querySelector("[data-a=allY]").onclick = function(){ var snap = JSON.stringify(mk); miss.forEach(function(s){ mk[s.no] = "y"; }); save(); drawItems(); drawRight(); TT.ui.toast("남은 학생을 모두 제출로 표시했습니다.", function(){ S.m[it.id] = JSON.parse(snap); save(); drawItems(); drawRight(); }); };
+    R.querySelector("[data-a=edit]").onclick = function(){ TT.ui.prompt("제출물 이름 바꾸기", it.title, "", function(v){ it.title = v.slice(0, 40); save(); drawItems(); drawRight(); }); };
+    R.querySelector("[data-a=del]").onclick = function(){ TT.ui.confirm("제출물 삭제", "'" + it.title + "'와 체크 기록을 지웁니다.", "삭제", function(){ S.items = S.items.filter(function(x){ return x.id !== it.id; }); delete S.m[it.id]; cur = null; save(); drawItems(); drawRight(); }); };
+  }
+
+  TT.ui.classSelect($("clsSel"), "submit", function(c){ cls = c; cur = null; drawItems(); drawRight(); });
+})();
+</script>
+</body>
+</html>

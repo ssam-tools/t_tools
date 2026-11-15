@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>형성평가 · 쌤 노트</title>
+<!--
+  형성평가 빠른 채점 + 보충 루프
+  · 칸을 누르면 ✔(맞음) → ✗(틀림) → 빈칸. "모두 ✔" 뒤 틀린 칸만 누르면 빠릅니다.
+  · 문항별 정답률 → 60% 아래는 "다시 설명할 문항"(📒 수업 기록장 메모로)
+  · 틀린 학생 → 🔁 보충 학습지(틀린 유형만, 학생별 다른 숫자) 인쇄 → 📦 제출물로 회수
+    → "보충 후 확인"에서 해결한 문항을 누르면 학생 기록(교과 세특)에 "보충 학습 뒤 스스로 해결" 근거가 남습니다.
+  · 저장 "tt_mcheck_v1" {list:[{id,name,date,lv,seed,items:[{type,q,a,std}]}], res:{평가id:{학급id:{번호:{r:{문항:1|0}, fix:{문항:1}, ab}}}}}
+-->
+<style>
+  header{align-items:center}
+  .bar{flex-wrap:wrap}
+  main{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(240px,290px);gap:10px;padding:10px!important}
+  .tw{min-height:0;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+  table.g{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
+  .g th,.g td{border-bottom:1px solid #eef1f4;padding:2px 4px;text-align:center;white-space:nowrap}
+  .g thead th{position:sticky;top:0;background:#f7f9fb;z-index:2;font-size:12px;border-bottom:1px solid var(--line)}
+  .g tfoot td{position:sticky;bottom:0;background:#f7f9fb;font-size:11.5px;font-weight:800;border-top:1px solid var(--line)}
+  .g td.nm{text-align:left;font-weight:700}
+  .c{font:inherit;width:30px;height:28px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;font-weight:900;font-size:14px;color:#a0a9b3}
+  .c.y{background:var(--ok-soft);border-color:#9fd3b4;color:var(--ok)}
+  .c.n{background:var(--danger-soft);border-color:#f0b4ae;color:var(--danger)}
+  .c.f{background:#efe7fa;border-color:#cdb8ea;color:#5b2f99}
+  .low{color:var(--danger)}.mid{color:#8a6a00}.hi{color:var(--ok)}
+  .sc{font-weight:900;color:var(--accent)}
+  .mini{font:inherit;font-size:11px;border:1px solid var(--line);background:#fff;border-radius:7px;padding:2px 6px;cursor:pointer;color:var(--sub)}
+  .mini[aria-pressed=true]{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+  tr.ab td{opacity:.45}
+  .side{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px}
+  .box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
+  .box h3{font-size:14px;font-weight:800}
+  .box ul{list-style:none;display:flex;flex-direction:column;gap:3px;font-size:13px}
+  .box .btn{padding:6px 10px;font-size:13px}
+  .muted{color:var(--sub);font-size:12.5px}
+  .seg button{padding:6px 11px}
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--sub);text-align:center;grid-column:1/-1}
+  .empty .big{font-size:42px}
+  dialog label.f{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin-top:8px}
+  dialog input,dialog select{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:5px 8px;box-sizing:border-box}
+  dialog .its{max-height:40vh;overflow:auto;display:flex;flex-direction:column;gap:4px;margin-top:6px}
+  dialog .its div{display:flex;gap:6px;align-items:center}
+  dialog .acts{display:flex;justify-content:space-between;margin-top:12px}dialog .acts .r{display:flex;gap:6px}
+  #prt{position:fixed;inset:0;z-index:50;background:#fff;overflow:auto;padding:16px 22px}
+  #prt .pb{display:flex;gap:8px;margin-bottom:10px}
+  .page{max-width:760px;margin:0 auto 24px;color:#111;page-break-after:always}.page:last-child{page-break-after:auto}
+  .page .hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #111;padding-bottom:4px;margin-bottom:12px;font-size:13px}
+  .page h2{font-size:18px;margin:0}
+  .page ol{padding-left:22px;font-size:15px;line-height:1.75}.page li{margin-bottom:30px}
+  @media print{ body > *:not(#prt){display:none!important} #prt{position:static;padding:0} #prt .pb{display:none} @page{size:A4;margin:12mm} }
+  @media (max-width:860px){ main{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>✅ 형성평가</h1>
+  </div>
+  <div class="bar">
+    <select id="clsSel" aria-label="학급 선택"></select>
+    <select id="qSel" aria-label="형성평가 고르기"></select>
+    <div class="seg" id="mode" role="group" aria-label="채점 모드"><button type="button" data-v="mark" aria-pressed="true">채점</button><button type="button" data-v="fix" aria-pressed="false">🔁 보충 후 확인</button></div>
+    <button type="button" class="btn" id="newQ">＋ 새 형성평가</button>
+    <details class="more" id="more">
+      <summary aria-label="더 보기">⋯</summary>
+      <div class="menu">
+        <button type="button" id="mPrint">🖨 문항지·정답 인쇄</button>
+        <button type="button" id="mCsv">점수 복사 (모둠 편성·수행평가에 붙여 넣기)</button>
+        <hr><button type="button" id="mDel" class="danger">이 형성평가 삭제</button>
+      </div>
+    </details>
+  </div>
+</header>
+<main class="panel" id="m"></main>
+<footer>
+  <span id="info">칸을 누르면 ✔ → ✗ → 빈칸 · "모두 ✔" 뒤 틀린 칸만 누르면 빠릅니다</span>
+  <span class="priv">🔒 점수는 이 기기(와 내 보관함)에만 · 교실 화면에 띄우지 마세요</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script src="../../shared/mathgen.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var KEY = "tt_mcheck_v1", N = TT.notes;
+  var S = TT.store.get(KEY, null) || {}; S.v = 1; S.list = S.list || []; S.res = S.res || {};
+  function save(){ S.updatedAt = Date.now(); TT.store.set(KEY, S); }
+  var cls = null, cur = (TT.store.get("tt_ui_v1", {}) || {}).mcheck || null, mode = "mark";
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function ymd(){ var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth()+1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function Q(){ return S.list.filter(function(q){ return q.id === cur; })[0] || null; }
+  function box(){ var q = Q(); if(!q || !cls) return {}; var x = S.res[q.id] = S.res[q.id] || {}; return x[cls.id] = x[cls.id] || {}; }
+  function rec(no){ var B = box(); var r = B[no] = B[no] || {}; r.r = r.r || {}; r.fix = r.fix || {}; return r; }
+  function code(){ return cls && cls.grade && cls.cls ? cls.grade * 100 + cls.cls : null; }
+  function label(it, i){ var t = it.type && MG.type(it.type); return (i + 1) + "번" + (t ? " " + t.n : it.std ? " " + it.std : ""); }
+
+  function fillSel(){
+    var s = $("qSel"); s.textContent = "";
+    if(!S.list.length){ var o = document.createElement("option"); o.value = ""; o.textContent = "형성평가 없음"; s.appendChild(o); }
+    S.list.slice().sort(function(a, b){ return a.date < b.date ? 1 : -1; }).forEach(function(q){ var o = document.createElement("option"); o.value = q.id; o.textContent = q.name + " · " + q.date.slice(5).replace("-", "/") + " (" + q.items.length + "문항)"; s.appendChild(o); });
+    if(!Q()) cur = (S.list[S.list.length - 1] || {}).id || null;
+    s.value = cur || "";
+  }
+  $("qSel").onchange = function(){ cur = this.value; var u = TT.store.get("tt_ui_v1", {}) || {}; u.mcheck = cur; TT.store.set("tt_ui_v1", u); render(); };
+  $("mode").onclick = function(e){ var b = e.target.closest("button"); if(!b) return; mode = b.dataset.v; this.querySelectorAll("button").forEach(function(x){ x.setAttribute("aria-pressed", x === b); }); render(); };
+
+  /* 통계: 문항별 정답률, 학생 점수, 보충 대상 */
+  function stats(){
+    var q = Q(), B = box(), n = q.items.length, rate = [], done = 0, wrongSt = [];
+    for(var i = 0; i < n; i++){ var y = 0, t = 0; cls.students.forEach(function(s){ var r = B[s.no]; if(!r || r.ab || !r.r || r.r[i] == null) return; t++; if(r.r[i] === 1) y++; }); rate.push(t ? {p: Math.round(y / t * 100), t: t} : null); }
+    cls.students.forEach(function(s){ var r = B[s.no]; if(!r || r.ab || !r.r) return; var marked = Object.keys(r.r).length; if(marked) done++; var w = Object.keys(r.r).filter(function(k){ return r.r[k] === 0; }); if(w.length) wrongSt.push({s: s, w: w.map(Number)}); });
+    return {rate: rate, done: done, wrong: wrongSt};
+  }
+  function render(){
+    var m = $("m"); m.textContent = "";
+    if(!cls){ TT.ui.needRoster(m); return; }
+    var q = Q();
+    if(!q){ m.innerHTML = '<div class="empty"><div class="big">✅</div><div><b>형성평가를 만들어 주세요.</b><br>🔢 문항 생성기에서 문항을 만들고 "✅ 형성평가로"를 누르거나,<br>여기서 ＋ 새 형성평가로 문항 수만 정해 시작할 수 있어요(종이 문항지를 쓸 때).</div><a class="btn primary" href="../mgen/">🔢 문항 생성기 열기</a></div>'; return; }
+    var B = box(), st = stats();
+    var head = "<tr><th>번호</th><th>이름</th>" + q.items.map(function(it, i){ return '<th title="' + esc(label(it, i)) + '">' + (i + 1) + "</th>"; }).join("") + "<th>점수</th><th>결시</th><th></th></tr>";
+    var rows = cls.students.map(function(s){
+      var r = B[s.no] || {r: {}, fix: {}}, sc = 0;
+      var cells = q.items.map(function(it, i){
+        var v = r.r ? r.r[i] : null, f = r.fix && r.fix[i], c = v === 1 ? "y" : v === 0 ? (f ? "f" : "n") : "", t = v === 1 ? "✔" : v === 0 ? (f ? "🔁" : "✗") : "";
+        if(v === 1) sc++;
+        return '<td><button type="button" class="c ' + c + '" data-no="' + s.no + '" data-i="' + i + '"' + (mode === "fix" && v !== 0 ? " disabled" : "") + ' title="' + esc(label(it, i)) + '">' + t + "</button></td>";
+      }).join("");
+      var marked = r.r && Object.keys(r.r).length;
+      return '<tr class="' + (r.ab ? "ab" : "") + '"><td>' + s.no + '</td><td class="nm">' + esc(s.name || "") + "</td>" + cells + '<td class="sc">' + (marked ? sc + "/" + q.items.length : "") + '</td><td><button type="button" class="mini" data-ab="' + s.no + '" aria-pressed="' + !!r.ab + '">결시</button></td><td>' + (mode === "mark" ? '<button type="button" class="mini" data-all="' + s.no + '">모두 ✔</button>' : "") + "</td></tr>";
+    }).join("");
+    var foot = '<tr><td colspan="2">정답률</td>' + st.rate.map(function(x){ return '<td class="' + (!x ? "" : x.p < 60 ? "low" : x.p < 80 ? "mid" : "hi") + '">' + (x ? x.p + "%" : "") + "</td>"; }).join("") + "<td></td><td></td><td></td></tr>";
+    m.innerHTML = '<div class="tw"><table class="g"><thead>' + head + "</thead><tbody>" + rows + "</tbody><tfoot>" + foot + '</tfoot></table></div><aside class="side" id="side"></aside>';
+    side(st);
+    $("info").textContent = mode === "fix" ? "🔁 보충 후 확인: 틀렸던(✗) 칸 중 보충 뒤 해결한 칸을 누르세요 → 학생 기록(교과 세특)에 근거가 남습니다" : "칸을 누르면 ✔ → ✗ → 빈칸 · 채점 " + st.done + " / " + cls.students.length + "명";
+  }
+  function side(st){
+    var q = Q(), low = st.rate.map(function(x, i){ return {x: x, i: i}; }).filter(function(o){ return o.x && o.x.p < 60; });
+    var fixN = 0; st.wrong.forEach(function(w){ var r = box()[w.s.no]; w.w.forEach(function(i){ if(r.fix && r.fix[i]) fixN++; }); });
+    var totalW = st.wrong.reduce(function(a, w){ return a + w.w.length; }, 0);
+    $("side").innerHTML = '<div class="box"><h3>📢 다시 설명할 문항 <span class="muted">정답률 60% 아래</span></h3>'
+      + (low.length ? "<ul>" + low.map(function(o){ return '<li><b class="low">' + o.x.p + "%</b> " + esc(label(q.items[o.i], o.i)) + "</li>"; }).join("") + '</ul><button type="button" class="btn" id="toJ">📒 수업 기록장 메모에 넣기</button>' : '<div class="muted">없음 (채점하면 자동으로 나옵니다)</div>') + "</div>"
+      + '<div class="box"><h3>🔁 보충 대상 ' + st.wrong.length + '명 <span class="muted">해결 ' + fixN + " / " + totalW + "문항</span></h3>"
+      + (st.wrong.length ? "<ul>" + st.wrong.slice(0, 12).map(function(w){ return "<li>" + w.s.no + " " + esc(w.s.name || "") + ' <span class="muted">' + w.w.map(function(i){ return i + 1; }).join(", ") + "번</span></li>"; }).join("") + (st.wrong.length > 12 ? "<li class=\"muted\">…</li>" : "") + '</ul><button type="button" class="btn primary" id="supp">🔁 보충 학습지 인쇄 (틀린 유형만)</button><button type="button" class="btn" id="toSub">📦 제출물로 회수</button><button type="button" class="btn" id="goFix">보충 후 확인하기 →</button>' : '<div class="muted">틀린 학생이 없으면 비어 있습니다.</div>') + "</div>"
+      + '<div class="box"><h3>🔗 이어지는 곳</h3><div class="muted">해결 표시는 ✍️ 학생 기록(교과 세특)으로 · 점수는 ⋯ → 점수 복사로 모둠 편성·수행평가에 붙여 넣기</div></div>';
+    var tj = $("toJ"); if(tj) tj.onclick = function(){ toJournal(low); };
+    var sp = $("supp"); if(sp) sp.onclick = function(){ supplement(st.wrong); };
+    var ts = $("toSub"); if(ts) ts.onclick = function(){ toSubmit(st.wrong); };
+    var gf = $("goFix"); if(gf) gf.onclick = function(){ $("mode").querySelector("[data-v=fix]").click(); };
+  }
+
+  $("m").addEventListener("click", function(e){
+    var c = e.target.closest(".c");
+    if(c){
+      var r = rec(c.dataset.no), i = c.dataset.i;
+      if(mode === "fix"){ if(r.r[i] !== 0) return; if(r.fix[i]) delete r.fix[i]; else r.fix[i] = 1; save(); fixNote(+c.dataset.no); render(); return; }
+      var v = r.r[i]; if(v == null) r.r[i] = 1; else if(v === 1) r.r[i] = 0; else { delete r.r[i]; delete r.fix[i]; }
+      save(); render(); return;
+    }
+    var a = e.target.closest("[data-all]"); if(a){ var r2 = rec(a.dataset.all); Q().items.forEach(function(it, i){ if(r2.r[i] == null) r2.r[i] = 1; }); save(); render(); return; }
+    var b = e.target.closest("[data-ab]"); if(b){ var r3 = rec(b.dataset.ab); r3.ab = !r3.ab; save(); render(); }
+  });
+
+  /* 보충 뒤 해결 → 학생 기록(교과 세특). 평가·반·번호로 짝: 다시 누르면 갱신, 모두 풀면 삭제 */
+  function fixNote(no){
+    var q = Q(), s = cls.students.filter(function(x){ return +x.no === no; })[0]; if(!s) return;
+    var r = box()[no], idx = Object.keys(r.fix || {}).map(Number).sort(function(a, b){ return a - b; });
+    var d = N.load(), aid = "m" + q.id + "-" + cls.id + "-" + no, k = d.recs.findIndex(function(x){ return x.aid === aid; });
+    if(!idx.length){ if(k >= 0){ d.recs.splice(k, 1); N.save(d); } return; }
+    var kinds = []; idx.forEach(function(i){ var it = q.items[i], t = it.type && MG.type(it.type), n = t ? t.n : (it.std || (i + 1) + "번 문항"); if(kinds.indexOf(n) < 0) kinds.push(n); });
+    var o = {k: N.key(cls, s), n: s.name, date: ymd(), area: "subj", src: "형성평가 보충", text: "[" + q.name + "] " + kinds.join("·") + " 문항에서 처음에 틀렸으나 보충 학습 뒤 스스로 해결함(오개념 수정)"};
+    if(k >= 0) Object.assign(d.recs[k], o); else d.recs.push(Object.assign({id: TT.util.uid(), aid: aid, at: Date.now()}, o));
+    N.save(d);
+  }
+  /* 다시 설명할 문항 → 수업 기록장의 이 반 진도 메모 */
+  function toJournal(low){
+    var J = TT.store.get("tt_journal_v1", null), cc = code();
+    if(!J || !J.prog || !cc || !J.prog[cc]){ TT.ui.toast("수업 기록장에 이 반이 없습니다. 수업 기록장을 한 번 열어 주세요."); return; }
+    var q = Q(), line = "[" + ymd().slice(5).replace("-", "/") + " " + q.name + "] 다시 설명: " + low.map(function(o){ return label(q.items[o.i], o.i) + "(" + o.x.p + "%)"; }).join(", ");
+    J.prog[cc].memo = (J.prog[cc].memo ? J.prog[cc].memo + "\n" : "") + line; TT.store.set("tt_journal_v1", J);
+    TT.ui.toast("수업 기록장 " + cls.name + " 메모에 넣었습니다.");
+  }
+  /* 보충 학습지: 틀린 문항과 같은 유형을 다른 숫자로(유형이 없으면 원래 문항을 다시) */
+  function supplement(wrong){
+    var q = Q(), sc = TT.school.load();
+    var pages = wrong.map(function(w){
+      var L = [];
+      w.w.forEach(function(i){ var it = q.items[i];
+        if(it.type && MG.type(it.type)){ for(var j = 0; j < 2; j++) L.push(MG.make(it.type, q.lv || 2, (q.seed || q.id) + "|fix|" + w.s.no + "|" + i + "|" + j)); }
+        else L.push({q: "(다시 풀기) " + (it.q || (i + 1) + "번 문항"), a: it.a || ""});
+      });
+      return '<div class="page"><div class="hd"><div><h2>🔁 보충 학습지 · ' + esc(q.name) + "</h2>" + esc(sc.name || "") + "</div><div>" + esc(cls.name) + " " + w.s.no + "번 " + esc(w.s.name || "") + '</div></div><ol>' + L.map(function(o){ return "<li>" + o.q + "</li>"; }).join("") + "</ol></div>";
+    }).join("");
+    var key = '<div class="page"><div class="hd"><h2>보충 학습지 정답</h2><div>' + esc(cls.name) + "</div></div>" + wrong.map(function(w){
+      var A = []; w.w.forEach(function(i){ var it = q.items[i]; if(it.type && MG.type(it.type)){ for(var j = 0; j < 2; j++) A.push(MG.make(it.type, q.lv || 2, (q.seed || q.id) + "|fix|" + w.s.no + "|" + i + "|" + j).a); } else A.push(it.a || "-"); });
+      return "<div><b>" + w.s.no + "번</b> " + A.map(function(a, j){ return (j + 1) + ") " + a; }).join("  ") + "</div>";
+    }).join("") + "</div>";
+    var old = $("prt"); if(old) old.remove();
+    var p = document.createElement("div"); p.id = "prt"; p.innerHTML = '<div class="pb"><button type="button" class="btn primary" id="pp">🖨 인쇄</button><button type="button" class="btn" id="pc">닫기</button><span class="muted">틀린 문항마다 같은 유형 2문제씩 · 학생마다 다른 숫자</span></div>' + pages + key;
+    document.body.appendChild(p); $("pc").onclick = function(){ p.remove(); }; $("pp").onclick = function(){ window.print(); };
+  }
+  /* 보충 학습지 회수 → 제출물 체크 (보충 대상이 아닌 학생은 "해당 없음") */
+  function toSubmit(wrong){
+    var q = Q(), Sb = TT.store.get("tt_submit_v1", null) || {v: 1, items: [], m: {}}; Sb.items = Sb.items || []; Sb.m = Sb.m || {};
+    var id = TT.util.uid(), mk = {}, tgt = {}; wrong.forEach(function(w){ tgt[w.s.no] = 1; });
+    cls.students.forEach(function(s){ if(!tgt[s.no]) mk[s.no] = "x"; });
+    Sb.items.push({id: id, cls: cls.id, title: ("보충 학습지 · " + q.name).slice(0, 40), due: "", at: ymd()}); Sb.m[id] = mk; TT.store.set("tt_submit_v1", Sb);
+    TT.ui.toast("📦 제출물 체크에 '보충 학습지' 항목을 만들었습니다 (대상 " + wrong.length + "명).");
+  }
+
+  /* 새 형성평가 (종이 문항지용): 문항 수와 문항마다 유형(선택) */
+  $("newQ").onclick = function(){
+    var d = document.createElement("dialog"), f = document.createElement("form"); d.appendChild(f); document.body.appendChild(d); d.style.width = "min(560px,94vw)";
+    d.addEventListener("close", function(){ d.remove(); });
+    var opts = '<option value="">유형 없음</option>' + MG.T.map(function(t){ return '<option value="' + t.id + '">중' + t.g + " " + esc(t.n) + "</option>"; }).join("");
+    f.innerHTML = '<h2>＋ 새 형성평가</h2><p>종이 문항지로 본 형성평가도 문항 수만 정하면 채점할 수 있어요. 문항마다 유형을 고르면 틀린 학생에게 같은 유형의 보충 학습지를 만들어 줍니다. 🔢 문항 생성기에서 만들면 문항과 정답이 함께 들어와요.</p>'
+      + '<label class="f">이름<input id="nN" maxlength="40" style="width:100%" placeholder="예: 인수분해 형성평가"></label><label class="f">문항 수 <input id="nK" type="number" min="1" max="30" value="5" style="width:80px"></label><div class="its" id="its"></div>'
+      + '<div class="acts"><span></span><div class="r"><button type="button" class="btn" id="nX">취소</button><button type="submit" class="btn primary">만들기</button></div></div>';
+    function its(){ var k = Math.max(1, Math.min(30, +f.querySelector("#nK").value || 1)), h = ""; for(var i = 0; i < k; i++) h += "<div>" + (i + 1) + '번 <select data-t="' + i + '">' + opts + '</select><input data-s="' + i + '" placeholder="성취기준·내용 (선택)" style="flex:1"></div>'; f.querySelector("#its").innerHTML = h; }
+    f.querySelector("#nK").oninput = its; its();
+    f.querySelector("#nX").onclick = function(){ d.close(); };
+    f.onsubmit = function(e){
+      e.preventDefault(); var k = Math.max(1, Math.min(30, +f.querySelector("#nK").value || 1)), items = [];
+      for(var i = 0; i < k; i++){ var t = f.querySelector('[data-t="' + i + '"]').value; items.push({type: t, std: f.querySelector('[data-s="' + i + '"]').value.trim() || (t ? MG.type(t).unit : ""), q: "", a: ""}); }
+      var q = {id: TT.util.uid(), name: (f.querySelector("#nN").value.trim() || "형성평가").slice(0, 40), date: ymd(), lv: 2, seed: Math.random().toString(36).slice(2, 8), items: items};
+      S.list.push(q); cur = q.id; save(); d.close(); fillSel(); render();
+    };
+    d.showModal();
+  };
+
+  function closeMenu(){ $("more").open = false; }
+  document.addEventListener("click", function(e){ if(!$("more").contains(e.target)) closeMenu(); });
+  $("mPrint").onclick = function(){
+    closeMenu(); var q = Q(); if(!q) return; var sc = TT.school.load();
+    if(!q.items.some(function(it){ return it.q; })){ TT.ui.toast("종이 문항지로 만든 형성평가라 인쇄할 문항이 없습니다."); return; }
+    var old = $("prt"); if(old) old.remove();
+    var p = document.createElement("div"); p.id = "prt";
+    p.innerHTML = '<div class="pb"><button type="button" class="btn primary" id="pp">🖨 인쇄</button><button type="button" class="btn" id="pc">닫기</button></div><div class="page"><div class="hd"><div><h2>✅ ' + esc(q.name) + "</h2>" + esc(sc.name || "") + "</div><div>____반 ____번 이름 ________</div></div><ol>" + q.items.map(function(it){ return "<li>" + it.q + "</li>"; }).join("") + '</ol></div><div class="page"><div class="hd"><h2>정답</h2></div><ol>' + q.items.map(function(it){ return "<li>" + it.a + "</li>"; }).join("") + "</ol></div>";
+    document.body.appendChild(p); $("pc").onclick = function(){ p.remove(); }; $("pp").onclick = function(){ window.print(); };
+  };
+  $("mCsv").onclick = function(){
+    closeMenu(); var q = Q(); if(!q || !cls) return; var B = box();
+    var t = cls.students.map(function(s){ var r = B[s.no], sc = r && r.r ? Object.keys(r.r).filter(function(k){ return r.r[k] === 1; }).length : ""; return s.no + "\t" + (s.name || "") + "\t" + (r && r.ab ? "" : sc); }).join("\n");
+    if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText("번호\t이름\t점수\n" + t).then(function(){ TT.ui.toast("번호·이름·점수를 복사했습니다. 모둠 편성의 명단이나 엑셀에 붙여 넣으세요."); });
+  };
+  $("mDel").onclick = function(){ closeMenu(); var q = Q(); if(!q) return; TT.ui.confirm("형성평가 삭제", "'" + q.name + "'와 모든 반의 채점을 지웁니다. 학생 기록으로 들어간 보충 기록도 지웁니다.", "삭제", function(){
+    var d = N.load(); d.recs = d.recs.filter(function(r){ return !(r.aid && r.aid.indexOf("m" + q.id + "-") === 0); }); N.save(d);
+    S.list = S.list.filter(function(x){ return x.id !== q.id; }); delete S.res[q.id]; cur = null; save(); fillSel(); render(); }); };
+
+  fillSel();
+  TT.ui.classSelect($("clsSel"), "mcheck", function(c){ cls = c; render(); });
+})();
+</script>
+</body>
+</html>

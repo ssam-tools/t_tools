@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>학기초 세팅 · 쌤 노트</title>
+<!--
+  14단계 학기초 기본 세팅 꾸러미.
+  · 담당자: 학교 정보 · 학생 명렬 · 교직원 명렬 · 학사일정 · 전체 교사 시간표(컴시간 엑셀)를 "학교 세팅 파일" 하나로 내보냄.
+    파일은 언제나 비밀 문구로 잠급니다(PBKDF2 31만 번 → AES-GCM 256). 비밀 문구는 파일에 들어가지 않습니다.
+  · 다른 선생님: 그 파일을 불러와 비밀 문구를 넣고, 내 이름 · 내 교과 · 담임 반만 고르면 끝.
+    명렬은 기본으로 "내 수업 반 + 우리 반"만 이 기기에 넣습니다(필요한 만큼만).
+  · 저장: tt_school_v1(학교 정보·컴시간 코드·내 교과), tt_roster_v1, tt_staff_v1, tt_calendar_v1, tt_timetable_v1(내 시간표), tt_alltt_v1(전체 교사 시간표)
+  · 서버로 보내지 않습니다. 파일은 기기 안에서만 만들고 엽니다.
+-->
+<style>
+  main.panel{flex-direction:column;gap:10px;min-height:0}
+  .view{flex:1;min-height:0;display:flex;gap:12px}
+  .tiles{flex:1;min-width:0;display:grid;grid-template-columns:1.1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;min-height:0}
+  .tile{border:1px solid var(--line);border-radius:14px;background:#fbfcfd;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-height:0;overflow:hidden}
+  .tile.on{border-color:#9cc3ea;background:#fff}
+  .tile h2{font-size:15px;display:flex;align-items:center;gap:6px}
+  .tile h2 label{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--sub);display:flex;gap:4px;align-items:center;cursor:pointer}
+  .tile .st{font-size:13px;color:var(--sub);line-height:1.45}
+  .tile .st b{color:var(--ink)} .tile .st .ok{color:var(--ok);font-weight:800} .tile .st .no{color:var(--danger);font-weight:700}
+  .tile .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+  .tile .btn{font-size:13px;padding:6px 10px}
+  .sch{grid-row:span 2}
+  .sch .field{font-size:12px}.sch .field input{font-size:14px;padding:6px 9px}
+  .side{flex:0 0 clamp(250px,28vw,330px);display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;min-height:0}
+  .side h2{font-size:15px}
+  .side p{font-size:13px;color:var(--sub);line-height:1.5}
+  .msg{font-size:13px;font-weight:700;min-height:1.3em}.msg.ok{color:var(--ok)}.msg.err{color:var(--danger)}
+  .steps{flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:10px;min-height:0}
+  .step{border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;background:#fbfcfd;min-height:0;overflow:auto}
+  .step.dim{opacity:.45;pointer-events:none}
+  .step h2{font-size:15px}
+  .step h2 i{font-style:normal;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;margin-right:6px}
+  .drop{border:2px dashed var(--accent);border-radius:12px;background:var(--accent-soft);padding:14px;text-align:center;font-size:13.5px;color:var(--ink);cursor:pointer}
+  .drop b{display:block;font-size:15px;margin-bottom:3px}
+  ul.sum{list-style:none;display:flex;flex-direction:column;gap:5px;font-size:13.5px}
+  ul.sum li{display:flex;gap:8px;align-items:center}
+  ul.sum li span{margin-left:auto;color:var(--sub);font-size:12.5px}
+  .chk{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px}
+  .chk label{display:flex;gap:4px;align-items:center;cursor:pointer;font-weight:400;color:var(--ink)}
+  .chk input{width:auto!important;flex:none}
+  .done{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;font-size:15px;line-height:1.6}
+  .done .big{font-size:46px}
+  @media (max-width:860px){
+    body{height:auto;min-height:100dvh;overflow:auto}
+    .view{flex-direction:column}
+    .tiles,.steps{grid-template-columns:1fr;grid-template-rows:none}
+    .sch{grid-row:auto}.side{flex:none}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>🧳 학기초 세팅</h1>
+  </div>
+  <div class="bar">
+    <div class="seg" role="tablist">
+      <button type="button" id="tLoad" aria-pressed="true">📥 세팅 파일 불러오기 <small>(선생님)</small></button>
+      <button type="button" id="tMake" aria-pressed="false">📤 세팅 파일 만들기 <small>(담당자)</small></button>
+    </div>
+  </div>
+</header>
+
+<main class="panel">
+  <!-- ───── 선생님: 불러오기 ───── -->
+  <section class="view" id="vLoad">
+    <div class="steps" id="steps">
+      <div class="step" id="s1">
+        <h2><i>1</i>세팅 파일 열기</h2>
+        <div class="drop" id="drop" tabindex="0" role="button"><b>📂 학교 세팅 파일 고르기</b>담당 선생님께 받은 파일(.json)을 고르거나 여기에 끌어다 놓으세요.</div>
+        <p class="sm" id="fName"></p>
+        <label class="field">비밀 문구 <small>(담당 선생님께 따로 받은 것)</small><input type="password" id="lPass" autocomplete="off"></label>
+        <button type="button" class="btn primary" id="lOpen" disabled>🔓 열기</button>
+        <div class="msg" id="lMsg"></div>
+      </div>
+      <div class="step dim" id="s2">
+        <h2><i>2</i>들어 있는 자료</h2>
+        <ul class="sum" id="lSum"></ul>
+        <p class="sm" id="lMade"></p>
+      </div>
+      <div class="step dim" id="s3">
+        <h2><i>3</i>나만 고르기</h2>
+        <label class="field">내 이름<select id="lMe"></select></label>
+        <label class="field">내 교과<input type="text" id="lSubj" maxlength="12" placeholder="예: 수학" autocomplete="off"></label>
+        <label class="field">담임 반<select id="lHome"></select></label>
+        <div class="field">이 기기에 넣을 학생 명렬
+          <div class="chk"><label><input type="radio" name="scope" value="mine" checked> 내 수업 반 + 우리 반만</label><label><input type="radio" name="scope" value="all"> 전체 학급</label></div></div>
+        <div class="field">함께 넣을 것<div class="chk" id="lWhat"></div></div>
+        <p class="sm" id="lNote"></p>
+        <button type="button" class="btn primary" id="lApply">✔ 이대로 세팅하기</button>
+      </div>
+    </div>
+    <div class="done" id="lDone" hidden>
+      <div class="big">🎉</div>
+      <div id="lDoneTxt"></div>
+      <div class="row" style="display:flex;gap:8px"><a class="btn primary" href="../../">🍎 첫 화면으로</a><a class="btn" href="../timetable/">🕘 내 시간표 보기</a></div>
+    </div>
+  </section>
+
+  <!-- ───── 담당자: 만들기 ───── -->
+  <section class="view" id="vMake" hidden>
+    <div class="tiles">
+      <div class="tile on sch">
+        <h2>🏷️ 학교 정보</h2>
+        <label class="field">학교 이름<input type="text" id="mName" maxlength="20" placeholder="예: 마산서중학교" autocomplete="off"></label>
+        <label class="field">교장<input type="text" id="mPrin" maxlength="10" autocomplete="off"></label>
+        <label class="field">주소<input type="text" id="mAddr" maxlength="60" autocomplete="off"></label>
+        <label class="field">대표 전화<input type="text" id="mTel" maxlength="20" placeholder="055-000-0000" autocomplete="off"></label>
+        <label class="field">컴시간 학교 코드 <small>(교사용 시간표 볼 때 넣는 번호)</small><input type="text" id="mComci" maxlength="12" inputmode="numeric" autocomplete="off"></label>
+      </div>
+      <div class="tile" id="tRos">
+        <h2>👥 학생 명렬<label><input type="checkbox" id="iRos" checked> 넣기</label></h2>
+        <div class="st" id="stRos"></div>
+        <div class="row"><a class="btn" href="../roster/">명렬표에서 나이스 파일 올리기</a></div>
+      </div>
+      <div class="tile" id="tStaff">
+        <h2>🧑‍🏫 교직원 명렬<label><input type="checkbox" id="iStaff" checked> 넣기</label></h2>
+        <div class="st" id="stStaff"></div>
+        <div class="row"><button type="button" class="btn" id="staffFile">📂 파일 올리기</button><button type="button" class="btn" id="staffPaste">📋 붙여 넣기</button></div>
+      </div>
+      <div class="tile" id="tCal">
+        <h2>📌 학사일정<label><input type="checkbox" id="iCal" checked> 넣기</label></h2>
+        <div class="st" id="stCal"></div>
+        <div class="row"><a class="btn" href="../year/">연간 업무에서 학사일정 붙여 넣기</a></div>
+      </div>
+      <div class="tile" id="tAll">
+        <h2>🕘 전체 교사 시간표<label><input type="checkbox" id="iAll" checked> 넣기</label></h2>
+        <div class="st" id="stAll"></div>
+        <label class="field">교시 시작 시각 <small>(띄어 쓰기로)</small><input type="text" id="mTimes" autocomplete="off"></label>
+        <div class="row"><button type="button" class="btn" id="allFile">📂 컴시간 엑셀 올리기</button></div>
+      </div>
+    </div>
+    <div class="side">
+      <h2>🔒 잠그고 내보내기</h2>
+      <p>학생·교직원 이름이 들어 있어 <b>비밀 문구로 잠가서</b> 내보냅니다. 파일과 비밀 문구는 <b>따로</b> 전하세요(예: 파일은 쿨메신저, 비밀 문구는 회의 때 말로).</p>
+      <label class="field">비밀 문구 <small>(8자 이상)</small><input type="password" id="mPass" autocomplete="new-password"></label>
+      <label class="field">한 번 더<input type="password" id="mPass2" autocomplete="new-password"></label>
+      <button type="button" class="btn primary" id="mExport">📤 학교 세팅 파일 내보내기</button>
+      <div class="msg" id="mMsg"></div>
+      <p class="sm" style="margin-top:auto">학기 중에 명렬·시간표가 바뀌면 다시 내보내면 됩니다. 선생님들은 새 파일을 불러오면 그대로 덮어씁니다(기록·메모는 그대로).</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>세팅 파일 하나로 명렬 · 학사일정 · 시간표 · 학교 정보가 모든 도구에 함께 쓰입니다.</span>
+  <span class="priv">🔒 기기 안에서만 만들고 엶 · 서버로 보내지 않음</span>
+</footer>
+
+<script src="../../shared/tt.js"></script>
+<script src="../../shared/comci.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var APP = "ssamnote-setup", ITER = 310000;
+  var DEF_TIMES = "09:00 09:55 10:50 11:45 13:30 14:25 15:20";
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function pad(n){ return ("0" + n).slice(-2); }
+
+  /* ================= 탭 ================= */
+  function tab(make){ $("tMake").setAttribute("aria-pressed", make); $("tLoad").setAttribute("aria-pressed", !make); $("vMake").hidden = !make; $("vLoad").hidden = make; if(make) drawMake(); }
+  $("tLoad").onclick = function(){ tab(false); };
+  $("tMake").onclick = function(){ tab(true); };
+
+  /* ================= 잠그기·풀기 (AES-GCM, 비밀 문구 → PBKDF2) ================= */
+  var enc = new TextEncoder(), dec = new TextDecoder();
+  function b64(u8){ var s = "", i; for(i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+  function unb64(s){ var b = atob(s), u = new Uint8Array(b.length); for(var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+  async function keyOf(pass, salt, iter){
+    var base = await crypto.subtle.importKey("raw", enc.encode(String(pass).normalize("NFC")), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey({name: "PBKDF2", hash: "SHA-256", salt: salt, iterations: iter}, base, {name: "AES-GCM", length: 256}, false, ["encrypt", "decrypt"]);
+  }
+  async function stream(u8, C){ return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new C("gzip"))).arrayBuffer()); }
+  async function lock(obj, pass){
+    var salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    var raw = enc.encode(JSON.stringify(obj)), gz = typeof CompressionStream !== "undefined";
+    if(gz) raw = await stream(raw, CompressionStream);
+    var ct = new Uint8Array(await crypto.subtle.encrypt({name: "AES-GCM", iv: iv, additionalData: enc.encode(APP)}, await keyOf(pass, salt, ITER), raw));
+    return {salt: b64(salt), iter: ITER, iv: b64(iv), gz: gz, ct: b64(ct)};
+  }
+  async function unlock(f, pass){
+    var key = await keyOf(pass, unb64(f.salt), +f.iter || ITER);
+    var pt = new Uint8Array(await crypto.subtle.decrypt({name: "AES-GCM", iv: unb64(f.iv), additionalData: enc.encode(APP)}, key, unb64(f.ct)));
+    if(f.gz){ if(typeof DecompressionStream === "undefined") throw new Error("old"); pt = await stream(pt, DecompressionStream); }
+    return JSON.parse(dec.decode(pt));
+  }
+
+  /* ================= 담당자: 만들기 ================= */
+  var ALL = TT.store.get("tt_alltt_v1", null);                 // 전체 교사 시간표 (엑셀에서 읽은 것)
+  function rosterInfo(){ var cl = TT.roster.classes().filter(function(c){ return c.students.length; }); return {n: cl.length, s: cl.reduce(function(a, c){ return a + c.students.length; }, 0), cl: cl}; }
+  function calInfo(){ var o = TT.store.get("tt_calendar_v1", null); var ev = o && Array.isArray(o.events) ? o.events : []; return {n: ev.length, ev: ev, y: o && o.y}; }
+  function times(){ return ($("mTimes").value.match(/\d{1,2}:\d{2}/g) || []).map(TTComci.pad5); }
+  function drawMake(){
+    var r = rosterInfo(), st = TT.staff.load(), c = calInfo();
+    $("stRos").innerHTML = r.n ? '<span class="ok">✔</span> 이 기기 명렬표: <b>' + r.n + "개 반 · " + r.s + "명</b><br>" + esc(r.cl.slice(0, 6).map(function(x){ return x.name; }).join(", ") + (r.n > 6 ? " …" : ""))
+      : '<span class="no">아직 없음</span> · 명렬표에 나이스 학생 명단 파일(엑셀)을 올리면 여기에 잡힙니다. 여러 반 파일을 한꺼번에 올릴 수 있어요.';
+    $("stStaff").innerHTML = st.length ? '<span class="ok">✔</span> <b>' + st.length + "명</b> · " + esc(st.slice(0, 5).map(function(x){ return x.name; }).join(", ") + (st.length > 5 ? " …" : ""))
+      : '<span class="no">아직 없음</span> · 교직원 명렬(엑셀·한글 표)에서 이름 · 부서 · 직위 · 교과 줄을 복사해 붙여 넣거나 파일을 올리세요.';
+    $("stCal").innerHTML = c.n ? '<span class="ok">✔</span> 일정 <b>' + c.n + "개</b>" + (c.y ? " (" + c.y + "학년도)" : "") + " · 휴업 " + c.ev.filter(function(e){ return e.k === "off"; }).length + "일 · 시험 " + c.ev.filter(function(e){ return e.k === "exam"; }).length + "일"
+      : '<span class="no">아직 없음</span> · 연간 업무에서 학사일정 표를 붙여 넣으면 여기에 잡힙니다.';
+    $("stAll").innerHTML = ALL && ALL.teachers && ALL.teachers.length ? '<span class="ok">✔</span> 선생님 <b>' + ALL.teachers.length + "명</b> · " + esc(ALL.teachers.slice(0, 4).map(function(t){ return t.name; }).join(", ")) + " …"
+      : '<span class="no">아직 없음</span> · 컴시간에서 받은 <b>교사별 시간표 엑셀</b>을 올리세요. (옛 .xls는 엑셀에서 xlsx로 저장)';
+    ["Ros", "Staff", "Cal", "All"].forEach(function(k){ $("t" + k).classList.toggle("on", $("i" + k).checked); });
+  }
+  (function initMake(){
+    var s = TT.school.load(), T = TT.timetable.load();
+    $("mName").value = s.name; $("mPrin").value = s.principal; $("mAddr").value = s.addr; $("mTel").value = s.tel; $("mComci").value = s.comci;
+    $("mTimes").value = ALL && ALL.periods ? ALL.periods.map(function(p){ return p.t; }).join(" ") : T && T.periods.length ? T.periods.map(function(p){ return p.t; }).join(" ") : DEF_TIMES;
+    ["iRos", "iStaff", "iCal", "iAll"].forEach(function(id){ $(id).onchange = drawMake; });
+  })();
+
+  /* 파일 고르기 */
+  function pick(accept, cb){
+    var inp = document.createElement("input"); inp.type = "file"; inp.accept = accept; inp.hidden = true; document.body.appendChild(inp);
+    inp.onchange = function(){ var f = inp.files && inp.files[0]; inp.remove(); if(f) cb(f); };
+    inp.click();
+  }
+  /* 전체 교사 시간표: 컴시간 엑셀 */
+  $("allFile").onclick = function(){
+    pick(".xlsx,.xls,.csv,.htm,.html", function(f){
+      TT.file.toRows(f).then(function(rows){
+        var r = TTComci.teachers(rows);
+        if(!r){ TT.ui.toast("선생님별 시간표를 찾지 못했어요. 한 줄에 한 선생님(이름 · 월1 … 금7) 모양의 교사별 시간표 엑셀인지 확인해 주세요."); return; }
+        var tm = times(); while(tm.length < r.maxP) tm.push("");
+        ALL = {v: 1, periods: tm.slice(0, Math.max(r.maxP, 7)).map(function(t, i){ return {n: i + 1, t: t || "00:00"}; }), teachers: r.teachers, at: Date.now()};
+        TT.store.set("tt_alltt_v1", ALL); drawMake();
+        TT.ui.toast("선생님 " + r.teachers.length + "명의 시간표를 읽었습니다 (최대 " + r.maxP + "교시).");
+      }).catch(function(e){ TT.ui.toast(e.userMsg || "파일을 읽지 못했습니다."); });
+    });
+  };
+  $("mTimes").onchange = function(){ if(!ALL) return; var tm = times(); ALL.periods.forEach(function(p, i){ if(tm[i]) p.t = tm[i]; }); TT.store.set("tt_alltt_v1", ALL); };
+
+  /* 교직원 명렬: 표(행·열) → [{name, dept, pos, subj, tel}] */
+  function staffFrom(rows){
+    var h = -1, m = {};
+    for(var r = 0; r < Math.min(rows.length, 15) && h < 0; r++){
+      var mm = {};
+      (rows[r] || []).forEach(function(v, ci){
+        var t = String(v == null ? "" : v).replace(/\s+/g, "");
+        if(/^(성명|이름|교사명|교직원명|성함)$/.test(t)) mm.name = ci;
+        else if(/^(부서|소속|업무부서|부서명)$/.test(t)) mm.dept = ci;
+        else if(/^(직위|직책|직급|담당|담당업무|업무|보직|담임)$/.test(t) && mm.pos == null) mm.pos = ci;
+        else if(/^(교과|과목|담당교과|담당과목|교과목)$/.test(t)) mm.subj = ci;
+        else if(/^(내선|전화|내선번호|교내전화)$/.test(t)) mm.tel = ci;
+      });
+      if(mm.name != null){ h = r; m = mm; }
+    }
+    var out = [], seen = {};
+    function cell(row, k){ return m[k] == null ? "" : String(row[m[k]] == null ? "" : row[m[k]]).trim(); }
+    rows.slice(h + 1).forEach(function(row){
+      var name, dept = "", pos = "", subj = "", tel = "";
+      if(h >= 0){ name = cell(row, "name"); dept = cell(row, "dept"); pos = cell(row, "pos"); subj = cell(row, "subj"); tel = cell(row, "tel"); }
+      else{
+        var tok = row.map(function(v){ return String(v == null ? "" : v).trim(); }).filter(Boolean);
+        if(tok.length === 1) tok = tok[0].split(/\s+/);
+        var i = tok.findIndex(function(t){ return /^[가-힣]{2,5}$/.test(t); }); if(i < 0) return;
+        name = tok[i]; pos = tok.filter(function(t, j){ return j !== i && !/^\d+$/.test(t); }).join(" ");
+      }
+      name = String(name || "").replace(/\s+/g, "");
+      if(!/^[가-힣A-Za-z]{2,10}$/.test(name) || seen[name]) return; seen[name] = 1;
+      out.push({name: name, dept: dept.slice(0, 20), pos: pos.slice(0, 30), subj: subj.slice(0, 12), tel: /^[\d\-~ ]{2,15}$/.test(tel) ? tel : ""});
+    });
+    return out;
+  }
+  function takeStaff(list){
+    if(!list.length){ TT.ui.toast("교직원 이름을 찾지 못했어요. 첫 줄에 '성명(이름)' 제목이 있는 표를 넣어 주세요."); return; }
+    TT.staff.save(list); drawMake(); TT.ui.toast("교직원 " + list.length + "명을 넣었습니다.");
+  }
+  $("staffFile").onclick = function(){ pick(".xlsx,.csv,.htm,.html,.txt", function(f){ TT.file.toRows(f).then(function(rows){ takeStaff(staffFrom(rows)); }).catch(function(e){ TT.ui.toast(e.userMsg || "파일을 읽지 못했습니다."); }); }); };
+  $("staffPaste").onclick = function(){
+    var d = document.createElement("dialog"); d.innerHTML = '<form><h2>🧑‍🏫 교직원 명렬 붙여 넣기</h2><p>엑셀·한글의 교직원 명렬 표를 제목 줄(성명 · 부서 · 직위 · 교과)까지 골라 복사한 뒤 붙여 넣으세요.</p><textarea rows="8" placeholder="여기에 붙여 넣기 (Ctrl+V)"></textarea><div class="acts"><span></span><div class="r"><button type="button" class="btn">취소</button><button type="submit" class="btn primary">넣기</button></div></div></form>';
+    document.body.appendChild(d); var ta = d.querySelector("textarea"), html = "";
+    ta.addEventListener("paste", function(e){ html = (e.clipboardData && e.clipboardData.getData("text/html")) || ""; });
+    d.querySelector("button.btn:not(.primary)").onclick = function(){ d.close(); };
+    d.addEventListener("close", function(){ d.remove(); });
+    d.querySelector("form").onsubmit = function(e){
+      e.preventDefault();
+      var rows = html && /<table/i.test(html) ? TTComci.htmlRows(html) : ta.value.replace(/\r/g, "").split("\n").map(function(l){ return l.split("\t"); });
+      d.close(); takeStaff(staffFrom(rows));
+    };
+    d.showModal(); ta.focus();
+  };
+
+  /* 내보내기 */
+  $("mExport").onclick = function(){
+    var msg = $("mMsg"), p1 = $("mPass").value, p2 = $("mPass2").value;
+    function err(t){ msg.className = "msg err"; msg.textContent = t; }
+    var name = $("mName").value.trim();
+    if(!name) return err("학교 이름을 넣어 주세요.");
+    if(p1.length < 8) return err("비밀 문구는 8자 이상으로 해 주세요.");
+    if(p1 !== p2) return err("두 비밀 문구가 서로 다릅니다.");
+    var sc = {name: name, principal: $("mPrin").value.trim(), addr: $("mAddr").value.trim(), tel: $("mTel").value.trim(), comci: $("mComci").value.trim()};
+    TT.school.save(sc);                                                   // 담당자 기기에도 저장
+    var body = {v: 1, made: new Date().toISOString(), school: sc}, has = ["school"];
+    var r = rosterInfo(); if($("iRos").checked && r.n){ body.roster = r.cl.map(function(c){ return {name: c.name, grade: c.grade, cls: c.cls, students: c.students.map(function(s){ return {no: s.no, name: s.name}; })}; }); has.push("roster"); }
+    var st = TT.staff.load(); if($("iStaff").checked && st.length){ body.staff = st; has.push("staff"); }
+    var c = calInfo(); if($("iCal").checked && c.n){ body.calendar = {y: c.y || null, events: c.ev}; has.push("calendar"); }
+    if($("iAll").checked && ALL && ALL.teachers && ALL.teachers.length){
+      var tm = times(); ALL.periods.forEach(function(p, i){ if(tm[i]) p.t = tm[i]; });
+      if(ALL.periods.some(function(p){ return !/^\d{2}:\d{2}$/.test(p.t) || p.t === "00:00"; })) return err("교시 시작 시각을 교시 수만큼 넣어 주세요.");
+      body.alltt = {periods: ALL.periods, teachers: ALL.teachers}; has.push("alltt");
+    }
+    if(has.length < 2) return err("학교 정보 말고도 넣을 자료가 하나는 있어야 합니다.");
+    msg.className = "msg"; msg.textContent = "잠그는 중…"; $("mExport").disabled = true;
+    lock(body, p1).then(function(L){
+      var file = {app: APP, v: 1, school: name, made: body.made, has: has, lock: L};
+      var d = new Date(), stamp = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
+      TT.util.download("학교세팅_" + TT.util.safe(TT.school.short() || "학교") + "_" + stamp + ".json", JSON.stringify(file), "application/json");
+      msg.className = "msg ok"; msg.textContent = "✔ 내보냈습니다. 다운로드 폴더를 확인하세요. 비밀 문구는 따로 알려 주세요.";
+      $("mPass").value = $("mPass2").value = "";
+    }).catch(function(){ err("파일을 만들지 못했습니다. 최신 크롬·엣지에서 다시 해 주세요."); })
+      .then(function(){ $("mExport").disabled = false; });
+  };
+
+  /* ================= 선생님: 불러오기 ================= */
+  var FILE = null, DATA = null;
+  function choose(f){
+    f.text().then(function(t){
+      var o = null; try{ o = JSON.parse(t.replace(/^﻿/, "")); }catch(e){}
+      if(!o || o.app !== APP || !o.lock){ $("lMsg").className = "msg err"; $("lMsg").textContent = "학교 세팅 파일이 아닙니다. 담당 선생님께 받은 파일을 골라 주세요."; return; }
+      FILE = o; $("fName").textContent = "📄 " + f.name + (o.school ? " · " + o.school : ""); $("lOpen").disabled = false; $("lMsg").textContent = ""; $("lPass").focus();
+    });
+  }
+  $("drop").onclick = function(){ pick(".json,application/json", choose); };
+  $("drop").onkeydown = function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); this.click(); } };
+  $("drop").ondragover = function(e){ e.preventDefault(); };
+  $("drop").ondrop = function(e){ e.preventDefault(); var f = e.dataTransfer.files[0]; if(f) choose(f); };
+  $("lPass").onkeydown = function(e){ if(e.key === "Enter" && !$("lOpen").disabled) $("lOpen").click(); };
+  $("lOpen").onclick = function(){
+    var msg = $("lMsg"); msg.className = "msg"; msg.textContent = "여는 중…"; $("lOpen").disabled = true;
+    unlock(FILE.lock, $("lPass").value).then(function(d){
+      DATA = d; $("lPass").value = ""; msg.className = "msg ok"; msg.textContent = "✔ 열었습니다.";
+      showData();
+    }).catch(function(e){
+      msg.className = "msg err"; msg.textContent = e && e.message === "old" ? "이 브라우저로는 열 수 없어요. 최신 크롬·엣지를 써 주세요." : "비밀 문구가 맞지 않습니다.";
+    }).then(function(){ $("lOpen").disabled = false; });
+  };
+  function homeGuess(me){
+    var st = (DATA.staff || []).filter(function(s){ return s.name === me; })[0]; if(!st) return "";
+    var m = /(\d)\s*[-학년]\s*(\d{1,2})\s*반?\s*담임/.exec((st.pos || "") + " " + (st.dept || "")); return m ? m[1] + "-" + (+m[2]) : "";
+  }
+  function teacherOf(me){ return ((DATA.alltt || {}).teachers || []).filter(function(t){ return t.name === me; })[0] || null; }
+  function myCodes(me){ var t = teacherOf(me), c = {}; if(t) Object.keys(t.slots).forEach(function(k){ var x = t.slots[k].cls; if(x) c[x] = 1; }); return c; }
+  function showData(){
+    var D = DATA, ul = "", ros = D.roster || [], tt = (D.alltt || {}).teachers || [];
+    function li(icon, t, v){ ul += "<li>" + icon + " " + t + "<span>" + v + "</span></li>"; }
+    li("🏷️", "학교 정보", esc(D.school.name) + (D.school.comci ? " · 컴시간 코드" : ""));
+    if(ros.length) li("👥", "학생 명렬", ros.length + "개 반 · " + ros.reduce(function(a, c){ return a + c.students.length; }, 0) + "명");
+    if(D.staff) li("🧑‍🏫", "교직원 명렬", D.staff.length + "명");
+    if(D.calendar) li("📌", "학사일정", D.calendar.events.length + "개");
+    if(tt.length) li("🕘", "전체 교사 시간표", tt.length + "명 · " + D.alltt.periods.length + "교시");
+    $("lSum").innerHTML = ul;
+    $("lMade").textContent = "만든 날: " + new Date(D.made).toLocaleDateString("ko-KR");
+    /* 내 이름 목록: 교직원 + 시간표 선생님 */
+    var names = {}; (D.staff || []).forEach(function(s){ names[s.name] = s.subj || ""; }); tt.forEach(function(t){ if(!(t.name in names) || !names[t.name]) names[t.name] = t.subj || ""; });
+    var cur = TT.school.load().teacher, keys = Object.keys(names).sort();
+    $("lMe").innerHTML = '<option value="">— 고르세요 —</option>' + keys.map(function(n){ return '<option value="' + esc(n) + '">' + esc(n) + (names[n] ? " (" + esc(names[n]) + ")" : "") + "</option>"; }).join("");
+    if(names.hasOwnProperty(cur)) $("lMe").value = cur;
+    $("lHome").innerHTML = '<option value="">담임 아님</option>' + ros.map(function(c){ return '<option value="' + c.grade + "-" + c.cls + '">' + esc(c.name) + "</option>"; }).join("");
+    var h = TT.roster.home(); if(h) $("lHome").value = h.grade + "-" + h.cls;
+    var W = [];
+    if(D.calendar) W.push(["cal", "학사일정"]);
+    if(D.staff) W.push(["staff", "교직원 명렬"]);
+    if(tt.length) W.push(["tt", "내 시간표"]);
+    W.push(["school", "학교 정보"]);
+    $("lWhat").innerHTML = W.map(function(w){ return '<label><input type="checkbox" value="' + w[0] + '" checked> ' + w[1] + "</label>"; }).join("");
+    $("s2").classList.remove("dim"); $("s3").classList.remove("dim");
+    $("lMe").onchange = meChanged; meChanged();
+  }
+  function meChanged(){
+    var me = $("lMe").value, t = me ? teacherOf(me) : null, st = (DATA.staff || []).filter(function(s){ return s.name === me; })[0];
+    $("lSubj").value = (st && st.subj) || (t && t.subj) || TT.school.load().subject || "";
+    var g = me ? homeGuess(me) : ""; if(g && Array.prototype.some.call($("lHome").options, function(o){ return o.value === g; })) $("lHome").value = g;
+    var n = Object.keys(myCodes(me)).length, notes = [];
+    if(me && (DATA.alltt || {}).teachers && !t) notes.push("전체 교사 시간표에 이 이름이 없어 내 시간표는 넣지 않습니다.");
+    if(me && t) notes.push("내 수업 " + Object.keys(t.slots).length + "시간 · " + n + "개 반");
+    if(TT.timetable.has() && t) notes.push("지금 내 시간표는 새 시간표로 바뀝니다.");
+    $("lNote").textContent = notes.join(" · ");
+  }
+  $("lApply").onclick = function(){
+    var me = $("lMe").value; if(!me){ TT.ui.toast("내 이름을 골라 주세요."); $("lMe").focus(); return; }
+    var D = DATA, what = {}; Array.prototype.forEach.call($("lWhat").querySelectorAll("input"), function(i){ what[i.value] = i.checked; });
+    var scope = document.querySelector("input[name=scope]:checked").value, home = $("lHome").value, done = [];
+    /* 학교 정보 · 내 이름 · 내 교과 */
+    var sc = {teacher: me, subject: $("lSubj").value.trim()};
+    if(what.school){ sc.name = D.school.name; sc.principal = D.school.principal; sc.addr = D.school.addr; sc.tel = D.school.tel; sc.comci = D.school.comci; }
+    TT.school.save(sc);
+    /* 학생 명렬: 같은 학년·반은 명단만 새로, 나머지 반은 그대로 (학생 기록·메모는 학년-반-번호로 이어짐) */
+    if(D.roster && D.roster.length){
+      var codes = myCodes(me), want = D.roster.filter(function(c){ return scope === "all" || codes[c.grade * 100 + c.cls] || home === c.grade + "-" + c.cls; });
+      var R = TT.roster.load(), n = 0;
+      R.classes = R.classes.filter(function(c){ return c.students.length || c.grade != null; });   // 비어 있는 "우리 반" 자리는 정리
+      want.forEach(function(w){
+        var ex = R.classes.filter(function(c){ return c.grade === w.grade && c.cls === w.cls; })[0];
+        if(ex){ ex.students = w.students; ex.name = w.name; } else R.classes.push({id: TT.util.uid(), name: w.name, grade: w.grade, cls: w.cls, students: w.students});
+        n += w.students.length;
+      });
+      var hc = home ? R.classes.filter(function(c){ return c.grade + "-" + c.cls === home; })[0] : null;
+      R.home = hc ? hc.id : (home === "" ? "" : R.home);
+      R = TT.roster.clean(R); if(hc) R.current = hc.id;
+      TT.roster.save(R); done.push("학생 " + want.length + "개 반 " + n + "명");
+    }
+    if(what.cal && D.calendar){ TT.store.set("tt_calendar_v1", {v: 1, y: D.calendar.y, events: D.calendar.events, at: Date.now()}); done.push("학사일정 " + D.calendar.events.length + "개"); }
+    if(what.staff && D.staff){ TT.staff.save(D.staff); done.push("교직원 " + D.staff.length + "명"); }
+    if(D.alltt){
+      TT.store.set("tt_alltt_v1", {v: 1, periods: D.alltt.periods, teachers: D.alltt.teachers, at: Date.now()});
+      var t = teacherOf(me);
+      if(what.tt && t){
+        var old = TT.timetable.load() || {v: 1};
+        var subj = sc.subject, slots = {};
+        Object.keys(t.slots).forEach(function(k){ var s = t.slots[k]; slots[k] = {code: s.code, cls: s.cls, subj: s.subj || subj}; });
+        var maxP = Object.keys(slots).reduce(function(a, k){ return Math.max(a, +k.split("-")[1]); }, 0);
+        old.periods = D.alltt.periods.filter(function(p){ return p.n <= Math.max(maxP, 7); });
+        old.slots = slots; old.weeks = {}; old.updatedAt = Date.now(); old.from = "setup";
+        TT.store.set(TT.timetable.KEY, old); done.push("내 시간표 " + Object.keys(slots).length + "시간");
+      }
+    }
+    $("steps").hidden = true; $("lDone").hidden = false;
+    $("lDoneTxt").innerHTML = "<b>" + esc(me) + " 선생님, 세팅이 끝났습니다.</b><br>" + esc(done.join(" · ")) + (home ? "<br>★ 우리 반: " + esc(home.replace("-", "학년 ") + "반") : "");
+  };
+
+  if(/[?&]make/.test(location.search)) tab(true);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+/* 쌤 노트 · 공통 디자인 맞춤
+   원래 자기 디자인을 가지고 들어온 도구(수업 기록장·모둠 편성·생활지도·진학 추천)를
+   공통 디자인(shared/tt.css)의 색·글꼴·제목 모양에 맞춥니다. tt.js가 모든 도구 화면에 자동으로 붙입니다.
+   공통 색: 바탕 #f3f6f9 · 카드 #fff · 글자 #1d2733 / #5b6773 · 선 #dde3ea · 강조 #2f6fb5 / #e6f0fa
+   제목: "아이콘 + 이름", 굵기 800, 크기 clamp(19px,3.2vh,26px) · 글꼴: 맑은 고딕 계열 · 밝은 화면만 */
+
+html[data-app]{color-scheme:light}
+html[data-app] body{font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif}
+
+/* ---------- 수업 기록장 (apps/journal) ---------- */
+html[data-app="journal"]:root:not([data-theme="x"]){
+  --bg:#f3f6f9; --surface:#fff; --surface-2:#eef2f6; --line:#dde3ea;
+  --fg:#1d2733; --fg-2:#5b6773;
+  --primary:#2f6fb5; --on-primary:#fff; --primary-soft:#e6f0fa;
+  --ok:#2e7d4f; --warn:#8a4f00; --bad:#b3261e;
+  --grid:rgba(47,111,181,.08); --scrim:rgba(20,30,45,.45);
+  --board:#1f3d33; --board-fg:#f2f7f3;
+  --f-body:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+  color-scheme:light;
+}
+html[data-app="journal"] body::before{background:var(--bg)}
+html[data-app="journal"] .hdr{background:var(--bg);color:var(--fg)}
+html[data-app="journal"] .hdr h1{font-size:clamp(19px,3.2vh,26px);font-weight:800;letter-spacing:-.02em}
+html[data-app="journal"] .hdr h1::before{content:"📒 "}
+html[data-app="journal"] .hdr-sub{font-family:inherit;color:var(--fg-2);opacity:1}
+html[data-app="journal"] .hdr .ttback{color:var(--primary)}
+html[data-app="journal"] .hbtn{border:1px solid var(--line);background:#fff;border-radius:10px;color:var(--fg)}
+html[data-app="journal"] .wrap{max-width:980px}
+
+/* ---------- 모둠 편성 (apps/group) ---------- */
+html[data-app="group"]:root:not([data-theme="x"]){
+  --bg:#f3f6f9; --surface:#fff; --surface2:#eef2f6; --ink:#1d2733; --muted:#5b6773; --line:#dde3ea;
+  --accent:#2f6fb5; --accent-ink:#fff; --mark:#e0a526; --bad:#b3261e; --ok:#2e7d4f;
+  --f-display:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+  --f-body:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+  color-scheme:light;
+}
+html[data-app="group"] h1,html[data-app="group"] h2,html[data-app="group"] h3{font-weight:800}
+html[data-app="group"] .brand h1{font-size:clamp(19px,3.2vh,26px);letter-spacing:-.02em}
+html[data-app="group"] .brand p{font-size:13px}
+html[data-app="group"] .card{border-width:1px}
+
+/* ---------- 생활지도 (apps/tardy) ---------- */
+html[data-app="tardy"]:root{
+  --bg:#f3f6f9; --ink:#1d2733; --muted:#5b6773; --line:#dde3ea; --accent:#2f6fb5; --accent-soft:#e6f0fa; --good:#2e7d4f;
+}
+
+/* ---------- 진학 추천 (apps/advisor) ---------- */
+html[data-app="advisor"]:root{ --bg:#f3f6f9; --ink:#1d2733; --sub:#5b6773; --line:#dde3ea; --pri:#2f6fb5; --pri2:#e6f0fa; --good:#2e7d4f; --bad:#b3261e }
+html[data-app="tardy"] .hl h1{font-size:clamp(19px,3.2vh,26px)}
+html[data-app="tardy"] a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:3px;color:inherit}

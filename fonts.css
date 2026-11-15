@@ -1,0 +1,15 @@
+/* 쌤 노트 · 화면 글꼴 (⋯ → 🔤 화면 글꼴). tt.js 가 모든 화면에 붙이고 <html data-font="…"> 로 고릅니다.
+   글꼴 파일은 이 사이트 안(shared/fonts/)에서만 읽습니다(외부 글꼴 서버에 접속하지 않음).
+   파일이 없으면 컴퓨터에 깔린 같은 글꼴 → 한컴 글꼴(함초롬) → 맑은 고딕 순으로 대신 씁니다.
+   글꼴: 고운돋움·고운바탕·주아 (SIL 오픈 폰트 라이선스, 무료·재배포 가능) */
+@font-face{font-family:"SN Gowun Dodum";src:local("Gowun Dodum"),local("GowunDodum-Regular"),url("fonts/GowunDodum-Regular.ttf") format("truetype");font-display:swap}
+@font-face{font-family:"SN Gowun Batang";font-weight:400;src:local("Gowun Batang"),local("GowunBatang-Regular"),url("fonts/GowunBatang-Regular.ttf") format("truetype");font-display:swap}
+@font-face{font-family:"SN Gowun Batang";font-weight:700 900;src:local("Gowun Batang Bold"),local("GowunBatang-Bold"),url("fonts/GowunBatang-Bold.ttf") format("truetype");font-display:swap}
+@font-face{font-family:"SN Jua";src:local("Jua"),local("Jua-Regular"),url("fonts/Jua-Regular.ttf") format("truetype");font-display:swap}
+
+html[data-font="soft"]{--fb:"SN Gowun Dodum","함초롬돋움","HCR Dotum","Malgun Gothic","Apple SD Gothic Neo",sans-serif;--fh:var(--fb)}
+html[data-font="neat"]{--fb:"SN Gowun Batang","함초롬바탕","HCR Batang","바탕",Batang,"AppleMyungjo",serif;--fh:var(--fb)}
+html[data-font="cute"]{--fb:"SN Gowun Dodum","함초롬돋움","HCR Dotum","Malgun Gothic",sans-serif;--fh:"SN Jua","HY엽서M","Malgun Gothic",sans-serif}
+html[data-font] body,html[data-font] button,html[data-font] input,html[data-font] select,html[data-font] textarea{font-family:var(--fb)}
+html[data-font] h1,html[data-font] h2,html[data-font] h3,html[data-font] .tdh,html[data-font] .cn,html[data-font] .name,html[data-font] .th,html[data-font] .bh,html[data-font] .tbig b{font-family:var(--fh)}
+html[data-font="cute"] h1,html[data-font="cute"] h2,html[data-font="cute"] .tdh,html[data-font="cute"] .tbig b{font-weight:400}
