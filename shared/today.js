@@ -132,8 +132,9 @@
     var miss = weekday && J ? TTT.day(d).filter(function(s){ return s.end <= m && !(J.taught || {})[td + "|" + s.n]; }) : [];
     if(miss.length){
       var f = miss[miss.length - 1];
-      h += '<a class="tdl miss" href="apps/journal/" title="수업 기록장 오늘 화면에서 \'진행 완료\'를 누르면 진도가 +1 됩니다">✏️ '
-        + f.n + "교시 " + esc(f.code) + " 기록 안 함 → 진도 +1" + (miss.length > 1 ? " <small>외 " + (miss.length - 1) + "개</small>" : "") + "</a>";
+      h += '<div class="tdl miss" style="display:flex;gap:6px;align-items:center"><a class="tdl miss" style="flex:1;min-width:0" href="apps/journal/" title="수업 기록장에서 확인하기">✏️ '
+        + f.n + "교시 " + esc(f.code) + " 기록 안 함" + (miss.length > 1 ? " <small>외 " + (miss.length - 1) + "개</small>" : "") + "</a>"
+        + (typeof TTFollow !== "undefined" ? '<button type="button" class="tdc" style="font-size:12.5px;padding:1px 8px" title="이번 차시를 진행 완료로 기록 (18단계)" onclick="TTFollow.plusOneNow(' + (+f.n) + ')">진도 +1</button>' : "") + "</div>";
     }
     var focus = cur || nx;                                            // 지금 수업이 있으면 그 반, 없으면 다음 반의 진도를 보여 줌
     function chg(s){ return s.chg ? ' <small title="수업 교체로 이번 주에만 바뀐 수업" style="color:#8a5a00;font-weight:800">🔁 바뀜</small>' : ""; }   // 14단계

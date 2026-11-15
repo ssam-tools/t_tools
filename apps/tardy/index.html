@@ -15,6 +15,7 @@
   · 출결: 지각(무단/인정), 결석(병결/인정결/미인정결/기타)과 사유. 조퇴·결과는 다루지 않습니다.
   · 표시 기준: 무단 지각 연속 2일 이상(주황), 한 주 3회 이상(빨강) — 설정에서 바꿀 수 있음.
   · 결석신고서: 같은 학생의 이어진 결석을 한 건으로 묶어 양식(absence-form.hwpx)에 자동으로 채우고, 한글 파일로 저장하거나 인쇄합니다.
+  · 18단계: 🔍 나이스와 맞춰 보기(통계 탭) — 나이스 출결 현황 파일(합계표·날짜별)을 넣으면 같은 기간 쌤 노트 기록과 다른 학생만 보여 줌(파일은 저장 안 함).
   · 저장: "tt_guide_v1" (이 기기 브라우저에만, 전체 백업에 포함). 예전 "tt_attend_v1"·"tt_counsel_v1" 자료는 처음 열 때 옮겨 옵니다.
 -->
 <style>
@@ -502,7 +503,7 @@ function renderStats() {
   const T = rows.reduce((a, r) => ({ Lu: a.Lu + r.c.Lu, Lo: a.Lo + r.c.Lo, A: a.A + r.c.A }), { Lu: 0, Lo: 0, A: 0 });
   const sel = `<select id="rangeSel" data-chg="range" style="width:auto" aria-label="기간">${[['all', '전체 기간'], ['month', '이번 달'], ['last', '지난 달'], ['4w', '최근 4주']].map(([v, t]) => `<option value="${v}" ${view.range === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
   return `<div class="view"><div class="row spread" style="flex:none"><div class="row">${sel}<span class="small muted">무단지각 <b>${T.Lu}</b> · 인정지각 <b>${T.Lo}</b> · 결석 <b>${T.A}</b></span></div>
-    <button class="btn btn-sm" data-act="att-csv">출결 표(CSV) 저장</button></div>
+    <span class="row"><button class="btn btn-sm btn-primary" data-act="nice-open">🔍 나이스와 맞춰 보기</button><button class="btn btn-sm" data-act="att-csv">출결 표(CSV) 저장</button></span></div>
     <div class="split two"><div class="main"><div class="card scroll" style="flex:1;padding:6px 10px"><table class="plain"><thead><tr><th>학생</th><th>무단지각</th><th>인정지각</th><th>병결</th><th>인정결</th><th>미인정결</th><th>주${o.weekN}회+</th><th>연속</th><th>많은 요일</th><th>상담</th><th>3회=1일</th></tr></thead>
       <tbody>${rows.map(r => `<tr><td><button class="btn btn-sm" style="border:0;background:none;padding:0;font-weight:700" data-act="student" data-sid="${r.s.id}">${r.s.no} ${esc(nm(r.s))}</button></td><td>${r.c.Lu}</td><td>${r.c.Lo}</td><td>${r.c.sick}</td><td>${r.c.ok}</td><td>${r.c.un + r.c.etc}</td><td>${r.aw}주</td><td>${r.runs}회</td><td>${esc(r.top)}</td><td>${r.logs}</td><td>${Math.floor(r.c.Lu / 3)}일</td></tr>`).join('')}</tbody></table></div></div>
     <div class="side"><section class="card"><h3>요일별 무단지각 (${sum}회)</h3><div class="bars">${dow.map((n, i) => `<div class="b"><span>${n}</span><i style="height:${Math.round(n / mx * 62)}px"></i><span>${L.KD[i + 1]}</span></div>`).join('')}</div></section>
@@ -603,6 +604,99 @@ function saveBlob(name, blob) { const a = document.createElement('a'); a.href = 
 function todoModal() {
   const rows = students().map(st => ({ st, w: wkStat(st.no, view.monday) }));
   openModal(`<div class="head"><h2>확인할 학생</h2><button class="btn btn-sm" data-act="close">닫기</button></div><ul class="todo">${todoList(rows, view.monday).join('') || '<li class="muted">지금 확인할 학생이 없습니다.</li>'}</ul>`);
+}
+
+/* ======================= 18단계: 나이스 출결 현황과 맞춰 보기 =======================
+   나이스에서 내려받은 출결 현황(학급별 합계표 또는 날짜별 기록, 엑셀·html·csv·복사한 표)을 이 기기 안에서 읽어
+   같은 기간의 쌤 노트 기록과 수가 다른 학생만 보여 줍니다. 파일은 저장하지 않습니다. */
+const NV = { from: '', to: '', res: null, err: '' };
+const NICE_LB = { A: '결석 합계', sick: '질병결석(병결)', un: '미인정결석', etc: '기타결석', ok: '출석인정결석', L: '지각 합계', Lu: '미인정지각', Lo: '질병·기타지각' };
+function niceGrid(html) {                                        // html 표 → 칸 나눔(colspan·rowspan 펼침)
+  const doc = new DOMParser().parseFromString(html, 'text/html'), grid = [];
+  Array.from(doc.querySelectorAll('tr')).forEach((tr, r) => {
+    grid[r] = grid[r] || []; let c = 0;
+    Array.from(tr.querySelectorAll('th,td')).forEach(td => {
+      while (grid[r][c] !== undefined) c++;
+      const cs = Math.max(1, +td.getAttribute('colspan') || 1), rs = Math.max(1, +td.getAttribute('rowspan') || 1), t = td.textContent.replace(/\s+/g, ' ').trim();
+      for (let i = 0; i < rs; i++) for (let j = 0; j < cs; j++) { grid[r + i] = grid[r + i] || []; grid[r + i][c + j] = (i === 0 && j === 0) ? t : (i > 0 ? t : ''); }
+      c += cs;
+    });
+  });
+  return grid.map(r => Array.from(r, x => x == null ? '' : x));
+}
+async function niceRowsFromFile(f) {
+  const head = new TextDecoder('utf-8').decode(new Uint8Array(await f.slice(0, 4096).arrayBuffer()));
+  if (/<table|<html/i.test(head)) { const txt = TT.util.decodeText(await f.arrayBuffer()); return niceGrid(txt); }
+  return TT.file.toRows(f);
+}
+const NICE_HDR = /결석|지각|조퇴|결과|질병|미인정|무단|기타|인정|번호|성\s*명|이\s*름|일자|날짜|구분/;
+function niceParse(rows, from, to) {
+  rows = rows.map(r => (r || []).map(x => String(x == null ? '' : x).trim()));
+  const h = rows.findIndex(r => r.some(x => /^(성\s*명|이\s*름|학생\s*명|학생)$/.test(x)));
+  if (h < 0) throw new Error('"성명(이름)" 칸을 찾지 못했습니다. 나이스에서 내려받은 출결 현황 파일인지 확인해 주세요.');
+  const isHdr = r => r && r.some(x => NICE_HDR.test(x)) && r.filter(x => /^\d+$/.test(x)).length < 2;
+  let a = h, b = h; while (a > 0 && isHdr(rows[a - 1])) a--; while (b + 1 < rows.length && isHdr(rows[b + 1]) && rows[b + 1].every(x => !/^\d+(\.\d+)?$/.test(x) && !/\d{4}\D+\d{1,2}\D+\d{1,2}/.test(x))) b++;   // 아래 줄은 숫자·날짜가 없는 소제목 줄만
+  const W = Math.max(...rows.slice(a, b + 1).map(r => r.length)), names = [];
+  const H = rows.slice(a, b + 1).map((r, i, all) => { const o = []; let last = ''; for (let j = 0; j < W; j++) { const v = r[j] || ''; if (v) last = v; o[j] = v || (i < all.length - 1 ? last : ''); } return o; });
+  for (let j = 0; j < W; j++) names[j] = Array.from(new Set(H.map(r => r[j]).filter(Boolean))).join('|');
+  const col = re => names.findIndex(n => re.test(n));
+  const cNo = col(/번호/), cNm = col(/성\s*명|이\s*름|학생\s*명|^학생$/), cDt = col(/일자|날짜/), cKd = col(/구분|종류|출결\s*상황|사유\s*구분/);
+  const subOf = n => /미인정|무단/.test(n) ? 'un' : /질병|병/.test(n) ? 'sick' : /기타/.test(n) ? 'etc' : /인정/.test(n) ? 'ok' : '';
+  const cnt = [];
+  names.forEach((n, j) => {
+    if (/조퇴|결과|비율|%/.test(n)) return;
+    const A = /결석/.test(n), Lt = /지각/.test(n); if (!A && !Lt) return;
+    const s = subOf(n.replace(/결석|지각/g, ''));
+    cnt.push({ j, f: A ? (s || 'A') : (s === 'un' ? 'Lu' : s ? 'Lo' : 'L') });
+  });
+  const out = {}, inR = d => (!from || d >= from) && (!to || d <= to);
+  function bump(k, f, v) { const o = out[k] = out[k] || {}; o[f] = (o[f] || 0) + v; }
+  rows.slice(b + 1).forEach(r => {
+    const nmv = (r[cNm] || '').replace(/\s+/g, ''), no = cNo >= 0 ? parseInt(r[cNo], 10) : NaN;
+    if (!nmv || /^(계|합계|소계|평균)$/.test(nmv)) return;
+    const k = isFinite(no) ? 'n' + no : 'm' + nmv;
+    out[k] = out[k] || { no: isFinite(no) ? no : null, name: nmv };
+    if (cnt.length && cDt < 0) { cnt.forEach(c => { const v = parseFloat(String(r[c.j]).replace(/[^\d.]/g, '')); if (v > 0) bump(k, c.f, v); }); return; }
+    if (cDt >= 0 && cKd >= 0) {                                    // 날짜별 기록: 한 줄 = 한 번
+      const m = String(r[cDt]).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/); if (!m) return;
+      const d = `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`; if (!inR(d)) return;
+      const t = r[cKd], s = subOf(t);
+      if (/결석/.test(t)) { bump(k, s || 'un', 1); bump(k, 'A', 1); } else if (/지각/.test(t)) { bump(k, s === 'un' ? 'Lu' : 'Lo', 1); bump(k, 'L', 1); }
+    }
+  });
+  const fields = new Set(); cnt.forEach(c => fields.add(c.f)); if (cDt >= 0 && cKd >= 0 && !cnt.length) ['A', 'sick', 'un', 'etc', 'ok', 'L', 'Lu', 'Lo'].forEach(f => fields.add(f));
+  if (!fields.size) throw new Error('결석·지각 칸을 찾지 못했습니다. 출결 현황(합계표) 또는 날짜별 출결 기록 파일을 넣어 주세요.');
+  return { stu: Object.values(out), fields: Array.from(fields) };
+}
+function niceCompare(P, from, to) {
+  const inR = d => d >= from && d <= to, diffs = [], seen = {};
+  P.stu.forEach(x => {
+    const st = x.no != null ? students().find(s => s.no === x.no) : students().find(s => s.name.replace(/\s+/g, '') === x.name);
+    if (!st) { diffs.push({ no: x.no, name: x.name, f: '명단', nice: '있음', mine: '우리 반 명단에 없음' }); return; }
+    seen[st.id] = 1;
+    if (x.name && st.name.replace(/\s+/g, '') !== x.name && !/○|\*/.test(x.name)) diffs.push({ st, f: '이름', nice: x.name, mine: st.name });
+    const c = typeCounts(st.id, inR); c.L = c.Lu + c.Lo;
+    P.fields.forEach(f => { const a = +(x[f] || 0), m = +(c[f] || 0); if (a !== m) diffs.push({ st, f: NICE_LB[f], nice: a, mine: m }); });
+  });
+  return { diffs, n: P.stu.length, missing: students().filter(s => !seen[s.id]) };
+}
+function niceModal() {
+  if (!NV.from) { const td = today(); NV.from = td.slice(0, 8) + '01'; NV.to = td; }
+  const R = NV.res;
+  const tbl = !R ? '' : R.diffs.length
+    ? `<div class="scroll" style="max-height:42vh"><table class="plain"><thead><tr><th>학생</th><th>항목</th><th>나이스</th><th>쌤 노트</th><th></th></tr></thead><tbody>${R.diffs.map(x => `<tr><td>${x.st ? `${x.st.no} ${esc(nm(x.st))}` : `${x.no == null ? '' : x.no} ${esc(x.name)}`}</td><td>${esc(x.f)}</td><td><b>${esc(x.nice)}</b></td><td><b>${esc(x.mine)}</b></td><td>${x.st ? `<button class="btn btn-sm" data-act="student" data-sid="${x.st.id}">기록 보기</button>` : ''}</td></tr>`).join('')}</tbody></table></div>
+       <div class="row" style="margin-top:8px"><button class="btn btn-sm" data-act="nice-copy">다른 점 복사</button><span class="small muted">나이스 ${R.n}명과 맞춰 봄 · 다른 곳 ${R.diffs.length}</span></div>`
+    : `<p class="pill pill-good" style="display:inline-block">✔ 나이스 ${R.n}명과 쌤 노트 기록이 모두 같습니다 (${esc(mdk(NV.from))} ~ ${esc(mdk(NV.to))})</p>`;
+  const miss = R && R.missing.length ? `<p class="small muted">나이스 파일에 없는 우리 반 학생: ${R.missing.map(s => s.no + '번').join(', ')}</p>` : '';
+  openModal(`<div class="head"><h2 style="margin:0">🔍 나이스 출결과 맞춰 보기</h2><button class="btn btn-sm" data-act="close">닫기</button></div>
+    <p class="small muted" style="margin:4px 0 8px">나이스 → 출결 → 학급별(학생별) 출결 현황을 <b>엑셀로 내려받아</b> 넣거나, 표를 복사해 붙여 넣으세요. 합계표와 날짜별 기록 모두 읽습니다. 파일은 이 기기 안에서만 읽고 저장하지 않습니다.</p>
+    <div class="grid2"><div><label class="f" for="nv-from">기간 시작 (나이스에서 고른 기간과 같게)</label><input type="date" id="nv-from" value="${esc(NV.from)}"></div><div><label class="f" for="nv-to">기간 끝</label><input type="date" id="nv-to" value="${esc(NV.to)}"></div></div>
+    <div class="row" style="margin-top:8px"><label class="btn btn-primary">📂 나이스 파일 고르기<input type="file" id="nv-file" accept=".xlsx,.xls,.csv,.html,.htm" hidden></label><span class="small muted">또는 아래에 표 붙여 넣기</span></div>
+    <textarea id="nv-paste" rows="3" placeholder="나이스 화면의 표를 Ctrl+A, Ctrl+C 한 뒤 여기에 Ctrl+V" style="margin-top:6px"></textarea>
+    ${NV.err ? `<p class="err">${esc(NV.err)}</p>` : ''}${tbl}${miss}`, true);
+  const run = rows => { try { NV.from = $('#nv-from').value || NV.from; NV.to = $('#nv-to').value || NV.to; NV.err = ''; NV.res = niceCompare(niceParse(rows, NV.from, NV.to), NV.from, NV.to); } catch (e) { NV.err = e.message || '읽지 못했습니다.'; NV.res = null; } niceModal(); };
+  $('#nv-file').onchange = async e => { const f = e.target.files[0]; if (!f) return; try { run(await niceRowsFromFile(f)); } catch (er) { NV.err = er.userMsg || er.message; niceModal(); } };
+  $('#nv-paste').onpaste = e => { const cd = e.clipboardData, html = cd && cd.getData('text/html'), txt = cd && cd.getData('text/plain'); e.preventDefault(); run(html && /<table/i.test(html) ? niceGrid(html) : String(txt || '').replace(/\r/g, '').split('\n').map(l => l.split('\t'))); };
 }
 
 /* 출결 한 칸 */
@@ -886,6 +980,8 @@ const A = {
   'rec-areason': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; setRec(no, d, Object.assign({}, cur, { r: t.dataset.r })); render(); recModal(no, d); },
   'rec-ev': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; const n = Object.assign({}, cur); n.ev = n.ev === t.dataset.r ? '' : t.dataset.r; setRec(no, d, n); recModal(no, d); },
   'todo-open': () => todoModal(),
+  'nice-open': () => niceModal(),
+  'nice-copy': () => { const R = NV.res; if (!R) return; copyText(`[나이스 출결 대조] ${NV.from} ~ ${NV.to}\n` + R.diffs.map(x => `${x.st ? x.st.no + '번 ' + x.st.name : x.name} · ${x.f}: 나이스 ${x.nice} / 쌤 노트 ${x.mine}`).join('\n')); },
   'counsel-new': t => counselModal(t.dataset.sid || ''),
   'counsel-edit': t => counselModal('', t.dataset.id),
   'counsel-save': () => {
@@ -968,6 +1064,7 @@ document.addEventListener('keydown', e => {
 window.addEventListener('storage', e => { if (e.key === 'tt_roster_v1') { loadHome(); render(); } });
 window.addEventListener('afterprint', () => { $('#printArea').innerHTML = ''; });
 render();
+if (new URLSearchParams(location.search).get('nice')) { history.replaceState(null, '', location.pathname + '?tab=' + view.tab); niceModal(); }   // 18단계: 첫 화면 '출결 마감 전 나이스 대조'에서
 })();
 </script>
 </body>

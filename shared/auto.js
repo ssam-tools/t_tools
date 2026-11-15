@@ -11,6 +11,7 @@
      ④ end          어떻게 끝내나 — ["copy","print","save","done"] 중 고름 ("done" = ✔ 다 했어요, 글 없이 처리만)
      (선택) done(o)  처리했을 때 함께 할 일 (예: 연간 업무 체크, 내 할 일 지우기)
      (선택) make 가 돌려준 links:[{href, label}] → 미리보기에 도구 단추로 보임 (16단계)
+     (선택) labels:{done:"…"} 끝내기 단추 이름 바꾸기 · after:true 설정에 "며칠 뒤"로 보임 (18단계, 규칙은 shared/follow.js)
    ■ 카드 길: 기다림(아직 며칠 전 아님) → 준비됨(첫 화면 "오늘 챙길 것"에 뜸) → 확인(미리보기) → 처리(사라짐·기록)
               / 미루기(내일 다시) / 이번엔 안 함(기록만 남기고 다시 안 뜸)
    ■ 저장: "tt_auto_v1" {set:{규칙id:{on, days}}, log:{"규칙id|key":{s:"done"|"skip"|"later", at, until}}}
@@ -282,7 +283,7 @@ var TTAuto = (function(){
     var d = document.createElement("dialog"); d.className = "auDlg";
     d.innerHTML = "<form><h2>" + r.icon + " " + esc(out.title) + "</h2><p class=\"meta\">쌤 노트가 준비해 두었습니다. 필요하면 고친 뒤 끝내세요.</p><textarea spellcheck=\"false\"></textarea>"
       + '<div class="acts"><div class="l"><button type="button" class="btn" data-a="later" title="내일 다시 띄웁니다">⏰ 미루기</button><button type="button" class="btn" data-a="skip" title="이번 일은 다시 띄우지 않습니다">이번엔 안 함</button></div>'
-      + '<div class="r">' + r.end.map(function(e, i){ return '<button type="button" class="btn' + (i === 0 ? " primary" : "") + '" data-a="' + e + '">' + END[e] + "</button>"; }).join("") + "</div></div>"
+      + '<div class="r">' + r.end.map(function(e, i){ return '<button type="button" class="btn' + (i === 0 ? " primary" : "") + '" data-a="' + e + '">' + ((r.labels && r.labels[e]) || END[e]) + "</button>"; }).join("") + "</div></div>"
       + (out.links && out.links.length ? '<p class="meta" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' + out.links.map(function(l){ return '<a class="btn" style="padding:4px 10px;font-size:13px" href="' + TT.BASE + esc(l.href) + '">' + esc(l.label) + "</a>"; }).join("") + "</p>" : "")
       + '<p class="meta" style="margin-top:8px"><a href="#" data-a="set">⚙ 자동 준비 설정</a> · ' + esc(r.desc) + "</p></form>";
     document.body.appendChild(d); d.addEventListener("close", function(){ d.remove(); });
@@ -333,7 +334,7 @@ var TTAuto = (function(){
     d.innerHTML = "<form><h2>⚙ 자동 준비 설정</h2><p class=\"meta\">켜 둔 일은 때가 되면 첫 화면 '오늘 챙길 것'에 \"준비됨\"으로 뜹니다. 모두 이 기기 안에서만 계산합니다.</p>"
       + RULES.map(function(r){ var cf = conf(r, S);
           return '<label class="rr"><input type="checkbox" data-on="' + r.id + '"' + (cf.on ? " checked" : "") + "><b>" + r.icon + " " + esc(r.name) + "</b>"
-            + (r.days != null ? '<span><input type="number" min="0" max="60" data-days="' + r.id + '" value="' + cf.days + '"> 일 ' + (r.id === "submit-missing" ? "뒤" : "전") + "</span>" : "<span></span>")
+            + (r.days != null ? '<span><input type="number" min="0" max="60" data-days="' + r.id + '" value="' + cf.days + '"> 일 ' + (r.after || r.id === "submit-missing" ? "뒤" : "전") + "</span>" : "<span></span>")
             + "<small>" + esc(r.desc) + "</small></label>"; }).join("")
       + '<div class="acts"><span></span><div class="r"><button type="button" class="btn" data-a="no">취소</button><button type="submit" class="btn primary">저장</button></div></div></form>';
     document.body.appendChild(d); d.addEventListener("close", function(){ d.remove(); });
