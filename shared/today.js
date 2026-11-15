@@ -538,6 +538,8 @@
     var T = m0 ? [] : (typeof TT_TOOLS === "undefined" ? [] : TT_TOOLS).filter(function(t){
       return t.ready && t.href && (t.name + " " + t.short + " " + t.desc + " " + t.id).toLowerCase().indexOf(low) >= 0; }).slice(0, 5)
       .map(function(t){ return {ic: t.icon, tx: esc(t.name), sub: "도구", go: function(){ if(TT.noteTool) TT.noteTool(t.id); location.href = t.href; }}; });
+    if(!m0 && typeof TTFill !== "undefined") T = T.concat(TTFill.all().filter(function(t){ return (t.n + " " + t.id).toLowerCase().indexOf(low) >= 0; }).slice(0, 3)   // 17단계: 문서 틀 바로 열기
+      .map(function(t){ return {ic: t.ic || "📄", tx: esc(t.n) + " <small>자동 채움</small>", sub: "문서 틀", go: function(){ location.href = t.kind === "link" ? "apps/tardy/?tab=report" : "apps/ai/?f=" + encodeURIComponent(t.id); }}; }));
     var S = m0 ? [] : students().filter(function(x){ return x.s.name.indexOf(qq) >= 0 || (qq.length >= 3 && qq.indexOf(x.s.name + " ") === 0); }).slice(0, 6)
       .map(function(x){ return {ic: "🧑‍🎓", tx: "<b>" + esc(x.s.name) + "</b> <small>" + esc(x.c.name) + " " + esc(x.s.no) + "번</small>", go: function(){ closeFind(); TT.notes.card(x.c, x.s); },
         btns: [["📇 카드", function(){ closeFind(); TT.notes.card(x.c, x.s); }], ["✍️ 기록", function(){ closeFind(); TT.notes.quick({cls: x.c.id, nos: [x.s.no], src: "첫 화면 찾기"}); }]]}; });

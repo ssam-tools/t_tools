@@ -11,6 +11,7 @@ shared/tt.css           공통 디자인 (색·버튼·대화상자)
 shared/tt.js            공통 코드 (저장, 명렬표, 파일 읽기, 백업, 알림)
 shared/tools.js         도구 목록
 shared/auto.js          "준비됨" 엔진 — 자동화 규칙(언제·무엇을 읽고·무엇을 만들어·어떻게 끝내나)
+shared/fill.js          문서 자동 채움 — 틀의 {학교}·{담임}·{학급}·{날짜:다음 주 금요일}·{빈칸:…} 채우기, 날짜 말 계산
 shared/fonts.css         화면 글꼴 4가지 (글꼴 파일은 shared/fonts/, 무료 OFL 글꼴)
 shared/comci.js         컴시간 시간표 읽기 (붙여 넣은 표 · 교사별 시간표 엑셀)
 apps/<도구>/index.html  각 도구

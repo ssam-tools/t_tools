@@ -17,6 +17,8 @@
     ② 🤖 바로 묻기: 학교 업무판(Code.gs)에 AI 키를 넣어 둔 학교만. 가린 요청문만 업무판을 거쳐 AI로 갑니다.
   · 받은 답은 다른 도구로 이어집니다: 채점 기준 → 수행평가, 가정통신문 → 인쇄 틀·제출물 체크, 공문 → 기안문 틀, 세특 → 생기부 도우미 초안.
   · 보관함 "tt_docs_v1" {list:[{id, type, title, body, at}]} (내 기기에만)
+  · 17단계 🧾 자동 채움(shared/fill.js): 가정통신문·안내 문자·쿨메신저 안내·명단 표·신청서·공문 틀에 학교명·날짜·담임·학급·명단을 채우고,
+    선생님은 빈칸 한두 곳만 씀. "다음 주 월요일" 같은 말은 날짜(요일)로 계산, 휴업일·주말이면 ⚠. 내 틀은 "tt_filltpl_v1". 주소 ?f=틀id 로 바로 열기.
 -->
 <style>
   header{align-items:center}
@@ -62,6 +64,23 @@
   .gong .t{text-align:center;font-size:22px;font-weight:800;margin:6px 0 14px}
   .gong .h div{display:flex;gap:10px}.gong .h b{min-width:56px;display:inline-block}
   .gong .b{white-space:pre-wrap;border-top:2px solid #111;margin-top:8px;padding-top:10px}
+  .gong .ft{white-space:pre-wrap;margin-top:26px;border-top:1px solid #111;padding-top:6px;font-size:13px;line-height:1.7}
+  .gong .hd{text-align:center;font-size:22px;font-weight:800;letter-spacing:.15em;margin-top:22px}
+  /* 17단계 자동 채움 */
+  .fcol[hidden]{display:none!important}
+  .auto{display:flex;flex-wrap:wrap;gap:4px}
+  .auto span{font-size:12px;border-radius:999px;padding:2px 9px;background:var(--accent-soft);color:#1f4f86;white-space:nowrap}
+  .auto span.no{background:var(--star-soft);color:#6b4e00}
+  .dv{font-size:12px;font-weight:700;color:var(--ok)}.dv.w{color:var(--danger)}
+  .hits{font-size:12px;color:var(--sub);display:flex;flex-wrap:wrap;gap:4px 10px}.hits b{color:var(--ok)}.hits .w{color:var(--danger);font-weight:700}
+  .pv{flex:1;min-height:0;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#f6f7f9;padding:10px}
+  .pv .sheet{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.12);padding:22px 26px;font-size:13px}
+  .pv .paper,.pv .gong{font-size:13px}.pv .paper h1{font-size:19px}
+  .paper .form{width:100%;border-collapse:collapse;margin:8px 0 4px}.paper .form th{width:24%;background:#f3f3f3;text-align:center}.paper .form td{white-space:pre-wrap}
+  .paper .rost th{background:#f3f3f3}.paper .rost td{height:24px}
+  .paper .to{text-align:center;margin-top:20px;font-size:18px;font-weight:800;letter-spacing:.12em}
+  #prt .sheet{page-break-after:always;box-shadow:none;padding:0}#prt .sheet:last-child{page-break-after:auto}
+  .tok{display:flex;flex-wrap:wrap;gap:3px}.tok button{font:inherit;font-size:12px;border:1px solid var(--line);background:#fff;border-radius:7px;padding:1px 6px;cursor:pointer}
   @media print{ body > *:not(#prt){display:none!important} #prt{position:static;padding:0} #prt .pb{display:none} }
   @media (max-width:980px){ main{grid-template-columns:1fr;overflow:auto} body{height:auto;min-height:100dvh;overflow:auto} .col{min-height:360px} }
 </style>
@@ -91,12 +110,15 @@
     <textarea class="big" id="result" placeholder="AI가 준 답을 여기에 붙여 넣으세요. (🤖 바로 묻기를 쓰면 자동으로 채워집니다)" spellcheck="false"></textarea>
     <div class="row" id="actions"></div>
   </section>
+  <section class="col fcol" id="fA" aria-label="빈칸" hidden></section>
+  <section class="col fcol" id="fB" aria-label="미리보기" hidden></section>
 </main>
 <footer>
   <span>AI 답은 반드시 읽고 고쳐 쓰세요 · 학생 이름·연락처는 요청문에서 자동으로 가립니다</span>
   <span class="priv">🔒 요청문·결과는 이 기기(와 내 보관함)에만 · ②는 가린 요청문만 업무판을 거쳐 AI로</span>
 </footer>
 <script src="../../shared/tt.js"></script>
+<script src="../../shared/fill.js"></script>
 <script>
 (function(){
   "use strict";
@@ -134,6 +156,7 @@
      f:[["q","요청","",null,"w","ta"]], b:function(v){ return v.q || ""; }}
   ];
   var cur = T[0], vals = {}, map = {}, docId = null, handoff = null;
+  var mode = "ai", F = {t: null, vals: {}, cls: null, stu: null, dateOn: true, hits: []};   // 17단계 자동 채움
 
   /* ---------- 개인정보 가리기: 명렬표의 모든 학생 이름 + 연락처 꼴 + 더 가릴 말 ---------- */
   function mask(t){
@@ -157,14 +180,16 @@
 
   function drawNav(){
     var g = "", h = "";
-    T.forEach(function(t){ if(t.g !== g){ g = t.g; h += "<h4>" + esc(g) + "</h4>"; } h += '<button type="button" data-t="' + t.id + '" aria-current="' + (t === cur) + '">' + t.ic + " " + esc(t.n) + "</button>"; });
-    h += '<h4>문서 틀</h4><button type="button" data-p="letter">📨 가정통신문 틀 (인쇄)</button><button type="button" data-p="gong">🏛️ 공문 기안문 틀</button><h4>보관함</h4><button type="button" data-box="1">🗄️ 보관함 (' + docs().length + ")</button>";
+    T.forEach(function(t){ if(t.g !== g){ g = t.g; h += "<h4>" + esc(g) + "</h4>"; } h += '<button type="button" data-t="' + t.id + '" aria-current="' + (mode !== "fill" && t === cur) + '">' + t.ic + " " + esc(t.n) + "</button>"; });
+    h += "<h4>🧾 자동 채움 (빈칸만 쓰기)</h4>" + TTFill.all().map(function(t){ return '<button type="button" data-f="' + esc(t.id) + '" aria-current="' + (mode === "fill" && F.t && F.t.id === t.id) + '">' + esc(t.ic || "📄") + " " + esc(t.n) + (t.mine ? " ✎" : "") + "</button>"; }).join("")
+      + '<button type="button" data-mk="1">＋ 내 틀 만들기</button><h4>보관함</h4><button type="button" data-box="1">🗄️ 보관함 (' + docs().length + ")</button>";
     $("nav").innerHTML = h;
   }
   $("nav").onclick = function(e){
     var b = e.target.closest("button"); if(!b) return;
-    if(b.dataset.t){ cur = T.filter(function(t){ return t.id === b.dataset.t; })[0]; vals = {}; docId = null; handoff = null; drawAll(); $("result").value = ""; }
-    if(b.dataset.p) paper(b.dataset.p, $("result").value);
+    if(b.dataset.t){ setMode("ai"); cur = T.filter(function(t){ return t.id === b.dataset.t; })[0]; vals = {}; docId = null; handoff = null; drawAll(); $("result").value = ""; }
+    if(b.dataset.f) openFill(b.dataset.f);
+    if(b.dataset.mk) editMine(null);
     if(b.dataset.box) box();
   };
   function drawFields(){
@@ -249,17 +274,18 @@
   function paper(kind, body){
     var old = $("prt"); if(old) old.remove();
     var p = document.createElement("div"); p.id = "prt";
-    var sname = SC.name || "○○중학교", today = new Date();
+    var sname = SC.name || "○○중학교", today = new Date(), cx = TTFill.ctx();   // 17단계: 학교장·학급·담임·주소·전화 자동
+    body = TTFill.dates(body || "").text;                                      // "다음 주 월요일" → 날짜(요일)
     var dstr = today.getFullYear() + ". " + (today.getMonth() + 1) + ". " + today.getDate() + ".";
     if(kind === "letter"){
       var title = vals.title || "가정통신문";
       p.innerHTML = '<div class="pb"><button type="button" class="btn primary" data-a="print">🖨 인쇄</button><button type="button" class="btn" data-a="close">닫기</button><span class="muted">글을 누르면 바로 고칠 수 있습니다</span></div>'
-        + '<div class="paper"><div class="meta"><span>' + esc(sname) + ' 가정통신문</span><span>' + dstr + '</span></div><h1 contenteditable="true">' + esc(title) + '</h1><div class="body" contenteditable="true">' + esc(body || "본문을 적어 주세요.") + '</div><div class="sign">' + esc(sname) + "장</div>"
-        + (vals.reply ? '<div class="cut">✂ 자르는 선</div><h1 style="font-size:19px;margin:6px 0 10px">' + esc(title) + ' 회신서</h1><table><tr><th>학년</th><td></td><th>반</th><td></td><th>번호</th><td></td><th>학생 이름</th><td style="width:22%"></td></tr><tr><th colspan="2">의견</th><td colspan="6" style="height:80px">□ 동의함  □ 동의하지 않음</td></tr><tr><th colspan="2">보호자</th><td colspan="6" style="text-align:right">(서명)</td></tr></table>' + (vals.due ? '<div style="margin-top:6px;font-size:13px">회신 마감: ' + esc(vals.due) + "까지 담임 선생님께 내 주세요.</div>" : "") : "") + "</div>";
+        + '<div class="paper"><div class="meta"><span>' + esc(sname) + ' 가정통신문</span><span>' + dstr + '</span></div><h1 contenteditable="true">' + esc(title) + '</h1><div class="body" contenteditable="true">' + esc(body || "본문을 적어 주세요.") + '</div><div class="sign">' + esc(cx["학교장"] || sname + "장") + "</div>"
+        + (vals.reply ? '<div class="cut">✂ 자르는 선</div><h1 style="font-size:19px;margin:6px 0 10px">' + esc(title) + ' 회신서</h1><table><tr><th>학년</th><td style="text-align:center">' + esc(cx["학년"]) + '</td><th>반</th><td style="text-align:center">' + esc(cx["반"]) + '</td><th>번호</th><td></td><th>학생 이름</th><td style="width:22%"></td></tr><tr><th colspan="2">의견</th><td colspan="6" style="height:80px">□ 동의함  □ 동의하지 않음</td></tr><tr><th colspan="2">보호자</th><td colspan="6" style="text-align:right">(서명)</td></tr></table>' + (vals.due ? '<div style="margin-top:6px;font-size:13px">회신 마감: ' + esc(TTFill.when(vals.due) ? TTFill.fmt(TTFill.when(vals.due)) : vals.due) + "까지 담임 선생님께 내 주세요.</div>" : "") : "") + "</div>";
     } else {
       var lines = normGong(body || "");
       p.innerHTML = '<div class="pb"><button type="button" class="btn primary" data-a="print">🖨 인쇄</button><button type="button" class="btn" data-a="copyG">📋 본문 복사 (업무관리시스템에 붙여 넣기)</button><button type="button" class="btn" data-a="close">닫기</button><span class="muted">항목 기호와 "끝." 표시를 정리했습니다. 글을 누르면 고칠 수 있습니다</span></div>'
-        + '<div class="gong"><div class="t">' + esc(sname) + '</div><div class="h"><div><b>수신</b><span contenteditable="true">' + esc(vals.to || "내부결재") + '</span></div><div><b>(경유)</b><span></span></div><div><b>제목</b><span contenteditable="true">' + esc(vals.title || "[제목]") + '</span></div></div><div class="b" id="gb" contenteditable="true">' + esc(lines) + "</div></div>";
+        + gongHTML(vals.to || "내부결재", vals.title || "[제목]", lines, cx);
     }
     document.body.appendChild(p);
     p.querySelector("[data-a=close]").onclick = function(){ p.remove(); };
@@ -328,6 +354,200 @@
     }).catch(function(){ b.disabled = false; $("askInfo").textContent = "업무판에 닿지 못했습니다. 인터넷·업무판 주소를 확인해 주세요."; });
   };
 
+  /* ================= 17단계: 🧾 자동 채움 =================
+     틀(shared/fill.js) + 학교·선생님 설정 + 명렬표 + 학사일정 → 미리보기. 선생님은 빈칸만 쓰고 [복사]/[인쇄]/[저장]. */
+  function setMode(m){
+    mode = m;
+    Array.prototype.forEach.call(document.querySelectorAll("#m > .col"), function(c){ c.hidden = (m === "fill") !== c.classList.contains("fcol"); });
+  }
+  function classesWith(){ return TT.roster.classes().filter(function(c){ return c.students.length > 0; }); }
+  function tplText(t){ return [t.to, t.title, t.body, t.cols, (t.form || []).map(function(r){ return r[1]; }).join("\n")].join("\n"); }
+  function openFill(id){
+    var t = TTFill.all().filter(function(x){ return x.id === id; })[0]; if(!t) return;
+    var L = classesWith(), keep = F.cls;
+    F = {t: t, vals: {}, cls: L.filter(function(c){ return keep && c.id === keep.id; })[0] || TT.roster.home() || L[0] || null, stu: null, dateOn: true, hits: []};
+    if(F.cls && !F.cls.students.length) F.cls = L[0] || null;
+    F.stu = F.cls ? F.cls.students.slice().sort(function(a, b){ return a.no - b.no; })[0] || null : null;
+    setMode("fill"); drawNav(); drawFillA(); drawFillB();
+  }
+  /* 칸 값 → 날짜 말 계산(빈칸·글칸) */
+  function filled(st){
+    var v = {}, hits = [];
+    TTFill.scan(tplText(F.t)).forEach(function(f){
+      var x = F.vals[f.name] != null ? F.vals[f.name] : f.def;
+      if(F.dateOn && (f.kind === "빈칸" || f.kind === "글칸") && x){ var r = TTFill.dates(x); x = r.text; hits = hits.concat(r.hits); }
+      v[f.name] = x;
+    });
+    F.hits = hits;
+    var cx = TTFill.ctx(F.cls, st === undefined ? F.stu : st);
+    var blank = F.t.kind === "paper";                                            // 인쇄 서류의 빈칸은 손으로 쓰게 비워 둠
+    return function(s){ return TTFill.fill(s, v, cx, blank); };
+  }
+  function drawFillA(){
+    var t = F.t, A = $("fA"), cx = TTFill.ctx(F.cls, F.stu), nd = TTFill.needs(tplText(t)), h = "";
+    h += '<h2>' + esc(t.ic || "📄") + " " + esc(t.n) + '<span class="sp"></span>' + (t.kind !== "link" ? '<button type="button" class="btn" data-x="edit" style="padding:3px 9px;font-size:12px">' + (t.mine ? "✏️ 틀 고치기" : "✏️ 내 틀로 고쳐 쓰기") + "</button>" : "") + "</h2>";
+    h += '<div class="muted">' + esc(t.help || "빈칸만 쓰면 나머지는 자동으로 채워집니다.") + "</div>";
+    if(t.kind === "link"){ A.innerHTML = h + '<div class="row" style="margin-top:8px"><a class="btn primary" href="' + esc(t.href) + '">' + esc(t.ic) + " " + esc(t.n) + " 열기 →</a></div>"; return; }
+    var chips = [["🏫", "학교", cx["학교"]], ["👤", "담임", cx["담임"]], ["📅", "오늘", cx["오늘"]]];
+    if(nd.cls || t.table || nd.stu) chips.push(["👥", "학급", cx["학급"] ? cx["학급"] + " " + cx["인원"] : ""]);
+    if(/\{(전화)\}/.test(tplText(t)) || t.kind === "gong") chips.push(["☎", "전화", cx["전화"]]);
+    h += '<div class="auto" title="자동으로 채운 값">' + chips.map(function(c){ return c[2] ? "<span>" + c[0] + " " + esc(c[2]) + "</span>" : '<span class="no">' + c[0] + " " + c[1] + " 없음</span>"; }).join("") + "</div>";
+    if(chips.some(function(c){ return !c[2]; })) h += '<div class="muted">빈 값은 첫 화면 ⋯ → 🏷️ 학교·선생님 설정(또는 🧳 학기초 세팅)에 한 번 넣으면 모든 틀에 들어갑니다.</div>';
+    if(nd.cls || t.table || nd.stu){
+      var L = classesWith();
+      h += '<div class="row"><select id="fCls" aria-label="학급">' + (L.length ? L.map(function(c){ return '<option value="' + esc(c.id) + '"' + (F.cls && c.id === F.cls.id ? " selected" : "") + ">" + esc(c.name) + " (" + c.students.length + "명)</option>"; }).join("") : "<option>명단 없음</option>") + "</select>";
+      if(nd.stu && F.cls) h += '<select id="fStu" aria-label="학생">' + F.cls.students.slice().sort(function(a, b){ return a.no - b.no; }).map(function(x){ return '<option value="' + x.no + '"' + (F.stu && x.no === F.stu.no ? " selected" : "") + ">" + x.no + "번 " + esc(x.name) + "</option>"; }).join("") + "</select>";
+      h += "</div>";
+    }
+    var fs = TTFill.scan(tplText(t));
+    h += '<div class="fields" style="max-height:none;flex:1 1 auto;align-content:start">' + (fs.length ? fs.map(function(f){
+      var v = F.vals[f.name] != null ? F.vals[f.name] : f.def, id = ' data-v="' + esc(f.name) + '"';
+      if(f.kind === "글칸") return '<label class="w">' + esc(f.name) + "<textarea" + id + ' style="min-height:' + (t.kind === "gong" ? 200 : 96) + 'px">' + esc(v) + "</textarea></label>";
+      if(f.kind === "날짜칸"){ var d = TTFill.when(v), w = TTFill.check(d);
+        return "<label>" + esc(f.name) + ' <span class="dv' + (w || !d ? " w" : "") + '" data-dv="' + esc(f.name) + '">' + (d ? "→ " + esc(TTFill.fmt(d, f.shape)) + (w ? " ⚠ " + esc(w) : "") : v ? "날짜를 못 읽음" : "") + "</span><input" + id + ' value="' + esc(v) + '" placeholder="다음 주 금요일 · 11/27 · 3일 뒤" list="fDays"></label>'; }
+      return '<label class="' + (String(v).length > 14 ? "w" : "") + '">' + esc(f.name) + "<input" + id + ' value="' + esc(v) + '"></label>';
+    }).join("") : '<div class="muted w">쓸 빈칸이 없습니다. 모두 자동으로 채웠습니다.</div>') + "</div>";
+    h += '<datalist id="fDays"><option>내일</option><option>모레</option><option>이번 주 금요일</option><option>다음 주 월요일</option><option>다음 주 금요일</option><option>다음 등교일</option><option>7일 뒤</option></datalist>';
+    h += '<label class="row muted" style="gap:4px"><input type="checkbox" id="fDate"' + (F.dateOn ? " checked" : "") + '> 빈칸 글 속 "다음 주 월요일"·"3일 뒤"도 날짜(요일)로 바꾸기</label>';
+    A.innerHTML = h;
+  }
+  $("fA").addEventListener("input", function(e){
+    var el = e.target;
+    if(el.dataset.v != null){
+      F.vals[el.dataset.v] = el.value;
+      var dv = $("fA").querySelector('[data-dv="' + CSS.escape(el.dataset.v) + '"]');
+      if(dv){ var f = TTFill.scan(tplText(F.t)).filter(function(x){ return x.name === el.dataset.v; })[0], d = TTFill.when(el.value), w = TTFill.check(d);
+        dv.textContent = d ? "→ " + TTFill.fmt(d, f && f.shape) + (w ? " ⚠ " + w : "") : el.value ? "날짜를 못 읽음" : ""; dv.className = "dv" + (w || !d ? " w" : ""); }
+      drawFillB();
+    }
+  });
+  $("fA").addEventListener("change", function(e){
+    var el = e.target;
+    if(el.id === "fCls"){ F.cls = classesWith().filter(function(c){ return c.id === el.value; })[0] || null; F.stu = F.cls ? F.cls.students.slice().sort(function(a, b){ return a.no - b.no; })[0] : null; drawFillA(); drawFillB(); }
+    if(el.id === "fStu"){ F.stu = F.cls.students.filter(function(x){ return String(x.no) === el.value; })[0] || null; drawFillA(); drawFillB(); }
+    if(el.id === "fDate"){ F.dateOn = el.checked; drawFillB(); }
+  });
+  $("fA").addEventListener("click", function(e){ var b = e.target.closest("[data-x=edit]"); if(b) editMine(F.t); });
+
+  /* 한 장 (가정통신문·명단 표·신청서) */
+  function sheet(fx, st){
+    var t = F.t, cx = TTFill.ctx(F.cls, st === undefined ? F.stu : st), sch = cx["학교"] || "○○중학교", head = cx["학교장"] || "○○중학교장";
+    var h = '<div class="sheet"><div class="paper"><div class="meta"><span>' + esc(sch) + (t.sign === "head" ? " 가정통신문" : "") + "</span><span>" + esc(TTFill.fmt(new Date(), "공문")) + "</span></div>";
+    h += '<h1 contenteditable="true">' + esc(fx(t.title || t.n).trim() || t.n) + "</h1>";
+    if(t.form) h += '<table class="form">' + t.form.map(function(r){ var v = fx(r[1]); return "<tr><th>" + esc(r[0]) + '</th><td contenteditable="true"' + (/글칸/.test(r[1]) ? ' style="height:90px;vertical-align:top"' : "") + ">" + esc(v) + "</td></tr>"; }).join("") + "</table>";
+    if(t.body) h += '<div class="body" contenteditable="true">' + esc(fx(t.body)) + "</div>";
+    if(t.table === "roster" && F.cls){
+      var cols = fx(t.cols || "확인, 비고").split(",").map(function(x){ return x.trim(); }).filter(Boolean);
+      h += '<table class="rost" style="margin-top:10px"><tr><th style="width:9%">번호</th><th style="width:20%">이름</th>' + cols.map(function(c){ return '<th contenteditable="true">' + esc(c) + "</th>"; }).join("") + "</tr>"
+        + F.cls.students.slice().sort(function(a, b){ return a.no - b.no; }).map(function(x){ return '<tr><td style="text-align:center">' + x.no + "</td><td>" + esc(x.name) + "</td>" + cols.map(function(){ return "<td></td>"; }).join("") + "</tr>"; }).join("") + "</table>";
+    }
+    if(t.reply){
+      var due = (TTFill.scan(t.body).filter(function(f){ return f.kind === "날짜칸"; })[0] || {}).name, dd = due ? TTFill.when(F.vals[due] != null ? F.vals[due] : TTFill.scan(t.body).filter(function(f){ return f.name === due; })[0].def) : null;
+      h += '<div class="cut">✂ 자르는 선</div><h1 style="font-size:17px;margin:6px 0 10px" contenteditable="true">' + esc(fx(t.title || "")) + ' 회신서</h1><table><tr><th>학년</th><td style="text-align:center">' + esc(cx["학년"]) + '</td><th>반</th><td style="text-align:center">' + esc(cx["반"]) + '</td><th>번호</th><td></td><th>학생 이름</th><td style="width:22%"></td></tr><tr><th colspan="2">의견</th><td colspan="6" style="height:70px">□ 동의함  □ 동의하지 않음</td></tr><tr><th colspan="2">보호자</th><td colspan="6" style="text-align:right">(서명)</td></tr></table>'
+        + (dd ? '<div style="margin-top:6px;font-size:12.5px">회신 마감: ' + esc(TTFill.fmt(dd)) + "까지 담임 선생님께 내 주세요.</div>" : "");
+    }
+    if(t.sign === "head") h += '<div class="sign">' + esc(head) + "</div>";
+    if(t.sign === "to") h += '<div class="to">' + esc(head) + " 귀하</div>";
+    return h + "</div></div>";
+  }
+  function gongSheet(fx){
+    var t = F.t, cx = TTFill.ctx(F.cls, null);
+    return '<div class="sheet">' + gongHTML(fx(t.to || "내부결재"), fx(t.title || ""), normGong(fx(t.body || "")), cx) + "</div>";
+  }
+  function gongHTML(to, title, body, cx){
+    var sname = cx["학교"] || "○○중학교";
+    return '<div class="gong"><div class="t">' + esc(sname) + '</div><div class="h"><div><b>수신</b><span contenteditable="true">' + esc(to) + '</span></div><div><b>(경유)</b><span></span></div><div><b>제목</b><span contenteditable="true">' + esc(title) + '</span></div></div><div class="b" id="gb" contenteditable="true">' + esc(body) + "</div>"
+      + '<div class="hd">' + esc(cx["학교장"] || "○○중학교장") + '</div><div class="ft" contenteditable="true">기안자 교사 ' + esc(cx["교사"] || "○○○") + "     검토자     결재권자\n시행 " + esc(sname.replace(/\s+/g, "")) + "-        (" + esc(TTFill.fmt(new Date(), "공문").replace(/\(.\)$/, "")) + ")     접수\n" + (cx["주소"] ? "우 " + esc(cx["주소"]) + "     " : "") + (cx["전화"] ? "전화 " + esc(cx["전화"]) + "     " : "") + "/ 공개</div></div>";
+  }
+  function drawFillB(){
+    var t = F.t, B = $("fB");
+    if(t.kind === "link"){ B.innerHTML = '<h2>미리보기</h2><div class="muted">결석신고서는 출결·결석계 화면에서 결석 기록마다 자동으로 채워집니다. (학생·기간·사유·확인일·담임·학교장, 한글 파일 저장·인쇄)</div>'; return; }
+    var fx = filled(), h = '<h2>미리보기<span class="sp"></span><span class="muted">고칠 곳을 바로 눌러 고치세요</span></h2>';
+    if(t.kind === "text"){ var txt = fx(t.body); h += '<textarea class="big" id="fOut" spellcheck="false">' + esc(txt) + "</textarea>"; }
+    else h += '<div class="pv" id="fPv">' + (t.kind === "gong" ? gongSheet(fx) : sheet(fx)) + "</div>";
+    if(F.hits.length) h += '<div class="hits">📅 ' + F.hits.slice(0, 6).map(function(x){ return esc(x.from) + " → <b>" + esc(x.to) + "</b>" + (x.warn ? ' <span class="w">⚠ ' + esc(x.warn) + "</span>" : ""); }).join(" · ") + "</div>";
+    h += '<div class="row">';
+    if(t.kind === "text") h += '<button type="button" class="btn primary" data-y="copy">📋 복사</button><span class="muted" id="fLen"></span>';
+    else {
+      h += '<button type="button" class="btn primary" data-y="print">🖨 인쇄</button>';
+      if(t.each && F.cls) h += '<button type="button" class="btn" data-y="printAll">🖨 반 전체 ' + F.cls.students.length + "장 (이름 넣어)</button>";
+      h += '<button type="button" class="btn" data-y="copyP">📋 ' + (t.kind === "gong" ? "본문 복사 (업무관리시스템)" : "글 복사") + "</button>";
+      if(t.reply) h += '<button type="button" class="btn" data-y="submit">📦 회신 받기: 제출물 만들기</button>';
+    }
+    h += '<button type="button" class="btn" data-y="save">🗄️ 보관함에 저장</button></div>';
+    B.innerHTML = h;
+    var o = $("fOut"); if(o){ var ln = function(){ $("fLen").textContent = o.value.length + "자" + (TTFill.scan(tplText(t)).concat(TTFill.AUTO.map(function(a){ return {name: a}; })).some(function(f){ return o.value.indexOf("[" + f.name + "]") >= 0; }) ? " · [ ] 빈칸이 남았습니다" : ""); }; o.oninput = ln; ln(); }
+  }
+  function printSheets(html){
+    var old = $("prt"); if(old) old.remove();
+    var p = document.createElement("div"); p.id = "prt";
+    p.innerHTML = '<div class="pb"><button type="button" class="btn primary" data-a="print">🖨 인쇄</button><button type="button" class="btn" data-a="close">닫기</button></div>' + html;
+    document.body.appendChild(p);
+    Array.prototype.forEach.call(p.querySelectorAll("[contenteditable]"), function(x){ x.removeAttribute("contenteditable"); });
+    p.querySelector("[data-a=close]").onclick = function(){ p.remove(); };
+    p.querySelector("[data-a=print]").onclick = function(){ window.print(); };
+    setTimeout(function(){ window.print(); }, 50);
+  }
+  function pvText(){
+    var pv = $("fPv"); if(!pv) return ($("fOut") || {}).value || "";
+    if(F.t.kind === "gong") return $("gb").innerText;
+    var out = []; Array.prototype.forEach.call(pv.querySelectorAll("h1, .form tr, .body"), function(x){ out.push(x.tagName === "TR" ? x.children[0].innerText + ": " + x.children[1].innerText : x.innerText); });
+    return out.join("\n\n");
+  }
+  $("fB").addEventListener("click", function(e){
+    var b = e.target.closest("[data-y]"); if(!b) return; var y = b.dataset.y;
+    if(y === "copy") copy($("fOut").value, "복사했습니다. 문자·쿨메신저에 붙여 넣으세요.");
+    if(y === "copyP") copy(pvText(), "글을 복사했습니다.");
+    if(y === "print") printSheets($("fPv").innerHTML);
+    if(y === "printAll"){ var L = F.cls.students.slice().sort(function(a, b){ return a.no - b.no; }); printSheets(L.map(function(st){ return sheet(filled(st), st); }).join("")); TT.ui.toast(L.length + "장을 인쇄합니다. 미리보기에서 고친 글은 반 전체 인쇄에 들어가지 않습니다(빈칸에 쓴 내용으로 만듦)."); }
+    if(y === "submit"){
+      var c = F.cls || TT.roster.home() || classesWith()[0]; if(!c){ TT.ui.toast("명렬표에 반이 없습니다."); return; }
+      var title = (pvTitle() + " 회신").slice(0, 40), dueF = TTFill.scan(F.t.body).filter(function(f){ return f.kind === "날짜칸"; })[0], dd = dueF ? TTFill.when(F.vals[dueF.name] != null ? F.vals[dueF.name] : dueF.def) : null;
+      var S = TT.store.get("tt_submit_v1", null) || {v: 1, items: [], m: {}}; S.items = S.items || []; S.m = S.m || {};
+      S.items.push({id: TT.util.uid(), cls: c.id, title: title, due: dd ? TTFill.ymd(dd) : "", at: ymd()}); TT.store.set("tt_submit_v1", S);
+      TT.ui.toast(c.name + "에 '" + title + "' 제출물을 만들었습니다. 마감이 지나면 첫 화면에 미제출 안내가 준비됩니다.");
+    }
+    if(y === "save"){ var L2 = docs(); L2.push({id: TT.util.uid(), type: "fill", title: mask(pvTitle()).slice(0, 40), body: pvText(), at: Date.now()}); saveDocs(L2); drawNav(); TT.ui.toast("보관함에 저장했습니다."); }
+  });
+  function pvTitle(){ var h1 = $("fPv") && $("fPv").querySelector("h1, .h span:last-child"); return (h1 ? h1.innerText : filled()(F.t.title || F.t.n)).trim() || F.t.n; }
+
+  /* ---------- 내 틀 만들기·고치기 ---------- */
+  function templatize(text){
+    var cx = TTFill.ctx(), n = 0, s = String(text);
+    [["학교장", cx["학교장"]], ["학교", cx["학교"]], ["학급", cx["학급"]], ["담임", cx["담임"]], ["전화", cx["전화"]], ["주소", cx["주소"]]].forEach(function(p){ if(p[1] && p[1].length >= 2) s = s.split(p[1]).join("{" + p[0] + "}"); });
+    s = s.replace(/(?:\d{4}\s*[.년]\s*)?\d{1,2}\s*(?:월\s*|\.\s*)\d{1,2}\s*(?:일|\.)(?:\s*\((?:월|화|수|목|금|토|일)(?:요일)?\))?/g, function(all){ n++; return "{날짜칸:날짜" + n + "=" + all.replace(/\s*\([^)]*\)/, "").trim() + "}"; });
+    return s;
+  }
+  function editMine(base){
+    var own = base && base.mine ? base : null, d = document.createElement("dialog"), f = document.createElement("form");
+    d.appendChild(f); document.body.appendChild(d); d.style.width = "min(760px,96vw)"; d.addEventListener("close", function(){ d.remove(); });
+    var o = own || {ic: base ? base.ic : "📄", n: base ? base.n + " (내 틀)" : "", kind: base && base.kind !== "text" ? "paper" : (base ? "text" : "paper"), title: base ? base.title || "" : "{빈칸:제목=}", body: base ? (base.form ? base.form.map(function(r){ return r[0] + ": " + r[1]; }).join("\n") + "\n\n" : "") + (base.body || "") : ""};
+    var TOKS = ["{학교}", "{학교장}", "{담임}", "{학급}", "{인원}", "{교과}", "{전화}", "{오늘}", "{빈칸:이름=}", "{글칸:내용=}", "{날짜칸:마감=다음 주 금요일}", "{날짜:내일}", "{학생}", "{번호}"];
+    f.innerHTML = '<h2>' + (own ? "✏️ 내 틀 고치기" : "＋ 내 틀 만들기") + '</h2><p class="muted" style="margin:2px 0 6px">학교에서 쓰는 글을 붙여 넣고 <b>✨ 자동 표시</b>를 누르면 학교명·담임·학급·날짜를 찾아 {표시}로 바꿉니다. 중괄호 표시는 자동으로 채워지고, {빈칸:…}만 선생님이 씁니다.</p>'
+      + '<div class="fields" style="max-height:none;grid-template-columns:70px 1fr 140px"><label>아이콘<input id="eIc" value="' + esc(o.ic) + '" maxlength="4"></label><label>틀 이름<input id="eN" value="' + esc(o.n) + '" maxlength="30"></label><label>종류<select id="eK"><option value="paper"' + (o.kind === "paper" ? " selected" : "") + '>인쇄 문서</option><option value="text"' + (o.kind === "text" ? " selected" : "") + ">복사하는 글</option></select></label>"
+      + '<label class="w">제목 (인쇄 문서)<input id="eT" value="' + esc(o.title || "") + '"></label><label class="w">본문<textarea id="eB" style="min-height:220px">' + esc(o.body || "") + "</textarea></label></div>"
+      + '<div class="tok" style="margin:6px 0">' + TOKS.map(function(x){ return '<button type="button" data-tk="' + esc(x) + '">' + esc(x) + "</button>"; }).join("") + "</div>"
+      + '<div class="row" style="justify-content:space-between;margin-top:8px"><span><button type="button" class="btn" data-e="auto">✨ 자동 표시 (붙여 넣은 글에서)</button>' + (own ? ' <button type="button" class="btn" data-e="del" style="color:var(--danger)">틀 지우기</button>' : "") + '</span><span><button type="button" class="btn" data-e="close">취소</button> <button type="button" class="btn primary" data-e="save">저장</button></span></div>';
+    var last = f.querySelector("#eB");
+    f.addEventListener("focusin", function(e){ if(e.target.id === "eB" || e.target.id === "eT") last = e.target; });
+    f.onclick = function(e){
+      var tk = e.target.closest("[data-tk]"), a = e.target.closest("[data-e]");
+      if(tk){ var p = last.selectionStart || last.value.length; last.value = last.value.slice(0, p) + tk.dataset.tk + last.value.slice(last.selectionEnd || p); last.focus(); }
+      if(!a) return;
+      if(a.dataset.e === "close") d.close();
+      if(a.dataset.e === "auto"){ f.querySelector("#eB").value = templatize(f.querySelector("#eB").value); f.querySelector("#eT").value = templatize(f.querySelector("#eT").value); TT.ui.toast("학교명·담임·학급·날짜를 {표시}로 바꿨습니다. 확인해 주세요."); }
+      if(a.dataset.e === "del"){ TTFill.saveMine(TTFill.mine().filter(function(x){ return x.id !== own.id; })); d.close(); setMode("ai"); drawAll(); TT.ui.toast("틀을 지웠습니다."); }
+      if(a.dataset.e === "save"){
+        var n = f.querySelector("#eN").value.trim(), b = f.querySelector("#eB").value;
+        if(!n || !b.trim()){ TT.ui.toast("틀 이름과 본문을 써 주세요."); return; }
+        var L = TTFill.mine(), rec = {id: own ? own.id : "my-" + TT.util.uid(), ic: f.querySelector("#eIc").value.trim() || "📄", n: n.slice(0, 30), kind: f.querySelector("#eK").value, title: f.querySelector("#eT").value, body: b, at: Date.now()};
+        var i = L.findIndex(function(x){ return x.id === rec.id; }); if(i >= 0) L[i] = rec; else L.push(rec);
+        TTFill.saveMine(L); d.close(); F.vals = {}; openFill(rec.id); TT.ui.toast("내 틀을 저장했습니다.");
+      }
+    };
+    d.showModal();
+  }
+
   function drawAll(){ drawNav(); drawFields(); build(); drawActions(); }
 
   /* 생기부 도우미에서 넘어온 초안 (주소에는 아무것도 싣지 않고 이 창의 임시 저장소로만 받음) */
@@ -335,8 +555,10 @@
   var want = new URLSearchParams(location.search).get("t");
   if(want) cur = T.filter(function(t){ return t.id === want; })[0] || cur;
   if(handoff && handoff.kind === "saeteuk"){ cur = T.filter(function(t){ return t.id === "saeteuk"; })[0]; vals = {area: handoff.areaName, lim: String(handoff.lim || 1500), draft: handoff.text || ""}; }
-  if(want) history.replaceState(null, "", location.pathname);
+  var wantF = new URLSearchParams(location.search).get("f");
+  if(want || wantF) history.replaceState(null, "", location.pathname);
   drawAll(); checkAI();
+  if(wantF && !handoff) openFill(wantF);
 })();
 </script>
 </body>

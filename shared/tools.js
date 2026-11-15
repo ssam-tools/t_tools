@@ -49,7 +49,7 @@ var TT_TOOLS = [
   {id:"mpace",  icon:"⏳", cat:"math",  short:"진도·시수", name:"진도·시수", desc:"시간표 × 학사일정 × 수업 기록장 → 시험까지 남은 수업과 필요한 차시.", href:"apps/mpace/", ready:true, exam:21},
   {id:"play",   icon:"🎮", cat:"math",  short:"수학 놀이터", name:"수학 놀이터", desc:"보물 상자·숫자 폭탄·돌림판·퀴즈 배틀·빙고·스도쿠 등 17가지 수학 게임·퍼즐.", href:"apps/play/", ready:true, room:true},
   {id:"year",   icon:"📆", cat:"work",  short:"연간 업무", name:"연간 업무", desc:"해마다 돌아오는 일 · 학사일정 붙여 넣기 → 첫 화면 달력.", href:"apps/year/", ready:true},
-  {id:"ai",     icon:"🤖", cat:"work",  short:"AI·문서", name:"AI·문서 도우미", desc:"개인정보를 가린 AI 요청문, 가정통신문·공문 틀, 보관함.", href:"apps/ai/", ready:true},
+  {id:"ai",     icon:"🤖", cat:"work",  short:"AI·문서", name:"AI·문서 도우미", desc:"개인정보를 가린 AI 요청문 · 🧾 자동 채움(가정통신문·안내 문자·신청서·명단 표·공문 틀에 학교·날짜·담임·명단을 채움) · 보관함.", href:"apps/ai/", ready:true},
   {id:"lib",    icon:"🔎", cat:"work",  short:"자료실", name:"학교 자료실", desc:"규정집·교육계획서·기재요령·서식을 누구나 올리고 내용까지 찾기 (몇 쪽인지).", href:"apps/lib/", ready:true},
   {id:"train",  icon:"📜", cat:"work",  short:"의무연수", name:"의무연수 취합", desc:"꾸러미 이수증·이수번호를 한 번 내면 연수 담당자들이 한 번에 모아 갑니다.", href:"apps/train/", ready:true},
   {id:"setup",  icon:"🧳", cat:"work",  short:"학기초 세팅", name:"학기초 세팅", desc:"담당자가 명렬·교직원·학사일정·전체 시간표·학교 정보를 잠근 파일 하나로 → 선생님은 불러와 내 이름만 고르면 끝.", href:"apps/setup/", ready:true, months:[2,3]},
