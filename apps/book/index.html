@@ -18,6 +18,7 @@
   · 쪽-단원표(학년마다 한 번): "시작쪽 단원이름 [단원코드]" → 쪽만 넘겨도 단원·개념 카드·도전 문제가 따라 바뀜
   · 수업 모드: 아래 큰 단추 ① 따라오기 ② 개념 정리 ③ 교과서 문제(타이머) ④ 도전 문제 + [오늘 수업 끝] · 숫자키 1~4
     형광펜 · 확대(+/− · 두 손가락) · 도전 문제는 이 반에 아직 안 낸 문제부터 추천
+  · 6단계: [오늘 수업 끝] → 수업 기록장 오늘 교시 '진행 완료' + 쪽·도전 문제 / ✍️ 기록 → 학생 활동 한 줄을 수업 기록장 학생 기록으로 (번호만)
   · 저장 "tt_book_v1" { off:{학년:n}, map:{학년:"쪽-단원표"}, last:{반:{p,d,u,code}}, at:{반:p}, log:[{d,c,p,u,code,ch:[문항id]}], given:{반:[문항id]}, sel:반 }
 -->
 <style>
@@ -110,6 +111,18 @@
   .more{margin-top:2.5vh;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:15px;color:#777}
   .more button{font:inherit;font-size:14px;border:1.5px solid #ddd;border-radius:999px;background:#fff;padding:3px 10px;cursor:pointer}
   .more button.p4{border-color:#c2432a;font-weight:800}.more button.g::after{content:" ✓";color:#2d8a5b}
+  .rq{display:flex;flex-direction:column;gap:1.4vh;height:100%}
+  .rq h1{margin:0;font-size:clamp(24px,3vw,40px)}
+  .nos{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:8px}
+  .nos button,.tgs button{font:inherit;font-weight:900;border:2px solid #bbb;background:#fff;border-radius:14px;cursor:pointer;color:#111}
+  .nos button{font-size:clamp(20px,2.2vw,30px);padding:10px 0}
+  .tgs{display:flex;flex-wrap:wrap;gap:8px}.tgs button{font-size:clamp(16px,1.7vw,24px);padding:8px 16px;border-radius:999px}
+  .nos button.on,.tgs button.on{background:#2f6fb5;border-color:#2f6fb5;color:#fff}
+  .nos button i{display:block;font-style:normal;font-size:11px;color:#2d8a5b;font-weight:700}
+  .nos button.on i{color:#d9f2e3}
+  .rq .row input{flex:1;width:auto;font:inherit;font-size:20px;padding:10px 12px;border:2px solid #222;border-radius:12px;text-align:left}
+  .rq .row .btn{font-size:20px;padding:10px 22px}
+  .rq .muted{font-size:14px}
   .sum{font-size:clamp(20px,2.4vw,34px);line-height:1.7;text-align:center;margin:auto}
   .sum b{color:#2d8a5b}
   .sum .row{justify-content:center;margin-top:2vh}
@@ -133,7 +146,7 @@
     <span class="t" id="lt"></span><span class="sp"></span>
     <span class="tmb" id="tmb"><button data-m="3">3분</button><button data-m="5">5분</button><button data-m="7">7분</button></span>
     <span class="tm" id="tm"></span>
-    <button id="lpen" title="형광펜">🖍️</button><button id="lclr" title="형광펜 지우기">🧽</button>
+    <button id="lrec" title="학생 활동 한 줄 기록 (수업 기록장으로)">✍️ 기록</button><button id="lpen" title="형광펜">🖍️</button><button id="lclr" title="형광펜 지우기">🧽</button>
     <button id="lzo" title="작게">－</button><button id="lzi" title="크게">＋</button>
     <button id="lprev">◀</button><button id="lnext">▶</button>
     <button id="lx" title="수업 모드 나가기">✕</button>
@@ -401,6 +414,75 @@
     return {p: p, u: u, ch: ch};
   }
 
+  /* ── 수업 기록장 연동 (6단계) ──
+     [오늘 수업 끝]·[오늘 여기까지] → 그 반의 오늘 교시를 수업 기록장에 '진행 완료'(다음 차시 1개) + 📖 쪽·🔥 도전 문제
+     ✍️ 기록 → 학생 활동 한 줄(번호·꼬리표·메모)을 수업 기록장 학생 기록으로 → 학생 카드·생기부 도우미에 모임
+     학생 이름은 쓰지 않고 번호만 저장합니다(이름은 이 기기의 명렬표에서만 연결). */
+  var JPER = [{n:1,t:"09:00"},{n:2,t:"09:55"},{n:3,t:"10:50"},{n:4,t:"11:45"},{n:5,t:"13:30"},{n:6,t:"14:25"},{n:7,t:"15:20"}];
+  function jload(){ var o = TT.store.get("tt_journal_v1", null); return o && o.v === 2 && o.prog && o.students && o.tt && o.cur ? o : null; }
+  function hm(s){ var a = String(s).split(":"); return (+a[0]) * 60 + (+a[1]); }
+  function periodOf(c){            // 오늘 이 반 교시: 시작한 마지막 교시 → 없으면 오늘 남은 첫 교시
+    var d = new Date(), w = d.getDay(), m = d.getHours() * 60 + d.getMinutes(), L = [];
+    try{ if(TT.timetable.has()) L = TT.timetable.day(d).filter(function(s){ return +s.cls === c; }).map(function(s){ return {n: s.n, start: s.start}; }); }catch(e){}
+    if(!L.length && w >= 1 && w <= 5){ var Jt = jload(); if(Jt) JPER.forEach(function(p){ if(+Jt.tt[w + "-" + p.n] === c) L.push({n: p.n, start: hm(p.t)}); }); }
+    if(!L.length) return 0;
+    var past = L.filter(function(s){ return s.start <= m + 10; });
+    return (past.length ? past[past.length - 1] : L[0]).n;
+  }
+  function jLessons(Jo, g){ var raw = (Jo.cur || {})[g]; raw = Array.isArray(raw) ? raw.join("\n") : String(raw || ""); var L = []; raw.split("\n").forEach(function(l){ l = l.trim(); if(l && l[0] !== "#") L.push(l); }); return L; }
+  function journalSync(r){         // → {ok, msg}
+    var Jo = jload(); if(!Jo) return {msg: "수업 기록장을 한 번 열면 다음부터 자동으로 기록됩니다"};
+    var c = st.c, per = periodOf(c); if(!per) return {msg: "오늘 시간표에 " + cname(c) + " 수업이 없어 수업 기록장 진도는 그대로 둡니다"};
+    var key = today() + "|" + per, tg = Jo.taught[key], L = jLessons(Jo, gOf(c)), book = {p: r.p, u: r.u ? r.u.name : "", ch: r.ch};
+    Jo.prog[c] = Jo.prog[c] || {n: 0, memo: ""};
+    if(tg && tg.kind === "done"){ tg.book = book; TT.store.set("tt_journal_v1", Jo); return {ok: 1, msg: per + "교시 기록에 쪽·도전 문제를 더했습니다"}; }
+    if(tg && tg.kind === "skip") return {msg: per + "교시가 '수업 없음'으로 되어 있어 그대로 둡니다"};
+    if(!L.length) return {msg: "수업 기록장에 차시 목록이 없어 진도는 그대로 둡니다"};
+    var i = Math.min(+Jo.prog[c].n || 0, L.length);
+    if(i >= L.length){ Jo.taught[key] = {kind: "done", lesson: L.length - 1, book: book}; TT.store.set("tt_journal_v1", Jo); return {ok: 1, msg: "모든 차시를 마친 반이라 쪽·도전 문제만 남겼습니다"}; }
+    Jo.taught[key] = {kind: "done", lesson: i, book: book}; Jo.prog[c].n = i + 1;
+    TT.store.set("tt_journal_v1", Jo);
+    return {ok: 1, msg: per + "교시 진행 완료 · " + L[i]};
+  }
+  var POS = ["발표함", "칠판 풀이", "친구 설명", "질문함", "심화 질문", "다양한 풀이", "오개념 수정", "적극 참여", "모둠 협력", "집중", "성실함", "과제 성실"];
+  function studentNos(c){
+    var Jo = jload(), s = Jo && Jo.students && Jo.students[c];
+    if(s && s.length) return s.map(function(x){ return +x.no; });
+    try{ var R = TT.roster.classes().filter(function(x){ return x.grade * 100 + x.cls === c; })[0]; if(R) return R.students.map(function(x){ return +x.no; }); }catch(e){}
+    return [];
+  }
+  function todayRecs(c){ var Jo = jload(); return Jo ? (Jo.records || []).filter(function(r){ return r.cls === c && r.date === today(); }) : []; }
+  var RQ = {nos: [], tags: []};
+  function recPane(){
+    var P = $("lpane"), c = st.c, nos = studentNos(c), recs = todayRecs(c), cnt = {};
+    recs.forEach(function(r){ cnt[r.no] = (cnt[r.no] || 0) + 1; });
+    P.style.setProperty("--c", "#2f6fb5"); P.classList.add("on"); setPen(false);
+    [].forEach.call($("lbot").querySelectorAll("button[data-m]"), function(b){ b.classList.remove("on"); });
+    if(!jload()){ P.innerHTML = '<div class="none">수업 기록장을 한 번 열어 두면 여기서 바로 학생 기록을 남길 수 있습니다.<br><a class="btn" href="../journal/">📒 수업 기록장 열기</a></div>'; return; }
+    if(!nos.length){ P.innerHTML = '<div class="none">' + cname(c) + ' 명단이 없습니다.<br><small>학급 명렬표(또는 수업 기록장)에 명단을 넣으면 번호가 나옵니다.</small></div>'; return; }
+    P.innerHTML = '<div class="rq"><h1>✍️ ' + cname(c) + ' 학생 활동 기록 <span class="muted">— 번호(여럿 가능) → 꼬리표 → [저장] · 화면에는 번호만 나옵니다</span></h1>'
+      + '<div class="nos">' + nos.map(function(n){ return '<button data-n="' + n + '" class="' + (RQ.nos.indexOf(n) >= 0 ? "on" : "") + '">' + n + (cnt[n] ? "<i>오늘 " + cnt[n] + "</i>" : "") + "</button>"; }).join("") + "</div>"
+      + '<div class="tgs">' + POS.map(function(g){ return '<button data-t="' + g + '" class="' + (RQ.tags.indexOf(g) >= 0 ? "on" : "") + '">' + g + "</button>"; }).join("") + "</div>"
+      + '<div class="row"><input id="rqT" placeholder="한 줄 메모 (선택) — 예: 이차함수 꼭짓점을 두 가지 방법으로 설명" maxlength="120"><button class="btn primary" id="rqS">저장</button><button class="btn" id="rqX">닫기</button></div>'
+      + '<div class="muted">오늘 이 반 기록 ' + recs.length + '개 · 수업 기록장 → 학생 탭, 생기부 도우미에서 학생별로 모아 볼 수 있습니다 (내부 참고 꼬리표는 교무실에서 수업 기록장으로)</div></div>';
+    [].forEach.call(P.querySelectorAll(".nos button"), function(b){ b.onclick = function(){ var n = +b.dataset.n, i = RQ.nos.indexOf(n); if(i >= 0) RQ.nos.splice(i, 1); else RQ.nos.push(n); b.classList.toggle("on"); }; });
+    [].forEach.call(P.querySelectorAll(".tgs button"), function(b){ b.onclick = function(){ var g = b.dataset.t, i = RQ.tags.indexOf(g); if(i >= 0) RQ.tags.splice(i, 1); else RQ.tags.push(g); b.classList.toggle("on"); }; });
+    $("rqX").onclick = function(){ setMode(st.mode || 1); };
+    $("rqS").onclick = function(){
+      var txt = $("rqT").value.trim();
+      if(!RQ.nos.length){ alert("번호를 먼저 누르세요."); return; }
+      if(!RQ.tags.length && !txt){ alert("꼬리표를 고르거나 메모를 쓰세요."); return; }
+      var Jo = jload(); if(!Jo) return;
+      Jo.records = Jo.records || []; Jo.nextId = Jo.nextId || 1;
+      var per = periodOf(c), u = curUnit(), les = "";
+      try{ les = TT.notes && TT.notes.lessonNow ? TT.notes.lessonNow(c) : ""; }catch(e){}
+      RQ.nos.forEach(function(n){ Jo.records.push({id: Jo.nextId++, date: today(), period: per, cls: c, no: n, tags: RQ.tags.slice(), text: txt, star: false, ts: Date.now(), les: les || (u ? u.name : ""), pg: bookP(), src: "lesson"}); });
+      TT.store.set("tt_journal_v1", Jo);
+      toast(RQ.nos.sort(function(a, b){ return a - b; }).join("·") + "번 · " + (RQ.tags.join(", ") || "메모") + " 저장");
+      RQ = {nos: [], tags: []}; recPane();
+    };
+  }
+
   /* ── 수업 모드 (5단계) ── */
   function setLesson(on){
     st.lesson = on; document.body.classList.toggle("lesson", on); setPen(false); st.zoom = 1;
@@ -457,10 +539,13 @@
   function endLesson(){
     var r = done(); if(!r) return;
     timer(0); setPen(false);
+    var js = journalSync(r), nrec = todayRecs(st.c).length;
     var P = $("lpane"); P.classList.add("on"); P.style.setProperty("--c", "#2d8a5b");
     [].forEach.call($("lbot").querySelectorAll("button[data-m]"), function(b){ b.classList.remove("on"); });
     P.innerHTML = '<div class="sum">✅ <b>' + cname(st.c) + "반</b> 오늘 수업을 저장했습니다<br>진도 <b>p." + r.p + "</b>" + (r.u ? " · " + esc(r.u.name) : "")
       + "<br>도전 문제 <b>" + r.ch.length + "개</b>" + (r.ch.length ? " <small>(" + r.ch.map(function(id){ return id.replace("-", "년 ").replace(/^(\d+년 )0?/, "$1") + "번"; }).join(", ") + ")</small>" : "")
+      + "<br>📒 수업 기록장: " + (js.ok ? "<b>" + esc(js.msg) + "</b>" : '<small style="color:#8a5a00">' + esc(js.msg) + "</small>")
+      + (nrec ? "<br>✍️ 오늘 학생 기록 <b>" + nrec + "개</b>" : "")
       + '<br><small style="color:#777">다음 시간에는 이 쪽에서 이어서 열립니다</small><div class="row"><a class="btn" href="../../">🍎 쌤 노트로</a><button class="btn" id="sumBack">계속 보기</button></div></div>';
     $("sumBack").onclick = function(){ st.shown = []; setMode(1); };
     st.shown = [];
@@ -527,12 +612,13 @@
   $("prev").onclick = $("lprev").onclick = function(){ turn(-1); }; $("next").onclick = $("lnext").onclick = function(){ turn(1); };
   $("pin").onchange = function(){ var v = parseInt(this.value, 10); if(!isNaN(v) && st.c){ st.pdfPage = v + off(gOf(st.c)); show(); } };
   $("fit").onclick = function(){ st.wide = !st.wide; this.textContent = st.wide ? "↔ 맞춤" : "↕ 맞춤"; show(); };
-  $("bDone").onclick = function(){ var r = done(); if(r) toast(cname(st.c) + " 진도 p." + r.p + " 저장"); };
+  $("bDone").onclick = function(){ var r = done(); if(!r) return; var js = journalSync(r); toast(cname(st.c) + " 진도 p." + r.p + " 저장 · " + js.msg); };
   $("bProg").onclick = progDlg;
   $("bSet").onclick = function(){ setDlg(); };
   $("bLesson").onclick = function(){ if(st.c) setLesson(true); };
   $("lx").onclick = function(){ setLesson(false); };
   $("lend").onclick = endLesson;
+  $("lrec").onclick = function(){ RQ = {nos: [], tags: []}; recPane(); };
   $("lpen").onclick = function(){ if(st.mode === 2 || st.mode === 4) setMode(1); setPen(!st.pen); };
   $("lclr").onclick = function(){ delete ink[st.pdfPage]; var ic = document.querySelector(".stage canvas.ink"); if(ic) redrawInk(ic); };
   $("lzi").onclick = function(){ zoom(1.25); }; $("lzo").onclick = function(){ zoom(1 / 1.25); };

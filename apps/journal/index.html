@@ -423,6 +423,7 @@ function slotCard(k,p,c){
     const ls=L[tg.lesson];
     badge='<span class="pill ok">진행 완료</span>';
     line='<p class="lesson"><span class="lbl">진행</span>'+(ls?lessonLine(ls):'—')+'</p>';
+    if(tg.book)line+='<p class="lesson"><span class="lbl">수업 모드</span>📖 p.'+esc(tg.book.p)+(tg.book.u?' '+esc(tg.book.u):'')+(tg.book.ch&&tg.book.ch.length?' · 🔥 도전 '+tg.book.ch.map(id=>esc(String(id).replace('-','년 ').replace(/년 0/,'년 '))+'번').join(', '):'')+'</p>';   // 수업 6단계
     acts='<button class="btn sm ghost" data-act="slotUndo" '+ref+'>되돌리기</button>';
   }else{
     const ls=L[progN(c)];
