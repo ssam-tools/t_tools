@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>학생 카드 · 쌤 노트</title>
+<!--
+  학생 카드 (개편 10단계): 학생 한 명의 기록 · 출결 · 상담 · 제출물을 한 화면에 모읍니다. 읽기만 하고, 고치기는 각 도구에서.
+  · 읽는 곳: 학생 기록 "tt_notes_v1"(TT.notes) · 출결·상담 "tt_guide_v1"(우리 반만) · 제출물 "tt_submit_v1" · 명렬표 "tt_roster_v1"
+  · 주소: ?c=학급id&no=번호 (학생 메뉴의 이름 찾기 · Ctrl+K 에서 엶)
+  · 이 기기 안에서만 읽습니다. 교실 기기에서는 열리지 않습니다(학생 정보).
+-->
+<style>
+  header{align-items:center}
+  .bar{flex-wrap:wrap}
+  .who{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .who .nm{font-size:clamp(22px,3.6vh,30px);font-weight:900;color:var(--t-student,#6b46c1)}
+  .who .meta{font-size:14px;color:var(--sub)}
+  .memo{font-size:14px;background:var(--t-student-soft,#f1ecfb);border-radius:10px;padding:6px 10px;color:var(--ink)}
+  main{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:10px;padding:10px!important;min-height:0}
+  .bx{border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-height:0;background:var(--card)}
+  .bx h2{font-size:15px;display:flex;align-items:center;gap:6px}.bx h2 .n{font-size:12px;font-weight:800;border-radius:999px;padding:0 8px;background:var(--t-chip,#eceff3);color:var(--t-chip-ink,#4a5560)}
+  .bx h2 a{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--accent);text-decoration:none}
+  .ls{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:3px}
+  .r{display:flex;gap:8px;font-size:14px;line-height:1.5;border-bottom:1px solid var(--t-chip,#eceff3);padding:2px 0}
+  .r .d{flex:none;color:var(--sub);font-size:12.5px;font-variant-numeric:tabular-nums;min-width:3.6em}
+  .r .a{flex:none;font-size:11px;font-weight:800;border-radius:6px;padding:1px 6px;background:var(--t-chip,#eceff3);color:var(--t-chip-ink,#4a5560);align-self:flex-start;margin-top:2px}
+  .r .t{flex:1;min-width:0}
+  .sum{display:flex;gap:6px;flex-wrap:wrap}.sum span{font-size:13px;font-weight:800;border-radius:999px;padding:2px 10px;background:var(--t-chip,#eceff3)}
+  .sum .bad{background:var(--danger-soft);color:var(--danger)}.sum .ok{background:var(--ok-soft);color:var(--ok)}
+  .y{color:var(--ok);font-weight:800}.no{color:var(--danger);font-weight:800}
+  .none{color:var(--sub);font-size:13.5px;padding:8px 2px}
+  .nav2{display:flex;gap:4px}
+  .pick{display:flex;gap:6px;align-items:center}
+  @media (max-width:760px){ main{grid-template-columns:1fr;grid-template-rows:none} body{height:auto;min-height:100dvh;overflow:auto} .ls{max-height:none} }
+  @media print{ .bar,.nav2{display:none!important} main{display:grid!important} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../#student">← 쌤 노트</a>
+    <h1>📇 학생 카드</h1>
+  </div>
+  <div class="bar">
+    <span class="pick"><select id="clsSel" aria-label="학급 선택"></select><select id="stuSel" aria-label="학생 선택"></select></span>
+    <span class="nav2"><button class="btn" id="prev" title="앞 번호">◀</button><button class="btn" id="next" title="다음 번호">▶</button></span>
+    <button class="btn primary" id="addRec">✍️ 기록 더하기</button>
+    <button class="btn" id="print">🖨 인쇄</button>
+  </div>
+</header>
+<section class="who" id="who"></section>
+<main class="panel" id="m">
+  <section class="bx" id="bRec"></section>
+  <section class="bx" id="bAtt"></section>
+  <section class="bx" id="bCns"></section>
+  <section class="bx" id="bSub"></section>
+</main>
+<footer><span class="priv">🔒 이 기기 안의 기록만 모아 보여 줍니다. 밖으로 보내지 않습니다.</span><span>읽기 전용 · 고치기는 각 도구에서</span></footer>
+<script src="../../shared/tools.js"></script>
+<script src="../../shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function md(s){ var a = String(s || "").split("-"); return a.length > 2 ? (+a[1]) + "/" + (+a[2]) : esc(s); }
+  var TN = function(id, fb){ return typeof ttTool === "function" && ttTool(id) ? ttTool(id).name : fb; };
+  var q = new URLSearchParams(location.search), cls = null, st = null;
+  var AK = {sick: "병결", ok: "인정결", early: "인정조퇴", late: "인정지각", Lu: "지각"};
+  function kindOf(r){ return !r ? "" : r.t === "L" ? (r.o ? "late" : "Lu") : (r.k === "ok" || r.k === "early") ? r.k : "sick"; }
+
+  function fillStu(){
+    var sel = $("stuSel"); sel.innerHTML = "";
+    (cls ? cls.students : []).forEach(function(s){ var o = document.createElement("option"); o.value = s.no; o.textContent = s.no + "번 " + s.name; sel.appendChild(o); });
+    var want = q.get("no"); q.delete("no");
+    st = cls ? (cls.students.filter(function(s){ return String(s.no) === String(want); })[0] || (st && cls.students.filter(function(s){ return s.no === st.no; })[0]) || cls.students[0] || null) : null;
+    if(st) sel.value = st.no;
+    draw();
+  }
+  $("stuSel").onchange = function(){ st = cls.students.filter(function(s){ return String(s.no) === this.value; }, this)[0] || null; draw(); };
+  function move(k){ if(!cls || !st) return; var i = cls.students.indexOf(st), j = i + k; if(j < 0 || j >= cls.students.length) return; st = cls.students[j]; $("stuSel").value = st.no; draw(); }
+  $("prev").onclick = function(){ move(-1); }; $("next").onclick = function(){ move(1); };
+  $("addRec").onclick = function(){ if(cls && st) TT.notes.quick({cls: cls.id, nos: [st.no], src: "학생 카드"}); };
+  $("print").onclick = function(){ window.print(); };
+  window.addEventListener("storage", draw);
+  window.addEventListener("focus", draw);
+
+  function draw(){
+    if(!cls || !st){
+      $("who").innerHTML = '<span class="none">' + (TT.roster.has() ? "학급과 학생을 고르세요." : "명렬표에 학생 명단을 넣으면 학생 카드를 볼 수 있습니다. <a href=\"../roster/\">" + TN("roster", "명렬표") + " →</a>") + "</span>";
+      ["bRec", "bAtt", "bCns", "bSub"].forEach(function(id){ $(id).innerHTML = ""; }); return;
+    }
+    document.title = st.name + " · 학생 카드 · 쌤 노트";
+    var N = TT.notes, k = N.key(cls, st), memo = N.memo(k), home = TT.roster.home(), isHome = home && home.id === cls.id;
+    $("who").innerHTML = '<span class="nm">' + esc(st.name) + '</span><span class="meta">' + esc(cls.name) + " · " + esc(st.no) + "번" + (isHome ? " · ★ 우리 반" : "") + "</span>" + (memo ? '<span class="memo">📝 ' + esc(memo) + "</span>" : "");
+    /* ① 학생 기록 (TT.notes) */
+    var D = N.load(), R = D.recs.filter(function(r){ return r.k === k; }).sort(function(a, b){ return (b.date || "") < (a.date || "") ? -1 : 1; });
+    var by = {}; R.forEach(function(r){ by[r.area] = (by[r.area] || 0) + 1; });
+    $("bRec").innerHTML = '<h2>✍️ 학생 기록 <span class="n">' + R.length + '</span><a href="../record/">' + TN("record", "생기부 도우미") + " →</a></h2>"
+      + (R.length ? '<div class="sum">' + Object.keys(by).map(function(a){ return "<span>" + esc(N.area(a)) + " " + by[a] + "</span>"; }).join("") + "</div>" : "")
+      + '<div class="ls">' + (R.length ? R.map(function(r){ return '<div class="r"><span class="d">' + md(r.date) + '</span><span class="a">' + esc(N.area(r.area)) + '</span><span class="t">' + esc(r.text) + "</span></div>"; }).join("")
+        : '<div class="none">아직 기록이 없습니다. [✍️ 기록 더하기]로 본 것·한 것을 한 줄씩 남기세요.</div>') + "</div>";
+    /* ② 출결 · ③ 상담 (생활지도 tt_guide_v1 — 우리 반만) */
+    var G = TT.store.get("tt_guide_v1", null), no = String(st.no);
+    if(isHome && G){
+      var att = [], cnt = {}; Object.keys(G.att || {}).sort().reverse().forEach(function(d){ var r = (G.att[d] || {})[no]; if(!r) return; var kk = kindOf(r); if(!kk) return; cnt[kk] = (cnt[kk] || 0) + 1; att.push({d: d, k: kk, r: r.r || ""}); });
+      $("bAtt").innerHTML = '<h2>🧭 출결 <span class="n">' + att.length + '</span><a href="../tardy/">' + TN("tardy", "출결·결석계") + " →</a></h2>"
+        + '<div class="sum">' + (att.length ? Object.keys(AK).filter(function(x){ return cnt[x]; }).map(function(x){ return '<span class="' + (x === "Lu" || x === "sick" ? "bad" : "") + '">' + AK[x] + " " + cnt[x] + "</span>"; }).join("") : '<span class="ok">기록된 결석·지각 없음</span>') + "</div>"
+        + '<div class="ls">' + att.slice(0, 60).map(function(a){ return '<div class="r"><span class="d">' + md(a.d) + '</span><span class="a">' + AK[a.k] + '</span><span class="t">' + esc(a.r) + "</span></div>"; }).join("") + "</div>";
+      var C = (G.counsel || []).filter(function(c){ return String(c.sid) === no; }).sort(function(a, b){ return a.date < b.date ? 1 : -1; }), t0 = TT.util.today().replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3");
+      $("bCns").innerHTML = '<h2>🗣️ 상담 <span class="n">' + C.length + '</span><a href="../tardy/?tab=counsel">' + TN("counsel", "상담 일지") + " →</a></h2>"
+        + '<div class="ls">' + (C.length ? C.map(function(c){ var nx = c.next && !c.done ? ' <b class="' + (c.next <= t0 ? "no" : "") + '">→ 후속 ' + md(c.next) + "</b>" : c.done ? ' <span class="y">✔ 끝남</span>' : "";
+          return '<div class="r"><span class="d">' + md(c.date) + '</span><span class="t">' + esc((c.content || c.trigger || "상담").replace(/\s+/g, " ").slice(0, 140)) + nx + "</span></div>"; }).join("") : '<div class="none">상담 기록이 없습니다.</div>') + "</div>";
+    }else{
+      var msg = '<div class="none">' + (isHome ? "생활지도 자료가 아직 없습니다." : "출결·상담은 우리 반(★) 학생만 이 기기에 있습니다.") + "</div>";
+      $("bAtt").innerHTML = '<h2>🧭 출결</h2>' + msg; $("bCns").innerHTML = '<h2>🗣️ 상담</h2>' + msg;
+    }
+    /* ④ 제출물 (tt_submit_v1, 이 학급) */
+    var S = TT.store.get("tt_submit_v1", null), I = S && S.items ? S.items.filter(function(it){ return it.cls === cls.id; }).sort(function(a, b){ return (b.due || b.at || "") < (a.due || a.at || "") ? -1 : 1; }) : [];
+    var miss = I.filter(function(it){ var mk = ((S.m || {})[it.id] || {})[st.no]; return !mk; }).length;
+    $("bSub").innerHTML = '<h2>📦 제출물 <span class="n">' + I.length + '</span><a href="../submit/">' + TN("submit", "제출물 확인") + " →</a></h2>"
+      + (I.length ? '<div class="sum">' + (miss ? '<span class="bad">미제출 ' + miss + "</span>" : '<span class="ok">모두 냄</span>') + "</div>" : "")
+      + '<div class="ls">' + (I.length ? I.map(function(it){ var mk = ((S.m || {})[it.id] || {})[st.no];
+          return '<div class="r"><span class="d">' + (it.due ? md(it.due) : "") + '</span><span class="t">' + esc(it.title) + "</span>" + (mk === "y" ? '<span class="y">✔ 냄</span>' : mk === "x" ? '<span class="d">해당 없음</span>' : '<span class="no">미제출</span>') + "</div>"; }).join("")
+        : '<div class="none">이 학급의 제출물이 없습니다.</div>') + "</div>";
+  }
+
+  /* 학급 고르기: 주소의 c 가 있으면 그 반 */
+  var want = q.get("c");
+  if(want){ var u = TT.store.get("tt_ui_v1", {}) || {}; u.last = u.last || {}; u.last.stucard = want; TT.store.set("tt_ui_v1", u); }
+  TT.ui.classSelect($("clsSel"), "stucard", function(c){ cls = c; fillStu(); });
+})();
+</script>
+</body>
+</html>

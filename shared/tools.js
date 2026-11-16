@@ -80,7 +80,9 @@ var TT_TOOLS = [
   {id:"parent", icon:"✉️", cat:"life", menu:"homeroom", group:"room",  short:"학부모 문자", name:"학부모 문자", desc:"상황별 학부모 안내 문자를 빠르게 만듭니다.", href:"apps/parent/", ready:true},
   {id:"submit", icon:"📦", cat:"life", menu:"homeroom", group:"room",  short:"제출물", name:"제출물 확인", old:"제출물 체크", desc:"동의서·회신·신청서를 학생별로 체크하고 미제출자만 모아 봅니다.", href:"apps/submit/", ready:true},
   {id:"duty",   icon:"🧹", cat:"life", menu:"homeroom", group:"room",  short:"1인 1역", name:"1인 1역·당번", desc:"역할을 정하면 주마다 학생이 자동으로 돌아갑니다. 전자칠판에 띄워 씁니다.", href:"apps/duty/", ready:true, room:true, home:true, months:[3], season:["start"]},
+  {id:"seat",   icon:"🪑", cat:"life", menu:"homeroom", group:"room",  short:"자리 배치", name:"자리 배치", desc:"명렬표로 자리표 만들기 · 무작위 · 바꾸기 · 고정 · 학생 쪽에서 보기 · 인쇄 (이 기기에만).", href:"apps/seat/", ready:true, room:true, season:["start"]},
   /* ── 학생 ── */
+  {id:"stucard",icon:"📇", cat:"care", menu:"student", group:"stu",  short:"학생 카드", name:"학생 카드", desc:"학생 한 명의 기록 · 출결 · 상담 · 제출물을 한 화면에 (읽기 전용).", href:"apps/stucard/", ready:true},
   {id:"counsel",icon:"🗣️", cat:"care", menu:"student", group:"stu",  short:"상담 일지", name:"상담 일지", old:"상담", desc:"상담일지 · 후속 확인 · 행동특성 참고.", href:"apps/tardy/?tab=counsel", ready:true, home:true},
   {id:"record", icon:"📑", cat:"care", menu:"student", group:"stu",  short:"생기부", name:"생기부 도우미", desc:"모인 학생 기록을 영역별로 보며 초안 쓰기 · 나이스 글자 수 · 유의 낱말 점검.", href:"apps/record/", ready:true, months:[7,12], season:["end"]},
   {id:"advisor",icon:"🎓", cat:"care", menu:"student", group:"stu",  short:"진학 추천", name:"진학 추천", old:"진학", desc:"성적 분석 · 지원 가능 고교 살펴보기 · 가산점 자동 입력.", href:"apps/advisor/", ready:true, home:true, months:[10,11], season:["end"]},

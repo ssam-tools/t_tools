@@ -615,8 +615,12 @@
   function build(q){
     if(pasted) return pasteRows();
     var R = [], qq = q.trim(), low = qq.toLowerCase(); if(!qq) return bagRows();
-    var act = [], m0 = qq.match(/^종례\s*[:：]?\s*(.+)$/);
-    if(m0){
+    var act = [], m0 = qq.match(/^종례\s*[:：]?\s*(.+)$/), m1 = !m0 && qq.match(/^할\s*일\s*[:：]\s*(.+)$/);
+    if(m1){                                                            // 개편 9단계: "할 일: …" → 내 할 일
+      var pd1 = parseDate(m1[1]);
+      act.push({ic: "📝", tx: "내 할 일에 넣기 · <b>" + esc(pd1.rest || m1[1]) + "</b>", sub: dLabel(pd1.date), go: function(){ addTodo(pd1.rest || m1[1], pd1.date); }});
+      m0 = m1;                                                         // 아래 찾기는 건너뜀
+    }else if(m0){
       var pd0 = parseDate(m0[1]), dd = pd0.date || closeDay();
       act.push({ic: "📣", tx: "종례 바구니에 넣기 · <b>" + esc(pd0.rest || m0[1]) + "</b>", sub: dLabel(dd) + " 종례", go: function(){ addBag(pd0.rest || m0[1], dd); }});
     }else{
@@ -636,15 +640,33 @@
     if(!m0 && typeof TTFill !== "undefined") T = T.concat(TTFill.all().filter(function(t){ return (t.n + " " + t.id).toLowerCase().indexOf(low) >= 0; }).slice(0, 3)   // 17단계: 문서 틀 바로 열기
       .map(function(t){ return {ic: t.ic || "📄", tx: esc(t.n) + " <small>자동 채움</small>", sub: "문서 틀", go: function(){ location.href = t.kind === "link" ? "apps/tardy/?tab=report" : "apps/ai/?f=" + encodeURIComponent(t.id); }}; }));
     var S = m0 ? [] : students().filter(function(x){ return x.s.name.indexOf(qq) >= 0 || (qq.length >= 3 && qq.indexOf(x.s.name + " ") === 0); }).slice(0, 6)
-      .map(function(x){ return {ic: "🧑‍🎓", tx: "<b>" + esc(x.s.name) + "</b> <small>" + esc(x.c.name) + " " + esc(x.s.no) + "번</small>", go: function(){ closeFind(); TT.notes.card(x.c, x.s); },
-        btns: [["📇 카드", function(){ closeFind(); TT.notes.card(x.c, x.s); }], ["✍️ 기록", function(){ closeFind(); TT.notes.quick({cls: x.c.id, nos: [x.s.no], src: "첫 화면 찾기"}); }]]}; });
-    var actFirst = m0 || parseDate(qq).date || (!T.length && !S.length) || /\s/.test(qq);   // 띄어 쓴 한 줄은 입력으로 먼저
+      .map(function(x){ return {ic: "🧑‍🎓", tx: "<b>" + esc(x.s.name) + "</b> <small>" + esc(x.c.name) + " " + esc(x.s.no) + "번</small>", go: function(){ closeFind(); openStudent(x.c, x.s); },
+        btns: [["📇 학생 카드", function(){ closeFind(); openStudent(x.c, x.s); }], ["✍️ 기록", function(){ closeFind(); TT.notes.quick({cls: x.c.id, nos: [x.s.no], src: "첫 화면 찾기"}); }]]}; });
+    /* 개편 9단계: 내선번호(학교 업무판 '내선번호' 시트, 이 기기에 하루 기억) · 학교 자료실 파일(이름·본문, 업무판으로 찾기) */
+    var LD = window.TT_LIBD, E = [], D = [];
+    if(!m0 && LD){
+      var EX = LD.extCached();
+      if(!EX.length && LD.connected() && !extTried){ extTried = true; LD.ext().then(function(){ if(dlg && dlg.open) draw(); }, function(){}); }
+      E = EX.filter(function(x){ return (x.n + " " + x.d + " " + x.m).toLowerCase().indexOf(low) >= 0 || x.t === qq; }).slice(0, 5)
+        .map(function(x){ return {ic: "📞", tx: "<b>" + esc(x.t) + "</b> " + esc(x.n) + " <small>" + esc(x.d) + "</small>", sub: "내선번호 · Enter 복사", go: function(){ copyText(x.t); TT.ui.toast("📞 " + x.n + " " + x.t + " — 번호를 복사했어요"); }}; });
+      if(LD.connected() && qq.length >= 2){
+        if(docQ !== qq){ docQ = qq; docHits = null; clearTimeout(docT); docT = setTimeout(function(){ var q0 = qq; LD.search(q0).then(function(H){ if(docQ !== q0) return; docHits = H; if(dlg && dlg.open) draw(); }, function(){ if(docQ === q0){ docHits = []; } }); }, 450); }
+        D = (docHits || []).slice(0, 5).map(function(x){
+          var btns = []; if(x.view) btns.push(["바로 보기", function(){ LD.view(x.view); }]); btns.push(["내려받기", function(){ LD.down(x.orig || x.id); }]);
+          return {ic: "🗂️", tx: esc(x.name), sub: esc(x.cat) + (x.match === "내용" ? " · 본문" : ""), go: function(){ if(x.view) LD.view(x.view); else LD.down(x.orig || x.id); }, btns: btns};
+        });
+        if(!docHits) D = [{ic: "⏳", tx: "학교 자료실에서 찾는 중…", sub: "", go: function(){}}];
+      }
+    }
+    var actFirst = m0 || parseDate(qq).date || (!T.length && !S.length && !E.length && !(docHits || []).length) || /\s/.test(qq);   // 띄어 쓴 한 줄은 입력으로 먼저
     function grp(h, L){ if(L.length){ R.push({h: h}); R = R.concat(L); } }
     if(actFirst) grp("입력", act);
-    grp("학생", S); grp("도구", T);
+    grp("📞 내선번호", E); grp("학생", S); grp("도구", T); grp("🗂️ 학교 자료실", D);
     if(!actFirst) grp("입력", act);
     return R;
   }
+  var extTried = false, docQ = "", docHits = null, docT = 0;
+  function copyText(t){ try{ navigator.clipboard.writeText(t); }catch(e){} }
   function bagRows(){
     var t = ymd(new Date()), B = bagLoad().items.filter(function(x){ return !x.done; }).sort(function(a, b){ return a.date < b.date ? -1 : 1; });
     if(!B.length) return [];
@@ -679,9 +701,9 @@
   function openFind(){
     if(!dlg){
       dlg = document.createElement("dialog"); dlg.id = "tdFind";
-      dlg.innerHTML = '<input type="text" placeholder="학생·도구 찾기, 또는 한 줄 입력 (예: 다음주 화 상담 / 종례: 가정통신문 회수)" autocomplete="off" spellcheck="false" aria-label="찾기·빠른 입력">'
+      dlg.innerHTML = '<input type="text" placeholder="학생·도구·내선번호·자료 찾기, 또는 한 줄 입력 (종례: … / 할 일: …)" autocomplete="off" spellcheck="false" aria-label="찾기·빠른 입력">'
         + '<div class="fl"></div><div class="ft"><b>↑↓</b> 고르기 · <b>Enter</b> 실행 · <b>Esc</b> 닫기<br>'
-        + '<b>공문·쿨메신저 글 붙여 넣기</b> → 날짜와 할 일을 찾아 줌 · <b>종례:</b> 로 시작 → 종례 바구니 · 날짜(오늘·내일·다음주 화·11/20) → 내 할 일 · 학생 이름으로 시작 → 학생 기록 · 🔒 이 기기 안에서만 찾고 저장</div>';
+        + '학생 → 학생 카드 · 도구 · 📞 내선번호 · 🗂️ 학교 자료실 파일을 함께 찾음 · <b>종례:</b> → 종례 바구니 · <b>할 일:</b> 또는 날짜(내일·다음주 화·11/20) → 내 할 일 · 학생 이름으로 시작 → 학생 기록 · 공문·쿨메신저 글 붙여 넣기 → 할 일 찾기 · 🔒 학생 자료는 이 기기 안에서만</div>';
       document.body.appendChild(dlg);
       inp = dlg.querySelector("input"); list = dlg.querySelector(".fl");
       inp.addEventListener("input", function(){ pasted = null; sel = 0; draw(); });
@@ -702,7 +724,7 @@
       });
       dlg.addEventListener("click", function(e){ if(e.target === dlg) closeFind(); });
     }
-    inp.value = ""; pasted = null; inp.placeholder = "학생·도구 찾기, 또는 한 줄 입력 (예: 다음주 화 상담 / 종례: 가정통신문 회수)"; sel = 0; draw();
+    inp.value = ""; pasted = null; inp.placeholder = "학생·도구·내선번호·자료 찾기, 또는 한 줄 입력 (종례: … / 할 일: …)"; sel = 0; draw();
     if(!dlg.open) dlg.showModal(); inp.focus();
   }
   function closeFind(){ if(dlg && dlg.open) dlg.close(); }
@@ -801,6 +823,8 @@
         case "concept": case "play": case "class": case "group": case "photo": case "parent": case "mgen": case "mcheck": case "advisor": case "bonus": case "ai": case "train":
           return used || ({concept: "개념 카드 25장 · 도전 문제", play: "수학 게임·퍼즐 17가지", "class": "칠판 · 뽑기 · 타이머", group: "조건 맞춰 모둠·좌석", photo: "사진 이름·용량 정리", parent: "상황별 안내 문자", mgen: "숫자만 바꾼 문항·정답지", mcheck: "빠른 채점 · 보충", advisor: "성적 분석 · 고교 살펴보기", bonus: "가산점 양식 채우기", ai: "개인정보 가린 요청문 · 자동 채움", train: "이수증 한 번 내기"}[id]);
         case "merge": return "윈도우 PC 프로그램";
+        case "stucard": var NN = g("tt_notes_v1"); return TT.roster.has() ? "기록 " + (NN && NN.recs ? NN.recs.length : 0) + "개 · 출결 · 상담 · 제출물 모아 보기" : "⚠ 명렬표가 필요해요";
+        case "seat": var SE = null; try{ SE = JSON.parse(localStorage.getItem("snseat_v1") || "null"); }catch(e){} var hm2 = TT.roster.home(); return SE && SE.c && hm2 && SE.c[hm2.id] ? hm2.name + " 자리표 있음" : "명렬표로 자리표 만들기";
       }
     }catch(e){}
     return used || "";
