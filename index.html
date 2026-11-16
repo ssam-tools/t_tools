@@ -604,6 +604,7 @@
 <script src="shared/follow.js"></script>
 <script src="shared/fill.js"></script>
 <script src="shared/today.js"></script>
+<script src="shared/libd.js"></script>
 <script>
 (function(){
   "use strict";
@@ -751,6 +752,10 @@
       if(m.id === "school" && g.id === "board" && !TT.classroom){
         var B0 = TT.store.get("tt_board_v1", null) || {};
         items.unshift(B0.url && /^https:\/\/script\.google\.com\//.test(B0.url) ? {x: {icon: "📅", name: "주간·월간 업무판", st: "새 창으로 열기", href: B0.url}} : {x: {icon: "🔗", name: "업무판 연결", st: "학교 업무판 주소 넣기", fn: clickMenu("mBoard")}});
+      }
+      if(m.id === "school" && g.id === "lib" && !TT.classroom){                // 개편 8단계: 내선번호 (학교 드라이브 '내선번호' 시트)
+        var EX = window.TT_LIBD ? TT_LIBD.extCached() : [];
+        items.push({x: {icon: "📞", name: "내선번호", st: EX.length ? EX.length + "곳 · 찾기(Ctrl+K)로도" : "학교 업무판에서 불러오기", fn: function(){ sessionStorage.setItem("sn_ext", "1"); var v = TT.store.get(UIK, {}) || {}; v.mtab = v.mtab || {}; v.mtab.school = "lib"; TT.store.set(UIK, v); renderMenu("school"); }}});
       }
       if(m.id === "class" && g.id === "subject") items.push({x: {icon: "🔗", name: "교과 자료 연결", st: (pk ? pk.name + " 공개 자료 · " : "") + "내 링크 " + (((TT.store.get("tt_subject_links_v1", null) || {}).list || []).length) + "개", fn: openLinks}});
       return {g: {id: g.id, name: g.id === "subject" && pk ? g.name + " · " + pk.name : g.name}, items: items};
