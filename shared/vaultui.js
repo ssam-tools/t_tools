@@ -19,31 +19,31 @@
   }
 
   /* ---------- 모양 ---------- */
-  var css = ".ttv-dlg{border:0;border-radius:16px;padding:16px 20px;width:min(560px,94vw);max-height:calc(100vh - 16px);overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.28);color:#1d2733;font:14px/1.55 'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif}"
+  var css = ".ttv-dlg{border:0;border-radius:16px;padding:16px 20px;width:min(560px,94vw);max-height:calc(100vh - 16px);overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.28);color:var(--t-ink,#1d2733);font:14px/1.55 'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif}"
     + ".ttv-dlg::backdrop{background:rgba(20,30,45,.5)}"
-    + ".ttv-dlg h2{font-size:18px;margin:0 0 6px}.ttv-dlg p{margin:6px 0;color:#5b6773;font-size:13px}"
-    + ".ttv-dlg label.f{display:block;font-size:12.5px;font-weight:700;color:#5b6773;margin:7px 0 2px}"
-    + ".ttv-dlg input[type=text],.ttv-dlg input[type=password],.ttv-dlg input[type=url]{width:100%;box-sizing:border-box;font:inherit;font-size:15px;border:1px solid #dde3ea;border-radius:10px;padding:7px 11px}"
+    + ".ttv-dlg h2{font-size:18px;margin:0 0 6px}.ttv-dlg p{margin:6px 0;color:var(--t-sub,#5b6773);font-size:13px}"
+    + ".ttv-dlg label.f{display:block;font-size:12.5px;font-weight:700;color:var(--t-sub,#5b6773);margin:7px 0 2px}"
+    + ".ttv-dlg input[type=text],.ttv-dlg input[type=password],.ttv-dlg input[type=url]{width:100%;box-sizing:border-box;font:inherit;font-size:15px;border:1px solid var(--t-line,#dde3ea);border-radius:10px;padding:7px 11px}"
     + ".ttv-dlg .seg2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}"
-    + ".ttv-dlg .seg2 label{border:2px solid #dde3ea;border-radius:12px;padding:7px 10px;cursor:pointer;font-size:13px;color:#5b6773}"
-    + ".ttv-dlg .seg2 label b{display:block;font-size:15px;color:#1d2733;margin-bottom:2px}"
-    + ".ttv-dlg .seg2 input{display:none}.ttv-dlg .seg2 label:has(input:checked){border-color:#2f6fb5;background:#e6f0fa}"
+    + ".ttv-dlg .seg2 label{border:2px solid var(--t-line,#dde3ea);border-radius:12px;padding:7px 10px;cursor:pointer;font-size:13px;color:var(--t-sub,#5b6773)}"
+    + ".ttv-dlg .seg2 label b{display:block;font-size:15px;color:var(--t-ink,#1d2733);margin-bottom:2px}"
+    + ".ttv-dlg .seg2 input{display:none}.ttv-dlg .seg2 label:has(input:checked){border-color:var(--t-accent,#2f6fb5);background:var(--t-accent-soft,#e6f0fa)}"
     + ".ttv-dlg .acts{display:flex;justify-content:space-between;gap:8px;margin-top:10px;flex-wrap:wrap}.ttv-dlg .acts .r{display:flex;gap:8px;margin-left:auto}"
-    + ".ttv-btn{font:inherit;font-size:14px;font-weight:700;border:1px solid #dde3ea;background:#fff;color:#1d2733;border-radius:10px;padding:8px 14px;cursor:pointer}"
-    + ".ttv-btn.p{background:#2f6fb5;border-color:#2f6fb5;color:#fff}.ttv-btn.d{color:#b3261e;border-color:#f1c6c6}.ttv-btn:disabled{opacity:.6;cursor:default}"
-    + ".ttv-dlg .two{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}@media(max-width:520px){.ttv-dlg .two{grid-template-columns:1fr}}" + ".ttv-err{color:#b3261e;font-weight:700;font-size:13px;min-height:1.2em;margin-top:8px}"
-    + ".ttv-box{background:#f3f6f9;border-radius:10px;padding:10px 12px;margin-top:8px;font-size:13px}"
-    + ".ttv-lock{position:fixed;inset:0;z-index:2000;background:linear-gradient(135deg,#1f3b63,#2f6fb5);display:flex;align-items:center;justify-content:center;padding:16px;font:15px/1.5 'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif}"
-    + ".ttv-card{background:#fff;border-radius:20px;padding:28px 26px;width:min(440px,100%);box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;color:#1d2733}"
-    + ".ttv-card h1{font-size:23px;margin:6px 0 2px}.ttv-card p{color:#5b6773;margin:0 0 16px;font-size:13.5px}"
-    + ".ttv-card input{width:100%;box-sizing:border-box;font:inherit;font-size:18px;border:2px solid #dde3ea;border-radius:12px;padding:12px;margin-bottom:10px;text-align:center}"
-    + ".ttv-card input:focus{outline:none;border-color:#2f6fb5}.ttv-card .ttv-btn{width:100%;padding:13px;font-size:17px}"
-    + ".ttv-band{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:1500;background:#1f3b63;color:#fff;border-radius:0 0 12px 12px;padding:3px 6px 3px 12px;font:12.5px/1.6 'Malgun Gothic',system-ui,sans-serif;display:flex;gap:8px;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,.2)}"
+    + ".ttv-btn{font:inherit;font-size:14px;font-weight:700;border:1px solid var(--t-line,#dde3ea);background:var(--t-card,#fff);color:var(--t-ink,#1d2733);border-radius:10px;padding:8px 14px;cursor:pointer}"
+    + ".ttv-btn.p{background:var(--t-accent,#2f6fb5);border-color:var(--t-accent,#2f6fb5);color:var(--t-on,#fff)}.ttv-btn.d{color:var(--t-danger,#b3261e);border-color:#f1c6c6}.ttv-btn:disabled{opacity:.6;cursor:default}"
+    + ".ttv-dlg .two{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}@media(max-width:520px){.ttv-dlg .two{grid-template-columns:1fr}}" + ".ttv-err{color:var(--t-danger,#b3261e);font-weight:700;font-size:13px;min-height:1.2em;margin-top:8px}"
+    + ".ttv-box{background:var(--t-bg,#f3f6f9);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:13px}"
+    + ".ttv-lock{position:fixed;inset:0;z-index:2000;background:linear-gradient(135deg,#1f3b63,var(--t-accent,#2f6fb5));display:flex;align-items:center;justify-content:center;padding:16px;font:15px/1.5 'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif}"
+    + ".ttv-card{background:var(--t-card,#fff);border-radius:20px;padding:28px 26px;width:min(440px,100%);box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;color:var(--t-ink,#1d2733)}"
+    + ".ttv-card h1{font-size:23px;margin:6px 0 2px}.ttv-card p{color:var(--t-sub,#5b6773);margin:0 0 16px;font-size:13.5px}"
+    + ".ttv-card input{width:100%;box-sizing:border-box;font:inherit;font-size:18px;border:2px solid var(--t-line,#dde3ea);border-radius:12px;padding:12px;margin-bottom:10px;text-align:center}"
+    + ".ttv-card input:focus{outline:none;border-color:var(--t-accent,#2f6fb5)}.ttv-card .ttv-btn{width:100%;padding:13px;font-size:17px}"
+    + ".ttv-band{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:1500;background:#1f3b63;color:var(--t-on,#fff);border-radius:0 0 12px 12px;padding:3px 6px 3px 12px;font:12.5px/1.6 'Malgun Gothic',system-ui,sans-serif;display:flex;gap:8px;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,.2)}"
     + ".ttv-band button{font:inherit;font-weight:700;border:0;border-radius:8px;padding:2px 10px;background:#ffd36b;color:#3a2a00;cursor:pointer}"
-    + ".ttv-note{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:1600;background:#1d2733;color:#fff;border-radius:12px;padding:9px 12px 9px 16px;font:14px 'Malgun Gothic',system-ui,sans-serif;display:flex;gap:10px;align-items:center;max-width:94vw;box-shadow:0 6px 20px rgba(0,0,0,.25)}"
+    + ".ttv-note{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:1600;background:var(--t-ink,#1d2733);color:var(--t-on,#fff);border-radius:12px;padding:9px 12px 9px 16px;font:14px 'Malgun Gothic',system-ui,sans-serif;display:flex;gap:10px;align-items:center;max-width:94vw;box-shadow:0 6px 20px rgba(0,0,0,.25)}"
     + ".ttv-note button{font:inherit;font-weight:700;border:0;border-radius:8px;padding:4px 12px;background:#9cc8ff;color:#0d2440;cursor:pointer}"
-    + ".ttv-chip{font:12px 'Malgun Gothic',system-ui,sans-serif;font-weight:700;border:0;border-radius:999px;padding:3px 10px;cursor:pointer;background:#e3f3ea;color:#2e7d4f}"
-    + ".ttv-chip.err{background:#fdeceb;color:#b3261e}.ttv-chip.off{background:#eceff3;color:#5b6773}"
+    + ".ttv-chip{font:12px 'Malgun Gothic',system-ui,sans-serif;font-weight:700;border:0;border-radius:999px;padding:3px 10px;cursor:pointer;background:var(--t-ok-soft,#e3f3ea);color:var(--t-ok,#2e7d4f)}"
+    + ".ttv-chip.err{background:var(--t-danger-soft,#fdeceb);color:var(--t-danger,#b3261e)}.ttv-chip.off{background:var(--t-chip,#eceff3);color:var(--t-sub,#5b6773)}"
     + ".tt-rail .ttv-ri b{font-size:9.5px!important}"
     + "@media print{.ttv-band,.ttv-note,.ttv-lock{display:none!important}}";
   var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
@@ -130,10 +130,10 @@
     if(cfg && cfg.id){
       var s = lastStatus || {};
       dialog('<h2>☁️ 기기 연결·동기화</h2><p>이 기기는 <b>' + esc(cfg.id) + '</b> 보관함과 연결된 <b>내 기기</b>예요. 바뀐 내용은 잠긴 채로 학교 업무판 보관함에 자동으로 맞춰집니다.</p>'
-        + '<div class="ttv-box">마지막 동기화: <b class="ttv-last">' + (s.last ? new Date(s.last).toLocaleString("ko-KR") : "—") + '</b>' + (s.error ? '<br><span style="color:#b3261e">' + esc(s.error) + '</span>' : '') + '</div>'
+        + '<div class="ttv-box">마지막 동기화: <b class="ttv-last">' + (s.last ? new Date(s.last).toLocaleString("ko-KR") : "—") + '</b>' + (s.error ? '<br><span style="color:var(--t-danger,#b3261e)">' + esc(s.error) + '</span>' : '') + '</div>'
         + '<p>다른 기기 연결: 그 기기에서 <b>⋯ → 기기 연결·동기화</b>를 열고 같은 ID와 비밀 문구를 넣으세요. 전자칠판은 “교실 기기”로 정하세요.</p>'
         + '<div class="ttv-err"></div><div class="acts"><button class="ttv-btn d" data-a="off">이 기기 연결 끊기</button><div class="r"><button class="ttv-btn" data-a="close">닫기</button><button class="ttv-btn p" data-a="now">지금 동기화</button></div></div>'
-        + '<p style="margin-top:14px;font-size:12px">보관함을 아예 없애려면 <a href="#" data-a="wipe" style="color:#b3261e">보관함 지우기</a> (학교 업무판에 있는 내 자료와 ID가 지워지고, 이 기기의 자료는 남아요)</p>');
+        + '<p style="margin-top:14px;font-size:12px">보관함을 아예 없애려면 <a href="#" data-a="wipe" style="color:var(--t-danger,#b3261e)">보관함 지우기</a> (학교 업무판에 있는 내 자료와 ID가 지워지고, 이 기기의 자료는 남아요)</p>');
       q("[data-a=close]").onclick = function(){ dlg.close(); };
       q("[data-a=now]").onclick = function(){ var b = this; b.disabled = true; b.textContent = "맞추는 중…";
         vault().then(function(V){ return V.syncNow(); }).then(function(r){ b.disabled = false; b.textContent = "지금 동기화"; q(".ttv-last").textContent = r.last ? new Date(r.last).toLocaleString("ko-KR") : "—"; q(".ttv-err").textContent = r.error || ""; }); };
@@ -190,7 +190,7 @@
     box.innerHTML = '<form class="ttv-card" autocomplete="off"><div style="font-size:40px">🏫</div><h1>' + esc(TT.schoolTitle ? TT.schoolTitle() : "쌤 노트") + '</h1><p>교실 기기예요. 선생님 ID와 비밀 문구로 수업을 시작하세요.<br>창을 닫거나 20분 동안 쓰지 않으면 자동으로 잠기고 지워집니다.</p>'
       + '<input name="id" placeholder="선생님 ID" autocapitalize="off" spellcheck="false"><input name="pass" type="password" placeholder="비밀 문구">'
       + '<div class="ttv-err"></div><button class="ttv-btn p" type="submit">수업 시작</button>'
-      + (srv.url ? '' : '<p style="margin-top:12px;color:#b3261e">학교 업무판 주소가 없어요. 아래 “기기 설정”에서 넣어 주세요.</p>')
+      + (srv.url ? '' : '<p style="margin-top:12px;color:var(--t-danger,#b3261e)">학교 업무판 주소가 없어요. 아래 “기기 설정”에서 넣어 주세요.</p>')
       + '<p style="margin:14px 0 0;font-size:12px"><a href="#" class="cfg">기기 설정</a></p></form>';
     document.body.appendChild(box);
     var f = box.querySelector("form");

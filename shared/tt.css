@@ -2,16 +2,19 @@
    모든 도구가 이 파일 하나를 함께 씁니다. 색·글꼴·버튼 모양을 바꾸려면 여기만 고치면 됩니다.
    화면 틀: <header> 제목과 버튼, <main> 내용, <footer> 안내. 한 화면에 스크롤 없이 들어오도록 body 높이를 고정합니다. */
 :root{
-  --bg:#f3f6f9; --card:#fff; --ink:#1d2733; --sub:#5b6773; --line:#dde3ea;
-  --accent:#2f6fb5; --accent-soft:#e6f0fa; --ok:#2e7d4f; --ok-soft:#e3f3ea;
-  --wait:#7a6a3a; --wait-soft:#f6efd9;
-  --danger:#b3261e; --danger-soft:#fdeceb; --star:#e0a526; --star-soft:#fff6d6;
+  /* 색 값은 shared/look.css(화면 꾸미기 값)에서 가져옵니다. 괄호 안 두 번째 값은 그 파일을 못 읽었을 때 쓰는 같은 기본값입니다. */
+  --bg:var(--t-bg,#f3f6f9); --card:var(--t-card,#fff); --ink:var(--t-ink,#1d2733); --sub:var(--t-sub,#5b6773); --line:var(--t-line,#dde3ea);
+  --accent:var(--t-accent,#2f6fb5); --accent-soft:var(--t-accent-soft,#e6f0fa); --ok:var(--t-ok,#2e7d4f); --ok-soft:var(--t-ok-soft,#e3f3ea);
+  --wait:var(--t-wait,#7a6a3a); --wait-soft:var(--t-wait-soft,#f6efd9);
+  --danger:var(--t-danger,#b3261e); --danger-soft:var(--t-danger-soft,#fdeceb); --star:var(--t-star,#e0a526); --star-soft:var(--t-star-soft,#fff6d6);
+  --now:var(--t-now,#2f6fb5); --now-ink:var(--t-now-ink,#fff); --now-soft:var(--t-now-soft,#e6f0fa);
+  --font:var(--t-font,"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
 html,body{height:100%}
 body{
-  font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+  font-family:var(--font);
   background:var(--bg);color:var(--ink);
   height:100dvh;display:flex;flex-direction:column;overflow:hidden;
   padding:clamp(10px,2vh,20px) clamp(12px,3vw,28px);gap:clamp(8px,1.4vh,12px);
@@ -22,16 +25,16 @@ h1{font-size:clamp(19px,3.2vh,26px);font-weight:800;letter-spacing:-.02em}
 .lead{font-size:clamp(12px,1.9vh,14px);color:var(--sub);margin-top:2px}
 .bar{display:flex;gap:8px;align-items:center;position:relative}
 .btn,select,summary{
-  font:inherit;font-size:14px;font-weight:700;color:var(--ink);background:#fff;
+  font:inherit;font-size:14px;font-weight:700;color:var(--ink);background:var(--card);
   border:1px solid var(--line);border-radius:10px;padding:8px 13px;cursor:pointer;
   list-style:none;white-space:nowrap;text-decoration:none;display:inline-block
 }
 summary::-webkit-details-marker{display:none}
 select{max-width:230px;padding:8px 10px}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn.star.on{background:var(--star-soft);border-color:var(--star);color:#7a5a00}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--t-on,#fff)}
+.btn.star.on{background:var(--star-soft);border-color:var(--star);color:var(--t-star-ink,#7a5a00)}
 .btn:disabled{opacity:.5;cursor:default}
-.btn:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #7fb0e6;outline-offset:2px}
+.btn:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--t-focus,#7fb0e6);outline-offset:2px}
 
 /* 둘 중 하나 고르기 (탭처럼 쓰는 버튼 묶음) */
 .seg{display:inline-flex;background:#e4eaf0;border-radius:12px;padding:3px;min-width:0}
@@ -39,17 +42,17 @@ select{max-width:230px;padding:8px 10px}
   border:0;background:transparent;font:inherit;font-size:clamp(13px,2vh,15px);font-weight:700;
   color:var(--sub);padding:8px 16px;border-radius:9px;cursor:pointer;white-space:nowrap
 }
-.seg button[aria-pressed="true"]{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.seg button:focus-visible{outline:3px solid #7fb0e6;outline-offset:2px}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg button:focus-visible{outline:3px solid var(--t-focus,#7fb0e6);outline-offset:2px}
 .seg.wide{display:flex}.seg.wide button{flex:1;padding:8px 6px}
 
 /* 입력 칸 */
 .field{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:700;color:var(--sub);min-width:0}
 .field input,.field select,.field textarea,textarea.tt-out{
-  font:inherit;font-size:15px;font-weight:400;color:var(--ink);background:#fbfcfd;
+  font:inherit;font-size:15px;font-weight:400;color:var(--ink);background:var(--t-field,#fbfcfd);
   border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0;max-width:none;width:100%
 }
-.field input:focus,.field textarea:focus,textarea.tt-out:focus{outline:2px solid #7fb0e6;border-color:#7fb0e6;background:#fff}
+.field input:focus,.field textarea:focus,textarea.tt-out:focus{outline:2px solid var(--t-focus,#7fb0e6);border-color:var(--t-focus,#7fb0e6);background:var(--card)}
 .sm{font-size:12.5px;color:var(--sub)}
 
 /* 명단이 없을 때 안내 */
@@ -59,7 +62,7 @@ select{max-width:230px;padding:8px 10px}
 /* ⋯ 더 보기 메뉴 */
 details.more{position:relative}
 .menu{
-  position:absolute;right:0;top:calc(100% + 6px);z-index:10;background:#fff;border:1px solid var(--line);
+  position:absolute;right:0;top:calc(100% + 6px);z-index:10;background:var(--card);border:1px solid var(--line);
   border-radius:12px;box-shadow:0 8px 24px rgba(30,60,100,.18);padding:6px;min-width:190px
 }
 .menu button,.menu a{
@@ -71,7 +74,7 @@ details.more{position:relative}
 .menu .danger:hover{background:var(--danger-soft)}
 .menu hr{border:0;border-top:1px solid var(--line);margin:5px 0}
 
-.tt-warn{background:#fff4d6;color:#7a5a00;padding:8px 12px;border-radius:10px;font-size:13px;font-weight:700}
+.tt-warn{background:#fff4d6;color:var(--t-star-ink,#7a5a00);padding:8px 12px;border-radius:10px;font-size:13px;font-weight:700}
 
 main{flex:1;min-height:0;display:flex}
 main.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:clamp(10px,2vh,16px)}
@@ -101,7 +104,7 @@ dialog textarea{height:clamp(110px,26vh,200px);resize:vertical}
 
 /* 아래쪽 알림 */
 #tt-toast{
-  position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#1d2733;color:#fff;
+  position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--t-on,#fff);
   padding:10px 14px;border-radius:12px;display:flex;gap:12px;align-items:center;font-size:14px;z-index:30;max-width:92vw
 }
 #tt-toast button{background:transparent;border:1px solid #ffffff55;color:#9cc8ff;font:inherit;font-weight:700;border-radius:8px;padding:3px 10px;cursor:pointer;white-space:nowrap}
@@ -114,7 +117,7 @@ dialog textarea{height:clamp(110px,26vh,200px);resize:vertical}
   .seg button{padding:7px 10px}
 }
 @media print{
-  body{height:auto;overflow:visible;background:#fff;padding:0;display:block}
+  body{height:auto;overflow:visible;background:var(--card);padding:0;display:block}
   header,footer,#tt-toast,.tt-warn{display:none!important}
   main.panel{border:0;padding:0;display:block}
 }

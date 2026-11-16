@@ -272,10 +272,10 @@ var TTAuto = (function(){
   /* ---------- 미리보기 (확인 → 복사/인쇄/저장 · 미루기 · 안 함) ---------- */
   (function(){
     var s = document.createElement("style");
-    s.textContent = ".auDlg{width:min(560px,94vw)}.auDlg textarea{width:100%;min-height:min(42vh,320px);font:inherit;font-size:14.5px;line-height:1.6;border:1px solid var(--line,#dde3ea);border-radius:10px;padding:10px;resize:vertical}"
-      + ".auDlg .meta{font-size:12.5px;color:var(--sub,#5b6773);margin:2px 0 8px}.auDlg .acts{flex-wrap:wrap;gap:6px}.auDlg .acts .l{display:flex;gap:6px}"
+    s.textContent = ".auDlg{width:min(560px,94vw)}.auDlg textarea{width:100%;min-height:min(42vh,320px);font:inherit;font-size:14.5px;line-height:1.6;border:1px solid var(--line,var(--t-line,#dde3ea));border-radius:10px;padding:10px;resize:vertical}"
+      + ".auDlg .meta{font-size:12.5px;color:var(--sub,var(--t-sub,#5b6773));margin:2px 0 8px}.auDlg .acts{flex-wrap:wrap;gap:6px}.auDlg .acts .l{display:flex;gap:6px}"
       + ".auSet label.rr{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line,#eef1f4);font-size:14px}"
-      + ".auSet label.rr small{grid-column:2/4;color:var(--sub,#5b6773);font-size:12.5px;line-height:1.45}.auSet input[type=number]{width:56px;font:inherit;padding:3px 6px;border:1px solid var(--line,#dde3ea);border-radius:8px}";
+      + ".auSet label.rr small{grid-column:2/4;color:var(--sub,var(--t-sub,#5b6773));font-size:12.5px;line-height:1.45}.auSet input[type=number]{width:56px;font:inherit;padding:3px 6px;border:1px solid var(--line,var(--t-line,#dde3ea));border-radius:8px}";
     document.head.appendChild(s);
   })();
   var END = {copy: "📋 복사", print: "🖨 인쇄", save: "💾 저장", done: "✔ 다 했어요"};

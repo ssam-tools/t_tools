@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.27.0";
+  var VERSION = "0.28.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -499,30 +499,30 @@ var TT = (function(){
     var WIDE = "(min-width:900px) and (min-height:460px)";
     var CSS = ":root{--tt-rail:68px}"
       + ".tt-rail,.tt-navbtn{display:none}"
-      + ".tt-ri{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:10px;text-decoration:none;color:#5b6773;text-align:center;font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif}"
+      + ".tt-ri{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:10px;text-decoration:none;color:var(--t-sub,#5b6773);text-align:center;font-family:var(--t-font,'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif)}"
       + ".tt-ri span{font-size:20px;line-height:1}"
       + ".tt-ri b{font-size:10.5px;font-weight:700;line-height:1.15;word-break:keep-all}"
-      + ".tt-ri:hover{background:#e6f0fa;color:#2f6fb5}"
-      + ".tt-ri.on{background:#2f6fb5;color:#fff}"
-      + ".tt-ri:focus-visible{outline:3px solid #7fb0e6;outline-offset:1px}"
+      + ".tt-ri:hover{background:var(--t-accent-soft,#e6f0fa);color:var(--t-accent,#2f6fb5)}"
+      + ".tt-ri.on{background:var(--t-accent,#2f6fb5);color:var(--t-on,#fff)}"
+      + ".tt-ri:focus-visible{outline:3px solid var(--t-focus,#7fb0e6);outline-offset:1px}"
       + "button.tt-ri{border:0;background:transparent;cursor:pointer;font-family:inherit;padding:0}"
       + ".tt-grp{display:flex;flex-direction:column;gap:2px;background:#eef4fb;border-radius:10px;padding:3px 0 3px}"
-      + ".tt-gh{display:flex;flex-direction:column;align-items:center;color:#2f6fb5;padding:2px 0;font-family:'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif}"
+      + ".tt-gh{display:flex;flex-direction:column;align-items:center;color:var(--t-accent,#2f6fb5);padding:2px 0;font-family:var(--t-font,'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif)}"
       + ".tt-gh span{font-size:18px;line-height:1}.tt-gh b{font-size:10.5px;font-weight:800}"
-      + ".tt-ri.tt-sub{margin:0 3px;background:#fff;border:1px solid #d6e3f1}"
+      + ".tt-ri.tt-sub{margin:0 3px;background:var(--t-card,#fff);border:1px solid #d6e3f1}"
       + ".tt-ri.tt-sub span{font-size:15px}.tt-ri.tt-sub b{font-size:9.5px}"
-      + ".tt-ri.tt-sub.on{background:#2f6fb5;border-color:#2f6fb5}"
-      + ".tt-ri.tt-rec{color:#7a4fb5}.tt-ri.tt-rec:hover{background:#f1eafb;color:#7a4fb5}"
+      + ".tt-ri.tt-sub.on{background:var(--t-accent,#2f6fb5);border-color:var(--t-accent,#2f6fb5)}"
+      + ".tt-ri.tt-rec{color:var(--t-rec,#7a4fb5)}.tt-ri.tt-rec:hover{background:#f1eafb;color:var(--t-rec,#7a4fb5)}"
       + "@media " + WIDE + "{"
       +   "html.tt-hasnav body{margin-left:var(--tt-rail)!important}"
       +   "html.tt-hasnav .back,html.tt-hasnav .ttback{display:none!important}"
       +   "html.tt-hasnav .cta,html.tt-hasnav .tabs,html.tt-hasnav .dock{left:var(--tt-rail)!important}"
-      +   ".tt-rail{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:var(--tt-rail);z-index:15;background:#fff;border-right:1px solid #dde3ea;padding:6px 5px;gap:2px;overflow-y:auto;box-sizing:border-box}"
+      +   ".tt-rail{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:var(--tt-rail);z-index:15;background:var(--t-card,#fff);border-right:1px solid var(--t-line,#dde3ea);padding:6px 5px;gap:2px;overflow-y:auto;box-sizing:border-box}"
       +   ".tt-rail .tt-ri{flex:1 1 0;max-height:60px;min-height:38px}"
       +   ".tt-rail .tt-grp{flex:0 0 auto}.tt-rail .tt-ri.tt-sub{flex:0 0 40px;min-height:0}"
-      +   ".tt-rail .tt-rec{flex:0 0 50px;border-top:1px solid #dde3ea;border-radius:0;margin-top:auto}"
-      +   ".tt-rail .tt-home{flex:0 0 50px;border-bottom:1px solid #dde3ea;border-radius:10px 10px 0 0;margin-bottom:4px}"
-      +   ".tt-rail .tt-bd{flex:0 0 50px;border-top:1px solid #dde3ea;border-radius:0 0 10px 10px}"
+      +   ".tt-rail .tt-rec{flex:0 0 50px;border-top:1px solid var(--t-line,#dde3ea);border-radius:0;margin-top:auto}"
+      +   ".tt-rail .tt-home{flex:0 0 50px;border-bottom:1px solid var(--t-line,#dde3ea);border-radius:10px 10px 0 0;margin-bottom:4px}"
+      +   ".tt-rail .tt-bd{flex:0 0 50px;border-top:1px solid var(--t-line,#dde3ea);border-radius:0 0 10px 10px}"
       + "}"
       + "@media (max-width:899px),(max-height:459px){"
       +   "html.tt-hasnav .tt-navbtn{display:inline-block;font:inherit;font-size:12px;font-weight:700;border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:1px 9px;margin-left:8px;cursor:pointer;opacity:.85;vertical-align:middle}"
@@ -530,9 +530,9 @@ var TT = (function(){
       + "}"
       + ".tt-sheet{position:fixed;inset:0;z-index:40;background:rgba(20,30,45,.45);display:flex;align-items:flex-end;justify-content:center}"
       + ".tt-sheet[hidden]{display:none!important}"
-      + ".tt-sheet .in{background:#fff;width:min(520px,100%);border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;box-sizing:border-box}"
-      + ".tt-sheet h3{grid-column:1/-1;font-size:15px;margin:0 0 2px;color:#1d2733;font-family:'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif}"
-      + ".tt-sheet .tt-ri{min-height:66px;border:1px solid #dde3ea}.tt-sheet .in{max-height:88vh;overflow:auto}"
+      + ".tt-sheet .in{background:var(--t-card,#fff);width:min(520px,100%);border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;box-sizing:border-box}"
+      + ".tt-sheet h3{grid-column:1/-1;font-size:15px;margin:0 0 2px;color:var(--t-ink,#1d2733);font-family:var(--t-font,'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif)}"
+      + ".tt-sheet .tt-ri{min-height:66px;border:1px solid var(--t-line,#dde3ea)}.tt-sheet .in{max-height:88vh;overflow:auto}"
       + ".tt-sheet .tt-ri b{font-size:12px}"
       + ".tt-sheet .tt-grp{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:6px}.tt-sheet .tt-gh{grid-column:1/-1;flex-direction:row;gap:6px;justify-content:flex-start;padding:0 4px}.tt-sheet .tt-ri.tt-sub{min-height:56px;margin:0}"
       + "@media print{.tt-rail,.tt-navbtn,.tt-sheet{display:none!important}html.tt-hasnav body{margin-left:0!important}}";
@@ -801,6 +801,7 @@ var TT = (function(){
     ];
     function get(){ var u = store.get("tt_ui_v1", {}) || {}; return LIST.some(function(f){ return f.id === u.font; }) ? u.font : "basic"; }
     function apply(id){ if(id === "basic") delete document.documentElement.dataset.font; else document.documentElement.dataset.font = id; }
+    try{ if(!document.querySelector('link[href$="shared/look.css"]')){ var lk = document.createElement("link"); lk.rel = "stylesheet"; lk.href = BASE + "shared/look.css"; document.head.appendChild(lk); } }catch(e){}   // 화면 꾸미기 값(색·글꼴 변수)
     try{ var l = document.createElement("link"); l.rel = "stylesheet"; l.href = BASE + "shared/fonts.css"; document.head.appendChild(l); }catch(e){}
     apply(get());
     window.addEventListener("storage", function(e){ if(e.key === "tt_ui_v1") apply(get()); });

@@ -1,0 +1,59 @@
+/* 쌤 노트 · 화면 꾸미기 값 (개편 1단계, v0.28.0)
+   화면의 색·글꼴·글자 크기를 이 파일의 변수(--t-…)로 한곳에 모았습니다.
+   테마 하나 = 아래 값 묶음 하나입니다. 값 하나를 바꾸면 그 값을 쓰는 모든 화면이 한꺼번에 바뀝니다.
+   - 공통 디자인(shared/tt.css)과 각 화면의 색은 var(--bg) 처럼 이 값을 가져다 씁니다.
+   - 이 파일을 못 읽어도 화면이 깨지지 않도록 쓰는 곳마다 같은 기본값을 함께 적어 두었습니다.
+   - 7단계(화면 꾸미기)에서 <html data-look="spring"> 처럼 테마를 고르고, data-size 로 글자 크기를 고릅니다.
+   - 글꼴 고르기(⋯ → 화면 글꼴)는 shared/fonts.css 가 --t-font 를 바꿔서 합니다. */
+
+:root{
+  /* 바탕·카드·글자·선 */
+  --t-bg:#f3f6f9;          /* 바탕색 */
+  --t-card:#fff;           /* 카드·버튼 바탕 */
+  --t-field:#fbfcfd;       /* 입력 칸·작은 칸 바탕 */
+  --t-ink:#1d2733;         /* 글자색 */
+  --t-sub:#5b6773;         /* 흐린 글자 */
+  --t-faint:#9aa5b1;       /* 아주 흐린 글자(안내·빈 칸) */
+  --t-line:#dde3ea;        /* 테두리 선 */
+  --t-chip:#eceff3;        /* 꼬리표·회색 단추 바탕 */
+  --t-chip-ink:#4a5560;    /* 꼬리표 글자 */
+  --t-on:#fff;             /* 진한 색 위의 글자(흰 글씨) */
+  --t-focus:#7fb0e6;       /* 키보드로 고를 때 테두리 */
+
+  /* 강조색과 상태색 */
+  --t-accent:#2f6fb5;  --t-accent-soft:#e6f0fa;
+  --t-ok:#2e7d4f;      --t-ok-soft:#e3f3ea;
+  --t-wait:#7a6a3a;    --t-wait-soft:#f6efd9;
+  --t-danger:#b3261e;  --t-danger-soft:#fdeceb;
+  --t-star:#e0a526;    --t-star-soft:#fff6d6;  --t-star-ink:#7a5a00;
+  --t-rec:#7a4fb5;     --t-rec-soft:#efe7fa;   --t-rec-ink:#5b2f99;   /* ✍️ 학생 기록 단추 */
+  --t-pc:#5a3ea6;      --t-pc-soft:#ece8f7;                            /* PC 전용 표시 */
+
+  /* 지금 카드 (홈 맨 위 '다음 수업' 카드) */
+  --t-now:#2f6fb5;  --t-now-ink:#fff;  --t-now-soft:#e6f0fa;
+
+  /* 메뉴 색 4개 (tools.js 의 TT_MENUS color: blue·green·purple·teal) — 모두 흰 글씨와 4.5:1 이상 */
+  --t-class:#2563c9;     /* 수업 (파랑) */
+  --t-homeroom:#1f7a4d;  /* 우리 반 (초록) */
+  --t-student:#6b46c1;   /* 학생 (보라) */
+  --t-school:#0f6e7a;    /* 학교 (청록) */
+
+  /* 글꼴과 글자 크기 */
+  --t-font:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;  /* 본문 글꼴 */
+  --t-font-h:var(--t-font);  /* 제목 글꼴 */
+  --t-fz:1;                  /* 글자 크기 배율 (보통 1 · 크게 1.12 · 아주 크게 1.25) — 7단계에서 화면에 적용 */
+}
+
+/* 메뉴 색 고리: 어떤 칸에 data-menu="class" 처럼 적으면 그 안에서 var(--m) · var(--m-soft) 로 메뉴 색을 씁니다. */
+[data-menu="class"]{--m:var(--t-class)}
+[data-menu="homeroom"]{--m:var(--t-homeroom)}
+[data-menu="student"]{--m:var(--t-student)}
+[data-menu="school"]{--m:var(--t-school)}
+[data-menu]{--m-soft:color-mix(in srgb,var(--m,var(--t-accent)) 13%,#fff)}
+
+/* ---------- 테마 묶음 (7단계에서 고름. 지금은 쓰지 않음) ----------
+   테마마다 바탕색 · 지금 카드 색 · 메뉴 4개 색을 함께 바꿉니다. 나머지는 위의 기본값을 그대로 씁니다. */
+html[data-look="spring"]{--t-bg:#f5f9ef;--t-now:#3f7d4e;--t-now-soft:#e3efe5;--t-class:#3f7d4e;--t-homeroom:#c0466e;--t-student:#7d55b0;--t-school:#9a640e}
+html[data-look="summer"]{--t-bg:#eff8f9;--t-now:#0f7685;--t-now-soft:#dcf0f2;--t-class:#0f7685;--t-homeroom:#c13d31;--t-student:#2a64b0;--t-school:#8f6300}
+html[data-look="autumn"]{--t-bg:#fbf5ec;--t-now:#ad4f1a;--t-now-soft:#f6e5da;--t-class:#ad4f1a;--t-homeroom:#7a4a2a;--t-student:#8e2f3f;--t-school:#636218}
+html[data-look="winter"]{--t-bg:#f1f4f8;--t-now:#2f5d8a;--t-now-soft:#e0e8f1;--t-class:#2f5d8a;--t-homeroom:#46677a;--t-student:#555897;--t-school:#5c6672}
