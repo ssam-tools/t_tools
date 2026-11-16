@@ -14,8 +14,9 @@
   var here = (location.pathname.match(/\/apps\/([^\/]+)\//) || [])[1] || "";
   var tool = null;
   function withTools(cb){                                                          // 도구 목록(tools.js)이 아직 없으면 불러온 뒤 실행
-    if(typeof TT_TOOLS !== "undefined") return cb();
-    var s = document.createElement("script"); s.src = BASE + "shared/tools.js"; s.onload = cb; s.onerror = cb; document.head.appendChild(s);
+    function pk(){ if(typeof ttPackLoad === "function") ttPackLoad(BASE, cb, true); else cb(); }   // 교과 팩 도구도(교실 기기 막기 판단용)
+    if(typeof TT_TOOLS !== "undefined") return pk();
+    var s = document.createElement("script"); s.src = BASE + "shared/tools.js"; s.onload = pk; s.onerror = cb; document.head.appendChild(s);
   }
 
   /* ---------- 모양 ---------- */

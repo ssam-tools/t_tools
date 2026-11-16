@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.29.0";
+  var VERSION = "0.30.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -543,7 +543,7 @@ var TT = (function(){
     function items(all){
       var hereId = here === "tardy" && /[?&]tab=counsel/.test(location.search) ? "counsel" : here;
       var me = TT_TOOLS.filter(function(t){ return t.id === hereId; })[0], curMenu = me ? me.menu : null;
-      function ok(t){ return t.ready && t.href && !(classroom && !t.room); }   // 내려받는 프로그램은 첫 화면에서, 교실 기기는 수업용만
+      function ok(t){ return t.ready && t.href && !(classroom && !t.room) && (!t.subject || t.id === hereId || typeof ttPackId !== "function" || t.subject === ttPackId()); }   // 내려받는 프로그램은 첫 화면에서, 교실 기기는 수업용만, 교과 팩은 고른 교과만
       function shown(mid){ return mid === curMenu || typeof ttMenuShown !== "function" || ttMenuShown(mid); }
       function link(t, cls, label){
         var on = t.id === hereId;
@@ -593,10 +593,12 @@ var TT = (function(){
         a.parentNode.insertBefore(btn, a.nextSibling);
       });
     }
+    /* 교과 팩(subjects/*.js)까지 불러온 뒤 그림. 도구 화면에서는 모든 팩을 불러 지금 도구가 어느 팩 것이든 메뉴에 보이게 */
+    function withPack(){ if(typeof ttPackLoad === "function") ttPackLoad(BASE, build, true); else build(); }
     function start(){
-      if(typeof TT_TOOLS !== "undefined" && typeof TT_MENUS !== "undefined" && typeof ttMenuShown === "function") return build();
+      if(typeof TT_TOOLS !== "undefined" && typeof TT_MENUS !== "undefined" && typeof ttPackLoad === "function") return withPack();
       var s = document.createElement("script"); s.src = BASE + "shared/tools.js?v=" + VERSION + (typeof TT_TOOLS !== "undefined" ? "." + Date.now() : "");   // 예전 목록이 남아 있으면 새로 받음
-      s.onload = build; s.onerror = build; document.head.appendChild(s);
+      s.onload = withPack; s.onerror = build; document.head.appendChild(s);
     }
     if(document.body) start(); else document.addEventListener("DOMContentLoaded", start);
   })();
@@ -650,7 +652,7 @@ var TT = (function(){
   /* 보관함 동기화 화면(설정창·교실 모드·상태 표시)은 따로 불러옵니다 */
   /* ---------- 학교·선생님 설정 ("tt_school_v1") ----------
      학교 이름은 여기 한 곳에만 넣으면 첫 화면 제목, 결석신고서, 학부모 문자에 함께 쓰입니다. */
-  var SCH_TXT = {principal: 10, addr: 60, tel: 20, comci: 12, subject: 12, hb: 16, role: 10};   // 개편 2단계: role "subject" = 교과만(우리 반 메뉴 숨김), "homeroom"·"" = 담임   // 14단계: 교장·주소·전화·컴시간 학교 코드·내 교과
+  var SCH_TXT = {principal: 10, addr: 60, tel: 20, comci: 12, subject: 12, hb: 16, role: 10, pack: 12};   // 개편 3단계: pack = 교과 칸(교과 팩 id · "none")   // 개편 2단계: role "subject" = 교과만(우리 반 메뉴 숨김), "homeroom"·"" = 담임   // 14단계: 교장·주소·전화·컴시간 학교 코드·내 교과
   var school = {
     load: function(){
       var o = store.get("tt_school_v1", null) || {};

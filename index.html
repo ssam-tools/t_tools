@@ -230,6 +230,15 @@
   #dlgSchool label.f input{display:block;width:100%;margin-top:3px;font:inherit;font-size:15px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;box-sizing:border-box}
   #dlgSchool .role{font-size:12.5px;font-weight:700;color:var(--sub);margin-top:10px;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
   #dlgSchool .role span{flex:0 0 100%}#dlgSchool .role label{font-size:15px;color:var(--ink);font-weight:600;display:flex;gap:5px;align-items:center;cursor:pointer}
+  #dlgSchool select{display:block;width:100%;margin-top:3px;font:inherit;font-size:15px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;box-sizing:border-box;background:var(--card);color:var(--ink)}
+  /* 개편 3단계: 교과 자료 연결 (링크 모음) */
+  #dlgLinks{width:min(520px,94vw)}
+  #dlgLinks ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:5px}
+  #dlgLinks li a{display:flex;gap:8px;align-items:center;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-weight:700}
+  #dlgLinks li a:hover{border-color:var(--t-class,#2563c9);background:var(--accent-soft)}
+  #dlgLinks li a small{margin-left:auto;font-weight:600;color:var(--sub);font-size:11.5px;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #dlgLinks h3{font-size:13.5px;margin:12px 0 0;color:var(--sub)}
+  #dlgLinks textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:5px}
   #dlgSchool .acts{display:flex;justify-content:space-between;margin-top:14px}#dlgSchool .acts .r{display:flex;gap:6px}
   /* 묶음 카드: 카드 전체는 대표 도구로, 안의 작은 단추는 묶인 도구로 */
   .card{position:relative}
@@ -368,11 +377,24 @@
     <div class="f role"><span>맡은 일</span>
       <label><input type="radio" name="sRole" value="homeroom"> 담임</label>
       <label><input type="radio" name="sRole" value="subject"> 교과만 <small>(🌱 우리 반 메뉴 숨김)</small></label></div>
+    <label class="f" id="sPackL">교과 칸 <small>(수업 메뉴의 교과 전용 도구 · 팩이 없는 교과는 '교과 자료 연결'만)</small><select id="sPack"></select></label>
     <label class="f">학교 로고 <small>(선택 · 제목 옆에 보여요. 흰 바탕은 자동으로 투명하게)</small></label>
     <div class="logo"><img id="sLogoImg" alt="" hidden><span class="none" id="sLogoNone">없음</span><input type="file" id="sLogo" accept="image/png,image/jpeg,image/webp" hidden><button type="button" class="btn" id="sLogoPick">🖼️ 그림 고르기</button><button type="button" class="btn" id="sLogoDel" hidden>지우기</button></div>
     <p class="muted" id="sPrev"></p>
     <p class="sm">교장 · 주소 · 전화 · 컴시간 학교 코드는 <a href="apps/setup/?make" data-tn="setup" data-ti>🧳 학기초 세팅</a>에서 넣습니다.</p>
     <div class="acts"><span></span><div class="r"><button type="button" class="btn" id="sCancel">취소</button><button type="submit" class="btn primary">저장</button></div></div>
+  </form>
+</dialog>
+
+<dialog id="dlgLinks">
+  <form id="fLinks">
+    <h2>🔗 교과 자료 연결</h2>
+    <p class="muted" id="lkLead"></p>
+    <div id="lkPack"></div>
+    <h3>내 링크 <small>(이 기기에만 저장 · 한 줄에 하나: 이름 | 주소)</small></h3>
+    <ul id="lkMine"></ul>
+    <textarea id="lkEdit" rows="4" placeholder="예) 출판사 교사 자료실 | https://…&#10;예) 우리 교과 공유 폴더 | https://drive.google.com/…" spellcheck="false" hidden></textarea>
+    <div class="acts"><button type="button" class="btn" id="lkEditBtn">✏️ 내 링크 고치기</button><div class="r"><button type="button" class="btn" id="lkClose">닫기</button><button type="submit" class="btn primary" id="lkSave" hidden>저장</button></div></div>
   </form>
 </dialog>
 
@@ -408,6 +430,7 @@
 </dialog>
 
 <script src="shared/tools.js"></script>
+<script>if(typeof ttPackWrite === "function") ttPackWrite("");   /* 개편 3단계: 고른 교과 팩(subjects/*.js)을 여기서 불러옴 */</script>
 <script src="shared/tt.js"></script>
 <script src="shared/guidelogic.js"></script>
 <script src="shared/board.js"></script>
@@ -457,13 +480,19 @@
       TT_MENUS.forEach(function(m){
         if(m.id === "home" || !menuShown(m.id)) return;
         var groups = (m.groups || []).map(function(g){
-          var rows = TT_TOOLS.filter(function(t){ return t.menu === m.id && t.group === g.id && t.ready && !t.in && (!TT.classroom || t.room); }).map(toolRow);
+          var rows = TT_TOOLS.filter(function(t){ return t.menu === m.id && t.group === g.id && t.ready && !t.in && (!TT.classroom || t.room) && (!t.subject || typeof ttToolShown !== "function" || ttToolShown(t)); }).map(toolRow);
           if(m.id === "school" && g.id === "board" && !TT.classroom){            // 주간·월간 업무판 (연결했을 때)
             var B0 = TT.store.get("tt_board_v1", null) || {};
             if(B0.url && /^https:\/\/script\.google\.com\//.test(B0.url)) rows.push(plainRow("📅", "주간·월간 업무판", "학교 업무판 (새 창)", null, B0.url));
           }
+          if(m.id === "class" && g.id === "subject"){                            // 교과 칸: 고른 교과 팩의 도구 + 교과 자료 연결 (개편 3단계)
+            var pk = typeof ttPack === "function" ? ttPack() : null;
+            g = {id: g.id, name: pk ? g.name + " · " + pk.name : g.name};
+            rows.push(plainRow("🔗", "교과 자료 연결", "교과 공개 자료 · 내 링크 모음", openLinks));
+          }
           if(m.id === "settings" && !TT.classroom){                             // 설정: ⋯ 메뉴의 항목을 함께
-            rows.unshift(plainRow("🏷️", "학교·선생님 정보", "학교 이름 · 선생님 이름 · 담임/교과만", clickMenu("mSchool")));
+            rows.unshift(plainRow("🏷️", "학교·선생님 정보", "학교 이름 · 선생님 이름 · 담임/교과만 · 교과 칸", clickMenu("mSchool")),
+                         plainRow("📚", "교과 선택", "수업 메뉴 '교과 칸'에 쓸 교과", function(){ openSchool(); var e = $("sPack"); if(e) e.focus(); }));
             rows.push(plainRow("✨", "자동 준비", "자동 준비 설정", clickMenu("mAuto")), plainRow("🔤", "화면 글꼴", "화면 글꼴 고르기", clickMenu("mFont")),
                       plainRow("🔗", "업무판 연결", "학교 업무판 연결", clickMenu("mBoard")), plainRow("💾", "전체 백업", "전체 백업 저장", clickMenu("mBackup")));
           }
@@ -604,7 +633,10 @@
   }
   function openSchool(){
     var sc = TT.school.load(); $("sName").value = sc.name; $("sTeacher").value = sc.teacher;
-    Array.prototype.forEach.call(document.getElementsByName("sRole"), function(r){ r.checked = r.value === (sc.role === "subject" ? "subject" : "homeroom"); }); newLogo = sc.logo; showLogo(); prevSchool(); $("dlgSchool").showModal(); $("sName").focus();
+    Array.prototype.forEach.call(document.getElementsByName("sRole"), function(r){ r.checked = r.value === (sc.role === "subject" ? "subject" : "homeroom"); });
+    var sp = $("sPack"), P = typeof TT_PACKS !== "undefined" ? TT_PACKS : [];
+    sp.innerHTML = P.map(function(x){ return '<option value="' + x.id + '">' + x.icon + " " + x.name + "</option>"; }).join("") + '<option value="none">없음 · 교과 자료 연결만</option>';
+    sp.value = typeof ttPackId === "function" ? ttPackId() : "none"; newLogo = sc.logo; showLogo(); prevSchool(); $("dlgSchool").showModal(); $("sName").focus();
   }
   var newLogo = "";
   function showLogo(){ $("sLogoImg").hidden = !newLogo; $("sLogoNone").hidden = !!newLogo; $("sLogoDel").hidden = !newLogo; if(newLogo) $("sLogoImg").src = newLogo; }
@@ -638,7 +670,37 @@
   $("schChip").onclick = openSchool;
   $("sCancel").onclick = function(){ $("dlgSchool").close(); };
   $("fSchool").onsubmit = function(e){ e.preventDefault(); var rl = document.querySelector('input[name="sRole"]:checked');
-    TT.school.save({name: $("sName").value, teacher: $("sTeacher").value, logo: newLogo, role: rl ? rl.value : "homeroom"}); $("dlgSchool").close(); showTitle(); showHome(); drawTools(); TT.ui.toast("학교·선생님 설정을 저장했습니다."); };
+    var pk0 = typeof ttPackId === "function" ? ttPackId() : "", pk1 = $("sPack").value || "none";
+    TT.school.save({name: $("sName").value, teacher: $("sTeacher").value, logo: newLogo, role: rl ? rl.value : "homeroom", pack: pk1}); $("dlgSchool").close();
+    if(pk1 !== pk0 && pk1 !== "none" && typeof TT_PACK_DATA !== "undefined" && !TT_PACK_DATA[pk1]){ location.reload(); return; }   // 새 교과 팩은 다시 열며 불러옴
+    showTitle(); showHome(); drawTools(); TT.ui.toast("학교·선생님 설정을 저장했습니다."); };
+
+  /* 교과 자료 연결: 교과 팩의 공개 링크 + 내 링크("tt_subject_links_v1", 이 기기에만) */
+  var LKK = "tt_subject_links_v1";
+  function myLinks(){ var o = TT.store.get(LKK, null); return o && Array.isArray(o.list) ? o.list : []; }
+  function linkLi(x){ var li = document.createElement("li"), a = document.createElement("a"); a.href = x.u; a.target = "_blank"; a.rel = "noopener"; a.innerHTML = "<span>🔗</span><b></b><small></small>"; a.querySelector("b").textContent = x.n; a.querySelector("small").textContent = x.u.replace(/^https?:\/\//, ""); li.appendChild(a); return li; }
+  function okUrl(u){ return /^https?:\/\/[^\s]+$/i.test(u); }
+  function openLinks(){
+    var pk = typeof ttPack === "function" ? ttPack() : null, box = $("lkPack"), M = myLinks();
+    $("lkLead").textContent = pk ? pk.icon + " " + pk.name + " 교과 팩의 공개 자료와 내가 넣은 링크입니다." : "고른 교과 팩이 없어 내가 넣은 링크만 모읍니다. (⋯ → 학교·선생님 설정 → 교과 칸)";
+    box.textContent = "";
+    if(pk && (pk.links || []).length){ var ul = document.createElement("ul"); pk.links.filter(function(x){ return okUrl(x.u); }).forEach(function(x){ ul.appendChild(linkLi(x)); }); box.appendChild(ul); }
+    var mu = $("lkMine"); mu.textContent = ""; M.forEach(function(x){ mu.appendChild(linkLi(x)); });
+    if(!M.length){ var li = document.createElement("li"); li.className = "muted"; li.style.fontSize = "13px"; li.textContent = "아직 없습니다. ✏️ 내 링크 고치기로 출판사 자료실·교과 공유 폴더 주소를 넣어 두세요."; mu.appendChild(li); }
+    $("lkEdit").hidden = true; $("lkSave").hidden = true; $("lkEditBtn").hidden = false;
+    $("dlgLinks").showModal();
+  }
+  $("lkEditBtn").onclick = function(){ $("lkEdit").value = myLinks().map(function(x){ return x.n + " | " + x.u; }).join("\n"); $("lkEdit").hidden = false; $("lkSave").hidden = false; this.hidden = true; $("lkEdit").focus(); };
+  $("lkClose").onclick = function(){ $("dlgLinks").close(); };
+  $("fLinks").onsubmit = function(e){
+    e.preventDefault(); var bad = 0;
+    var L = $("lkEdit").value.split(/\n/).map(function(l){ return l.trim(); }).filter(Boolean).map(function(l){
+      var i = l.lastIndexOf("|"), n = i >= 0 ? l.slice(0, i).trim() : "", u = (i >= 0 ? l.slice(i + 1) : l).trim();
+      if(!okUrl(u)){ bad++; return null; } return {n: (n || u.replace(/^https?:\/\//, "")).slice(0, 40), u: u.slice(0, 500)};
+    }).filter(Boolean).slice(0, 30);
+    TT.store.set(LKK, {v: 1, list: L}); openLinks();
+    TT.ui.toast("내 링크 " + L.length + "개를 저장했습니다." + (bad ? " (주소가 http로 시작하지 않는 " + bad + "줄은 뺐어요)" : ""));
+  };
 
   /* 빠른 학생 기록 (shared/notes.js) */
   if(TT.classroom) $("qRec").hidden = true;

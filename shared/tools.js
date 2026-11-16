@@ -16,6 +16,13 @@
    목록 순서 = 화면에 나오는 순서. cat 과 TT_CATS 는 예전 화면(저장본)이 깨지지 않게 남겨 둔 것으로, 더는 쓰지 않습니다.
    old: 바꾸기 전 이름. 찾기(Ctrl+K)에서 예전 이름으로도 찾고, 각 도구 화면의 제목(h1·창 제목)을 새 이름으로 바꿔 보여 줍니다.
    who: "homeroom" 메뉴(우리 반)는 학교·선생님 설정에서 '교과만'을 고르면 숨깁니다(ttMenuShown).
+
+   ── 개편 3단계(v0.30): 교과 칸 = 교과 팩 ──
+   교과 전용 자료와 도구는 subjects/<교과>.js (교과 팩) 한 파일에 둡니다: 단원 목록 · 교과 자료 연결(링크) · 교과 전용 도구.
+   새 교과를 넣을 때: subjects/math.js 를 본떠 subjects/<id>.js 를 만들고 아래 TT_PACKS 에 한 줄 추가합니다(다른 파일은 고치지 않음).
+   어떤 팩을 쓸지는 학교·선생님 설정의 '교과 칸'(tt_school_v1.pack)으로 고릅니다. 고르지 않았으면 '내 교과'(subject) 글자로 찾고,
+   그것도 없으면 첫 팩(수학, 견본)을 씁니다. 'none' 이면 팩 없이 교과 칸에 '교과 자료 연결'(링크 모음)만 보입니다.
+   팩 파일은 고른 것 하나만 불러옵니다: 첫 화면은 ttPackWrite(""), 도구 화면은 tt.js 가 ttPackLoad 로.
    다른 화면에 도구 이름을 쓸 때는 글자로 적지 말고 ttName("journal") · ttLabel("journal") 을 쓰거나,
    HTML 에서는 <b data-tn="journal">수업 기록장</b> 처럼 적습니다(ttFillNames 가 이 목록의 이름으로 바꿈).
    그래야 이 목록에서 이름만 바꾸면 모든 화면이 함께 바뀝니다.
@@ -42,12 +49,17 @@ var TT_CATS = [
 /* 새 메뉴 구성 (PLAN_개편.md 확정안). color 는 1단계에서 CSS 변수로 연결합니다. who: "homeroom" = 담임에게만 보이는 메뉴 */
 var TT_MENUS = [
   {id:"home",     icon:"🏠", name:"홈",    color:"",       who:"all",      groups:[]},
-  {id:"class",    icon:"📚", name:"수업",  color:"blue",   who:"all",      groups:[{id:"teach", name:"수업하기"}, {id:"eval", name:"평가"}, {id:"subject", name:"교과 칸 · 수학"}]},
+  {id:"class",    icon:"📚", name:"수업",  color:"blue",   who:"all",      groups:[{id:"teach", name:"수업하기"}, {id:"eval", name:"평가"}, {id:"subject", name:"교과 칸"}]},
   {id:"homeroom", icon:"🌱", name:"우리 반", color:"green", who:"homeroom", groups:[{id:"room", name:"우리 반"}]},
   {id:"student",  icon:"🤝", name:"학생",  color:"purple", who:"all",      groups:[{id:"stu", name:"학생"}]},
   {id:"school",   icon:"🏫", name:"학교",  color:"teal",   who:"all",      groups:[{id:"board", name:"업무판"}, {id:"lib", name:"자료실"}, {id:"work", name:"업무 도구"}]},
   {id:"settings", icon:"⋯",  name:"설정",  color:"",       who:"all",      groups:[{id:"set", name:"설정"}]}
 ];
+/* 교과 팩 목록: 파일은 subjects/ 폴더. 팩 안의 도구는 불러올 때 TT_TOOLS 에 붙습니다(menu:"class", group:"subject", subject:id) */
+var TT_PACKS = [
+  {id:"math", name:"수학", icon:"🧮", file:"subjects/math.js"}
+];
+var TT_PACK_DATA = {};   // 불러온 팩: {id: {id, name, units, links, tools}}
 var TT_TOOLS = [
   /* ── 수업 · 수업하기 ── */
   {id:"timetable",icon:"🕘", cat:"teach", menu:"class", group:"teach", short:"내 시간표", name:"내 시간표", desc:"컴시간 시간표를 붙여 넣으면 오늘 수업·수업 기록에 쓰입니다. 수업 교체는 그 주에만 반영.", href:"apps/timetable/", ready:true, room:true},
@@ -59,11 +71,7 @@ var TT_TOOLS = [
   /* ── 수업 · 평가 ── */
   {id:"assess", icon:"📊", cat:"teach", menu:"class", group:"eval", short:"수행평가", name:"수행평가", desc:"채점 기준(점수형·수준형)을 만들고 반마다 채점, 관찰은 교과 세특 기록으로.", href:"apps/assess/", ready:true},
   {id:"mblue",  icon:"🎯", cat:"math", menu:"class", group:"eval",  short:"분류표", name:"이원목적분류표", desc:"문항별 성취기준·난이도·배점·정답 → 합계·분포 점검, 인쇄.", href:"apps/mblue/", ready:true, exam:21},
-  /* ── 수업 · 교과 칸(수학) ── 3단계에서 교과 팩(subjects/math.js)으로 옮깁니다 */
-  {id:"concept",icon:"🗺️", cat:"math", menu:"class", group:"subject", subject:"math",  short:"개념지도", name:"개념지도", old:"개념지도·도전 문제", desc:"중학교 개념 카드 25장(큰 글씨) · 카드마다 고1 3월 모의고사 기출 도전 문제 — 누를 때마다 문제 → 정답 → 해설.", href:"apps/concept/", ready:true, room:true},
-  {id:"mgen",   icon:"🔢", cat:"math", menu:"class", group:"subject", subject:"math",  short:"문항 생성", name:"문항 생성기", desc:"계산형 문항을 숫자만 바꿔 무한히 · 학생별 다른 숫자 · 정답지.", href:"apps/mgen/", ready:true},
-  {id:"mcheck", icon:"✅", cat:"math", menu:"class", group:"subject", subject:"math",  short:"형성평가", name:"형성평가·보충", desc:"빠른 채점 · 문항별 정답률 · 틀린 유형만 보충 학습지 · 해결 → 세특 근거.", href:"apps/mcheck/", ready:true},
-  {id:"play",   icon:"🎮", cat:"math", menu:"class", group:"subject", subject:"math",  short:"수학 놀이터", name:"수학 놀이터", desc:"보물 상자·숫자 폭탄·돌림판·퀴즈 배틀·빙고·스도쿠 등 17가지 수학 게임·퍼즐.", href:"apps/play/", ready:true, room:true},
+  /* ── 수업 · 교과 칸 ── 교과 전용 도구는 교과 팩 파일(subjects/<교과>.js)에 있습니다. 아래 TT_PACKS 참고 */
   /* ── 우리 반 (담임) ── */
   {id:"roster", icon:"👥", cat:"life", menu:"homeroom", group:"room",  short:"명렬표", name:"명렬표", old:"학급 명렬표", desc:"나이스 명단 · 학생 사진과 메모 · 학생 카드(상담 카드).", href:"apps/roster/", ready:true, room:true, months:[3]},
   {id:"photo",  icon:"📷", cat:"life", menu:"homeroom", group:"room",  short:"사진 파일명", in:"roster", name:"사진 파일명", old:"나이스 사진 이름", desc:"반 사진을 명렬표 순서대로 이름(번호)로 바꾸고 용량도 줄입니다.", href:"apps/photo/", ready:true, home:true},
@@ -104,7 +112,46 @@ function ttLabel(id, fallback){ var t = ttTool(id); return t ? t.icon + " " + t.
 function ttIsSubjectOnly(){ try{ var o = JSON.parse(localStorage.getItem("tt_school_v1") || "null"); return !!(o && o.role === "subject"); }catch(e){ return false; } }
 function ttMenuShown(id){ var m = ttMenu(id); return !m || m.who !== "homeroom" || !ttIsSubjectOnly(); }
 /* 도구를 보여 줄지 (메뉴가 숨겨졌으면 그 도구도) */
-function ttToolShown(t){ if(typeof t === "string") t = ttTool(t); return !!t && ttMenuShown(t.menu); }
+function ttToolShown(t){ if(typeof t === "string") t = ttTool(t); return !!t && ttMenuShown(t.menu) && (!t.subject || t.subject === ttPackId()); }
+
+/* ── 교과 팩 (개편 3단계) ── */
+function ttSchoolObj(){ try{ return JSON.parse(localStorage.getItem("tt_school_v1") || "null") || {}; }catch(e){ return {}; } }
+function ttPackInfo(id){ for(var i = 0; i < TT_PACKS.length; i++) if(TT_PACKS[i].id === id) return TT_PACKS[i]; return null; }
+/* 고른 교과 팩 id, 팩을 쓰지 않으면 "none" */
+function ttPackId(){
+  var o = ttSchoolObj(), p = String(o.pack || "");
+  if(p) return ttPackInfo(p) ? p : "none";
+  var subj = String(o.subject || "").replace(/\s+/g, "");
+  if(subj){ for(var i = 0; i < TT_PACKS.length; i++) if(subj.indexOf(TT_PACKS[i].name) >= 0) return TT_PACKS[i].id; return "none"; }
+  return TT_PACKS.length ? TT_PACKS[0].id : "none";   // 아무것도 정하지 않았으면 수학(견본) — 예전처럼 보이게
+}
+/* 불러온(고른) 팩 자료: {id, name, icon, units:{1:[…]}, links:[{n,u}], tools:[…]} 또는 null */
+function ttPack(){ var id = ttPackId(); return TT_PACK_DATA[id] || null; }
+/* 팩 파일이 부르는 함수: 팩을 등록하고 도구를 TT_TOOLS 에 붙임 */
+function ttAddPack(p){
+  if(!p || !p.id) return; var info = ttPackInfo(p.id) || {};
+  p.name = p.name || info.name || p.id; p.icon = p.icon || info.icon || "📚";
+  TT_PACK_DATA[p.id] = p;
+  (p.tools || []).forEach(function(t){
+    t.menu = "class"; t.group = "subject"; t.subject = p.id; if(t.ready == null) t.ready = true;
+    if(!ttTool(t.id)) TT_TOOLS.push(t);
+  });
+}
+/* 첫 화면처럼 HTML 을 읽는 중에 바로 부를 때: 고른 팩 파일을 그 자리에 끼워 넣음(다음 스크립트보다 먼저 실행됨) */
+function ttPackWrite(base){
+  var info = ttPackInfo(ttPackId());
+  if(!info || TT_PACK_DATA[info.id] || typeof document === "undefined" || document.readyState !== "loading") return;
+  document.write('<script src="' + (base || "") + info.file + '"><\/script>');
+}
+/* 화면이 다 열린 뒤에 부를 때: 고른 팩(all 이면 모든 팩)을 불러오고 cb() */
+function ttPackLoad(base, cb, all){
+  var L = (all ? TT_PACKS : [ttPackInfo(ttPackId())]).filter(function(x){ return x && !TT_PACK_DATA[x.id]; }), n = L.length;
+  if(!n || typeof document === "undefined"){ if(cb) cb(); return; }
+  L.forEach(function(x){
+    var s = document.createElement("script"); s.src = (base || "") + x.file;
+    s.onload = s.onerror = function(){ if(--n === 0 && cb) cb(); }; document.head.appendChild(s);
+  });
+}
 function ttMenu(id){ if(typeof TT_MENUS === "undefined") return null; for(var i = 0; i < TT_MENUS.length; i++) if(TT_MENUS[i].id === id) return TT_MENUS[i]; return null; }
 /* HTML 안의 <… data-tn="id" [data-tj="을"] [data-ti]> 글자를 이 목록의 이름으로 (data-ti 가 있으면 아이콘도) */
 function ttFillNames(root){
