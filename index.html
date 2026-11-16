@@ -344,8 +344,6 @@
     h1.ttl{font-size:21px}
     .qrec .ql{display:none}.qrec{padding:8px 10px;font-size:16px}
     .tbar{flex:none}                       /* 아래 안내 줄이 도구 칸과 겹치지 않게 */
-    body.inmenu .tbar{flex:none} body.inmenu .mcols{grid-template-columns:minmax(0,1fr)}
-    body.inmenu .mcol{gap:6px}
   }
   .prep{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;background:var(--card);border:1px dashed var(--accent);border-radius:14px;padding:7px 10px;font-size:13.5px}
   .prep b{color:var(--accent);white-space:nowrap}
@@ -353,18 +351,11 @@
   .prep .pi:hover{background:var(--accent);color:var(--t-on,#fff)}
   .prep .px{margin-left:auto;font:inherit;font-size:12px;border:0;background:none;color:var(--sub);cursor:pointer}
   /* 메뉴 화면 (6단계에서 공통 틀로 바꿈 — 지금은 그 메뉴의 도구를 크게) */
-  body.inmenu #today,body.inmenu .toprow,body.inmenu #gridHead,body.inmenu #prep{display:none!important}
-  body.inmenu .tbar{flex:1 1 0;background:none;border:0;padding:0}
-  body.inmenu main#grid{align-content:stretch}
-  body.inmenu main#grid.mv{grid-template-columns:minmax(0,1fr)!important;min-height:0}
-  body.inmenu .mn{grid-column:auto}
-  body.inmenu .mn .ch .cn{font-size:clamp(20px,3vh,26px)}
-  body.inmenu .mn .tb b{font-size:clamp(15px,2vh,18px)}
-  body.inmenu .mn .tb span{font-size:clamp(20px,2.8vh,26px)}
+  body.inmenu #today,body.inmenu .toprow,body.inmenu .tbar,body.inmenu #prep{display:none!important}
   .mview{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--sub)}
   .mview b{color:var(--m,var(--ink));font-size:15px}
   .mview a,.mview b{white-space:nowrap}
-  @media (max-width:760px){ body.inmenu .tbar{flex:none!important} body.inmenu main#grid{grid-template-rows:none!important} .mview span{display:none} }
+
 
   /* ── 개편 5단계: 홈 보드 (지금 카드 · 오늘 챙길 것 · 이번 주 · 자주 쓰는 도구) ── */
   #today{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);max-height:none;min-height:clamp(250px,40vh,999px)}
@@ -438,6 +429,48 @@
     .tbar.fav main#grid.fav{display:flex;flex-wrap:nowrap!important;overflow-x:auto;gap:6px;min-height:0;scrollbar-width:none}
     .tbar.fav main#grid.fav .fv{flex:0 0 auto}
     .tbar.fav .gtab button{padding:4px 8px;font-size:12px}
+  }
+
+  /* ── 개편 6단계: 메뉴 화면 공통 틀 ── */
+  .mview.mf{display:flex;flex-direction:column;align-items:stretch;gap:clamp(8px,1.3vh,12px);flex:1 1 0;min-height:0;color:var(--ink);font-size:inherit}
+  .mfh{display:flex;align-items:center;gap:10px}.mfh h2{font-size:clamp(20px,3vh,26px);color:var(--m);display:flex;gap:6px;align-items:center}
+  .mfh .back{font-size:14px}.msea{margin-left:auto;font-size:12px;font-weight:700;color:var(--sub);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+  .mnow{flex:none}.mnow .tdy{border-top:5px solid var(--m);max-height:none;min-height:0}
+  .mnow #mnLesson .tdb{gap:2px}.mnow #mnLesson{border-top-color:var(--now)}
+  .mnow .tnow .cl{font-size:clamp(24px,4.2vh,38px)}.mnow .tmemo{display:none}
+  .mnow .tbtns{max-width:560px;margin:3px 0}.mnow .tbtn{padding:6px 10px}
+  .mnow .tpd{margin-top:4px}
+  .mng{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .mnc{display:flex;flex-direction:column;gap:5px;min-width:0}.mnk{font-weight:800;font-size:14px;color:var(--sub)}.mnk small{font-weight:600}
+  .mnv{font-size:clamp(14px,1.9vh,16px);line-height:1.55}.mnv b{color:var(--m,var(--ink))}.mnc .tbtn{flex:none;align-self:flex-start}
+  .tbtn.sm{display:inline-flex;font-size:13px;padding:3px 10px;border-radius:9px;cursor:pointer;font-family:inherit}
+  .mnl{display:flex;flex-direction:column}.mnbag{margin-top:2px}
+  .mnstu{font:inherit;font-size:16px;border:2px solid var(--m);border-radius:12px;padding:8px 12px;width:100%;max-width:420px;background:var(--card);color:var(--ink)}
+  .mnres{display:flex;flex-wrap:wrap;gap:6px;min-height:8px}
+  .mstu{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:5px 10px;cursor:pointer;color:var(--ink)}.mstu:hover{border-color:var(--m);background:var(--m-soft)}
+  .mnweek{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+  .mwd{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;padding:5px 9px;font-size:12.5px;color:var(--sub);background:var(--t-field,#fbfcfd)}
+  .mwd b{color:var(--ink);font-size:14px}.mwd.today{border-color:var(--m);background:var(--m-soft)}.mwd.past{opacity:.55}
+  .mtabs{display:flex;gap:6px;flex-wrap:wrap;flex:none}
+  .mtabs button{font:inherit;font-size:14px;font-weight:800;border:1px solid var(--line);background:var(--card);color:var(--sub);border-radius:999px;padding:6px 14px;cursor:pointer}
+  .mtabs button small{font-weight:700;opacity:.7}.mtabs button.on{background:var(--m);border-color:var(--m);color:var(--t-on,#fff)}
+  .mtiles{flex:1 1 0;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));grid-auto-rows:min-content;gap:8px;align-content:start;padding:2px}
+  .mgh{grid-column:1/-1;font-size:12.5px;font-weight:800;color:var(--m);margin-top:4px}
+  .mtw{position:relative;display:flex;min-width:0}.mtw .pin{top:4px;left:4px}.mtw:hover .pin{opacity:1}
+  .mt{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font:inherit;text-align:left;cursor:pointer;position:relative}
+  .mt:hover{border-color:var(--m);box-shadow:0 3px 10px rgba(30,60,100,.08)}.mt.dim{opacity:.55}
+  .mt .mi{flex:none;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;background:var(--m-soft,var(--accent-soft))}
+  .mt .mtx{display:flex;flex-direction:column;min-width:0;gap:1px}
+  .mt b{font-size:clamp(15px,2vh,17px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mt small{font-size:12.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mt small.warn{color:var(--danger);font-weight:700}
+  .mt.hot{border-color:color-mix(in srgb,var(--m) 45%,var(--line))}
+  .mt .mh{position:absolute;top:4px;right:6px;font-style:normal;font-size:10px;font-weight:800;color:var(--m);background:var(--m-soft);border-radius:999px;padding:0 6px}
+  @media (max-width:760px){
+    .mng{grid-template-columns:1fr}.mnweek{gap:3px}.mwd{padding:4px 5px;font-size:11px}
+    .mtiles{grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;flex:none}
+    .mt{flex-direction:column;align-items:flex-start;gap:6px;padding:9px 10px}.mt .mi{width:38px;height:38px;font-size:21px}
+    .mt small{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .mview.mf{flex:none}.msea{display:none}
   }
 </style>
 </head>
@@ -698,14 +731,70 @@
   function route(){
     var cur = curMenu(), inm = cur !== "home", mv = $("mview");
     document.body.classList.toggle("inmenu", inm); drawNav(); $("tbar").classList.remove("fav");
-    if(inm){
-      var m = ttMenu(cur); mv.hidden = false; mv.setAttribute("data-menu", cur);
-      mv.innerHTML = '<a class="back" href="#">← 홈</a><b></b><span></span>'; mv.querySelector("b").textContent = m.icon + " " + m.name;
-      mv.querySelector("span").textContent = "· 지금 카드와 묶음 탭은 다음 단계에서 들어옵니다";
-      mv.firstChild.onclick = function(ev){ ev.preventDefault(); go("home"); };
-      drawMenus(cur); window.scrollTo(0, 0);
-    } else { mv.hidden = true; drawTools(); }
+    if(inm){ mv.hidden = false; renderMenu(cur); window.scrollTo(0, 0); }
+    else { mv.hidden = true; mv.textContent = ""; drawTools(); }
   }
+  /* ── 개편 6단계: 메뉴 화면 공통 틀 — ① 머리말(위) ② 지금 카드 1개 ③ 묶음 탭 ④ 도구 타일(색 아이콘 + 이름 + 상태 한 줄)
+     도구 순서는 시기(학기초·학기중·학기말)에 맞는 도구(tools.js 의 season · months · exam)가 앞으로. 고른 묶음 탭은 이 기기에 기억(tt_ui_v1.mtab) */
+  function season(){ var m = new Date().getMonth() + 1; return [2, 3, 8].indexOf(m) >= 0 ? "start" : [6, 7, 11, 12].indexOf(m) >= 0 ? "end" : "mid"; }
+  var SEASON_N = {start: "학기초", mid: "학기중", end: "학기말"};
+  function hot(t){
+    var s = season(), cm = new Date().getMonth() + 1;
+    return (t.season || []).indexOf(s) >= 0 || (t.months || []).indexOf(cm) >= 0 || (t.exam && recMissing([]).indexOf(t) >= 0);
+  }
+  function menuGroups(m){
+    var pk = typeof ttPack === "function" ? ttPack() : null;
+    return (m.groups || []).map(function(g){
+      var L = TT_TOOLS.filter(function(t){ return t.menu === m.id && t.group === g.id && okTool(t); });
+      L = L.filter(hot).concat(L.filter(function(t){ return !hot(t); }));          // 시기에 맞는 도구를 앞으로
+      var items = L.map(function(t){ return {t: t, hot: hot(t)}; });
+      if(m.id === "school" && g.id === "board" && !TT.classroom){
+        var B0 = TT.store.get("tt_board_v1", null) || {};
+        items.unshift(B0.url && /^https:\/\/script\.google\.com\//.test(B0.url) ? {x: {icon: "📅", name: "주간·월간 업무판", st: "새 창으로 열기", href: B0.url}} : {x: {icon: "🔗", name: "업무판 연결", st: "학교 업무판 주소 넣기", fn: clickMenu("mBoard")}});
+      }
+      if(m.id === "class" && g.id === "subject") items.push({x: {icon: "🔗", name: "교과 자료 연결", st: (pk ? pk.name + " 공개 자료 · " : "") + "내 링크 " + (((TT.store.get("tt_subject_links_v1", null) || {}).list || []).length) + "개", fn: openLinks}});
+      return {g: {id: g.id, name: g.id === "subject" && pk ? g.name + " · " + pk.name : g.name}, items: items};
+    }).filter(function(x){ return x.items.length; });
+  }
+  function tile(it){
+    var t = it.t, x = it.x, el = document.createElement(t && !t.file ? "a" : x && x.href ? "a" : "button");
+    el.className = "mt" + (it.hot ? " hot" : "") + (t && t.home && !hasHome ? " dim" : "");
+    if(t){ el.dataset.tid = t.id; if(t.file){ el.type = "button"; el.onclick = function(){ askDownload(t); }; } else el.href = t.href; el.title = t.desc; }
+    else if(x.href){ el.href = x.href; el.target = "_blank"; el.rel = "noopener"; } else { el.type = "button"; el.onclick = x.fn; }
+    el.innerHTML = '<span class="mi"></span><span class="mtx"><b></b><small></small></span>' + (it.hot ? '<em class="mh">' + SEASON_N[season()] + "</em>" : "");
+    el.querySelector(".mi").textContent = t ? t.icon : x.icon; el.querySelector("b").textContent = t ? t.name : x.name;
+    var st = t ? (window.TT_TODAY && TT_TODAY.status ? TT_TODAY.status(t.id) : "") || t.desc : x.st;
+    var sm = el.querySelector("small"); sm.textContent = st; if(/^⚠/.test(st)) sm.className = "warn";
+    if(t && t.home && !hasHome) el.title = "우리 반(★)을 지정하면 쓸 수 있어요 · 명렬표에서 지정";
+    var w = document.createElement("div"); w.className = "mtw"; w.appendChild(el); if(t) w.appendChild(pinBtn(t.id));
+    return w;
+  }
+  function renderMenu(cur){
+    var mv = $("mview"), m = ttMenu(cur); if(!m) return;
+    var G = menuGroups(m), u = TT.store.get(UIK, {}) || {}, tab = (u.mtab || {})[cur] || "all";
+    if(tab !== "all" && !G.some(function(x){ return x.g.id === tab; })) tab = "all";
+    mv.setAttribute("data-menu", cur); mv.className = "mview mf";
+    var h = '<div class="mfh"><a class="back" href="#">← 홈</a><h2><span>' + m.icon + "</span> " + m.name + '</h2><span class="msea">📅 ' + SEASON_N[season()] + " 순서</span></div>"
+      + '<div class="mnow">' + (window.TT_TODAY && TT_TODAY.menuNow ? TT_TODAY.menuNow(cur) : "") + "</div>"
+      + '<div class="mtabs" role="tablist">' + (G.length > 1 ? '<button type="button" role="tab" data-tab="all">전체</button>' : "")
+      + G.map(function(x){ return '<button type="button" role="tab" data-tab="' + x.g.id + '">' + x.g.name + " <small>" + x.items.length + "</small></button>"; }).join("") + "</div>"
+      + '<div class="mtiles"></div>';
+    mv.innerHTML = h;
+    mv.querySelector(".back").onclick = function(ev){ ev.preventDefault(); go("home"); };
+    var tb = mv.querySelector(".mtabs"), box = mv.querySelector(".mtiles");
+    Array.prototype.forEach.call(tb.querySelectorAll("button"), function(b){
+      var on = b.dataset.tab === tab || (G.length === 1); b.classList.toggle("on", on); b.setAttribute("aria-selected", on);
+      b.onclick = function(){ var v = TT.store.get(UIK, {}) || {}; v.mtab = v.mtab || {}; v.mtab[cur] = b.dataset.tab; TT.store.set(UIK, v); renderMenu(cur); };
+    });
+    G.forEach(function(x){
+      if(tab !== "all" && x.g.id !== tab) return;
+      if(tab === "all" && G.length > 1){ var hd = document.createElement("div"); hd.className = "mgh"; hd.textContent = x.g.name; box.appendChild(hd); }
+      x.items.forEach(function(it){ box.appendChild(tile(it)); });
+    });
+    if(cur === "school" && tab === "lib" && window.TT_LIBD) TT_LIBD.mount(box);   // 8단계: 학교 자료실(드라이브) 화면
+  }
+  window.addEventListener("tt-menu-refresh", function(){ if(curMenu() !== "home") renderMenu(curMenu()); });
+  window.addEventListener("tt-mytodo-change", function(){ if(curMenu() !== "home") renderMenu(curMenu()); });
   window.addEventListener("hashchange", route);
   window.addEventListener("popstate", route);
 
@@ -783,7 +872,7 @@
     $("ghHint").textContent = P.length ? "📌 고정 " + P.length + "개 · 나머지는 많이 쓴 순서" : "많이 쓴 순서로 바뀌어요 · 📌로 고정";
   }
   function drawTools(){
-    if(typeof curMenu === "function" && typeof NAV !== "undefined" && curMenu() !== "home"){ drawMenus(curMenu()); return; }   // 메뉴 화면에서 📌 등을 누른 뒤
+    if(typeof curMenu === "function" && typeof NAV !== "undefined" && curMenu() !== "home"){ renderMenu(curMenu()); return; }   // 메뉴 화면에서 📌 등을 누른 뒤
     var u = tu(), v = u.tools.view === "all" ? "all" : "fav";
     if(typeof TT_TOOLS === "undefined"){ drawMenus(); return; }
     var tot = TT_TOOLS.filter(okTool).length; $("gAllN").textContent = tot;
