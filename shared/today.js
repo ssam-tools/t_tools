@@ -407,7 +407,7 @@
     if(typeof TT_TOOLS === "undefined") return [];
     var d = new Date(), cm = d.getMonth() + 1, td = ymd(d), C = TT.store.get("tt_calendar_v1", null), ev = C && Array.isArray(C.events) ? C.events : [];
     var ex = ev.filter(function(e){ return e.k === "exam" && e.d >= td; }).map(function(e){ return dayDiff(e.d, td); }).sort(function(a, b){ return a - b; })[0];
-    return TT_TOOLS.filter(function(t){ return t.ready && t.href && ((t.months || []).indexOf(cm) >= 0 || (t.exam && ex != null && ex <= t.exam)); });
+    return TT_TOOLS.filter(function(t){ return t.ready && t.href && (typeof ttToolShown !== "function" || ttToolShown(t)) && ((t.months || []).indexOf(cm) >= 0 || (t.exam && ex != null && ex <= t.exam)); });
   }
   function markRec(){
     var g = document.getElementById("grid"); if(!g) return;
@@ -545,7 +545,7 @@
       }
     }
     var T = m0 ? [] : (typeof TT_TOOLS === "undefined" ? [] : TT_TOOLS).filter(function(t){
-      return t.ready && t.href && (t.name + " " + t.short + " " + t.desc + " " + t.id).toLowerCase().indexOf(low) >= 0; }).slice(0, 5)
+      return t.ready && t.href && (typeof ttToolShown !== "function" || ttToolShown(t)) && (t.name + " " + t.short + " " + (t.old || "") + " " + t.desc + " " + t.id).toLowerCase().indexOf(low) >= 0; }).slice(0, 5)
       .map(function(t){ return {ic: t.icon, tx: esc(t.name), sub: "도구", go: function(){ if(TT.noteTool) TT.noteTool(t.id); location.href = t.href; }}; });
     if(!m0 && typeof TTFill !== "undefined") T = T.concat(TTFill.all().filter(function(t){ return (t.n + " " + t.id).toLowerCase().indexOf(low) >= 0; }).slice(0, 3)   // 17단계: 문서 틀 바로 열기
       .map(function(t){ return {ic: t.ic || "📄", tx: esc(t.n) + " <small>자동 채움</small>", sub: "문서 틀", go: function(){ location.href = t.kind === "link" ? "apps/tardy/?tab=report" : "apps/ai/?f=" + encodeURIComponent(t.id); }}; }));

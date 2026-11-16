@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.28.0";
+  var VERSION = "0.29.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -534,27 +534,32 @@ var TT = (function(){
       + ".tt-sheet h3{grid-column:1/-1;font-size:15px;margin:0 0 2px;color:var(--t-ink,#1d2733);font-family:var(--t-font,'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif)}"
       + ".tt-sheet .tt-ri{min-height:66px;border:1px solid var(--t-line,#dde3ea)}.tt-sheet .in{max-height:88vh;overflow:auto}"
       + ".tt-sheet .tt-ri b{font-size:12px}"
+      + ".tt-grp[data-menu]{background:var(--m-soft,#eef4fb)}.tt-grp[data-menu] .tt-gh{color:var(--m,var(--t-accent,#2f6fb5))}"
       + ".tt-sheet .tt-grp{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:6px}.tt-sheet .tt-gh{grid-column:1/-1;flex-direction:row;gap:6px;justify-content:flex-start;padding:0 4px}.tt-sheet .tt-ri.tt-sub{min-height:56px;margin:0}"
       + "@media print{.tt-rail,.tt-navbtn,.tt-sheet{display:none!important}html.tt-hasnav body{margin-left:0!important}}";
     function attr(v){ return String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
-    /* 갈래(TT_CATS) → 도구. 지금 갈래는 펼쳐 모든 도구를, 다른 갈래는 아이콘 하나(누르면 그 갈래 첫 도구)로. all=true면 모두 펼침(좁은 화면 목록) */
+    /* 개편 2단계: 메뉴(TT_MENUS) → 묶음 → 도구. 지금 메뉴는 펼쳐 모든 도구를, 다른 메뉴는 아이콘 하나(누르면 그 메뉴 첫 도구)로. all=true면 모두 펼침(좁은 화면 목록)
+       '교과만' 선생님(학교·선생님 설정)에게는 우리 반 메뉴를 숨깁니다(지금 보고 있는 도구는 그대로 둠). */
     function items(all){
       var hereId = here === "tardy" && /[?&]tab=counsel/.test(location.search) ? "counsel" : here;
-      var me = TT_TOOLS.filter(function(t){ return t.id === hereId; })[0], curCat = me ? me.cat : null;
+      var me = TT_TOOLS.filter(function(t){ return t.id === hereId; })[0], curMenu = me ? me.menu : null;
       function ok(t){ return t.ready && t.href && !(classroom && !t.room); }   // 내려받는 프로그램은 첫 화면에서, 교실 기기는 수업용만
+      function shown(mid){ return mid === curMenu || typeof ttMenuShown !== "function" || ttMenuShown(mid); }
       function link(t, cls, label){
         var on = t.id === hereId;
         return '<a class="tt-ri' + cls + (on ? ' on' : '') + '" href="' + BASE + t.href + '" title="' + attr(t.name) + '"' + (on ? ' aria-current="page"' : '') + '><span>' + t.icon + '</span><b>' + attr(label) + '</b></a>';
       }
       var h = '<a class="tt-ri tt-home" href="' + BASE + '" title="첫 화면"><span>🍎</span><b>쌤 노트</b></a>';
-      (typeof TT_CATS !== "undefined" ? TT_CATS : []).forEach(function(c){
-        var L = TT_TOOLS.filter(function(t){ return t.cat === c.id && ok(t); });
+      var MS = typeof TT_MENUS !== "undefined" ? TT_MENUS : [];
+      MS.forEach(function(c){
+        if(c.id === "home" || !shown(c.id)) return;
+        var L = TT_TOOLS.filter(function(t){ return t.menu === c.id && ok(t); });
         if(!L.length) return;
-        if(all || c.id === curCat){
-          h += '<div class="tt-grp"><div class="tt-gh"><span>' + c.icon + '</span><b>' + attr(c.name) + '</b></div>';
+        if(all || c.id === curMenu){
+          h += '<div class="tt-grp" data-menu="' + attr(c.id) + '"><div class="tt-gh"><span>' + (c.icon === "⋯" ? "⚙️" : c.icon) + '</span><b>' + attr(c.name) + '</b></div>';
           L.forEach(function(t){ h += link(t, " tt-sub", t.short || t.name); });
           h += '</div>';
-        } else h += '<a class="tt-ri" href="' + BASE + L[0].href + '" title="' + attr(c.name + ": " + L.map(function(t){ return t.name; }).join(", ")) + '"><span>' + c.icon + '</span><b>' + attr(c.name) + '</b></a>';
+        } else h += '<a class="tt-ri" data-menu="' + attr(c.id) + '" href="' + BASE + L[0].href + '" title="' + attr(c.name + ": " + L.map(function(t){ return t.name; }).join(", ")) + '"><span>' + (c.icon === "⋯" ? "⚙️" : c.icon) + '</span><b>' + attr(c.name) + '</b></a>';
       });
       if(!classroom) h += '<button type="button" class="tt-ri tt-rec" data-tt="rec" title="학생 기록 한 줄 남기기 (생기부 자료)"><span>✍️</span><b>학생 기록</b></button>';
       var b = store.get("tt_board_v1", {}) || {};
@@ -562,7 +567,16 @@ var TT = (function(){
         h += '<a class="tt-ri tt-bd" href="' + attr(b.url) + '" target="_blank" rel="noopener" title="학교 업무판 (새 창)"><span>📅</span><b>업무판</b></a>';
       return h;
     }
+    /* 바뀐 도구 이름(tools.js 의 old → name)을 도구 화면 제목(h1·창 제목)에 반영합니다. 도구 파일은 고치지 않습니다. */
+    function rename(){
+      var t = TT_TOOLS.filter(function(x){ return x.id === here; })[0];
+      if(!t || !t.old || t.old === t.name) return;
+      if(document.title.indexOf(t.old) === 0) document.title = t.name + document.title.slice(t.old.length);
+      var h1 = document.querySelector("header h1, h1");
+      if(h1) Array.prototype.forEach.call(h1.childNodes, function(n){ if(n.nodeType === 3 && n.nodeValue.indexOf(t.old) >= 0) n.nodeValue = n.nodeValue.replace(t.old, t.name); });
+    }
     function build(){
+      try{ rename(); }catch(e){}
       var st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st);
       document.documentElement.classList.add("tt-hasnav");
       var rail = document.createElement("nav"); rail.className = "tt-rail"; rail.setAttribute("aria-label", "도구 이동");
@@ -580,7 +594,7 @@ var TT = (function(){
       });
     }
     function start(){
-      if(typeof TT_TOOLS !== "undefined" && typeof TT_CATS !== "undefined") return build();
+      if(typeof TT_TOOLS !== "undefined" && typeof TT_MENUS !== "undefined" && typeof ttMenuShown === "function") return build();
       var s = document.createElement("script"); s.src = BASE + "shared/tools.js?v=" + VERSION + (typeof TT_TOOLS !== "undefined" ? "." + Date.now() : "");   // 예전 목록이 남아 있으면 새로 받음
       s.onload = build; s.onerror = build; document.head.appendChild(s);
     }
@@ -636,7 +650,7 @@ var TT = (function(){
   /* 보관함 동기화 화면(설정창·교실 모드·상태 표시)은 따로 불러옵니다 */
   /* ---------- 학교·선생님 설정 ("tt_school_v1") ----------
      학교 이름은 여기 한 곳에만 넣으면 첫 화면 제목, 결석신고서, 학부모 문자에 함께 쓰입니다. */
-  var SCH_TXT = {principal: 10, addr: 60, tel: 20, comci: 12, subject: 12, hb: 16};   // 14단계: 교장·주소·전화·컴시간 학교 코드·내 교과
+  var SCH_TXT = {principal: 10, addr: 60, tel: 20, comci: 12, subject: 12, hb: 16, role: 10};   // 개편 2단계: role "subject" = 교과만(우리 반 메뉴 숨김), "homeroom"·"" = 담임   // 14단계: 교장·주소·전화·컴시간 학교 코드·내 교과
   var school = {
     load: function(){
       var o = store.get("tt_school_v1", null) || {};
