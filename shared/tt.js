@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.30.0";
+  var VERSION = "0.31.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -559,7 +559,7 @@ var TT = (function(){
           h += '<div class="tt-grp" data-menu="' + attr(c.id) + '"><div class="tt-gh"><span>' + (c.icon === "⋯" ? "⚙️" : c.icon) + '</span><b>' + attr(c.name) + '</b></div>';
           L.forEach(function(t){ h += link(t, " tt-sub", t.short || t.name); });
           h += '</div>';
-        } else h += '<a class="tt-ri" data-menu="' + attr(c.id) + '" href="' + BASE + L[0].href + '" title="' + attr(c.name + ": " + L.map(function(t){ return t.name; }).join(", ")) + '"><span>' + (c.icon === "⋯" ? "⚙️" : c.icon) + '</span><b>' + attr(c.name) + '</b></a>';
+        } else h += '<a class="tt-ri" data-menu="' + attr(c.id) + '" href="' + BASE + (c.id === "settings" ? L[0].href : "#" + c.id) + '" title="' + attr(c.name + ": " + L.map(function(t){ return t.name; }).join(", ")) + '"><span>' + (c.icon === "⋯" ? "⚙️" : c.icon) + '</span><b>' + attr(c.name) + '</b></a>';
       });
       if(!classroom) h += '<button type="button" class="tt-ri tt-rec" data-tt="rec" title="학생 기록 한 줄 남기기 (생기부 자료)"><span>✍️</span><b>학생 기록</b></button>';
       var b = store.get("tt_board_v1", {}) || {};

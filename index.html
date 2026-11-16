@@ -316,17 +316,68 @@
   .fopt[data-f="neat"] b,.fopt[data-f="neat"] span{font-family:"SN Gowun Batang","함초롬바탕","바탕",serif}
   .fopt[data-f="cute"] b,.fopt[data-f="cute"] span{font-family:"SN Jua","HY엽서M","Malgun Gothic",sans-serif;font-weight:400}
   @media (max-width:760px){ .tdrow{height:auto} .tbar.fav{flex-wrap:wrap} .tbar.fav main#grid.fav{flex-wrap:wrap} }
+
+  /* ── 개편 4단계: 머리말 · 메뉴 막대 · 시작 준비 ── */
+  header .hl{display:flex;align-items:baseline;gap:6px 16px;flex-wrap:wrap;min-width:0}
+  header .lead{margin-top:0;font-size:clamp(13.5px,1.9vh,15.5px);font-weight:700;color:var(--sub)}
+  header .lead .dl{color:var(--ink)}header .lead .tnext{margin-left:6px}
+  .mnav{display:flex;gap:4px;z-index:25;font-family:var(--font)}
+  .mnav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:var(--sub);border-radius:12px;font-size:11.5px;font-weight:800;line-height:1.1;-webkit-tap-highlight-color:transparent}
+  .mnav a span{display:block;font-size:22px;line-height:26px;height:26px}
+  .mnav a b{display:block;font-weight:800;margin-top:3px}
+  .mnav a:hover{background:var(--m-soft,var(--accent-soft));color:var(--m,var(--accent))}
+  .mnav a.on{background:var(--m,var(--accent));color:var(--t-on,#fff)}
+  .mnav a[data-menu="home"]{--m:var(--t-now,#2f6fb5)}
+  @media (min-width:761px){
+    body{padding-left:calc(84px + clamp(10px,1.6vw,22px))}
+    .mnav{position:fixed;left:0;top:0;bottom:0;width:84px;flex-direction:column;padding:12px 8px;background:var(--card);border-right:1px solid var(--line)}
+    .mnav a{height:64px}
+    .mnav .sp{flex:1}
+  }
+  @media (max-width:760px){
+    body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+    .mnav{position:fixed;left:0;right:0;bottom:0;padding:5px 6px calc(5px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:1px solid var(--line);box-shadow:0 -2px 10px rgba(30,60,100,.08)}
+    .mnav a{flex:1;height:58px}
+    .mnav .sp,.mnav .nx{display:none}
+    header{flex-direction:row!important;align-items:flex-start!important;flex-wrap:wrap}
+    header .hl{flex:1 1 0;flex-direction:column;gap:2px}
+    h1.ttl{font-size:21px}
+    .qrec .ql{display:none}.qrec{padding:8px 10px;font-size:16px}
+    .tbar{flex:none}                       /* 아래 안내 줄이 도구 칸과 겹치지 않게 */
+    body.inmenu .tbar{flex:none} body.inmenu .mcols{grid-template-columns:minmax(0,1fr)}
+    body.inmenu .mcol{gap:6px}
+  }
+  .prep{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;background:var(--card);border:1px dashed var(--accent);border-radius:14px;padding:7px 10px;font-size:13.5px}
+  .prep b{color:var(--accent);white-space:nowrap}
+  .prep .pi{font:inherit;font-size:13px;font-weight:700;border:0;border-radius:999px;padding:4px 11px;background:var(--accent-soft);color:var(--accent);text-decoration:none;cursor:pointer;white-space:nowrap}
+  .prep .pi:hover{background:var(--accent);color:var(--t-on,#fff)}
+  .prep .px{margin-left:auto;font:inherit;font-size:12px;border:0;background:none;color:var(--sub);cursor:pointer}
+  /* 메뉴 화면 (6단계에서 공통 틀로 바꿈 — 지금은 그 메뉴의 도구를 크게) */
+  body.inmenu #today,body.inmenu .toprow,body.inmenu #gridHead,body.inmenu #prep{display:none!important}
+  body.inmenu .tbar{flex:1 1 0;background:none;border:0;padding:0}
+  body.inmenu main#grid{align-content:stretch}
+  body.inmenu main#grid.mv{grid-template-columns:minmax(0,1fr)!important;min-height:0}
+  body.inmenu .mn{grid-column:auto}
+  body.inmenu .mn .ch .cn{font-size:clamp(20px,3vh,26px)}
+  body.inmenu .mn .tb b{font-size:clamp(15px,2vh,18px)}
+  body.inmenu .mn .tb span{font-size:clamp(20px,2.8vh,26px)}
+  .mview{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--sub)}
+  .mview b{color:var(--m,var(--ink));font-size:15px}
+  .mview a,.mview b{white-space:nowrap}
+  @media (max-width:760px){ body.inmenu .tbar{flex:none!important} body.inmenu main#grid{grid-template-rows:none!important} .mview span{display:none} }
 </style>
 </head>
 <body>
+<!-- 개편 4단계: 머리말 = 쌤 노트 + 날짜·교시 한 줄 + 찾기·학생 기록·⋯ / 메뉴 막대(PC 왼쪽 · 휴대폰 아래 탭) / 시작 준비 칸 -->
+<nav id="mnav" class="mnav" aria-label="메뉴"></nav>
 <header>
-  <div>
-    <h1 class="ttl"><img id="schLogo" class="slogo" alt="학교 로고" hidden><span id="appTitle">🍎 쌤 노트</span> <button type="button" class="sch" id="schChip" hidden>🏷️ 학교 이름 넣기</button></h1>
-    <p class="lead"><span id="leadTxt">학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다.</span> <a class="home" id="homeChip" href="apps/roster/"></a><span id="alerts"></span></p>
+  <div class="hl">
+    <h1 class="ttl"><img id="schLogo" class="slogo" alt="학교 로고" hidden><span id="appTitle">🍎 쌤 노트</span></h1>
+    <p class="lead"><span id="leadTxt"></span><a class="home" id="homeChip" href="apps/roster/" hidden></a><span id="alerts"></span></p>
   </div>
   <div class="bar">
-    <button type="button" class="qrec" id="qFind" hidden title="학생·도구 찾기, 한 줄로 할 일·종례 바구니·학생 기록 넣기 (Ctrl+K)">🔎 찾기·입력 <small style="opacity:.6">Ctrl+K</small></button>
-    <button type="button" class="qrec" id="qRec" title="학생을 골라 본 것·한 것을 한 줄 남깁니다 (생기부 자료)">✍️ 학생 기록</button>
+    <button type="button" class="qrec" id="qFind" hidden title="학생·도구 찾기, 한 줄로 할 일·종례 바구니·학생 기록 넣기 (Ctrl+K)">🔎<span class="ql"> 찾기·입력 <small style="opacity:.6">Ctrl+K</small></span></button>
+    <button type="button" class="qrec" id="qRec" title="학생을 골라 본 것·한 것을 한 줄 남깁니다 (생기부 자료)">✍️<span class="ql"> 학생 기록</span></button>
     <details class="more" id="more">
       <summary aria-label="더 보기">⋯</summary>
       <div class="menu">
@@ -346,6 +397,9 @@
     </details>
   </div>
 </header>
+
+<section id="prep" class="prep" hidden aria-label="시작 준비"></section>
+<section id="mview" class="mview" hidden aria-live="polite"></section>
 
 <div id="today" class="tdrow" aria-label="오늘"></div>
 
@@ -474,11 +528,11 @@
     row.appendChild(a); return row;
   }
   function clickMenu(id){ return function(){ var b = $(id); if(b) b.click(); }; }
-  function drawMenus(){
+  function drawMenus(only){                                                  // only: 메뉴 화면(개편 4단계)에서 그 메뉴 하나만 크게
     try{
-      grid.textContent = ""; N = 0; grid.classList.add("mv"); var span = 0;
+      grid.textContent = ""; N = 0; grid.classList.add("mv"); grid.classList.remove("fav"); var span = 0;
       TT_MENUS.forEach(function(m){
-        if(m.id === "home" || !menuShown(m.id)) return;
+        if(m.id === "home" || !menuShown(m.id) || (only && m.id !== only)) return;
         var groups = (m.groups || []).map(function(g){
           var rows = TT_TOOLS.filter(function(t){ return t.menu === m.id && t.group === g.id && t.ready && !t.in && (!TT.classroom || t.room) && (!t.subject || typeof ttToolShown !== "function" || ttToolShown(t)); }).map(toolRow);
           if(m.id === "school" && g.id === "board" && !TT.classroom){            // 주간·월간 업무판 (연결했을 때)
@@ -499,7 +553,12 @@
           return {g: g, rows: rows};
         }).filter(function(x){ return x.rows.length; });
         if(!groups.length) return;
-        var cols = groups.length > 1 && groups.reduce(function(n, x){ return n + x.rows.length; }, 0) > 8 ? 2 : 1;
+        var nr = groups.reduce(function(n, x){ return n + x.rows.length; }, 0);
+        var cols = only ? (groups.length > 1 ? groups.length : Math.min(3, Math.ceil(nr / 4))) : groups.length > 1 && nr > 8 ? 2 : 1;
+        if(only && groups.length === 1 && cols > 1){                             // 묶음이 하나면 단추를 칸마다 나눔
+          var per = Math.ceil(nr / cols), R0 = groups[0].rows; groups = [];
+          for(var q = 0; q < cols; q++) groups.push({g: {name: ""}, rows: R0.slice(q * per, q * per + per), solo: true});
+        }
         var el = document.createElement("section"); el.className = "cat mn" + (cols > 1 ? " w2" : ""); el.id = "menu-" + m.id; el.setAttribute("data-menu", m.id);
         el.innerHTML = '<div class="ch"><span class="ci"></span><div><div class="cn"></div></div></div>';
         el.querySelector(".ci").textContent = m.icon === "⋯" ? "⚙️" : m.icon; el.querySelector(".cn").textContent = m.name;
@@ -509,8 +568,8 @@
         for(var i = 0; i < cols; i++){ var c = document.createElement("div"); c.className = "mcol"; box.appendChild(c); C.push(c); H.push(0); }
         groups.forEach(function(x){                                            // 묶음을 짧은 칸에 차례로 (수업: 수업하기 | 평가 + 교과 칸)
           var k = H.indexOf(Math.min.apply(null, H)), col = C[k];
-          if(groups.length > 1){ var n = document.createElement("div"); n.className = "gpn"; n.textContent = x.g.name; col.appendChild(n); }
-          x.rows.forEach(function(r){ col.appendChild(r); }); H[k] += x.rows.length + (groups.length > 1 ? .5 : 0);
+          if(groups.length > 1 && !x.solo){ var n = document.createElement("div"); n.className = "gpn"; n.textContent = x.g.name; col.appendChild(n); }
+          x.rows.forEach(function(r){ col.appendChild(r); }); H[k] += x.rows.length + (groups.length > 1 ? .5 : 0) + (x.solo ? 1e-3 : 0);
         });
         grid.appendChild(el); span += cols;
       });
@@ -533,6 +592,43 @@
     grid.style.setProperty("--rh", Math.max(30, Math.floor(rh)) + "px");
   }
   var fitT; window.addEventListener("resize", function(){ clearTimeout(fitT); fitT = setTimeout(fitRows, 120); });
+
+  /* ── 개편 4단계: 메뉴 막대 (PC 왼쪽 · 휴대폰 아래 탭 5칸) — 한 번 누르면 그 메뉴 화면(#class 처럼 주소 끝 #) ──
+     메뉴 화면은 지금은 그 메뉴의 도구 카드를 크게 보여 줍니다(6단계에서 지금 카드·묶음 탭·상태 줄이 있는 공통 틀로). */
+  var NAV = ["home", "class", "homeroom", "student", "school"];
+  function curMenu(){ var h = (location.hash || "").replace(/^#/, ""); return NAV.indexOf(h) > 0 && menuShown(h) ? h : "home"; }
+  function drawNav(){
+    var nav = $("mnav"), cur = curMenu(); nav.textContent = "";
+    NAV.forEach(function(id){
+      if(id !== "home" && !menuShown(id)) return;
+      var m = typeof ttMenu === "function" ? ttMenu(id) : null; if(!m) return;
+      if(TT.classroom && id !== "home" && !TT_TOOLS.some(function(t){ return t.menu === id && t.room && t.ready; })) return;
+      var a = document.createElement("a"); a.href = id === "home" ? "#" : "#" + id; a.setAttribute("data-menu", id);
+      a.innerHTML = "<span></span><b></b>"; a.firstChild.textContent = m.icon; a.lastChild.textContent = m.name;
+      if(id === cur){ a.className = "on"; a.setAttribute("aria-current", "page"); }
+      a.onclick = function(ev){ ev.preventDefault(); go(id); };
+      nav.appendChild(a);
+    });
+    var sp = document.createElement("i"); sp.className = "sp"; nav.appendChild(sp);
+  }
+  function go(id){
+    if(id === "home"){ if(location.hash){ history.pushState(null, "", location.pathname + location.search); } }
+    else if(location.hash !== "#" + id){ location.hash = id; return; }   // hashchange 가 다시 그림
+    route();
+  }
+  function route(){
+    var cur = curMenu(), inm = cur !== "home", mv = $("mview");
+    document.body.classList.toggle("inmenu", inm); drawNav(); $("tbar").classList.remove("fav");
+    if(inm){
+      var m = ttMenu(cur); mv.hidden = false; mv.setAttribute("data-menu", cur);
+      mv.innerHTML = '<a class="back" href="#">← 홈</a><b></b><span></span>'; mv.querySelector("b").textContent = m.icon + " " + m.name;
+      mv.querySelector("span").textContent = "· 지금 카드와 묶음 탭은 다음 단계에서 들어옵니다";
+      mv.firstChild.onclick = function(ev){ ev.preventDefault(); go("home"); };
+      drawMenus(cur); window.scrollTo(0, 0);
+    } else { mv.hidden = true; drawTools(); }
+  }
+  window.addEventListener("hashchange", route);
+  window.addEventListener("popstate", route);
 
   /* ── 6단계: 자주 쓰는 도구 8개 (직접 📌 고정 + 사용 횟수로 자동) ↔ 전체 도구(갈래 카드 5장) ──
      사용 횟수는 첫 화면에서 도구를 열 때(단추·찾기·오늘 칸 링크) 셉니다 → tt_ui_v1.tools = {use:{id:{n,t}}, pin:[id], view:"fav"|"all"}
@@ -608,6 +704,7 @@
     $("ghHint").textContent = P.length ? "📌 고정 " + P.length + "개 · 나머지는 많이 쓴 순서" : "많이 쓴 순서로 바뀌어요 · 📌로 고정";
   }
   function drawTools(){
+    if(typeof curMenu === "function" && typeof NAV !== "undefined" && curMenu() !== "home"){ drawMenus(curMenu()); return; }   // 메뉴 화면에서 📌 등을 누른 뒤
     var u = tu(), v = u.tools.view === "all" ? "all" : "fav";
     if(typeof TT_TOOLS === "undefined"){ drawMenus(); return; }
     var tot = TT_TOOLS.filter(okTool).length; $("gAllN").textContent = tot;
@@ -622,14 +719,35 @@
   });
   if(typeof TT_MENUS === "undefined" || typeof ttMenuShown !== "function"){
     var fix = document.createElement("script"); fix.src = "shared/tools.js?v=" + Date.now();
-    fix.onload = function(){ if(typeof ttFillNames === "function") ttFillNames(); drawTools(); }; fix.onerror = drawTools; document.head.appendChild(fix);
-  } else drawTools();
+    fix.onload = function(){ if(typeof ttFillNames === "function") ttFillNames(); route(); }; fix.onerror = route; document.head.appendChild(fix);
+  } else route();
 
   /* 쌤 노트 제목: 학교 이름은 "학교·선생님 설정" 한 곳에서 (TT.school) */
   function showTitle(){
     var t = TT.school.title(), lg = TT.school.load().logo; $("appTitle").textContent = (lg ? "" : "🍎 ") + t; document.title = t;
     $("schLogo").hidden = !lg; if(lg) $("schLogo").src = lg;
-    $("schChip").hidden = !!TT.school.load().name || !!TT.classroom;
+    renderPrep();
+  }
+  /* 시작 준비: 설정이 덜 됐을 때만 머리말 아래에 한 줄 (학교 이름 · 세팅 파일/명렬표 · 우리 반 · 내 시간표). ✕ 를 누르면 이 기기에서 숨김 */
+  function renderPrep(){
+    var box = $("prep"); if(!box) return;
+    var u = TT.store.get("tt_ui_v1", {}) || {}, sc = TT.school.load(), d = TT.roster.load(), L = [];
+    if(!TT.classroom && !u.prepHide){
+      if(!sc.name) L.push({t: "🏷️ 학교 이름 넣기", fn: openSchool});
+      if(!TT.roster.has(d)) L.push({t: "🧳 학교 세팅 파일 불러오기 (또는 명렬표에 나이스 파일)", href: "apps/setup/"});
+      else if(!TT.roster.home(d) && !(typeof ttIsSubjectOnly === "function" && ttIsSubjectOnly())) L.push({t: "★ 우리 반 지정 (담임이 아니면 설정에서 '교과만')", href: "apps/roster/"});
+      if(!TT.timetable.has()) L.push({t: "🕘 " + TN("timetable", "", "내 시간표") + " 넣기", href: "apps/timetable/"});
+    }
+    box.textContent = ""; box.hidden = !L.length; if(!L.length) return;
+    var h = document.createElement("b"); h.textContent = "🚀 시작 준비"; box.appendChild(h);
+    L.forEach(function(x, i){
+      var a = document.createElement(x.href ? "a" : "button"); a.className = "pi"; a.textContent = (i + 1) + ". " + x.t;
+      if(x.href) a.href = x.href; else { a.type = "button"; a.onclick = x.fn; }
+      box.appendChild(a);
+    });
+    var c = document.createElement("button"); c.type = "button"; c.className = "px"; c.textContent = "✕ 숨기기"; c.title = "시작 준비 칸 숨기기 (⋯ → 처음 사용 안내에서 다시 보기)";
+    c.onclick = function(){ var v = TT.store.get("tt_ui_v1", {}) || {}; v.prepHide = true; TT.store.set("tt_ui_v1", v); renderPrep(); fitRows(); };
+    box.appendChild(c);
   }
   function openSchool(){
     var sc = TT.school.load(); $("sName").value = sc.name; $("sTeacher").value = sc.teacher;
@@ -667,7 +785,6 @@
   };
   function prevSchool(){ var n = $("sName").value.replace(/\s+/g, "").replace(/학교$/, ""); $("sPrev").textContent = "제목 미리보기: 🍎 " + (n ? n + " " : "") + "쌤 노트"; }
   $("sName").oninput = prevSchool;
-  $("schChip").onclick = openSchool;
   $("sCancel").onclick = function(){ $("dlgSchool").close(); };
   $("fSchool").onsubmit = function(e){ e.preventDefault(); var rl = document.querySelector('input[name="sRole"]:checked');
     var pk0 = typeof ttPackId === "function" ? ttPackId() : "", pk1 = $("sPack").value || "none";
@@ -766,6 +883,7 @@
 
   /* 명렬표에서 지정한 우리 반(담임)을 보여 줍니다. */
   function showHome(){
+    renderPrep(); $("homeChip").hidden = true; return;   // 개편 4단계: 우리 반 안내는 '시작 준비' 칸으로
     var chip = $("homeChip"), d = TT.roster.load(), h = TT.roster.home(d);
     chip.href = "apps/roster/"; chip.hidden = false;
     if(h){ chip.textContent = "★ 우리 반: " + h.name; chip.className = "home"; }
@@ -788,7 +906,7 @@
   /* 메뉴 */
   function closeMenu(){ $("more").open = false; }
   document.addEventListener("click", function(e){ if(!$("more").contains(e.target)) closeMenu(); });
-  $("mHelp").onclick = function(){ closeMenu(); $("dlgHelp").showModal(); };
+  $("mHelp").onclick = function(){ closeMenu(); var v = TT.store.get("tt_ui_v1", {}) || {}; if(v.prepHide){ delete v.prepHide; TT.store.set("tt_ui_v1", v); renderPrep(); } $("dlgHelp").showModal(); };
   $("mSchool").onclick = function(){ closeMenu(); openSchool(); };
   $("mBackup").onclick = function(){ closeMenu(); TT.backup.save(); showBackup(); };
   $("mAuto").onclick = function(){ closeMenu(); if(window.TTAuto) TTAuto.settings(); };
@@ -819,27 +937,19 @@
   window.addEventListener("pageshow", function(){ showHome(); showBackup(); showTitle(); showAlerts(); });
 
   /* 오늘 내 수업: 내 시간표가 있으면 머리말 자리에 오늘 수업과 다음 수업을 보여 줍니다. */
+  /* 개편 4단계: 머리말 한 줄 = 날짜 · 지금/다음 교시 (자세한 오늘 수업은 아래 '다음 수업' 카드) */
   function showToday(){
-    var el = $("leadTxt"), TTT = TT.timetable;
-    function e(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-    if(!TTT.has()){ el.innerHTML = '학급 운영과 수업에 쓰는 도구를 한곳에 모았습니다. <a class="tset" href="apps/timetable/">🕘 ' + TN("timetable", "", "내 시간표") + ' 넣기 →</a>'; return; }
-    var d = new Date(), w = d.getDay(), label = "오늘 수업", list;
-    if(w < 1 || w > 5){ var mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() + (w === 6 ? 2 : 1)); list = TTT.day(mon); label = "월요일 수업"; }
-    else list = TTT.day(d);
-    var m = d.getHours() * 60 + d.getMinutes(), weekday = w >= 1 && w <= 5;
-    var h = '<a class="tday" href="apps/timetable/" title="' + TN("timetable", "", "내 시간표") + ' 열기"><b class="lb">🕘 ' + label + " " + list.length + "시간</b>";
-    if(!list.length) h += '<span class="tc">수업 없음</span>';
-    list.forEach(function(s){
-      var cls = weekday && m >= s.end ? " past" : weekday && m >= s.start ? " cur" : "";
-      h += '<span class="tc' + cls + '">' + s.n + "교시 " + e(s.code) + "</span>";
-    });
-    if(weekday && list.length){
-      var cur = TTT.now(), nx = TTT.next();
-      if(cur) h += '<span class="tnext">● 지금 ' + cur.n + "교시 " + e(cur.code) + " (~" + cur.e + ")</span>";
-      else if(nx) h += '<span class="tnext">▶ 다음 ' + nx.n + "교시 " + e(nx.code) + " (" + nx.t + ")</span>";
+    var el = $("leadTxt"), TTT = TT.timetable, d = new Date(), w = d.getDay(), DW = "일월화수목금토";
+    function e(x){ return String(x == null ? "" : x).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+    var h = '<span class="dl">' + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + DW[w] + "요일</span>";
+    if(TTT.has() && w >= 1 && w <= 5){
+      var list = TTT.day(d), cur = TTT.now(), nx = TTT.next();
+      if(!list.length) h += '<span class="tnext" style="color:var(--sub)">· 오늘 수업 없음</span>';
+      else if(cur) h += '<a class="tnext" href="apps/timetable/">● 지금 ' + cur.n + "교시 " + e(cur.code) + " (~" + cur.e + ")</a>";
+      else if(nx) h += '<a class="tnext" href="apps/timetable/">▶ 다음 ' + nx.n + "교시 " + e(nx.code) + " (" + nx.t + ")</a>";
       else h += '<span class="tnext" style="color:var(--ok)">✔ 오늘 수업 끝</span>';
     }
-    el.innerHTML = h + "</a>";
+    el.innerHTML = h;
   }
   window.addEventListener("pageshow", showToday);
   window.addEventListener("storage", function(ev){ if(ev.key === "tt_timetable_v1") showToday(); });
