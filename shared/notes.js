@@ -3,6 +3,7 @@
    도구마다 디자인 파일이 달라서 스타일을 스스로 넣습니다. */
 (function(){
   "use strict";
+  var TN = function(id, j, fb){ return typeof ttTool === "function" && ttTool(id) ? ttName(id, j) : fb; };   // 도구 이름은 shared/tools.js 한 곳에서 (개편 0단계)
   if(!window.TT || TT.notesUI) return;
   var N = TT.notes, R = TT.roster;
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -76,7 +77,7 @@
      o: {cls: 학급 id, nos: [번호], area, text, src} */
   function quick(o){
     var d0 = R.load(), list = R.classes(d0).filter(function(c){ return c.students.length; });
-    if(!list.length){ TT.ui.toast("먼저 학급 명렬표에 나이스 명단을 올려 주세요."); return; }
+    if(!list.length){ TT.ui.toast("먼저 " + TN("roster", "", "학급 명렬표") + "에 나이스 명단을 올려 주세요."); return; }
     var now = classNow(list), home = R.home(d0);
     var c = list.filter(function(x){ return x.id === o.cls; })[0] || now || (home && home.students.length ? home : list[0]);
     var area = o.area || (now ? "subj" : "beh"), picked = {};

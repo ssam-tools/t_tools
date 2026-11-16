@@ -6,6 +6,8 @@
    모두 이 기기 안에서만 계산합니다. 첫 화면 카드 제목에는 숫자만 쓰고, 이름은 눌러 연 미리보기에만 나옵니다. */
 var TTFollow = (function(){
   "use strict";
+  var TN = function(id, j, fb){ return typeof ttTool === "function" && ttTool(id) ? ttName(id, j) : fb; };   // 도구 이름은 shared/tools.js 한 곳에서 (개편 0단계)
+  var TL = function(id, fb){ return typeof ttTool === "function" && ttTool(id) ? ttLabel(id) : fb; };
   var DOW = "일월화수목금토";
   function pad(n){ return (n < 10 ? "0" : "") + n; }
   function ymd(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
@@ -84,7 +86,7 @@ var TTFollow = (function(){
       var c = +s.cls; delete J.taught[k]; if(J.prog[c]) J.prog[c].n = Math.max(0, (+J.prog[c].n || 1) - 1); TT.store.set("tt_journal_v1", J);
       window.dispatchEvent(new Event("tt-auto-change"));
     });
-    else TT.ui.toast("수업 기록장에 차시 목록이 없거나 모든 차시를 마쳤습니다. 수업 기록장에서 확인해 주세요.");
+    else TT.ui.toast(TN("journal", "", "수업 기록장") + "에 차시 목록이 없거나 모든 차시를 마쳤습니다. " + TN("journal", "", "수업 기록장") + "에서 확인해 주세요.");
     window.dispatchEvent(new Event("tt-auto-change"));
   }
 
@@ -109,7 +111,7 @@ var TTFollow = (function(){
       read: function(c, o){ var mk = ((TT.store.get("tt_submit_v1", null) || {}).m || {})[o.it.id] || {}; return {it: o.it, cs: o.cs, miss: o.cs.students.filter(function(s){ return !mk[s.no]; }).sort(function(a, b){ return a.no - b.no; })}; },
       make: function(d, o, c){
         var nx = md(ymd(c.nextSchool(c.now))), what = d.it.title || "제출물", me = sign();
-        return {title: what + " 미제출 학부모 문자 " + d.miss.length + "명", links: [{href: "apps/submit/", label: "📦 제출물 체크"}, {href: "apps/parent/", label: "✉️ 학부모 문자"}],
+        return {title: what + " 미제출 학부모 문자 " + d.miss.length + "명", links: [{href: "apps/submit/", label: TL("submit", "📦 제출물 체크")}, {href: "apps/parent/", label: TL("parent", "✉️ 학부모 문자")}],
           text: d.miss.map(function(s){
             return "■ " + s.no + "번 " + s.name + "\n안녕하세요. " + me + "입니다.\n" + s.name + " 학생이 아직 " + what + "을(를) 내지 않았습니다(마감 " + md(d.it.due) + "). " + nx + "까지 준비해 보내 주시면 감사하겠습니다.";
           }).join("\n\n")};
@@ -165,7 +167,7 @@ var TTFollow = (function(){
             var span = e.start === e.end ? md(e.start) : md(e.start) + "~" + md(e.end);
             return "■ " + e.s.no + "번 " + e.s.name + " · " + span + " " + (AK[e.kind] || "결석") + (e.reasons.length ? " · 사유: " + e.reasons.join(", ") : "")
               + "\n[학부모 문자] 안녕하세요. " + me + "입니다.\n" + e.s.name + " 학생의 " + span + " 결석 처리를 위해 결석신고서와 증빙 서류(진료확인서·처방전 등)가 필요합니다. 준비되는 대로 학생 편으로 보내 주시면 감사하겠습니다.";
-          }).join("\n\n") + "\n\n결석신고서는 출결·결석계 화면에서 학생·기간·사유가 이미 채워져 있습니다."};
+          }).join("\n\n") + "\n\n결석신고서는 " + TN("tardy", "", "출결·결석계") + " 화면에서 학생·기간·사유가 이미 채워져 있습니다."};
       },
       end: ["copy", "done"] },
 
@@ -182,7 +184,7 @@ var TTFollow = (function(){
       },
       read: function(c, o){ return o; },
       make: function(d){
-        return {title: "오늘 수업 기록 빠짐 " + d.list.length + "교시", links: [{href: "apps/journal/", label: "📒 수업 기록장"}],
+        return {title: "오늘 수업 기록 빠짐 " + d.list.length + "교시", links: [{href: "apps/journal/", label: TL("journal", "📒 수업 기록장")}],
           text: d.list.map(function(x){ return x.s.n + "교시 " + x.s.code + " → " + x.now; }).join("\n")
             + "\n\n[모두 진도 +1]을 누르면 위 차시를 '진행 완료'로 기록합니다. 수업을 못 한 교시는 수업 기록장에서 '수업 없음'으로 바꾸세요."};
       },

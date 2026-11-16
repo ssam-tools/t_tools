@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "0.22.0";
+  var VERSION = "0.27.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -360,8 +360,9 @@ var TT = (function(){
       host.textContent = "";
       var box = el("div", "tt-empty");
       box.appendChild(el("div", "big", "👥"));
-      box.appendChild(el("div", "", "먼저 학급 명렬표에 나이스 학생 명단 파일을 올려 주세요."));
-      var a = el("a", "btn primary", "학급 명렬표 열기"); a.href = BASE + "apps/roster/"; box.appendChild(a);
+      var rn = typeof ttTool === "function" && ttTool("roster") ? ttTool("roster").name : "학급 명렬표";   // 도구 이름은 shared/tools.js 한 곳에서
+      box.appendChild(el("div", "", "먼저 " + rn + "에 나이스 학생 명단 파일을 올려 주세요."));
+      var a = el("a", "btn primary", rn + " 열기"); a.href = BASE + "apps/roster/"; box.appendChild(a);
       host.appendChild(box);
     },
     /* 저장이 안 되는 브라우저(사생활 보호 모드 등)일 때 화면 위에 경고를 띄웁니다. */

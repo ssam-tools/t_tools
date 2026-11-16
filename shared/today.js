@@ -12,6 +12,8 @@
    - 교실(화면 공유) 모드에서는 오늘 칸을 숨깁니다. */
 (function(){
   "use strict";
+  var TN = function(id, j, fb){ return typeof ttTool === "function" && ttTool(id) ? ttName(id, j) : fb; };
+  var TP = function(id, j, fb){ var t = typeof ttTool === "function" && ttTool(id); return t ? ttJosa(t.name, j).slice(t.name.length) : fb; };   // 이름 뒤 조사만 (도구 이름은 shared/tools.js 한 곳에서 · 개편 0단계)
   var box = document.getElementById("today");
   var row = document.querySelector(".toprow");
   var UIKEY = "tt_ui_v1";
@@ -108,7 +110,7 @@
     if(!P) return "";
     if(P.done) return '<div class="tdl ok">✔ 진행 완료 · ' + esc(P.done) + "</div>";
     if(P.skip) return '<div class="tdl"><span class="ls">수업 없음 · ' + esc(P.skip) + "</span></div>";
-    if(!P.nL) return hint('<a href="apps/journal/">수업 기록장</a>에 차시 목록을 넣으면 지난 진도가 나옵니다.');
+    if(!P.nL) return hint('<a href="apps/journal/">' + TN("journal", "", "수업 기록장") + '</a>에 차시 목록을 넣으면 지난 진도가 나옵니다.');
     return '<div class="tdl"><span class="ls">' + (P.last ? "지난 " + esc(P.last) + " → " : "") + "이번 <b>" + esc(P.now) + "</b></span></div>";
   }
   function memoLine(P){ return P && P.memo ? '<div class="tdl"><span class="ls">📝 ' + esc(P.memo.replace(/\s+/g, " ")) + "</span></div>" : ""; }
@@ -125,14 +127,14 @@
   function lesson(){
     var TTT = TT.timetable;
     var d = new Date(), w = d.getDay(), weekday = w >= 1 && w <= 5, h = "", td = ymd(d), m = d.getHours() * 60 + d.getMinutes();
-    if(!TTT.has()) return card("tdLesson", "🕘", "다음 수업", "", clockHead(null, null, weekday, m) + hint('<a href="apps/timetable/">내 시간표</a>를 넣으면 지금·다음 수업이 여기에 나옵니다.'), "", closeTag());
+    if(!TTT.has()) return card("tdLesson", "🕘", "다음 수업", "", clockHead(null, null, weekday, m) + hint('<a href="apps/timetable/">' + TN("timetable", "", "내 시간표") + '</a>' + TP("timetable", "를", "를") + ' 넣으면 지금·다음 수업이 여기에 나옵니다.'), "", closeTag());
     var cur = weekday ? TTT.now() : null, nx = weekday ? TTT.next() : null, J = journal();
     h += clockHead(cur, nx, weekday, m);
     /* 수업 끝 기록 알림: 오늘 끝난 수업 중 수업 기록장에 '진행 완료'도 '수업 없음'도 없는 교시 */
     var miss = weekday && J ? TTT.day(d).filter(function(s){ return s.end <= m && !(J.taught || {})[td + "|" + s.n]; }) : [];
     if(miss.length){
       var f = miss[miss.length - 1];
-      h += '<div class="tdl miss" style="display:flex;gap:6px;align-items:center"><a class="tdl miss" style="flex:1;min-width:0" href="apps/journal/" title="수업 기록장에서 확인하기">✏️ '
+      h += '<div class="tdl miss" style="display:flex;gap:6px;align-items:center"><a class="tdl miss" style="flex:1;min-width:0" href="apps/journal/" title="' + TN("journal", "", "수업 기록장") + '에서 확인하기">✏️ '
         + f.n + "교시 " + esc(f.code) + " 기록 안 함" + (miss.length > 1 ? " <small>외 " + (miss.length - 1) + "개</small>" : "") + "</a>"
         + (typeof TTFollow !== "undefined" ? '<button type="button" class="tdc" style="font-size:12.5px;padding:1px 8px" title="이번 차시를 진행 완료로 기록 (18단계)" onclick="TTFollow.plusOneNow(' + (+f.n) + ')">진도 +1</button>' : "") + "</div>";
     }
@@ -142,7 +144,7 @@
     if(cur && J){ var Pc = progOf(J, cur, td); h += progLine(Pc) + (nx ? "" : memoLine(Pc)); }
     if(nx) h += '<div class="tdl"><span class="nx">▶ 다음</span> <b>' + nx.n + "교시 " + esc(nx.code) + "</b>" + chg(nx) + " <small>" + nx.t + "</small></div>";
     if(nx && J && (!cur || !miss.length)){ var Pn = progOf(J, nx, td); h += progLine(Pn) + (cur ? "" : memoLine(Pn)); }
-    if(focus && !J) h += hint('<a href="apps/journal/">수업 기록장</a>을 쓰면 지난 진도와 메모가 여기에 나옵니다.');
+    if(focus && !J) h += hint('<a href="apps/journal/">' + TN("journal", "", "수업 기록장") + '</a>' + TP("journal", "을", "을") + ' 쓰면 지난 진도와 메모가 여기에 나옵니다.');
     /* 수업 5단계: [▶ 수업 시작] → 수업 모드(교과서 · 개념 · 교과서 문제 · 도전 문제). 지금(없으면 다음) 반으로 바로 */
     if(focus && +focus.cls > 100 && !TT.classroom){
       var B = TT.store.get("tt_book_v1", null), bl = B && B.last && B.last[+focus.cls];
@@ -252,7 +254,7 @@
       /* 연간 업무: 이번 달 남은 일 */
       var Yr = TT.store.get("tt_year_v1", null), t0 = new Date(), ay = t0.getMonth() >= 2 ? t0.getFullYear() : t0.getFullYear() - 1, cm = t0.getMonth() + 1;
       var ym = Yr && Array.isArray(Yr.items) ? Yr.items.filter(function(it){ return it.m === cm && !(Yr.done || {})[ay + "|" + it.id]; }).length : 0;
-      if(ym) out.push({ic: "📆", t: "연간 업무 남음", n: ym + "건", href: "apps/year/", lv: "mid", tip: "연간 업무: 이번 달에 남은 일"});
+      if(ym) out.push({ic: "📆", t: TN("year", "", "연간 업무") + " 남음", n: ym + "건", href: "apps/year/", lv: "mid", tip: TN("year", "", "연간 업무") + ": 이번 달에 남은 일"});
     }catch(err){}
 
     /* 이번 주 신경 쓸 학생: 지각·결석 / 미제출 / 상담 후속 중 두 가지 이상 겹친 학생 */
@@ -280,7 +282,7 @@
   function check(md){
     var L = lastItems = collect();
     if(md && md.id === "morning" && TT.roster.home())                   // 4단계: 조회 전에는 출결을 맨 위에
-      L.unshift({ic: "🧭", t: "조회: 출결 확인", n: "지금", href: "apps/tardy/", lv: "hi", tip: "조회 시간 — 지각·결석을 출결·결석계에 적어 두세요"});
+      L.unshift({ic: "🧭", t: "조회: 출결 확인", n: "지금", href: "apps/tardy/", lv: "hi", tip: "조회 시간 — 지각·결석을 " + TN("tardy", "", "출결·결석계") + "에 적어 두세요"});
     /* 15단계: "준비됨" 카드 (shared/auto.js) — 급한 순서로 3개까지, 나머지는 [더 보기] */
     /* 개편: 칸 맨 위에 오늘 날짜를 크게 + 그날 학사일정 */
     var now = new Date(), tdk = ymd(now), C0 = TT.store.get("tt_calendar_v1", null);
@@ -362,7 +364,7 @@
     var nt = all.filter(function(x){ return x.date >= a && x.date <= b; }).length;
     var bg = bagLoad().items.filter(function(x){ return !x.done && x.date <= t; });
     var h = (bg.length ? '<div class="tdl"><button type="button" class="tdc" data-cdone="' + esc(bg[0].id) + '" title="전했어요 (지우기)">✓</button> 📣 ' + esc(bg[0].text) + (bg.length > 1 ? " <small>외 " + (bg.length - 1) + "건</small>" : "") + "</div>" : "")
-      + (miss ? '<a class="tdl miss" href="apps/journal/">✏️ 이번 주 기록 안 한 수업 ' + miss + "개</a>" : (J ? '<div class="tdl ok">✔ 이번 주 수업 기록 완료</div>' : hint('<a href="apps/journal/">수업 기록장</a>을 쓰면 이번 주 빠진 기록이 나옵니다.')))
+      + (miss ? '<a class="tdl miss" href="apps/journal/">✏️ 이번 주 기록 안 한 수업 ' + miss + "개</a>" : (J ? '<div class="tdl ok">✔ 이번 주 수업 기록 완료</div>' : hint('<a href="apps/journal/">' + TN("journal", "", "수업 기록장") + '</a>' + TP("journal", "을", "을") + ' 쓰면 이번 주 빠진 기록이 나옵니다.')))
       + '<div class="tdl"><span class="ls">📝 남은 할 일 <b>' + left + "건</b> · 📅 다음 주 " + (nx.length ? "<b>" + esc(md2(nx[0].d) + " " + nx[0].t) + "</b>" + (nx.length > 1 ? " 외 " + (nx.length - 1) + "건" : "") : "학사일정 없음")
       + (nt ? " · 할 일 " + nt + "건" : "") + "</span></div>";
     if(bg.length && !miss && !J) h = h.replace(/<p class="tdx">[\s\S]*?<\/p>/, "");      // 칸이 좁으니 안내 문구는 뺌

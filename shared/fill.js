@@ -12,6 +12,7 @@
    ■ 저장 : 내 틀 "tt_filltpl_v1" {v:1, list:[{id, ic, n, kind:"text"|"paper", title, body, at}]} */
 var TTFill = (function(){
   "use strict";
+  var TN = function(id, j, fb){ return typeof ttTool === "function" && ttTool(id) ? ttName(id, j) : fb; };   // 도구 이름은 shared/tools.js 한 곳에서 (개편 0단계)
   var DOW = "일월화수목금토", MINE = "tt_filltpl_v1";
   function pad(n){ return (n < 10 ? "0" : "") + n; }
   function ymd(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
@@ -189,7 +190,7 @@ var TTFill = (function(){
      title: "{빈칸:제목=}", to: "{빈칸:수신=내부결재}",
      body: "{글칸:본문=관련: \n  (근거 문서)\n○○을 다음과 같이 실시하고자 합니다.\n  일시: \n  장소: \n  대상: }"},
     {id: "absence", ic: "📄", n: "결석신고서", kind: "link", href: "../tardy/?tab=report",
-     help: "출결·결석계에 적은 결석 기록으로 학생·기간·사유·담임·학교장이 이미 채워집니다."}
+     help: TN("tardy", "", "출결·결석계") + "에 적은 결석 기록으로 학생·기간·사유·담임·학교장이 이미 채워집니다."}
   ];
 
   /* ---------- 내 틀 ---------- */

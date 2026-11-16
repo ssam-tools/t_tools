@@ -18,6 +18,8 @@
      처리 기록은 90일 지나면 정리합니다. 계산은 모두 이 기기 안에서 합니다. 첫 화면 카드 제목에는 숫자만(이름은 눌러야). */
 var TTAuto = (function(){
   "use strict";
+  var TN = function(id, j, fb){ return typeof ttTool === "function" && ttTool(id) ? ttName(id, j) : fb; };   // 도구 이름은 shared/tools.js 한 곳에서 (개편 0단계)
+  var TL = function(id, fb, sh){ var t = typeof ttTool === "function" && ttTool(id); return t ? t.icon + " " + (sh ? t.short || t.name : t.name) : fb; };   // sh: 짧은 이름
   var KEY = "tt_auto_v1", DOW = "일월화수목금토";
   function pad(n){ return (n < 10 ? "0" : "") + n; }
   function ymd(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
@@ -140,7 +142,7 @@ var TTAuto = (function(){
       when: function(c, days){ return firstOf(c, null, days, "exam").map(function(e){ return {key: e.d + "|" + e.t, due: e.d, n: "D-" + diff(e.d, c.td), ev: e}; }); },
       read: function(c, o){ var P = TT.store.get("tt_mpace_v1", null); return {ev: o.ev, short: P && P.short > 0 ? P.short : 0}; },
       make: function(d){
-        return {title: d.ev.t + " 준비 · " + md(d.ev.d), links: [{href: "apps/mblue/", label: "🎯 분류표"}, {href: "apps/mpace/", label: "⏳ 진도·시수"}],
+        return {title: d.ev.t + " 준비 · " + md(d.ev.d), links: [{href: "apps/mblue/", label: TL("mblue", "🎯 분류표", 1)}, {href: "apps/mpace/", label: TL("mpace", "⏳ 진도·시수", 1)}],
           text: d.ev.t + " (" + md(d.ev.d) + ")까지 " + diff(d.ev.d, ymd(new Date())) + "일\n\n□ 이원목적분류표 만들기 (성취기준·난이도·배점)\n□ 시험 범위까지 반별 진도 점검" + (d.short ? " — 진도 부족 " + d.short + "반" : "") + "\n□ 출제·검토 일정 확인\n□ 수행평가 점수 정리"};
       },
       end: ["done", "copy"] },
@@ -150,7 +152,7 @@ var TTAuto = (function(){
       when: function(c, days){ return firstOf(c, /방학/, days, "off").map(function(e){ return {key: e.d, due: e.d, n: "D-" + diff(e.d, c.td), ev: e}; }); },
       read: function(c, o){ var N = TT.store.get("tt_notes_v1", null), n = N && Array.isArray(N.recs) ? N.recs.length : 0; return {ev: o.ev, recs: n}; },
       make: function(d){
-        return {title: "학기말 생기부 마감 점검 · " + d.ev.t + " " + md(d.ev.d), links: [{href: "apps/record/?neis=1", label: "🔍 나이스 기재 점검"}, {href: "apps/record/", label: "📑 생기부 도우미"}, {href: "apps/tardy/", label: "🧭 출결"}],
+        return {title: "학기말 생기부 마감 점검 · " + d.ev.t + " " + md(d.ev.d), links: [{href: "apps/record/?neis=1", label: "🔍 나이스 기재 점검"}, {href: "apps/record/", label: TL("record", "📑 생기부 도우미")}, {href: "apps/tardy/", label: TL("tardy", "🧭 출결", 1)}],
           text: d.ev.t + " (" + md(d.ev.d) + ") 전에 끝낼 것\n\n□ 교과 세특 — 글자 수·유의 낱말 점검 (모인 학생 기록 " + d.recs + "건)\n□ 행동특성 및 종합의견\n□ 창체(자율·동아리·진로) 기록\n□ 출결 마감 · 결석신고서 정리\n□ 나이스 기재 점검 — 나이스 세특·행특 파일을 넣어 빈칸·글자 수 초과·초안과 다른 학생 확인\n□ 기록 마감 점검표 확인"};
       },
       end: ["done", "copy"] },
