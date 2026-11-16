@@ -1,4 +1,7 @@
 /* 쌤 노트 · 첫 화면 "오늘" 업무판 (PLAN.md)
+   - 개편 5단계(v0.32): 홈 보드 — ① 지금 카드(다음 수업: 반·단원·지난 기록 + [수업 기록]·[자료 열기] + 오늘 1~7교시 줄)
+     ② 오늘 챙길 것(챙길 일 · 종례 바구니 · 내 할 일을 한 목록으로, 메뉴 색 꼬리표, 적는 칸 하나 — "종례: …" / "할 일: …").
+     예전 ③ 종례·할 일 칸과 오른쪽 내 할 일 칸은 ②로 합침(내 할 일 전체는 [📝 전체]로 여는 창).
    - 5단계: 찾기·빠른 입력(Ctrl+K) — 학생 이름·도구 찾기, 한 줄 입력을 할 일 / 종례 바구니(tt_close_v1) / 학생 기록으로 나눔.
      종례 시간: 월·수·금 15:10, 화·목 16:05 (CLOSE_T, tt_ui_v1.home.close 로 바꿀 수 있음).
    - 4단계: 상황에 따라 바뀌기 — 시간대(조회 전 / 수업 / 수업 끝 / 빈 시간 / 종례 전 / 금요일 오후 주간 정리)에 맞는 칸을
@@ -124,37 +127,57 @@
       + (left ? '<span class="tleft">' + left + "</span>" : "") + "</div>";
   }
   function closeTag(){ var w = new Date().getDay(); if(w < 1 || w > 5) return ""; var c = closeMin(w); return '<span class="tds">종례 ' + Math.floor(c / 60) + ":" + pad(c % 60) + "</span>"; }
+  /* 개편 5단계: 지금 카드 — 다음(지금) 수업의 반 · 단원 · 지난 기록 + [수업 기록] · [자료 열기] + 오늘 1~7교시 줄 */
+  function unitOf(J, cls, n){                                         // 수업 기록의 차시 목록에서 n번째 차시가 속한 단원(# 줄)
+    var raw = (J && J.cur || {})[Math.floor(+cls / 100)]; raw = Array.isArray(raw) ? raw.join("\n") : String(raw || "");
+    var u = "", k = 0, ls = raw.split("\n");
+    for(var i = 0; i < ls.length; i++){ var l = ls[i].trim(); if(!l) continue; if(l[0] === "#"){ u = l.replace(/^#+\s*/, ""); continue; } if(k === n) return u; k++; }
+    return u;
+  }
+  function clsName(s){ var c = +s.cls; return c > 100 ? Math.floor(c / 100) + "-" + (c % 100) : String(s.code || ""); }
+  function strip(list, m, live, lab){                                 // 오늘 1~7교시 표시줄 (지난 · 지금 · 다음)
+    var T = TT.timetable.load(), P = T ? T.periods.map(function(p){ return p.n; }) : [1, 2, 3, 4, 5, 6, 7], nx = live ? TT.timetable.next() : null;
+    return '<a class="tpd" href="apps/timetable/" title="' + TN("timetable", "", "내 시간표") + ' 열기">' + (lab ? '<span class="tpl">' + lab + "</span>" : "") + P.map(function(n){
+      var x = list.filter(function(y){ return y.n === n; })[0], c = !x ? " no" : live && m >= x.end ? " past" : live && m >= x.start ? " cur" : nx && nx.n === n ? " nx" : "";
+      return '<span class="pc' + c + '"><i>' + n + "</i><b>" + (x ? esc(clsName(x)) : "·") + "</b></span>";
+    }).join("") + "</a>";
+  }
   function lesson(){
     var TTT = TT.timetable;
     var d = new Date(), w = d.getDay(), weekday = w >= 1 && w <= 5, h = "", td = ymd(d), m = d.getHours() * 60 + d.getMinutes();
-    if(!TTT.has()) return card("tdLesson", "🕘", "다음 수업", "", clockHead(null, null, weekday, m) + hint('<a href="apps/timetable/">' + TN("timetable", "", "내 시간표") + '</a>' + TP("timetable", "를", "를") + ' 넣으면 지금·다음 수업이 여기에 나옵니다.'), "", closeTag());
-    var cur = weekday ? TTT.now() : null, nx = weekday ? TTT.next() : null, J = journal();
-    h += clockHead(cur, nx, weekday, m);
-    /* 수업 끝 기록 알림: 오늘 끝난 수업 중 수업 기록장에 '진행 완료'도 '수업 없음'도 없는 교시 */
-    var miss = weekday && J ? TTT.day(d).filter(function(s){ return s.end <= m && !(J.taught || {})[td + "|" + s.n]; }) : [];
+    var clk = '<span class="tds tck">' + (d.getHours() < 12 ? "오전 " : "오후 ") + ((d.getHours() % 12) || 12) + ":" + pad(d.getMinutes()) + "</span>";
+    if(!TTT.has()) return card("tdLesson", "🕘", "다음 수업", "", '<div class="tnone"><p>' + TN("timetable", "", "내 시간표") + TP("timetable", "를", "를") + " 넣으면 다음 수업의 <b>반 · 단원 · 지난 기록</b>이 여기에 나옵니다.</p>"
+      + '<a class="tbtn p" href="apps/timetable/">🕘 시간표 넣기 →</a></div>' + strip([], m, false), "", clk + closeTag());
+    var cur = weekday ? TTT.now() : null, nx = weekday ? TTT.next() : null, J = journal(), today = weekday ? TTT.day(d) : [];
+    var miss = weekday && J ? today.filter(function(s){ return s.end <= m && !(J.taught || {})[td + "|" + s.n]; }) : [];
+    var focus = cur || nx;
+    function chg(s){ return s.chg ? ' <small title="수업 교체로 이번 주에만 바뀐 수업" class="chg">🔁 바뀜</small>' : ""; }   // 14단계
+    if(focus){
+      var left = cur ? "끝까지 " + (cur.end - m) + "분" : (nx.start - m <= 180 ? (nx.start - m) + "분 뒤" : nx.t);
+      h += '<div class="tnow"><span class="k' + (cur ? " on" : "") + '">' + (cur ? "● 지금" : "▶ 다음") + '</span><b class="cl">' + esc(clsName(focus)) + "</b>"
+        + '<span class="pd">' + focus.n + "교시" + (focus.subj ? " · " + esc(focus.subj) : "") + chg(focus) + '</span><span class="lf">' + left + "</span></div>";
+      var P = J ? progOf(J, focus, td) : null, B = TT.store.get("tt_book_v1", null), bl = B && B.last && B.last[+focus.cls];
+      var un = P && P.nL ? unitOf(J, focus.cls, Math.min(+(((J.prog || {})[+focus.cls] || {}).n || 0), P.nL - 1)) : "";
+      un = un || (bl && bl.u) || "";
+      h += '<div class="tun"><span>📘 단원</span> ' + (un ? "<b>" + esc(un) + "</b>" : '<span class="ls">' + (J ? "차시 목록에 # 단원 이름을 넣으면 나옵니다" : "수업 기록을 쓰면 나옵니다") + "</span>")
+        + (bl ? ' <small class="ls">· 📖 p.' + bl.p + "</small>" : "") + "</div>";
+      if(P && P.done) h += '<div class="tla ok">✔ 이 교시 진행 완료 · ' + esc(P.done) + "</div>";
+      else if(P && P.nL) h += '<div class="tla"><span class="ls">지난 기록</span> ' + (P.last ? esc(P.last) : "처음") + ' <span class="ls">→ 이번</span> <b>' + esc(P.now) + "</b></div>" + (P.memo ? '<div class="tla tmemo"><span class="ls">📝 ' + esc(P.memo.replace(/\s+/g, " ")) + "</span></div>" : "");
+      else h += '<div class="tla"><span class="ls">' + (J ? "수업 기록에 차시 목록을 넣으면 지난 기록이 나옵니다." : "수업 기록을 쓰면 지난 진도와 메모가 나옵니다.") + "</span></div>";
+      var c0 = +focus.cls > 100 ? +focus.cls : 0;
+      h += '<div class="tbtns"><a class="tbtn" href="apps/journal/">✏️ ' + TN("journal", "", "수업 기록") + "</a>"
+        + (c0 && !TT.classroom ? '<a class="tbtn p" href="apps/book/?lesson=1&c=' + c0 + '" title="교과서 · 개념 정리 · 교과서 문제 · 도전 문제">📖 자료 열기' + (bl ? " <small>p." + bl.p + "부터</small>" : "") + "</a>" : "") + "</div>";
+    }else{
+      h += '<div class="tnone"><p>' + (weekday ? (today.length ? (miss.length ? "오늘 수업이 끝났어요. 기록을 확인해 주세요." : "✔ 오늘 수업 끝" + (J ? " · 기록 완료" : "")) : "오늘은 수업이 없습니다.") : "주말입니다. 아래는 월요일 수업이에요.") + "</p></div>";
+    }
     if(miss.length){
       var f = miss[miss.length - 1];
-      h += '<div class="tdl miss" style="display:flex;gap:6px;align-items:center"><a class="tdl miss" style="flex:1;min-width:0" href="apps/journal/" title="' + TN("journal", "", "수업 기록장") + '에서 확인하기">✏️ '
-        + f.n + "교시 " + esc(f.code) + " 기록 안 함" + (miss.length > 1 ? " <small>외 " + (miss.length - 1) + "개</small>" : "") + "</a>"
-        + (typeof TTFollow !== "undefined" ? '<button type="button" class="tdc" style="font-size:12.5px;padding:1px 8px" title="이번 차시를 진행 완료로 기록 (18단계)" onclick="TTFollow.plusOneNow(' + (+f.n) + ')">진도 +1</button>' : "") + "</div>";
+      h += '<div class="tmiss"><a href="apps/journal/" title="' + TN("journal", "", "수업 기록") + '에서 확인하기">✏️ ' + f.n + "교시 " + esc(clsName(f)) + " 기록 안 함" + (miss.length > 1 ? " <small>외 " + (miss.length - 1) + "개</small>" : "") + "</a>"
+        + (typeof TTFollow !== "undefined" ? '<button type="button" class="tdc" title="이번 차시를 진행 완료로 기록" onclick="TTFollow.plusOneNow(' + (+f.n) + ')">진도 +1</button>' : "") + "</div>";
     }
-    var focus = cur || nx;                                            // 지금 수업이 있으면 그 반, 없으면 다음 반의 진도를 보여 줌
-    function chg(s){ return s.chg ? ' <small title="수업 교체로 이번 주에만 바뀐 수업" style="color:#8a5a00;font-weight:800">🔁 바뀜</small>' : ""; }   // 14단계
-    if(cur) h += '<div class="tdl"><span class="now">● 지금</span> <b>' + cur.n + "교시 " + esc(cur.code) + "</b>" + chg(cur) + " <small>~" + cur.e + "</small></div>";
-    if(cur && J){ var Pc = progOf(J, cur, td); h += progLine(Pc) + (nx ? "" : memoLine(Pc)); }
-    if(nx) h += '<div class="tdl"><span class="nx">▶ 다음</span> <b>' + nx.n + "교시 " + esc(nx.code) + "</b>" + chg(nx) + " <small>" + nx.t + "</small></div>";
-    if(nx && J && (!cur || !miss.length)){ var Pn = progOf(J, nx, td); h += progLine(Pn) + (cur ? "" : memoLine(Pn)); }
-    if(focus && !J) h += hint('<a href="apps/journal/">' + TN("journal", "", "수업 기록장") + '</a>' + TP("journal", "을", "을") + ' 쓰면 지난 진도와 메모가 여기에 나옵니다.');
-    /* 수업 5단계: [▶ 수업 시작] → 수업 모드(교과서 · 개념 · 교과서 문제 · 도전 문제). 지금(없으면 다음) 반으로 바로 */
-    if(focus && +focus.cls > 100 && !TT.classroom){
-      var B = TT.store.get("tt_book_v1", null), bl = B && B.last && B.last[+focus.cls];
-      h += '<a class="tdrd" href="apps/book/?lesson=1&c=' + (+focus.cls) + '" title="교과서·개념 정리·교과서 문제·도전 문제 (5단계)"><span class="k">▶ 수업 시작</span><span class="t">'
-        + Math.floor(+focus.cls / 100) + "-" + (+focus.cls % 100) + (bl ? " · 📖 p." + bl.p + (bl.u ? " " + esc(bl.u) : "") + "부터" : " · 교과서 열기") + '</span><span class="go">→</span></a>';
-    }
-    if(!cur && !nx) h += weekday && TTT.day(d).length ? (miss.length ? "" : '<div class="tdl ok">✔ 오늘 수업 끝' + (J ? " · 기록 완료" : "") + "</div>")
-                         + (J ? "" : hint("수업 기록을 남겼는지 확인해 보세요."))
-                       : hint(weekday ? "오늘은 수업이 없습니다." : "주말입니다. 월요일 수업은 위쪽 시간표 줄에서 볼 수 있어요.");
-    return card("tdLesson", "🕘", "다음 수업", "apps/journal/", h, miss.length ? "기록 " + miss.length : "", closeTag());
+    var mon = new Date(d); if(!weekday) mon.setDate(d.getDate() + (w === 6 ? 2 : 1));
+    h += strip(weekday ? today : TTT.day(mon), m, weekday, weekday ? "" : "월");
+    return card("tdLesson", "🕘", cur ? "지금 수업" : "다음 수업", "apps/journal/", h, miss.length ? "기록 " + miss.length : "", clk + closeTag());
   }
 
   /* ② 오늘 챙길 것 (2단계) — 예전 위쪽 알림 칩을 목록+숫자 배지로 옮기고,
@@ -279,25 +302,87 @@
     if(x.href) return '<a class="' + cls + '" href="' + x.href + '"' + tip + ">" + inner + "</a>";
     return '<span class="' + cls + '"' + tip + " style=\"cursor:default\">" + inner + "</span>";
   }
+  /* 개편 5단계: 오늘 챙길 것 = 챙길 일 + 종례 바구니 + 내 할 일 — 한 목록, 메뉴 색 꼬리표, 적는 칸 하나 */
+  var MOF = {"🗣️": "student", "🔁": "student", "📄": "homeroom", "📦": "homeroom", "👀": "homeroom", "🧭": "homeroom", "📝": "class", "⏳": "class", "✏️": "class", "🏖️": "school", "📆": "school", "📅": "school"};
+  var TAGN = {"class": "수업", homeroom: "우리 반", student: "학생", school: "학교", close: "종례", me: "할 일"};
+  function tag(k){ var mn = k === "close" ? "homeroom" : k === "me" ? "" : k; return '<span class="tg' + (k === "me" ? " me" : "") + '"' + (mn ? ' data-menu="' + mn + '"' : "") + ">" + TAGN[k] + "</span>"; }
+  function myTodos(){ var M = TT.store.get("tt_mytodo_v1", null); return M && Array.isArray(M.items) ? M.items.filter(function(x){ return !x.done; }) : []; }
   function check(md){
-    var L = lastItems = collect();
-    if(md && md.id === "morning" && TT.roster.home())                   // 4단계: 조회 전에는 출결을 맨 위에
+    var L = lastItems = collect(), k = md ? md.id : "", t = ymd(new Date()), tmr = ymd(nextSchool(new Date()));
+    if(k === "morning" && TT.roster.home())                              // 조회 전에는 출결을 맨 위에
       L.unshift({ic: "🧭", t: "조회: 출결 확인", n: "지금", href: "apps/tardy/", lv: "hi", tip: "조회 시간 — 지각·결석을 " + TN("tardy", "", "출결·결석계") + "에 적어 두세요"});
-    /* 15단계: "준비됨" 카드 (shared/auto.js) — 급한 순서로 3개까지, 나머지는 [더 보기] */
-    /* 개편: 칸 맨 위에 오늘 날짜를 크게 + 그날 학사일정 */
-    var now = new Date(), tdk = ymd(now), C0 = TT.store.get("tt_calendar_v1", null);
-    var evs = (C0 && C0.events || []).filter(function(e){ return e.d === tdk; }).map(function(e){ return e.t; });
-    var head = '<div class="tbig td8"><b>' + (now.getMonth() + 1) + "월 " + now.getDate() + '일</b><span class="dw' + (now.getDay() % 6 === 0 ? " we" : "") + '">' + "일월화수목금토".charAt(now.getDay()) + "요일</span></div>"
-      + (evs.length ? '<div class="tev" title="오늘 학사일정">📌 ' + esc(evs.join(" · ")) + "</div>" : "");
-    /* 15단계 "준비됨" (shared/auto.js) — 눈에 띄는 초록 단추 하나로. 하나면 바로 열고, 여럿이면 급한 순서 목록 */
-    var A = lastAuto = window.TTAuto ? TTAuto.ready() : [];
+    if((k === "free" && md.miss) || k === "week"){                      // 빈 시간·금요일 오후: 밀린 수업 기록
+      var wm = k === "week" ? weekMiss() : md.miss;
+      if(wm) L.push({ic: "✏️", t: (k === "week" ? "이번 주 " : "") + "기록 안 한 수업", n: wm + "개", href: "apps/journal/", lv: "hi", tip: TN("journal", "", "수업 기록") + "에 적어 주세요"});
+    }
+    if(k === "week"){ var nw = nextWeekEv(); if(nw) L.push({ic: "📅", t: "다음 주 " + nw.t, n: md2(nw.d), href: "", lv: "dd", tip: "다음 주 학사일정"}); }
+    var C0 = TT.store.get("tt_calendar_v1", null), evs = (C0 && C0.events || []).filter(function(e){ return e.d === t; }).map(function(e){ return e.t; });
+    var head = evs.length ? '<div class="tev" title="오늘 학사일정">📌 ' + esc(evs.join(" · ")) + "</div>" : "";
+    var A = lastAuto = window.TTAuto ? TTAuto.ready() : [];               // 15단계 "준비됨" (shared/auto.js)
     var rd = A.length ? '<button type="button" class="tdrd" data-auto="' + (A.length === 1 ? 0 : "more") + '" title="쌤 노트가 준비해 둔 일 · 눌러서 확인 → 복사·인쇄·저장"><span class="k">✨ 준비됨 ' + A.length + '</span><span class="t">'
       + esc(A.slice(0, 3).map(function(x){ return x.o.name || x.r.name; }).join(" · ")) + (A.length > 3 ? " 외 " + (A.length - 3) : "") + '</span><span class="go">확인 ›</span></button>' : "";
-    if(!L.length) return card("tdCheck", "📋", "오늘 챙길 것", "", head + rd + (A.length ? "" : '<div class="tdl ok">✔ 지금 챙길 일이 없습니다</div>'));
-    var urgent = L.filter(function(x){ return x.lv !== "dd"; }).length;
-    var badge = '<button type="button" class="tdn" data-pop="all" title="챙길 일 전체 보기">' + (urgent ? "급한 일 " + urgent : "전체") + " ▾</button>";
-    return card("tdCheck", "📋", "오늘 챙길 것", "", head + rd + '<div class="tdg">' + L.map(item).join("") + "</div>").replace("</div><div class=\"tdb\">", badge + "</div><div class=\"tdb\">");
+    /* 한 목록: 급한 일 → 종례 바구니 → 지났거나 오늘인 할 일 → 보통 → 내일 할 일 → 일정(D-day) → 날짜 없는 할 일 */
+    var cd = closeDay(), lim = k === "close" ? tmr : ymd(addDays(new Date(), 1));
+    var BG = bagLoad().items.filter(function(x){ return !x.done && x.date <= cd; });
+    var MY = myTodos(), myNow = MY.filter(function(x){ return x.date && x.date <= t; }), mySoon = MY.filter(function(x){ return x.date && x.date > t && x.date <= lim; }),
+        myNo = MY.filter(function(x){ return !x.date; }), myLater = MY.length - myNow.length - mySoon.length - myNo.length;
+    function sortD(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; }
+    function rowC(x){
+      var inner = x.ic + " " + esc(x.t), m = MOF[x.ic] || "school", tip = ' title="' + esc(x.tip || "") + '"';
+      var body = x.pop ? '<button type="button" class="tx" data-pop="' + x.pop + '"' + tip + ">" + inner + "</button>" : x.href ? '<a class="tx" href="' + x.href + '"' + tip + ">" + inner + "</a>" : '<span class="tx"' + tip + ">" + inner + "</span>";
+      return '<div class="ti ' + (x.lv || "mid") + '">' + tag(m) + body + '<span class="n">' + esc(x.n) + "</span></div>";
+    }
+    function rowB(x){ return '<div class="ti">' + tag("close") + '<span class="tx" title="종례 때 전할 말">' + (x.date < t ? "⏰ " : "📣 ") + esc(x.text) + (x.date > t ? ' <small>' + dLabel(x.date) + "</small>" : "") + '</span><button type="button" class="ck" data-cdone="' + esc(x.id) + '" title="전했어요">✓</button></div>'; }
+    function rowM(x){
+      var lb = !x.date ? "" : x.date < t ? '<span class="dt late">지남</span>' : x.date === t ? '<span class="dt today">오늘</span>' : '<span class="dt">' + (x.date === tmr ? "내일" : dLabel(x.date)) + "</span>";
+      return '<div class="ti">' + tag("me") + '<span class="tx" title="내 할 일 (나만 보기)">' + esc(x.text) + "</span>" + lb + '<button type="button" class="ck" data-tdone="' + esc(x.id) + '" title="끝냈어요">✓</button></div>';
+    }
+    var hi = L.filter(function(x){ return x.lv === "hi"; }), mid = L.filter(function(x){ return x.lv !== "hi" && x.lv !== "dd"; }), dd = L.filter(function(x){ return x.lv === "dd"; });
+    var rows = hi.map(rowC).concat(BG.sort(sortD).map(rowB), myNow.sort(sortD).map(rowM), mid.map(rowC), mySoon.sort(sortD).map(rowM), dd.map(rowC), myNo.map(rowM));
+    var nU = hi.length + BG.length + myNow.length;
+    var list = rows.length ? '<div class="tlist">' + rows.join("") + "</div>" : '<div class="tlist"><div class="tdl ok">✔ 지금 챙길 일이 없습니다</div></div>';
+    var inp = '<form class="tdin" autocomplete="off"><input id="tdInp" maxlength="120" placeholder="할 일 적고 Enter · &quot;종례: 가정통신문 회수&quot; · 날짜 말(내일, 11/20)도 됨" aria-label="할 일이나 종례 때 전할 말 적기"><button type="submit" title="넣기">＋</button></form>';
+    var side = '<button type="button" class="tdn all" data-todo="all" title="내 할 일 전체 (끝낸 일·고치기)">📝 전체' + (myLater > 0 ? " +" + myLater : "") + "</button>";
+    return card("tdCheck", "📋", "오늘 챙길 것", "", head + rd + list + inp, nU ? "급한 일 " + nU : (rows.length ? rows.length + "건" : ""), side);
   }
+  function weekMiss(){
+    var d = new Date(), t = ymd(d), m = d.getHours() * 60 + d.getMinutes(), mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    var J = journal(), G = TT.store.get("tt_guide_v1", null) || {}, hol = G.holidays || {}, C = TT.store.get("tt_calendar_v1", null), ev = C && Array.isArray(C.events) ? C.events : [], miss = 0;
+    if(!J || !TT.timetable.has()) return 0;
+    for(var i = 0; i < 5; i++){
+      var x = new Date(mon); x.setDate(mon.getDate() + i); var ds = ymd(x);
+      if(ds > t || hol[ds] || ev.some(function(e){ return e.k === "off" && e.d === ds; })) continue;
+      TT.timetable.day(x).forEach(function(s){ if((ds < t || s.end <= m) && !(J.taught || {})[ds + "|" + s.n]) miss++; });
+    }
+    return miss;
+  }
+  function nextWeekEv(){
+    var d = new Date(), mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 7); var fr = new Date(mon); fr.setDate(mon.getDate() + 4);
+    var C = TT.store.get("tt_calendar_v1", null), a = ymd(mon), b = ymd(fr);
+    return (C && Array.isArray(C.events) ? C.events : []).filter(function(e){ return e.d >= a && e.d <= b; }).sort(function(p, q){ return p.d < q.d ? -1 : 1; })[0] || null;
+  }
+  /* 적는 칸: "종례: …" → 종례 바구니(다음 종례), 그 밖("할 일: …" 포함) → 내 할 일. 날짜 말은 날짜로 */
+  box.addEventListener("submit", function(e){
+    if(!e.target.classList.contains("tdin")) return; e.preventDefault();
+    var v = (document.getElementById("tdInp").value || "").trim(); if(!v) return;
+    var cm = v.match(/^종례\s*[:：]\s*/), tm = v.match(/^(할\s*일|todo)\s*[:：]\s*/i), rest = v.replace(cm ? cm[0] : tm ? tm[0] : "", ""), pd = parseDate(rest);
+    keepInp = {v: "", focus: true};
+    if(cm) addBag(pd.rest || rest, pd.date || closeDay()); else addTodo(pd.rest || rest, pd.date);
+    render();
+  });
+  box.addEventListener("click", function(e){
+    var b = e.target.closest("[data-tdone]");
+    if(b){
+      var id = b.dataset.tdone, M = TT.store.get("tt_mytodo_v1", null); if(!M || !Array.isArray(M.items)) return;
+      M.items.forEach(function(x){ if(x.id === id){ x.done = true; x.doneAt = Date.now(); } }); TT.store.set("tt_mytodo_v1", M);
+      window.dispatchEvent(new CustomEvent("tt-mytodo-change", {detail: "today"}));
+      TT.ui.toast("끝냈습니다 ✔", function(){ var M2 = TT.store.get("tt_mytodo_v1", null); M2.items.forEach(function(x){ if(x.id === id){ x.done = false; x.doneAt = 0; } }); TT.store.set("tt_mytodo_v1", M2); window.dispatchEvent(new CustomEvent("tt-mytodo-change", {detail: "today"})); });
+      return;
+    }
+    var a = e.target.closest("[data-todo]");
+    if(a){ var dl = document.getElementById("dlgTodo"); if(dl){ window.dispatchEvent(new CustomEvent("tt-mytodo-change", {detail: "open"})); dl.showModal(); } }
+  });
+  var keepInp = null;
   box.addEventListener("click", function(e){
     var au = e.target.closest("[data-auto]");
     if(au && window.TTAuto){ closePop(); var v = au.dataset.auto; if(v === "more") TTAuto.list(); else if(lastAuto[+v]) TTAuto.open(lastAuto[+v]); return; }
@@ -381,21 +466,21 @@
     var first = P.length ? P[0] : 530, cl = closeMin(w);
     var td = ymd(d), J = journal(), today = TTT.day(d);
     var miss = J ? today.filter(function(s){ return s.end <= m && !(J.taught || {})[td + "|" + s.n]; }) : [];
-    if(m >= 450 && m < first) return {id: "morning", label: "조회 전", card: "tdTodo"};
+    if(m >= 450 && m < first) return {id: "morning", label: "조회 전", card: "tdCheck"};
     var cur = TTT.now(), nx = TTT.next();
     if(cur || (nx && nx.start - m <= 10)) return {id: "lesson", label: cur ? "수업 중" : "곧 수업", card: "tdLesson"};
-    if(m >= cl - 15 && m <= cl + 20) return {id: "close", label: m < cl ? "종례 전" : "종례", card: "tdTodo"};   // 종례가 수업 끝 알림보다 먼저
+    if(m >= cl - 15 && m <= cl + 20) return {id: "close", label: m < cl ? "종례 전" : "종례", card: "tdCheck"};   // 종례가 수업 끝 알림보다 먼저
     if(miss.length && miss.some(function(s){ return m - s.end <= 15; })) return {id: "after", label: "수업 끝", card: "tdLesson"};
-    if(w === 5 && m >= 780 && m <= cl + 120) return {id: "week", label: "금요일 오후", card: "tdTodo"};
-    if(m >= first && m < cl) return {id: "free", label: "빈 시간", card: "tdTodo", miss: miss.length};
+    if(w === 5 && m >= 780 && m <= cl + 120) return {id: "week", label: "금요일 오후", card: "tdCheck"};
+    if(TTT.has() && m >= first && m < cl) return {id: "free", label: "빈 시간", card: "tdCheck", miss: miss.length};
     return null;
   }
   (function(){
     var st = document.createElement("style");
-    st.textContent = "#today.f1{grid-template-columns:1.5fr 1fr 1fr}#today.f2{grid-template-columns:1fr 1.5fr 1fr}#today.f3{grid-template-columns:1fr 1fr 1.5fr}@media (max-width:760px){#today.f1,#today.f2,#today.f3{grid-template-columns:1fr}}"
+    st.textContent = "#today.f1{grid-template-columns:1.25fr 1fr}#today.f2{grid-template-columns:1fr 1.25fr}@media (max-width:760px){#today.f1,#today.f2{grid-template-columns:1fr}}"
       + ".tdy.tdf{box-shadow:0 0 0 2px var(--accent-soft,var(--t-accent-soft,#e6f0fb));background:linear-gradient(var(--accent-soft,#eef5fd),var(--card,#fff) 60%)}"
       + ".tdmode{font-size:11px;font-weight:800;color:var(--accent,var(--t-accent,#2f6fb3));background:var(--card,#fff);border:1px solid var(--accent,var(--t-accent,#2f6fb3));border-radius:999px;padding:0 7px;white-space:nowrap}"
-      + "@media (max-width:760px){.tdy.tdf{order:-1}}"
+      + ""
       + "#grid .tdRec{position:relative;outline:2px solid var(--star,#f2b705);outline-offset:-2px}"
       + "#grid a.tb.tdRec::after{content:attr(data-rec);position:absolute;top:2px;right:4px;font-size:10px;font-weight:800;color:var(--t-star-ink,#7a5a00);background:var(--star-soft,#fff3cc);border-radius:999px;padding:0 5px;line-height:1.5}"
       + "#grid a.tbs.tdRec{background:var(--star-soft,#fff3cc)}";
@@ -629,11 +714,13 @@
 
   function render(){
     var md = null; try{ md = mode(); }catch(err){}
-    box.innerHTML = lesson() + check(md) + todo(md);
+    var ie = document.getElementById("tdInp"), kv = keepInp || (ie ? {v: ie.value, focus: document.activeElement === ie} : null); keepInp = null;   // 적던 글 지키기 (1분마다 다시 그림)
+    box.innerHTML = lesson() + check(md);
+    if(kv){ var ie2 = document.getElementById("tdInp"); if(ie2){ ie2.value = kv.v; if(kv.focus) ie2.focus(); } }
     box.classList.remove("f1", "f2", "f3");
     if(md){
       var c = document.getElementById(md.card);
-      if(c){ c.classList.add("tdf"); box.classList.add(md.card === "tdLesson" ? "f1" : md.card === "tdCheck" ? "f2" : "f3");
+      if(c){ c.classList.add("tdf"); box.classList.add(md.card === "tdLesson" ? "f1" : "f2");
         var hd = c.querySelector(".tdh"), chip = document.createElement("span"); chip.className = "tdmode"; chip.textContent = "지금 · " + md.label;
         var a = hd.firstChild; hd.insertBefore(chip, a ? a.nextSibling : null); }
     }

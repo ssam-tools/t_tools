@@ -365,6 +365,80 @@
   .mview b{color:var(--m,var(--ink));font-size:15px}
   .mview a,.mview b{white-space:nowrap}
   @media (max-width:760px){ body.inmenu .tbar{flex:none!important} body.inmenu main#grid{grid-template-rows:none!important} .mview span{display:none} }
+
+  /* ── 개편 5단계: 홈 보드 (지금 카드 · 오늘 챙길 것 · 이번 주 · 자주 쓰는 도구) ── */
+  #today{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);max-height:none;min-height:clamp(250px,40vh,999px)}
+  #today .tdb{display:flex;flex-direction:column;gap:3px}
+  #tdLesson{border-top-color:var(--now)}#tdCheck{border-top-color:var(--star)}
+  .tdh .tds{font-variant-numeric:tabular-nums}
+  .tdh .tdn.all{margin-left:auto;background:var(--accent-soft);color:var(--accent);border:0;cursor:pointer;font-family:inherit}
+  .tdh .tdn + .tdn{margin-left:4px}
+  .tnow{display:flex;align-items:baseline;gap:4px 12px;flex-wrap:wrap;margin-top:2px}
+  .tnow .k{font-weight:800;color:var(--sub);font-size:clamp(13px,1.8vh,15px)}.tnow .k.on{color:var(--now)}
+  .tnow .cl{font-size:clamp(30px,5.6vh,50px);font-weight:900;letter-spacing:-.02em;color:var(--now);line-height:1.05;font-family:var(--t-font-h,inherit)}
+  .tnow .pd{font-size:clamp(15px,2.2vh,19px);font-weight:800}.tnow .chg{color:#8a5a00;font-weight:800}
+  .tnow .lf{margin-left:auto;font-size:clamp(13px,1.8vh,15px);font-weight:800;color:var(--accent);white-space:nowrap}
+  .tun,.tla{font-size:clamp(13.5px,1.95vh,16.5px);line-height:1.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tun>span:first-child{font-weight:700;color:var(--sub)}.ls{color:var(--sub)}.tla.ok{color:var(--ok);font-weight:800}
+  .tbtns{display:flex;gap:8px;margin:clamp(3px,.8vh,8px) 0}
+  .tbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:800;font-size:clamp(14px,1.95vh,16.5px);border:1px solid var(--line);border-radius:12px;padding:clamp(6px,1.1vh,10px) 10px;text-decoration:none;color:var(--ink);background:var(--card);white-space:nowrap}
+  .tbtn:hover{border-color:var(--now)}.tbtn small{font-weight:600;opacity:.85}
+  .tbtn.p{background:var(--now);color:var(--now-ink,#fff);border-color:var(--now)}.tbtn.p:hover{filter:brightness(1.08)}
+  .tnone{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin:4px 0}.tnone p{font-size:clamp(14px,1.9vh,16px);color:var(--sub);line-height:1.5}.tnone .tbtn{flex:none}
+  .tmiss{display:flex;gap:6px;align-items:center;font-size:clamp(13px,1.8vh,15px)}
+  .tmiss a{flex:1;min-width:0;color:var(--danger);font-weight:700;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tmiss a:hover{text-decoration:underline}
+  .tpd{display:flex;gap:4px;margin-top:auto;text-decoration:none;align-items:stretch}
+  .tpd .tpl{display:flex;align-items:center;font-size:11.5px;font-weight:800;color:var(--sub);padding-right:2px}
+  .tpd .pc{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;border-radius:8px;background:var(--t-chip,#eceff3);padding:2px 0;line-height:1.25}
+  .tpd .pc i{font-style:normal;font-size:10.5px;color:var(--sub);font-weight:700}
+  .tpd .pc b{font-size:clamp(12px,1.7vh,14px);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .tpd .pc.no b{color:var(--t-faint,#9aa5b1)}.tpd .pc.past{opacity:.45}
+  .tpd .pc.cur{background:var(--now)}.tpd .pc.cur i,.tpd .pc.cur b{color:var(--now-ink,#fff)}
+  .tpd .pc.nx{box-shadow:inset 0 0 0 2px var(--now)}
+  .tlist{flex:1 1 0;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:1px;margin:2px 0}
+  .ti{display:flex;align-items:center;gap:7px;min-height:clamp(26px,3.6vh,32px);font-size:clamp(13.5px,1.85vh,15.5px);border-bottom:1px solid var(--t-chip,#eceff3);flex:none}
+  .tg{flex:none;font-size:11px;font-weight:800;border-radius:6px;padding:1px 0;width:44px;text-align:center;background:var(--m,var(--t-chip,#eceff3));color:var(--t-on,#fff)}
+  .tg.me{background:var(--t-chip,#eceff3);color:var(--t-chip-ink,#4a5560)}
+  .ti .tx{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);text-decoration:none;background:none;border:0;font:inherit;text-align:left;padding:0;cursor:pointer}
+  span.tx{cursor:default}a.tx:hover,button.tx:hover{text-decoration:underline}.ti .tx small{color:var(--sub)}
+  .ti .n{flex:none;font-size:11.5px;font-weight:800;border-radius:999px;padding:0 7px;background:var(--star-soft);color:var(--t-star-ink,#7a5a00)}
+  .ti.hi .n{background:var(--danger-soft);color:var(--danger)}.ti.dd .n{background:var(--accent-soft);color:var(--accent)}
+  .ti .dt{flex:none;font-size:11.5px;font-weight:700;color:var(--sub)}.ti .dt.late{color:var(--danger)}.ti .dt.today{color:var(--accent)}
+  .ti .ck{flex:none;font:inherit;font-size:12.5px;font-weight:800;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:0 9px;line-height:22px;cursor:pointer;color:var(--ok)}
+  .ti .ck:hover{background:var(--ok);color:var(--t-on,#fff);border-color:var(--ok)}
+  .tdin{display:flex;gap:4px;flex:none}
+  .tdin input{flex:1;min-width:0;font:inherit;font-size:clamp(13px,1.8vh,15px);border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--t-field,#fbfcfd);color:var(--ink)}
+  .tdin input:focus{outline:2px solid var(--t-focus,#7fb0e6);border-color:var(--t-focus,#7fb0e6);background:var(--card)}
+  .tdin button{font:inherit;font-size:18px;font-weight:800;border:0;border-radius:10px;padding:0 13px;background:var(--accent);color:var(--t-on,#fff);cursor:pointer}
+  .toprow{min-height:0}
+  @media (min-width:761px){ body.allv .toprow{display:none} body.allv #today{min-height:0;height:clamp(150px,23vh,220px);flex:none} body.allv #tdLesson .tun,body.allv #tdLesson .tla,body.allv #tdLesson .tbtns{display:none} }   /* 전체 도구를 볼 때는 오늘 칸을 줄임 */
+  #dlgTodo{width:min(520px,94vw)}#dlgTodo .mytodo{border:0;padding:0;max-height:64vh;overflow:auto}#dlgTodo .tl{max-height:50vh;overflow:auto}
+  #dlgTodo .acts{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+  /* 휴대폰: 한 화면(스크롤 없이) — 지금 카드 · 오늘 챙길 것(안에서 넘김) · 이번 주 한 줄 · 자주 쓰는 도구 한 줄 */
+  .board.mob{gap:6px}
+  .bline{display:flex;align-items:center;gap:4px;font-size:14px}.bline>b{white-space:nowrap;margin-right:2px}
+  .bc{flex:1;min-width:0;font:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--line);background:var(--t-field,#fbfcfd);border-radius:8px;padding:4px 0;color:var(--ink);cursor:pointer;white-space:nowrap}
+  .bc b{color:var(--accent)}.bc.today{border-color:var(--accent);background:var(--accent-soft)}.bc.past{opacity:.55}.bc.hol{background:var(--danger-soft)}.bc.on{outline:2px solid var(--accent)}
+  .bline .bk{flex:none;padding:3px 8px;text-decoration:none}
+  .bday{border-top:1px solid var(--line);padding-top:4px;max-height:26vh;overflow:auto}.bday .bdh{display:flex;justify-content:space-between;align-items:center}
+  @media (max-width:760px){
+    body:not(.allv):not(.inmenu){height:100dvh;min-height:0;overflow:auto}
+    #today{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto minmax(190px,1fr);flex:1 1 0;min-height:auto;height:auto;max-height:none}
+    #today .tdy{max-height:none}
+    #tdLesson{flex:none}
+    .tnow .cl{font-size:28px}.tun,.tla{font-size:14px}
+    .toprow,.toprow.wk2,body:not(.allv) .toprow:not(.wk2){height:auto!important;flex:none!important;min-height:0!important;max-height:none!important}
+    #tdLesson .tdh .tck,#tdLesson .tmemo{display:none}
+    .tbtn{padding:7px 8px}
+    body:not(.allv):not(.inmenu) footer{font-size:11px;flex-wrap:nowrap}
+    body:not(.allv):not(.inmenu) footer .priv{font-size:0;padding:2px 8px;white-space:nowrap;flex:none}body:not(.allv):not(.inmenu) footer .priv::after{content:"🔒 이 기기에만 저장";font-size:11px}
+    body:not(.allv):not(.inmenu) footer #count{display:none}
+    #today{gap:8px}
+    .tbar.fav{flex-wrap:nowrap!important;flex:none;overflow:hidden}
+    .tbar.fav main#grid.fav{display:flex;flex-wrap:nowrap!important;overflow-x:auto;gap:6px;min-height:0;scrollbar-width:none}
+    .tbar.fav main#grid.fav .fv{flex:0 0 auto}
+    .tbar.fav .gtab button{padding:4px 8px;font-size:12px}
+  }
 </style>
 </head>
 <body>
@@ -405,7 +479,6 @@
 
 <div class="toprow">
   <section id="board" class="board" hidden aria-label="이번 주 학교 업무"></section>
-  <section id="mytodo" class="mytodo" aria-label="내 할 일 (나만 보기)"></section>
 </div>
 
 <div id="tbar" class="tbar">
@@ -438,6 +511,11 @@
     <p class="sm">교장 · 주소 · 전화 · 컴시간 학교 코드는 <a href="apps/setup/?make" data-tn="setup" data-ti>🧳 학기초 세팅</a>에서 넣습니다.</p>
     <div class="acts"><span></span><div class="r"><button type="button" class="btn" id="sCancel">취소</button><button type="submit" class="btn primary">저장</button></div></div>
   </form>
+</dialog>
+
+<dialog id="dlgTodo">
+  <section id="mytodo" class="mytodo" aria-label="내 할 일 (나만 보기)"></section>
+  <div class="acts"><span class="muted" style="font-size:12px">끝낸 일 보기·고치기·지우기 · 날짜 넣기</span><button type="button" class="btn" onclick="this.closest('dialog').close()">닫기</button></div>
 </dialog>
 
 <dialog id="dlgLinks">
@@ -574,7 +652,7 @@
         grid.appendChild(el); span += cols;
       });
       grid.style.setProperty("--mc", Math.max(span, 4));
-      fitRows();
+      fitRows(); requestAnimationFrame(fitRows);
     }catch(err){
       grid.innerHTML = '<div class="cat" style="grid-column:1/-1;align-items:center;justify-content:center;text-align:center"><b>도구 목록을 불러오지 못했습니다.</b><span class="cd">새로 올린 파일이 아직 다 받아지지 않았을 수 있어요. 잠시 뒤 Ctrl+F5(새로 고침)를 눌러 주세요.</span></div>';
     }
@@ -592,6 +670,7 @@
     grid.style.setProperty("--rh", Math.max(30, Math.floor(rh)) + "px");
   }
   var fitT; window.addEventListener("resize", function(){ clearTimeout(fitT); fitT = setTimeout(fitRows, 120); });
+  window.addEventListener("tt-today-render", function(){ requestAnimationFrame(fitRows); });   // 오늘 칸 높이가 바뀌면 단추 높이도 다시 (개편 5단계)
 
   /* ── 개편 4단계: 메뉴 막대 (PC 왼쪽 · 휴대폰 아래 탭 5칸) — 한 번 누르면 그 메뉴 화면(#class 처럼 주소 끝 #) ──
      메뉴 화면은 지금은 그 메뉴의 도구 카드를 크게 보여 줍니다(6단계에서 지금 카드·묶음 탭·상태 줄이 있는 공통 틀로). */

@@ -115,6 +115,23 @@
                   + '<button type="button" class="bk" data-act="setup" title="업무판 설정" aria-label="업무판 설정">⚙</button>'
                 : '<button type="button" class="btn primary" data-act="setup">업무판 연결</button><button type="button" class="bk" data-act="hide" title="이 칸 숨기기">숨기기</button>')
       + "</div>";
+    if(window.matchMedia && window.matchMedia("(max-width:760px)").matches){   // 개편 5단계: 휴대폰은 이번 주 한 줄(건수만) · 누르면 그날 내용
+      var tot = 0, sel = st.day || "";
+      h = '<div class="bline"><b>📅 ' + (weekend ? "다음 주" : "이번 주") + "</b>";
+      for(var j = 0; j < 5; j++){
+        var dj = add(mon, j), kj = ymd(dj), nj = items.filter(function(x){ return x.type === "item" && x.date === kj; }).length + mine.filter(function(x){ return x.date === kj; }).length;
+        var hj = items.filter(function(x){ return x.type === "day" && x.date === kj && x.important === "1"; }).length; tot += nj;
+        h += '<button type="button" class="bc' + (kj === tk ? " today" : "") + (kj < tk ? " past" : "") + (hj ? " hol" : "") + (kj === sel ? " on" : "") + '" data-day="' + kj + '" title="' + (dj.getMonth()+1) + "/" + dj.getDate() + " · " + nj + '건">'
+          + DOW[dj.getDay()] + " <b>" + nj + "</b></button>";
+      }
+      h += (linked ? '<a class="bk" href="' + esc(c.url) + '" target="_blank" rel="noopener" title="업무판 열기">↗</a>' : '<button type="button" class="bk" data-act="setup" title="학교 업무판 연결">연결</button>') + "</div>";
+      if(sel){
+        var ds = new Date(+sel.slice(0,4), +sel.slice(5,7) - 1, +sel.slice(8,10)), L2 = mine.filter(function(x){ return x.date === sel; }).map(function(x){ return '<div class="bi me">' + (x.ic || "📝") + " " + esc(x.text) + "</div>"; })
+          .concat(items.filter(function(x){ return x.type === "item" && x.date === sel; }).map(function(x){ return '<div class="bi"><b style="color:' + color(x.dept) + '">' + esc(short(x.dept)) + "</b>" + (x.time ? '<span class="t">' + esc(x.time) + "</span>" : "") + esc(x.text) + "</div>"; }));
+        h += '<div class="bday"><div class="bdh">' + (ds.getMonth()+1) + "/" + ds.getDate() + " " + DOW[ds.getDay()] + '요일 <button type="button" class="bk" data-addday="' + sel + '">＋ 할 일</button></div>' + (L2.length ? L2.join("") : '<div class="bnone">일정 없음</div>') + "</div>";
+      }
+      box.className = "board mob"; box.innerHTML = h; return;
+    }
     h += '<div class="bweeks">';
     for(var wk = 0; wk < 2; wk++){
       var m0 = add(mon, wk * 7);
@@ -232,6 +249,11 @@
     if(act === "setup") openSetup();
     if(act === "retry") refresh();
     if(act === "hide"){ setCfg({hidden: true}); render(); TT.ui.toast("숨겼습니다. ⋯ 메뉴의 '학교 업무판 연결'에서 다시 켤 수 있습니다."); }
+  });
+  box.addEventListener("click", function(e){                            // 휴대폰 한 줄: 요일을 누르면 그날 내용 펼치기/접기
+    var b = e.target.closest("[data-day]"), a = e.target.closest("[data-addday]");
+    if(b){ st.day = st.day === b.dataset.day ? "" : b.dataset.day; render(); return; }
+    if(a){ var k = a.dataset.addday; TT.ui.prompt("📝 " + (+k.slice(5,7)) + "/" + (+k.slice(8,10)) + " 내 할 일", "", "나만 보는 할 일", function(v){ addMine(k, v); render(); TT.ui.toast("내 할 일에 넣었습니다 (나만 보기)."); }); }
   });
   /* 날짜 칸의 빈 곳(또는 내 할 일)을 누르면 그 날짜로 내 할 일 추가. 학교 업무를 누르면 업무판이 열립니다. */
   box.addEventListener("click", function(e){
