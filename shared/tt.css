@@ -30,7 +30,7 @@ h1{font-size:clamp(19px,3.2vh,26px);font-weight:800;letter-spacing:-.02em}
   list-style:none;white-space:nowrap;text-decoration:none;display:inline-block
 }
 summary::-webkit-details-marker{display:none}
-select{max-width:230px;padding:8px 10px}
+select{max-width:260px;padding:8px 10px;text-overflow:ellipsis}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--t-on,#fff)}
 .btn.star.on{background:var(--star-soft);border-color:var(--star);color:var(--t-star-ink,#7a5a00)}
 .btn:disabled{opacity:.5;cursor:default}
@@ -45,6 +45,12 @@ select{max-width:230px;padding:8px 10px}
 .seg button[aria-pressed="true"]{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .seg button:focus-visible{outline:3px solid var(--t-focus,#7fb0e6);outline-offset:2px}
 .seg.wide{display:flex}.seg.wide button{flex:1;padding:8px 6px}
+
+/* 머리말(맨 위 줄) 단추·고르기 칸·입력 칸은 모든 도구에서 같은 높이 38px (개편 뒤 다듬기) */
+header .btn,header select,header summary,header .tbtn,header input[type=number],header input[type=text],header input:not([type]){height:38px;box-sizing:border-box;vertical-align:middle}
+header .btn,header .tbtn,header summary{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding-top:0;padding-bottom:0;line-height:1.2}
+header select{padding-top:0;padding-bottom:0}
+header .seg{padding:3px;align-items:stretch}header .seg button{height:32px;padding-top:0;padding-bottom:0;line-height:1.2}
 
 /* 입력 칸 */
 .field{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:700;color:var(--sub);min-width:0}

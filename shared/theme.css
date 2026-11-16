@@ -50,3 +50,8 @@ html[data-app="tardy"]:root{
 html[data-app="advisor"]:root{ --bg:var(--t-bg,#f3f6f9); --ink:var(--t-ink,#1d2733); --sub:var(--t-sub,#5b6773); --line:var(--t-line,#dde3ea); --pri:var(--t-accent,#2f6fb5); --pri2:var(--t-accent-soft,#e6f0fa); --good:var(--t-ok,#2e7d4f); --bad:var(--t-danger,#b3261e) }
 html[data-app="tardy"] .hl h1{font-size:clamp(19px,3.2vh,26px)}
 html[data-app="tardy"] a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:3px;color:inherit}
+
+/* ---------- 머리말 단추 높이 맞춤: 다른 도구와 같은 38px (개편 뒤 다듬기) ---------- */
+html[data-app="group"] #clsSel,html[data-app="group"] #clsName,html[data-app="group"] .brand ~ * .btn.sm,html[data-app="group"] #clsDel{height:38px!important;min-height:0!important;box-sizing:border-box;padding-top:0;padding-bottom:0}
+html[data-app="tardy"] #maskBtn{height:38px;padding:0 13px;font-size:14px;font-weight:700;border-radius:10px}
+html[data-app="journal"] #gear{width:38px;height:38px}

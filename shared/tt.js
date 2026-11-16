@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "1.0.0";
+  var VERSION = "1.0.1";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -339,7 +339,7 @@ var TT = (function(){
         var ui0 = store.get(KEYUI, {}) || {}, want = (ui0.last || {})[tool];
         if(!list.some(function(c){ return c.id === want; })) want = (roster.home(d) && roster.home(d).students.length ? d.home : (list[0] || {}).id) || "";
         sel.textContent = "";
-        if(!list.length){ var o0 = el("option", "", "명단 없음 · 명렬표에 나이스 파일을 올려 주세요"); o0.value = ""; sel.appendChild(o0); }
+        if(!list.length){ var o0 = el("option", "", "명단 없음 · 명렬표 먼저"); o0.value = ""; sel.appendChild(o0); }
         list.forEach(function(c){
           var o = el("option", "", (c.id === d.home ? "★ " : "") + c.name + " (" + c.students.length + "명)"); o.value = c.id; sel.appendChild(o);
         });
@@ -497,7 +497,7 @@ var TT = (function(){
     document.documentElement.setAttribute("data-app", here);               // 공통 디자인 맞춤(shared/theme.css)
     (function(){ var l = document.createElement("link"); l.rel = "stylesheet"; l.href = BASE + "shared/theme.css"; document.head.appendChild(l); })();
     var WIDE = "(min-width:900px) and (min-height:460px)";
-    var CSS = ":root{--tt-rail:68px}"
+    var CSS = ":root{--tt-rail:84px}"
       + ".tt-rail,.tt-navbtn{display:none}"
       + ".tt-ri{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:10px;text-decoration:none;color:var(--t-sub,#5b6773);text-align:center;font-family:var(--t-font,'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif)}"
       + ".tt-ri span{font-size:20px;line-height:1}"
@@ -517,12 +517,30 @@ var TT = (function(){
       +   "html.tt-hasnav body{margin-left:var(--tt-rail)!important}"
       +   "html.tt-hasnav .back,html.tt-hasnav .ttback{display:none!important}"
       +   "html.tt-hasnav .cta,html.tt-hasnav .tabs,html.tt-hasnav .dock{left:var(--tt-rail)!important}"
-      +   ".tt-rail{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:var(--tt-rail);z-index:15;background:var(--t-card,#fff);border-right:1px solid var(--t-line,#dde3ea);padding:6px 5px;gap:2px;overflow-y:auto;box-sizing:border-box}"
-      +   ".tt-rail .tt-ri{flex:1 1 0;max-height:60px;min-height:38px}"
-      +   ".tt-rail .tt-grp{flex:0 0 auto}.tt-rail .tt-ri.tt-sub{flex:0 0 40px;min-height:0}"
-      +   ".tt-rail .tt-rec{flex:0 0 50px;border-top:1px solid var(--t-line,#dde3ea);border-radius:0;margin-top:auto}"
-      +   ".tt-rail .tt-home{flex:0 0 50px;border-bottom:1px solid var(--t-line,#dde3ea);border-radius:10px 10px 0 0;margin-bottom:4px}"
-      +   ".tt-rail .tt-bd{flex:0 0 50px;border-top:1px solid var(--t-line,#dde3ea);border-radius:0 0 10px 10px}"
+      /* 첫 화면 왼쪽 메뉴 막대(index.html .mnav)와 같은 너비·같은 단추 크기. 스크롤 없이 한 화면에 (개편 뒤 다듬기) */
+      +   ".tt-rail{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:var(--tt-rail);z-index:15;background:var(--t-card,#fff);border-right:1px solid var(--t-line,#dde3ea);padding:12px 8px;gap:4px;overflow:hidden;box-sizing:border-box}"
+      +   ".tt-rail .tt-top{flex:0 0 64px;height:64px;border-radius:12px;gap:2px}"
+      +   ".tt-rail .tt-top span{display:block;font-size:22px;line-height:26px;height:26px}"
+      +   ".tt-rail .tt-top b{display:block;font-size:11.5px;font-weight:800;line-height:1.1;margin-top:3px}"
+      +   ".tt-rail .tt-top:hover{background:var(--m-soft,var(--t-accent-soft,#e6f0fa));color:var(--m,var(--t-accent,#2f6fb5))}"
+      +   ".tt-rail .tt-top.on{background:var(--m,var(--t-accent,#2f6fb5));color:var(--t-on,#fff)}"
+      +   ".tt-rail .tt-top[data-menu=home]{--m:var(--t-now,#2f6fb5)}"
+      +   ".tt-rail .tt-list{flex:1 1 0;min-height:0;display:grid;grid-template-columns:var(--tt-cols,1fr);grid-auto-rows:var(--tt-rh,34px);align-content:start;gap:2px;background:var(--m-soft,#eef4fb);border-radius:12px;padding:3px;margin:0 -4px;overflow:hidden}"
+      +   ".tt-rail .tt-list .tt-ri{flex-direction:row;justify-content:flex-start;gap:3px;padding:0 3px;min-width:0;overflow:hidden;color:var(--t-ink,#1d2733)}"
+      +   ".tt-rail .tt-list .tt-ri span{font-size:14px;flex:none}"
+      +   ".tt-rail .tt-list .tt-ri b{font-size:10.5px;letter-spacing:-.02em;text-align:left;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}"
+      +   ".tt-rail .tt-list .tt-ri:hover{background:var(--t-card,#fff);color:var(--m,var(--t-accent,#2f6fb5))}"
+      +   ".tt-rail .tt-list .tt-ri.on{background:var(--m,var(--t-accent,#2f6fb5));color:var(--t-on,#fff)}"
+      +   ".tt-rail .tt-list.c2 .tt-ri{justify-content:center;padding:0}.tt-rail .tt-list.c2 .tt-ri b{display:none}"
+      +   ".tt-rail .tt-foot{flex:none;display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--t-line,#dde3ea);padding-top:4px;margin:0 -4px}"
+      +   ".tt-rail .tt-foot .tt-ri{flex-direction:row;justify-content:flex-start;gap:3px;height:34px;padding:0 3px;white-space:nowrap}"
+      +   ".tt-rail .tt-foot .tt-ri span{font-size:15px}.tt-rail .tt-foot .tt-ri b{font-size:10.5px;font-weight:800;letter-spacing:-.02em}"
+      +   ".tt-rail .tt-foot .tt-ri.on{background:var(--t-accent,#2f6fb5);color:var(--t-on,#fff)}"
+      + "  .tt-rail.cf .tt-foot{flex-direction:row;justify-content:space-around}.tt-rail.cf .tt-foot .tt-ri{height:30px;flex:1 1 0;justify-content:center;padding:0}.tt-rail.cf .tt-foot .tt-ri b{display:none}"
+      + "}"
+      + "@media " + WIDE + " and (max-height:640px){"
+      +   ".tt-rail{padding:8px 8px;gap:3px}.tt-rail .tt-top{flex-basis:50px;height:50px}.tt-rail .tt-top span{font-size:19px;line-height:22px;height:22px}.tt-rail .tt-top b{margin-top:1px}"
+      +   ".tt-rail .tt-foot .tt-ri{height:30px}"
       + "}"
       + "@media (max-width:899px),(max-height:459px){"
       +   "html.tt-hasnav .tt-navbtn{display:inline-block;font:inherit;font-size:12px;font-weight:700;border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:1px 9px;margin-left:8px;cursor:pointer;opacity:.85;vertical-align:middle}"
@@ -567,6 +585,53 @@ var TT = (function(){
         h += '<a class="tt-ri tt-bd" href="' + attr(b.url) + '" target="_blank" rel="noopener" title="학교 업무판 (새 창)"><span>📅</span><b>업무판</b></a>';
       return h;
     }
+    /* 넓은 화면 왼쪽 막대: 첫 화면 메뉴 막대와 똑같이 위에 홈·수업·우리 반·학생·학교(크기 고정),
+       그 아래 지금 메뉴의 도구 목록(남은 높이에 맞춰 줄 높이를 정함, 스크롤 없음), 맨 아래 설정·학생 기록·업무판 */
+    var NAVM = ["home", "class", "homeroom", "student", "school"];
+    function railItems(){
+      var hereId = here === "tardy" && /[?&]tab=counsel/.test(location.search) ? "counsel" : here;
+      var me = TT_TOOLS.filter(function(t){ return t.id === hereId; })[0], curMenu = me ? me.menu : null;
+      function ok(t){ return t.ready && t.href && !(classroom && !t.room) && (!t.subject || t.id === hereId || typeof ttPackId !== "function" || t.subject === ttPackId()); }
+      function shown(mid){ return mid === curMenu || typeof ttMenuShown !== "function" || ttMenuShown(mid); }
+      function tools(mid){ return TT_TOOLS.filter(function(t){ return t.menu === mid && ok(t); }); }
+      function M(id){ return typeof ttMenu === "function" ? ttMenu(id) : null; }
+      var h = "";
+      NAVM.forEach(function(id){
+        var m = M(id); if(!m) return;
+        if(id !== "home" && (!shown(id) || !tools(id).length)) return;
+        var on = id === curMenu;
+        h += '<a class="tt-ri tt-top' + (on ? ' on' : '') + '" data-menu="' + id + '" href="' + BASE + (id === "home" ? "" : "#" + id) + '" title="' + attr(m.name) + '"><span>' + m.icon + '</span><b>' + attr(m.name) + '</b></a>';
+      });
+      var L = curMenu ? tools(curMenu) : [];
+      if(L.length){
+        h += '<div class="tt-list" data-menu="' + attr(curMenu) + '" role="group" aria-label="' + attr((M(curMenu) || {}).name || "") + ' 도구">';
+        L.forEach(function(t){
+          var on = t.id === hereId;
+          h += '<a class="tt-ri' + (on ? ' on' : '') + '" href="' + BASE + t.href + '" title="' + attr(t.name) + '"' + (on ? ' aria-current="page"' : '') + '><span>' + t.icon + '</span><b>' + attr(t.short || t.name) + '</b></a>';
+        });
+        h += '</div>';
+      } else h += '<i style="flex:1"></i>';
+      h += '<div class="tt-foot">';
+      var S = tools("settings");
+      if(S.length) h += '<a class="tt-ri' + (curMenu === "settings" ? ' on' : '') + '" href="' + BASE + S[0].href + '" title="설정: ' + attr(S.map(function(t){ return t.name; }).join(", ")) + '"><span>⚙️</span><b>설정</b></a>';
+      if(!classroom) h += '<button type="button" class="tt-ri tt-rec" data-tt="rec" title="학생 기록 한 줄 남기기 (생기부 자료)"><span>✍️</span><b>학생 기록</b></button>';
+      var b = store.get("tt_board_v1", {}) || {};
+      if(b.url && !b.hidden && /^https:\/\/script\.google\.com\//.test(b.url))
+        h += '<a class="tt-ri tt-bd" href="' + attr(b.url) + '" target="_blank" rel="noopener" title="학교 업무판 (새 창)"><span>📅</span><b>업무판</b></a>';
+      return h + '</div>';
+    }
+    /* 도구 목록 줄 높이: 한 줄에 하나(아이콘+이름)로 들어가면 그렇게, 모자라면 두 줄(아이콘만, 이름은 마우스를 올리면) */
+    function fitRail(rail){
+      var list = rail.querySelector(".tt-list"); if(!list) return;
+      var n = list.children.length, G = 2;
+      function one(){ return (list.clientHeight - 6 - (n - 1) * G) / n; }
+      rail.classList.remove("cf");
+      if(one() < 26) rail.classList.add("cf");   // 자리가 모자라면 맨 아래(설정·학생 기록·동기화)를 아이콘 한 줄로
+      var o = one();
+      if(o >= 26){ list.classList.remove("c2"); list.style.setProperty("--tt-cols", "1fr"); list.style.setProperty("--tt-rh", Math.floor(Math.min(40, o)) + "px"); return; }
+      var r = Math.ceil(n / 2), two = (list.clientHeight - 6 - (r - 1) * G) / r;
+      list.classList.add("c2"); list.style.setProperty("--tt-cols", "1fr 1fr"); list.style.setProperty("--tt-rh", Math.floor(Math.max(18, Math.min(40, two))) + "px");
+    }
     /* 바뀐 도구 이름(tools.js 의 old → name)을 도구 화면 제목(h1·창 제목)에 반영합니다. 도구 파일은 고치지 않습니다. */
     function rename(){
       var t = TT_TOOLS.filter(function(x){ return x.id === here; })[0];
@@ -580,7 +645,9 @@ var TT = (function(){
       var st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st);
       document.documentElement.classList.add("tt-hasnav");
       var rail = document.createElement("nav"); rail.className = "tt-rail"; rail.setAttribute("aria-label", "도구 이동");
-      rail.innerHTML = items(); document.body.appendChild(rail);
+      rail.innerHTML = railItems(); document.body.appendChild(rail);
+      fitRail(rail); var fT; window.addEventListener("resize", function(){ clearTimeout(fT); fT = setTimeout(function(){ fitRail(rail); }, 80); });
+      if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ fitRail(rail); });
       var sheet = document.createElement("div"); sheet.className = "tt-sheet"; sheet.hidden = true;
       sheet.innerHTML = '<nav class="in" aria-label="도구 이동"><h3>다른 도구로 이동</h3>' + items(true) + "</nav>";
       document.body.appendChild(sheet);

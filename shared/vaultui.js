@@ -45,7 +45,7 @@
     + ".ttv-note button{font:inherit;font-weight:700;border:0;border-radius:8px;padding:4px 12px;background:#9cc8ff;color:#0d2440;cursor:pointer}"
     + ".ttv-chip{font:12px 'Malgun Gothic',system-ui,sans-serif;font-weight:700;border:0;border-radius:999px;padding:3px 10px;cursor:pointer;background:var(--t-ok-soft,#e3f3ea);color:var(--t-ok,#2e7d4f)}"
     + ".ttv-chip.err{background:var(--t-danger-soft,#fdeceb);color:var(--t-danger,#b3261e)}.ttv-chip.off{background:var(--t-chip,#eceff3);color:var(--t-sub,#5b6773)}"
-    + ".tt-rail .ttv-ri b{font-size:9.5px!important}"
+    + ".tt-rail > .ttv-ri b{font-size:9.5px!important}"
     + "@media print{.ttv-band,.ttv-note,.ttv-lock{display:none!important}}";
   var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
 
@@ -105,7 +105,7 @@
       else if(personal) pv.textContent = "🔒 자료는 이 기기에 저장되고, 내 비밀 문구로 잠근 뒤에만 학교 보관함과 동기화됩니다."; }
     if(foot && !document.querySelector(".ttv-chip")){ var b = document.createElement("button"); b.type = "button"; b.className = "ttv-chip off"; b.onclick = open; foot.parentNode.insertBefore(b, foot); foot.parentNode.insertBefore(document.createTextNode(" "), foot); }
     var rail = document.querySelector(".tt-rail");                                  // 도구 화면 왼쪽 메뉴
-    if(rail && !rail.querySelector(".ttv-ri")){ var a = document.createElement("a"); a.href = "#"; a.className = "tt-ri ttv-ri bd"; a.innerHTML = "<span>☁️</span><b>동기화</b>"; a.onclick = function(e){ e.preventDefault(); open(); }; rail.appendChild(a); }
+    if(rail && !rail.querySelector(".ttv-ri")){ var a = document.createElement("a"); a.href = "#"; a.className = "tt-ri ttv-ri bd"; a.innerHTML = "<span>☁️</span><b>동기화</b>"; a.onclick = function(e){ e.preventDefault(); open(); }; (rail.querySelector(".tt-foot") || rail).appendChild(a); try{ window.dispatchEvent(new Event("resize")); }catch(e){} }
     paintChip();
   }
 
