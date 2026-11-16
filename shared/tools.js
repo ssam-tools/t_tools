@@ -15,20 +15,21 @@
    🧭 생활지도  🗣️ 상담  📄 결석신고서  ✉️ 학부모 문자  🏅 가산점  🎓 진학 추천  📑 생기부 도우미  📎 파일 합치기
    📅 학교 업무판  📝 내 할 일  ☁️ 동기화(보관함)  🏫 교실 기기  🏷️ 학교·선생님 설정  💾 백업  🖼️ 그림 저장  🔒 개인정보 보호 안내  📖 지금 차시
    🗃️ 문장 은행  🧾 기록 마감 점검표  🗂️ 상담 카드  🖨 인쇄
-   🔢 문항 생성기  ✅ 형성평가  🔁 보충  🎯 이원목적분류표  ⏳ 진도·시수
+   📘 교과서·수업 모드  🗺️ 개념지도·도전 문제  🔥 도전 문제(기출)  🔢 문항 생성기  ✅ 형성평가  🔁 보충  🎯 이원목적분류표  ⏳ 진도·시수
    📊 수행평가  📦 제출물 체크  🧹 1인 1역·당번  🪑 자리 바꾸기
    📆 연간 업무  🤖 AI·문서 도우미 (📃 학습지·문항 📏 채점 기준 📨 가정통신문 🏛️ 공문 🗒️ 회의록 💬 민원 답변 ✒️ 세특 다듬기 ✨ 자유 요청 🗄️ 보관함)  🔎 학교 자료실
    📜 의무연수 취합  🧳 학기초 세팅
    🎮 수학 놀이터 (🎁 보물 상자 💣 숫자 폭탄 🎡 돌림판 🛤️ 주사위 말판 🏇 주사위 합 경주 🃏 하이·로우 🏁 퀴즈 배틀 🎱 수학 빙고 ➕ 숫자 만들기 🕵️ 수 탐정 📈 그래프 맞히기 🔲 스도쿠 🔷 세 장 찾기 🎴 짝 맞추기 🗼 하노이 탑 🪄 마방진 🔥 성냥개비 식) */
 var TT_CATS = [
-  {id:"teach", icon:"📚", name:"교과지도",   desc:"시간표 · 수업 기록 · 수업 도구 · 모둠 · 수행평가"},
+  {id:"teach", icon:"📚", name:"교과지도",   desc:"시간표 · 교과서·수업 모드 · 수업 기록 · 수업 도구 · 모둠 · 수행평가"},
   {id:"life",  icon:"🌱", name:"생활지도",   desc:"학급 명렬표 · 출결·결석계 · 학부모 문자 · 제출물 · 1인 1역"},
   {id:"care",  icon:"🤝", name:"상담·생기부", desc:"상담 · 생기부 도우미 · 진학(가산점)"},
   {id:"work",  icon:"💼", name:"업무",       desc:"연간 업무·학사일정 · AI·문서 도우미 · 파일 합치기"},
-  {id:"math",  icon:"🧮", name:"수학",       desc:"문항 생성 · 형성평가·보충 · 이원목적분류표 · 진도 · 수학 놀이터", soon:["📐 도형·그래프 그리기","📉 통계 실험","📚 고교 대비 자료실"]}
+  {id:"math",  icon:"🧮", name:"수학",       desc:"개념지도·도전 문제 · 문항 생성 · 형성평가·보충 · 이원목적분류표 · 진도 · 수학 놀이터", soon:["📐 도형·그래프 그리기","📉 통계 실험"]}
 ];
 var TT_TOOLS = [
   {id:"timetable",icon:"🕘", cat:"teach", short:"내 시간표", name:"내 시간표", desc:"컴시간 시간표를 붙여 넣으면 오늘 수업·수업 기록장에 쓰입니다. 수업 교체는 그 주에만 반영.", href:"apps/timetable/", ready:true, room:true},
+  {id:"book",   icon:"📘", cat:"teach", short:"교과서·수업", name:"교과서·수업 모드", desc:"▶ 수업 모드: ① 교과서 ② 개념 정리 ③ 교과서 문제(타이머) ④ 도전 문제 → [오늘 수업 끝] 한 번으로 진도 저장 · 반마다 지난 쪽에서 · 진도표.", href:"apps/book/", ready:true, room:true},
   {id:"journal",icon:"📒", cat:"teach", short:"수업 기록장", name:"수업 기록장", desc:"수업 진도와 학생 활동을 반별로 기록합니다.", href:"apps/journal/", ready:true, room:true},
   {id:"class",  icon:"🧰", cat:"teach", short:"수업 도구", name:"수업 도구", desc:"칠판(모눈·좌표평면) · 뽑기 · 타이머 · 모둠 점수 · 소음 신호등.", href:"apps/class/", ready:true, room:true},
   {id:"group",  icon:"🧩", cat:"teach", short:"모둠 편성", name:"모둠 편성", desc:"조건에 맞게 모둠과 좌석을 편성합니다.", href:"apps/group/", ready:true, room:true, months:[3]},
@@ -43,6 +44,7 @@ var TT_TOOLS = [
   {id:"record", icon:"📑", cat:"care",  short:"생기부", name:"생기부 도우미", desc:"모인 학생 기록을 영역별로 보며 초안 쓰기 · 나이스 글자 수 · 유의 낱말 점검.", href:"apps/record/", ready:true, months:[7,12]},
   {id:"advisor",icon:"🎓", cat:"care",  short:"진학", name:"진학", desc:"성적 분석 · 지원 가능 고교 살펴보기 · 가산점 자동 입력.", href:"apps/advisor/", ready:true, home:true, months:[10,11]},
   {id:"bonus",  icon:"🏅", cat:"care",  short:"가산점", in:"advisor", name:"가산점 자동 입력", desc:"수상경력·창체 파일을 올리면 가산점 양식을 자동으로 채웁니다.", href:"apps/bonus/", ready:true, home:true, months:[10,11]},
+  {id:"concept",icon:"🗺️", cat:"math",  short:"개념지도", name:"개념지도·도전 문제", desc:"중학교 개념 카드 25장(큰 글씨) · 카드마다 고1 3월 모의고사 기출 도전 문제 — 누를 때마다 문제 → 정답 → 해설.", href:"apps/concept/", ready:true, room:true},
   {id:"mgen",   icon:"🔢", cat:"math",  short:"문항 생성", name:"문항 생성기", desc:"계산형 문항을 숫자만 바꿔 무한히 · 학생별 다른 숫자 · 정답지.", href:"apps/mgen/", ready:true},
   {id:"mcheck", icon:"✅", cat:"math",  short:"형성평가", name:"형성평가·보충", desc:"빠른 채점 · 문항별 정답률 · 틀린 유형만 보충 학습지 · 해결 → 세특 근거.", href:"apps/mcheck/", ready:true},
   {id:"mblue",  icon:"🎯", cat:"math",  short:"분류표", name:"이원목적분류표", desc:"문항별 성취기준·난이도·배점·정답 → 합계·분포 점검, 인쇄.", href:"apps/mblue/", ready:true, exam:21},

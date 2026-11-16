@@ -16,6 +16,9 @@ shared/fill.js          문서 자동 채움 — 틀의 {학교}·{담임}·{학
 shared/fonts/            글꼴 파일 (고운돋움·고운바탕·주아 한글 2,350자 줄인 판, OFL.txt)
 shared/fonts.css         화면 글꼴 4가지 (글꼴 파일은 shared/fonts/, 무료 OFL 글꼴)
 shared/comci.js         컴시간 시간표 읽기 (붙여 넣은 표 · 교사별 시간표 엑셀)
+shared/exam-data.js     고1 3월 모의고사 기출 270문항 목록 (연도·번호·배점·정답·단원) — 그림은 없음
+shared/challenge.js     도전 문제 보기 (문제 → 정답 → 해설), 기출 그림은 각 기기 브라우저에만 저장
+shared/concepts.js      개념 카드 25장 (수학 견본) — 다른 교과는 이 파일과 exam-data.js만 바꾸면 됨
 apps/<도구>/index.html  각 도구 (apps/record 생기부 도우미: ⋯ → 🔍 나이스 기재 점검)
 sw.js, manifest.*       앱 설치, 오프라인 사용
 assets/                 아이콘
@@ -45,3 +48,9 @@ roster.html 등          예전 주소로 들어온 사람을 새 주소로 보�
 3. 파일 도구는 파일을 기기 안에서만 처리합니다.
 4. **이 저장소에는 실제 학생 정보를 절대 올리지 않습니다.** 백업 파일(`*.json`)도 올리지 마세요.
 5. 원본 자료는 나이스에서 내려받은 파일을 기준으로 합니다.
+
+## 수업 자료 (GitHub에 올리지 않음)
+
+교과서 PDF · 쪽-단원표 · 기출 그림은 저작권 자료라 이 저장소에 넣지 않습니다.
+선생님 컴퓨터의 `lesson_files` 폴더(textbook · page_unit · exam)에 모아 두고,
+📘 교과서·수업 모드 → ⚙ → [📂 lesson_files 폴더 고르기] 로 각 기기 브라우저에 한 번 불러옵니다.

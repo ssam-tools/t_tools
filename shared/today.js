@@ -143,6 +143,12 @@
     if(nx) h += '<div class="tdl"><span class="nx">▶ 다음</span> <b>' + nx.n + "교시 " + esc(nx.code) + "</b>" + chg(nx) + " <small>" + nx.t + "</small></div>";
     if(nx && J && (!cur || !miss.length)){ var Pn = progOf(J, nx, td); h += progLine(Pn) + (cur ? "" : memoLine(Pn)); }
     if(focus && !J) h += hint('<a href="apps/journal/">수업 기록장</a>을 쓰면 지난 진도와 메모가 여기에 나옵니다.');
+    /* 수업 5단계: [▶ 수업 시작] → 수업 모드(교과서 · 개념 · 교과서 문제 · 도전 문제). 지금(없으면 다음) 반으로 바로 */
+    if(focus && +focus.cls > 100 && !TT.classroom){
+      var B = TT.store.get("tt_book_v1", null), bl = B && B.last && B.last[+focus.cls];
+      h += '<a class="tdrd" href="apps/book/?lesson=1&c=' + (+focus.cls) + '" title="교과서·개념 정리·교과서 문제·도전 문제 (5단계)"><span class="k">▶ 수업 시작</span><span class="t">'
+        + Math.floor(+focus.cls / 100) + "-" + (+focus.cls % 100) + (bl ? " · 📖 p." + bl.p + (bl.u ? " " + esc(bl.u) : "") + "부터" : " · 교과서 열기") + '</span><span class="go">→</span></a>';
+    }
     if(!cur && !nx) h += weekday && TTT.day(d).length ? (miss.length ? "" : '<div class="tdl ok">✔ 오늘 수업 끝' + (J ? " · 기록 완료" : "") + "</div>")
                          + (J ? "" : hint("수업 기록을 남겼는지 확인해 보세요."))
                        : hint(weekday ? "오늘은 수업이 없습니다." : "주말입니다. 월요일 수업은 위쪽 시간표 줄에서 볼 수 있어요.");

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: file:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>개념지도·도전 문제 · 쌤 노트</title>
+<!--
+  수업 3단계: 중학교 개념 카드 25장 × 고1 3월 모의고사 기출(2017~2026, 2020 없음) 도전 문제
+  · 개념 카드를 누르면 큰 글씨 한 장 → 아래 "🔥 도전 문제 n개" → 문제 그림이 바로 크게 → 누를 때마다 정답 → 해설
+  · 카드 번호: M학년-단원코드 (예: M3-ROOT). 다른 단계(교과서 쪽·수업 모드)는 이 단원코드로 연결합니다.
+  · 다른 교과: shared/concepts.js(개념 카드)와 shared/exam-data.js(문제 목록)만 바꾸면 그대로 동작
+  · 저장 "tt_concept_v1" (shared/challenge.js)
+-->
+<style>
+  header{align-items:center}
+  .bar{flex-wrap:wrap;gap:6px}
+  main{display:flex;flex-direction:column;gap:8px;padding:10px!important;min-height:0}
+  .gsel{display:flex;gap:6px;align-items:center;font-size:14px}
+  .gsel button{font:inherit;font-size:15px;font-weight:700;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:5px 14px;cursor:pointer}
+  .gsel button.on{background:#222;color:#fff;border-color:#222}
+  .gsel .muted{margin-left:auto}
+  .muted{color:var(--sub);font-size:12.5px}
+  .map{flex:1;min-height:0;display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .col{display:flex;flex-direction:column;gap:6px;min-height:0;border-radius:14px;padding:8px;background:var(--c-bg)}
+  .col h2{margin:0 0 2px;font-size:clamp(14px,1.4vw,19px);color:var(--c);text-align:center}
+  .cc{flex:1 1 0;max-height:96px;min-height:0;display:flex;align-items:center;gap:6px;background:#fff;border:1.5px solid var(--c);border-radius:12px;padding:4px 8px;cursor:pointer;text-align:left;font:inherit;color:#111;overflow:hidden}
+  .cc:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  .cc .g{flex:0 0 auto;font-size:12px;font-weight:800;color:#fff;background:var(--c);border-radius:6px;padding:1px 6px}
+  .cc .n{flex:1;min-width:0;font-size:clamp(13px,1.25vw,18px);font-weight:700;line-height:1.25;word-break:keep-all}
+  .cc .f{flex:0 0 auto;font-size:clamp(12px,1.1vw,16px);font-weight:800;color:#c2432a;border:1.5px solid #f0b8a8;background:#fff6f3;border-radius:999px;padding:2px 8px}
+  .cc .f.z{color:#aaa;border-color:#e5e5e5;background:#fafafa}
+  .cc.dim{opacity:.28}
+  /* 개념 카드 전체 화면 */
+  .card{position:fixed;inset:0;z-index:400;background:#fff;display:none;flex-direction:column;padding:2.2vh 4vw}
+  .card.on{display:flex}
+  .card .top{display:flex;align-items:center;gap:12px}
+  .card .tag{font-size:clamp(14px,1.5vw,20px);font-weight:800;color:#fff;background:var(--c);border-radius:8px;padding:3px 12px}
+  .card .id{color:#999;font-size:14px}
+  .card .x{margin-left:auto;font:inherit;font-size:20px;font-weight:800;border:2px solid #222;border-radius:12px;background:#fff;padding:6px 16px;cursor:pointer}
+  .card h1{margin:1.2vh 0 1vh;font-size:clamp(30px,4.4vw,64px);color:var(--c)}
+  .card ul{flex:1;min-height:0;margin:0;padding-left:1.2em;font-size:clamp(20px,2.6vw,40px);line-height:1.5;overflow:auto}
+  .card li{margin:0 0 .45em}
+  .card .ch{border-top:2px solid #eee;padding-top:1.4vh;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .card .go{font:inherit;font-size:clamp(20px,2.4vw,34px);font-weight:900;border:0;border-radius:16px;background:#c2432a;color:#fff;padding:12px 26px;cursor:pointer}
+  .card .go:disabled{background:#ccc}
+  .card .chips{flex:1;display:flex;flex-wrap:wrap;gap:6px}
+  .card .chips button{font:inherit;font-size:14px;border:1.5px solid #ddd;border-radius:999px;background:#fff;padding:3px 10px;cursor:pointer}
+  .card .chips button.p4{border-color:#c2432a;font-weight:800}
+  .card .chips button.seen::after{content:" ✓";color:#2d8a5b}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>🗺️ 개념지도·도전 문제</h1>
+  </div>
+  <div class="bar">
+    <button class="btn" id="bImg">📂 기출 그림 불러오기</button>
+    <button class="btn" id="bFix">🛠 고친 단원 불러오기</button>
+    <a class="btn" href="../journal/">📒 수업 기록장</a>
+  </div>
+</header>
+<main class="panel">
+  <div class="gsel" id="gsel"></div>
+  <div class="map" id="map"></div>
+</main>
+<footer>
+  <span>카드를 누르면 큰 글씨 개념 정리 → 🔥 도전 문제 → 그림을 누를 때마다 문제 → 정답 → 해설 (키보드 ← → · 스페이스 · Esc)</span>
+  <span class="priv">🔒 기출 그림은 이 기기에만 (재배포 금지 자료)</span>
+</footer>
+<div class="card" id="card"></div>
+<script src="../../shared/tt.js"></script>
+<script src="../../shared/exam-data.js"></script>
+<script src="../../shared/challenge.js"></script>
+<script src="../../shared/concepts.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var C = window.TTChallenge;
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  var AREA = window.TT_CONCEPTS.AREA, CONCEPT = window.TT_CONCEPTS.CARDS;
+  var AREAS = Object.keys(AREA), G = 0, open = null;
+  function cardId(u){ return "M" + u.g + "-" + u.c; }
+  function drawSel(){
+    var h = ""; [[0,"전체"],[1,"1학년"],[2,"2학년"],[3,"3학년"]].forEach(function(o){ h += '<button data-g="' + o[0] + '" class="' + (G === o[0] ? "on" : "") + '">' + o[1] + "</button>"; });
+    h += '<span class="muted" id="st"></span>';
+    $("gsel").innerHTML = h;
+    [].forEach.call($("gsel").querySelectorAll("button"), function(b){ b.onclick = function(){ G = +b.dataset.g; drawSel(); draw(); }; });
+    C.stored(function(n){ var f = C.fixCount(); $("st").textContent = "기출 " + C.data.items.length + "문항 · 그림 " + (n ? n + "장 저장됨" : "아직 안 불러옴") + (f ? " · 고친 단원 " + f + "개" : ""); });
+  }
+  function draw(){
+    var h = "";
+    AREAS.forEach(function(a){
+      h += '<div class="col" style="--c:' + AREA[a][0] + ";--c-bg:" + AREA[a][1] + '"><h2>' + a + "</h2>";
+      C.units.filter(function(u){ return u.area === a; }).sort(function(x, y){ return x.g - y.g; }).forEach(function(u){
+        var n = C.count(u.c);
+        h += '<div class="cc' + (G && u.g !== G ? " dim" : "") + '" data-u="' + u.c + '" role="button" tabindex="0"><span class="g">' + u.g + '</span><span class="n">' + esc(u.name) + '</span><span class="f' + (n ? "" : " z") + '" data-f="' + u.c + '" title="도전 문제 바로 보기">🔥' + n + "</span></div>";
+      });
+      h += "</div>";
+    });
+    $("map").innerHTML = h;
+    [].forEach.call($("map").querySelectorAll(".cc"), function(el){
+      el.onclick = function(e){
+        var f = e.target.closest && e.target.closest("[data-f]");
+        if(f){ C.open(C.list(f.dataset.f), 0, draw); return; }
+        showCard(el.dataset.u);
+      };
+    });
+  }
+  function showCard(code){
+    var u = C.unit(code), col = AREA[u.area][0], l = C.list(code), K = CONCEPT[code] || [];
+    open = code;
+    var h = '<div class="top"><span class="tag">' + u.g + "학년 · " + esc(u.area) + '</span><span class="id">' + cardId(u) + '</span><button class="x" id="cx">✕ 닫기</button></div>'
+      + "<h1>" + esc(u.name) + "</h1><ul>" + K.map(function(t){ return "<li>" + t + "</li>"; }).join("") + "</ul>"
+      + '<div class="ch"><button class="go" id="cgo"' + (l.length ? "" : " disabled") + ">🔥 도전 문제 " + l.length + "개</button><div class=\"chips\">"
+      + l.map(function(it, i){ return '<button data-i="' + i + '" class="p' + it.pt + (C.seen(it.id) ? " seen" : "") + '" title="' + esc(C.label(it)) + '">' + it.y + "년 " + it.n + "번</button>"; }).join("") + "</div></div>";
+    var c = $("card"); c.style.setProperty("--c", col); c.innerHTML = h; c.classList.add("on");
+    $("cx").onclick = closeCard;
+    $("cgo").onclick = function(){ C.open(l, 0, function(){ showCard(code); }); };
+    [].forEach.call(c.querySelectorAll(".chips button"), function(b){ b.onclick = function(){ C.open(l, +b.dataset.i, function(){ showCard(code); }); }; });
+  }
+  function closeCard(){ $("card").classList.remove("on"); open = null; draw(); }
+  document.addEventListener("keydown", function(e){
+    if(!open || document.querySelector(".chv.on")) return;
+    if(e.key === "Escape") closeCard();
+    else if(e.key === " " || e.key === "Enter"){ e.preventDefault(); $("cgo").click(); }
+  });
+  $("bImg").onclick = function(){ C.pickFolder(function(n){ alert("기출 그림 " + n + "장을 이 기기에 저장했습니다.\n이제 인터넷이 없어도 도전 문제가 바로 보입니다."); drawSel(); }); };
+  $("bFix").onclick = function(){ C.importFix(function(n){ alert("고친 단원 " + n + "개를 반영했습니다."); drawSel(); draw(); }); };
+  /* 다른 화면에서 ?u=ROOT 로 열면 그 개념 카드를 바로 */
+  var q = (location.search.match(/[?&]u=([A-Z0-9]+)/) || [])[1];
+  drawSel(); draw(); if(q && C.unit(q)) showCard(q);
+})();
+</script>
+</body>
+</html>

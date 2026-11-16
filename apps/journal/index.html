@@ -365,6 +365,8 @@ const isInternal=t=>TAGS.some(g=>g.internal&&g.tags.indexOf(t)>=0);
 const nameOf=(c,no)=>{const s=(S.students[c]||[]).find(x=>x.no===no);return S.hideNames||!s?no+'번':s.name;};
 const labelOf=(c,no)=>{const s=(S.students[c]||[]).find(x=>x.no===no);return S.hideNames||!s?cs(c)+' '+no+'번':s.name+' ('+cs(c)+' '+no+'번)';};
 const progN=c=>{const p=S.prog[c];return p?p.n:0;};
+/* 수업 4단계: 교과서·진도표(tt_book_v1)에서 [오늘 여기까지] 한 쪽 */
+const bookTag=c=>{try{const B=JSON.parse(localStorage.getItem('tt_book_v1')||'null'),l=B&&B.last&&B.last[c];return l?' · 📖 p.'+l.p+(l.u?' '+esc(l.u):''):'';}catch(e){return '';}};
 function periodFor(c){const now=new Date(),w=now.getDay();if(w<1||w>5)return 0;const m=nowMin();let best=0;PERIODS.forEach(p=>{if(TWn()[w+'-'+p.n]===c&&m>=toMin(p.t))best=p.n;});return best;}
 function defaultClass(){
   const now=new Date(),w=now.getDay();
@@ -466,7 +468,7 @@ function gradeBlock(g){
     const n=Math.min(progN(c),N),d=mx-n,nx=L[n];
     return '<button class="prow" role="listitem" data-act="openClass" data-c="'+c+'" aria-label="'+cn(c)+' 진도 '+n+'/'+N+'">'
       +'<span class="pl">'+cs(c)+'</span>'
-      +'<span class="pm"><span class="track"><span class="fill" style="width:'+(n/N*100)+'%"></span>'+U.slice(1).map(u=>'<span class="tick" style="left:'+(u.start/N*100)+'%"></span>').join('')+'</span><span class="nx">'+(nx?'다음 · '+esc(nx.title):'모든 차시 완료')+'</span></span>'
+      +'<span class="pm"><span class="track"><span class="fill" style="width:'+(n/N*100)+'%"></span>'+U.slice(1).map(u=>'<span class="tick" style="left:'+(u.start/N*100)+'%"></span>').join('')+'</span><span class="nx">'+(nx?'다음 · '+esc(nx.title):'모든 차시 완료')+bookTag(c)+'</span></span>'
       +'<span class="pv"><span><b>'+n+'</b>/'+N+'</span>'+(d>0?'<i class="lag">−'+d+'</i>':'<i class="lead">선두</i>')+'</span></button>';
   }).join('')+'</div>';
   h+='<p class="legend">'+U.map(u=>esc(u.name)+' '+u.count+'차시').join(' · ')+'<br>막대의 흰 칸막이는 단원 경계예요. 반을 누르면 차시별로 고칠 수 있어요.</p>';
