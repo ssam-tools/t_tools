@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용).
      예외: 첫 화면의 "이번 주 업무"가 학교 업무판(구글 앱스 스크립트)을 읽어 오는 주소 두 곳. 학생 자료는 보내지 않습니다. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2f6fb5">
 <title>쌤 노트</title>
@@ -492,7 +492,7 @@
         <button type="button" id="mSchool">학교·선생님 설정</button>
         <a href="apps/setup/"><span data-tn="setup" data-ti>🧳 학기초 세팅</span> (세팅 파일)</a>
         <button type="button" id="mAuto">✨ 자동 준비 설정</button>
-        <button type="button" id="mFont">🔤 화면 글꼴</button>
+        <button type="button" id="mFont">🎨 화면 꾸미기</button>
         <button type="button" id="mBoard">학교 업무판 연결</button>
         <button type="button" id="mInstall" hidden>앱으로 설치</button>
         <hr>
@@ -658,7 +658,7 @@
           if(m.id === "settings" && !TT.classroom){                             // 설정: ⋯ 메뉴의 항목을 함께
             rows.unshift(plainRow("🏷️", "학교·선생님 정보", "학교 이름 · 선생님 이름 · 담임/교과만 · 교과 칸", clickMenu("mSchool")),
                          plainRow("📚", "교과 선택", "수업 메뉴 '교과 칸'에 쓸 교과", function(){ openSchool(); var e = $("sPack"); if(e) e.focus(); }));
-            rows.push(plainRow("✨", "자동 준비", "자동 준비 설정", clickMenu("mAuto")), plainRow("🔤", "화면 글꼴", "화면 글꼴 고르기", clickMenu("mFont")),
+            rows.push(plainRow("✨", "자동 준비", "자동 준비 설정", clickMenu("mAuto")), plainRow("🎨", "화면 꾸미기", "테마 · 글꼴 · 글자 크기", clickMenu("mFont")),
                       plainRow("🔗", "업무판 연결", "학교 업무판 연결", clickMenu("mBoard")), plainRow("💾", "전체 백업", "전체 백업 저장", clickMenu("mBackup")));
           }
           return {g: g, rows: rows};
@@ -1078,23 +1078,8 @@
   $("mSchool").onclick = function(){ closeMenu(); openSchool(); };
   $("mBackup").onclick = function(){ closeMenu(); TT.backup.save(); showBackup(); };
   $("mAuto").onclick = function(){ closeMenu(); if(window.TTAuto) TTAuto.settings(); };
-  /* 화면 글꼴 4가지 (TT.font, shared/fonts.css) */
-  $("mFont").onclick = function(){
-    closeMenu();
-    var d = document.createElement("dialog"), cur = TT.font.get();
-    d.innerHTML = '<form><h2>🔤 화면 글꼴</h2><p>모든 도구 화면에 함께 바뀝니다. 이 기기에만 저장됩니다.</p><div class="fpick"></div><div class="acts"><span></span><div class="r"><button type="submit" class="btn primary">닫기</button></div></div></form>';
-    var box = d.querySelector(".fpick");
-    TT.font.list.forEach(function(f){
-      var b = document.createElement("button"); b.type = "button"; b.className = "fopt" + (f.id === cur ? " on" : ""); b.dataset.f = f.id;
-      b.innerHTML = '<b></b><span>오후 2:50 · 11월 16일 월요일</span><small></small>';
-      b.querySelector("b").textContent = f.name; b.querySelector("small").textContent = f.desc;
-      b.onclick = function(){ TT.font.set(f.id); Array.prototype.forEach.call(box.children, function(x){ x.classList.toggle("on", x === b); }); };
-      box.appendChild(b);
-    });
-    document.body.appendChild(d); d.addEventListener("close", function(){ d.remove(); });
-    d.querySelector("form").onsubmit = function(e){ e.preventDefault(); d.close(); };
-    d.showModal();
-  };
+  /* 개편 7단계: 화면 꾸미기 (테마 · 글꼴 · 글자 크기 — shared/tt.js TT.look) */
+  $("mFont").onclick = function(){ closeMenu(); if(TT.look) TT.look.open(); };
   $("mNewYear").onclick = function(){ closeMenu(); TT.backup.newYear(function(){ showHome(); showBackup(); showTitle(); showAlerts(); }); };
   $("mRestore").onclick = function(){ closeMenu(); TT.backup.pick(function(){ location.reload(); }); };
   var installEvt = null;

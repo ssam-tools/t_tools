@@ -51,9 +51,14 @@
 [data-menu="school"]{--m:var(--t-school)}
 [data-menu]{--m-soft:color-mix(in srgb,var(--m,var(--t-accent)) 13%,#fff)}
 
-/* ---------- 테마 묶음 (7단계에서 고름. 지금은 쓰지 않음) ----------
-   테마마다 바탕색 · 지금 카드 색 · 메뉴 4개 색을 함께 바꿉니다. 나머지는 위의 기본값을 그대로 씁니다. */
-html[data-look="spring"]{--t-bg:#f5f9ef;--t-now:#3f7d4e;--t-now-soft:#e3efe5;--t-class:#3f7d4e;--t-homeroom:#c0466e;--t-student:#7d55b0;--t-school:#9a640e}
-html[data-look="summer"]{--t-bg:#eff8f9;--t-now:#0f7685;--t-now-soft:#dcf0f2;--t-class:#0f7685;--t-homeroom:#c13d31;--t-student:#2a64b0;--t-school:#8f6300}
-html[data-look="autumn"]{--t-bg:#fbf5ec;--t-now:#ad4f1a;--t-now-soft:#f6e5da;--t-class:#ad4f1a;--t-homeroom:#7a4a2a;--t-student:#8e2f3f;--t-school:#636218}
-html[data-look="winter"]{--t-bg:#f1f4f8;--t-now:#2f5d8a;--t-now-soft:#e0e8f1;--t-class:#2f5d8a;--t-homeroom:#46677a;--t-student:#555897;--t-school:#5c6672}
+/* ---------- 테마 5개 (개편 7단계 · ⋯ → 🎨 화면 꾸미기) ----------
+   테마 하나 = 바탕색 · 지금 카드 색 · 메뉴 4개 색 묶음. 모든 메뉴 색·지금 카드 색은 흰 글씨와 4.5:1 이상 대비(가독성 확인함).
+   강조색(단추·오늘 표시)도 지금 카드 색을 따라갑니다. 기본(맑은 파랑)은 위 :root 값 그대로입니다. */
+html[data-look="spring"]{--t-accent:#3d7a2c;--t-accent-soft:#e4f0dd;--t-bg:#f5f9ef;--t-now:#3d7a2c;--t-now-soft:#e4f0dd;--t-class:#3d7a2c;--t-homeroom:#c0396a;--t-student:#7a50b5;--t-school:#866100}   /* 봄: 새싹 연두 · 벚꽃 분홍 · 라일락 · 개나리 */
+html[data-look="summer"]{--t-accent:#0b6f80;--t-accent-soft:#d9eef1;--t-bg:#eef7f9;--t-now:#0b6f80;--t-now-soft:#d9eef1;--t-class:#0b6f80;--t-homeroom:#c0412b;--t-student:#1f68b3;--t-school:#8a5f00}   /* 여름: 바다 청록 · 산호 · 하늘 · 햇살 */
+html[data-look="autumn"]{--t-accent:#b04a10;--t-accent-soft:#f6e4d8;--t-bg:#fbf5ec;--t-now:#b04a10;--t-now-soft:#f6e4d8;--t-class:#b04a10;--t-homeroom:#7a4a2a;--t-student:#8e2f47;--t-school:#5c6117}   /* 가을: 단풍 주황 · 밤색 · 포도주 · 올리브 */
+html[data-look="winter"]{--t-accent:#2b659e;--t-accent-soft:#dfe8f2;--t-bg:#f0f3f7;--t-now:#2b659e;--t-now-soft:#dfe8f2;--t-class:#2b659e;--t-homeroom:#466678;--t-student:#3d4a8f;--t-school:#57616b}   /* 겨울: 얼음 파랑 · 회청 · 남색 · 잿빛 */
+
+/* ---------- 글자 크기 3단계 (보통 · 크게 · 아주 크게) — 화면 전체를 같은 비율로 키웁니다 ---------- */
+html[data-size="l"]{--t-fz:1.12}html[data-size="xl"]{--t-fz:1.25}
+html[data-size="l"] body,html[data-size="xl"] body{zoom:var(--t-fz)}
