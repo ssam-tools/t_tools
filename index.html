@@ -491,7 +491,7 @@
       <div class="menu">
         <button type="button" id="mHelp">처음 사용 안내</button>
         <button type="button" id="mSchool">학교·선생님 설정</button>
-        <a href="apps/setup/"><span data-tn="setup" data-ti>🧳 학기초 세팅</span> (세팅 파일)</a>
+        <a href="apps/setup/"><span data-tn="setup" data-ti>🧳 학기초 세팅</span> 파일</a>
         <button type="button" id="mAuto">✨ 자동 준비 설정</button>
         <button type="button" id="mFont">🎨 화면 꾸미기</button>
         <button type="button" id="mBoard">학교 업무판 연결</button>
@@ -709,7 +709,7 @@
 
   /* ── 개편 4단계: 메뉴 막대 (PC 왼쪽 · 휴대폰 아래 탭 5칸) — 한 번 누르면 그 메뉴 화면(#class 처럼 주소 끝 #) ──
      메뉴 화면은 지금은 그 메뉴의 도구 카드를 크게 보여 줍니다(6단계에서 지금 카드·묶음 탭·상태 줄이 있는 공통 틀로). */
-  var NAV = ["home", "class", "homeroom", "student", "school"];
+  var NAV = ["home", "class", "homeroom", "student", "school", "settings"];   // 설정은 막대 맨 아래
   function curMenu(){ var h = (location.hash || "").replace(/^#/, ""); return NAV.indexOf(h) > 0 && menuShown(h) ? h : "home"; }
   function drawNav(){
     var nav = $("mnav"), cur = curMenu(); nav.textContent = "";
@@ -718,12 +718,12 @@
       var m = typeof ttMenu === "function" ? ttMenu(id) : null; if(!m) return;
       if(TT.classroom && id !== "home" && !TT_TOOLS.some(function(t){ return t.menu === id && t.room && t.ready; })) return;
       var a = document.createElement("a"); a.href = id === "home" ? "#" : "#" + id; a.setAttribute("data-menu", id);
-      a.innerHTML = "<span></span><b></b>"; a.firstChild.textContent = m.icon; a.lastChild.textContent = m.name;
+      if(id === "settings"){ var sp0 = document.createElement("i"); sp0.className = "sp"; nav.appendChild(sp0); }
+      a.innerHTML = "<span></span><b></b>"; a.firstChild.textContent = m.icon === "⋯" ? "⚙️" : m.icon; a.lastChild.textContent = m.name;
       if(id === cur){ a.className = "on"; a.setAttribute("aria-current", "page"); }
       a.onclick = function(ev){ ev.preventDefault(); go(id); };
       nav.appendChild(a);
     });
-    var sp = document.createElement("i"); sp.className = "sp"; nav.appendChild(sp);
   }
   function go(id){
     if(id === "home"){ if(location.hash){ history.pushState(null, "", location.pathname + location.search); } }
@@ -758,6 +758,11 @@
         var EX = window.TT_LIBD ? TT_LIBD.extCached() : [];
         items.push({x: {icon: "📞", name: "내선번호", st: EX.length ? EX.length + "곳 · 찾기(Ctrl+K)로도" : "학교 업무판에서 불러오기", fn: function(){ sessionStorage.setItem("sn_ext", "1"); var v = TT.store.get(UIK, {}) || {}; v.mtab = v.mtab || {}; v.mtab.school = "lib"; TT.store.set(UIK, v); renderMenu("school"); }}});
       }
+      if(m.id === "settings" && !TT.classroom){                                   // 설정 메뉴: ⋯ 메뉴에 있던 설정을 카드로 (누르면 같은 창이 열림)
+        (g.id === "set" ? [["mSchool","🏫","학교·선생님 설정","학교 이름 · 담임/교과만 · 교과 칸"],["mFont","🎨","화면 꾸미기","색 · 글꼴 · 글자 크기"],["mAuto","✨","자동 준비 설정","시기에 맞춰 할 일 미리 넣기"],["mBoard","📅","학교 업무판 연결","업무판 주소 · 자료실 · 내선번호"],["mVault","☁️","기기 연결·동기화","내 기기끼리 자료 맞추기"],["mInstall","📲","앱으로 설치","바탕화면·홈 화면에 아이콘"]]
+          : [["mBackup","💾","전체 백업 저장","이 기기 자료를 파일 하나로"],["mRestore","📂","백업 불러오기","백업 파일에서 되살리기"],["mHelp","❓","처음 사용 안내","쌤 노트 쓰는 법"],["mNewYear","🌱","새 학년 시작","지난 학년 자료 정리 (조심)"]]
+        ).forEach(function(a){ var el = $(a[0]); if(el && !el.hidden) items.push({x: {icon: a[1], name: a[2], st: a[3], fn: clickMenu(a[0])}}); });
+      }
       if(m.id === "class" && g.id === "subject") items.push({x: {icon: "🔗", name: "교과 자료 연결", st: (pk ? pk.name + " 공개 자료 · " : "") + "내 링크 " + (((TT.store.get("tt_subject_links_v1", null) || {}).list || []).length) + "개", fn: openLinks}});
       return {g: {id: g.id, name: g.id === "subject" && pk ? g.name + " · " + pk.name : g.name}, items: items};
     }).filter(function(x){ return x.items.length; });
@@ -780,7 +785,7 @@
     var G = menuGroups(m), u = TT.store.get(UIK, {}) || {}, tab = (u.mtab || {})[cur] || "all";
     if(tab !== "all" && !G.some(function(x){ return x.g.id === tab; })) tab = "all";
     mv.setAttribute("data-menu", cur); mv.className = "mview mf";
-    var h = '<div class="mfh"><a class="back" href="#">← 홈</a><h2><span>' + m.icon + "</span> " + m.name + '</h2><span class="msea">📅 ' + SEASON_N[season()] + " 순서</span></div>"
+    var h = '<div class="mfh"><a class="back" href="#">← 홈</a><h2><span>' + (m.icon === "⋯" ? "⚙️" : m.icon) + "</span> " + m.name + "</h2>" + (cur === "settings" ? "" : '<span class="msea">📅 ' + SEASON_N[season()] + " 순서</span>") + "</div>"
       + '<div class="mnow">' + (window.TT_TODAY && TT_TODAY.menuNow ? TT_TODAY.menuNow(cur) : "") + "</div>"
       + '<div class="mtabs" role="tablist">' + (G.length > 1 ? '<button type="button" role="tab" data-tab="all">전체</button>' : "")
       + G.map(function(x){ return '<button type="button" role="tab" data-tab="' + x.g.id + '">' + x.g.name + " <small>" + x.items.length + "</small></button>"; }).join("") + "</div>"
@@ -801,6 +806,7 @@
   }
   window.addEventListener("tt-menu-refresh", function(){ if(curMenu() !== "home") renderMenu(curMenu()); });
   window.addEventListener("tt-mytodo-change", function(){ if(curMenu() !== "home") renderMenu(curMenu()); });
+  window.addEventListener("load", function(){ if(curMenu() === "settings") renderMenu("settings"); });   // 기기 연결·동기화 단추(vaultui)가 나중에 붙으므로
   window.addEventListener("hashchange", route);
   window.addEventListener("popstate", route);
 

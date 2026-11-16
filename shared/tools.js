@@ -54,7 +54,7 @@ var TT_MENUS = [
   {id:"homeroom", icon:"🌱", name:"우리 반", color:"green", who:"homeroom", groups:[{id:"room", name:"우리 반"}]},
   {id:"student",  icon:"🤝", name:"학생",  color:"purple", who:"all",      groups:[{id:"stu", name:"학생"}]},
   {id:"school",   icon:"🏫", name:"학교",  color:"teal",   who:"all",      groups:[{id:"board", name:"업무판"}, {id:"lib", name:"자료실"}, {id:"work", name:"업무 도구"}]},
-  {id:"settings", icon:"⋯",  name:"설정",  color:"",       who:"all",      groups:[{id:"set", name:"설정"}]}
+  {id:"settings", icon:"⋯",  name:"설정",  color:"",       who:"all",      groups:[{id:"set", name:"설정"}, {id:"data", name:"백업·안내"}]}
 ];
 /* 교과 팩 목록: 파일은 subjects/ 폴더. 팩 안의 도구는 불러올 때 TT_TOOLS 에 붙습니다(menu:"class", group:"subject", subject:id) */
 var TT_PACKS = [
@@ -66,7 +66,7 @@ var TT_TOOLS = [
   {id:"timetable",icon:"🕘", cat:"teach", menu:"class", group:"teach", short:"내 시간표", name:"내 시간표", desc:"컴시간 시간표를 붙여 넣으면 오늘 수업·수업 기록에 쓰입니다. 수업 교체는 그 주에만 반영.", href:"apps/timetable/", ready:true, room:true, season:["start"]},
   {id:"book",   icon:"📘", cat:"teach", menu:"class", group:"teach", short:"교과서", name:"교과서 띄우기", old:"교과서·수업 모드", desc:"▶ 수업 모드: ① 교과서 ② 개념 정리 ③ 교과서 문제(타이머) ④ 도전 문제 → [오늘 수업 끝] 한 번으로 진도 저장 · 반마다 지난 쪽에서 · 진도표.", href:"apps/book/", ready:true, room:true},
   {id:"journal",icon:"📒", cat:"teach", menu:"class", group:"teach", short:"수업 기록", name:"수업 기록", old:"수업 기록장", desc:"수업 진도와 학생 활동을 반별로 기록합니다.", href:"apps/journal/", ready:true, room:true},
-  {id:"mpace",  icon:"⏳", cat:"math", menu:"class", group:"teach",  short:"진도·시수", name:"진도·시수", desc:"시간표 × 학사일정 × 수업 기록 → 시험까지 남은 수업과 필요한 차시.", href:"apps/mpace/", ready:true, exam:21, season:["end"]},
+  {id:"mpace",  icon:"⏳", cat:"math", menu:"class", group:"teach",  short:"진도 시수", name:"진도·시수", desc:"시간표 × 학사일정 × 수업 기록 → 시험까지 남은 수업과 필요한 차시.", href:"apps/mpace/", ready:true, exam:21, season:["end"]},
   {id:"class",  icon:"🧰", cat:"teach", menu:"class", group:"teach", short:"교실 도구", name:"교실 도구", old:"수업 도구", desc:"칠판(모눈·좌표평면) · 뽑기 · 타이머 · 모둠 점수 · 소음 신호등.", href:"apps/class/", ready:true, room:true},
   {id:"group",  icon:"🧩", cat:"teach", menu:"class", group:"teach", short:"모둠 편성", name:"모둠 편성", desc:"조건에 맞게 모둠과 좌석을 편성합니다.", href:"apps/group/", ready:true, room:true, months:[3], season:["start"]},
   /* ── 수업 · 평가 ── */
@@ -75,9 +75,9 @@ var TT_TOOLS = [
   /* ── 수업 · 교과 칸 ── 교과 전용 도구는 교과 팩 파일(subjects/<교과>.js)에 있습니다. 아래 TT_PACKS 참고 */
   /* ── 우리 반 (담임) ── */
   {id:"roster", icon:"👥", cat:"life", menu:"homeroom", group:"room",  short:"명렬표", name:"명렬표", old:"학급 명렬표", desc:"나이스 명단 · 학생 사진과 메모 · 학생 카드(상담 카드).", href:"apps/roster/", ready:true, room:true, months:[3], season:["start"]},
-  {id:"photo",  icon:"📷", cat:"life", menu:"homeroom", group:"room",  short:"사진 파일명", in:"roster", name:"사진 파일명", old:"나이스 사진 이름", desc:"반 사진을 명렬표 순서대로 이름(번호)로 바꾸고 용량도 줄입니다.", href:"apps/photo/", ready:true, home:true, season:["start"]},
+  {id:"photo",  icon:"📷", cat:"life", menu:"homeroom", group:"room",  short:"사진", in:"roster", name:"사진 파일명", old:"나이스 사진 이름", desc:"반 사진을 명렬표 순서대로 이름(번호)로 바꾸고 용량도 줄입니다.", href:"apps/photo/", ready:true, home:true, season:["start"]},
   {id:"tardy",  icon:"🧭", cat:"life", menu:"homeroom", group:"room",  short:"출결", name:"출결·결석계", desc:"무단지각 확인, 결석 사유와 결석신고서(한글 파일·인쇄).", href:"apps/tardy/", ready:true, home:true},
-  {id:"parent", icon:"✉️", cat:"life", menu:"homeroom", group:"room",  short:"학부모 문자", name:"학부모 문자", desc:"상황별 학부모 안내 문자를 빠르게 만듭니다.", href:"apps/parent/", ready:true},
+  {id:"parent", icon:"✉️", cat:"life", menu:"homeroom", group:"room",  short:"문자", name:"학부모 문자", desc:"상황별 학부모 안내 문자를 빠르게 만듭니다.", href:"apps/parent/", ready:true},
   {id:"submit", icon:"📦", cat:"life", menu:"homeroom", group:"room",  short:"제출물", name:"제출물 확인", old:"제출물 체크", desc:"동의서·회신·신청서를 학생별로 체크하고 미제출자만 모아 봅니다.", href:"apps/submit/", ready:true},
   {id:"duty",   icon:"🧹", cat:"life", menu:"homeroom", group:"room",  short:"1인 1역", name:"1인 1역·당번", desc:"역할을 정하면 주마다 학생이 자동으로 돌아갑니다. 전자칠판에 띄워 씁니다.", href:"apps/duty/", ready:true, room:true, home:true, months:[3], season:["start"]},
   {id:"seat",   icon:"🪑", cat:"life", menu:"homeroom", group:"room",  short:"자리 배치", name:"자리 배치", desc:"명렬표로 자리표 만들기 · 무작위 · 바꾸기 · 고정 · 학생 쪽에서 보기 · 인쇄 (이 기기에만).", href:"apps/seat/", ready:true, room:true, season:["start"]},

@@ -49,6 +49,7 @@
 [data-menu="homeroom"]{--m:var(--t-homeroom)}
 [data-menu="student"]{--m:var(--t-student)}
 [data-menu="school"]{--m:var(--t-school)}
+[data-menu="settings"]{--m:var(--t-sub,#5b6773)}
 [data-menu]{--m-soft:color-mix(in srgb,var(--m,var(--t-accent)) 13%,#fff)}
 
 /* ---------- 테마 5개 (개편 7단계 · ⋯ → 🎨 화면 꾸미기) ----------

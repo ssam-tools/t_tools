@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "1.0.1";
+  var VERSION = "1.0.2";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -613,7 +613,7 @@ var TT = (function(){
       } else h += '<i style="flex:1"></i>';
       h += '<div class="tt-foot">';
       var S = tools("settings");
-      if(S.length) h += '<a class="tt-ri' + (curMenu === "settings" ? ' on' : '') + '" href="' + BASE + S[0].href + '" title="설정: ' + attr(S.map(function(t){ return t.name; }).join(", ")) + '"><span>⚙️</span><b>설정</b></a>';
+      if(S.length) h += '<a class="tt-ri' + (curMenu === "settings" ? ' on' : '') + '" href="' + BASE + '#settings" title="설정: 학교·선생님 설정, 화면 꾸미기, 학기초 세팅 파일, 백업"><span>⚙️</span><b>설정</b></a>';
       if(!classroom) h += '<button type="button" class="tt-ri tt-rec" data-tt="rec" title="학생 기록 한 줄 남기기 (생기부 자료)"><span>✍️</span><b>학생 기록</b></button>';
       var b = store.get("tt_board_v1", {}) || {};
       if(b.url && !b.hidden && /^https:\/\/script\.google\.com\//.test(b.url))

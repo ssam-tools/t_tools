@@ -95,7 +95,7 @@
   function paintChip(){
     var c = chipText();
     document.querySelectorAll(".ttv-chip").forEach(function(el){ el.textContent = c.t; el.className = "ttv-chip " + c.c; el.title = (lastStatus && lastStatus.error) || "기기 연결·동기화"; });
-    document.querySelectorAll(".ttv-ri b").forEach(function(el){ el.textContent = c.c === "err" ? "동기화 오류" : c.c === "off" ? "동기화" : "동기화 " + (lastStatus && lastStatus.busy ? "…" : stamp(lastStatus && lastStatus.last)); });
+    document.querySelectorAll(".ttv-ri").forEach(function(el){ el.querySelector("span").textContent = c.c === "err" ? "⚠️" : "☁️"; el.title = c.c === "err" ? "동기화 오류" + ((lastStatus && lastStatus.error) ? ": " + lastStatus.error : "") : c.c === "off" ? "기기 연결·동기화 (아직 안 함)" : "마지막 동기화 " + (lastStatus && lastStatus.busy ? "…" : stamp(lastStatus && lastStatus.last)); });   // 막대 글자는 '동기화' 그대로(잘리지 않게), 시각은 마우스를 올리면
   }
   function placeChips(){
     if(CR) return;
