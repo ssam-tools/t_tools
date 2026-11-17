@@ -306,11 +306,19 @@
   }
 
   /* ================= 뽑기 ================= */
+  /* v1.10.3: 명단이 없으면 번호로 뽑기 (1번 ~ N번, N은 고를 수 있음 · C.numMax) */
+  var NUMC = null;
+  function pc(){
+    if(cls) return cls;
+    var N = Math.max(2, Math.min(99, +C.numMax || 30));
+    if(!NUMC || NUMC.students.length !== N){ var L = []; for(var i = 1; i <= N; i++) L.push({no: i, name: ""}); NUMC = {id: "num", name: "번호 뽑기", num: true, students: L}; }
+    return NUMC;
+  }
   var P = {off: {}, used: {}, noRepeat: true, fair: true, recFirst: false, n: 1, last: [], rolling: false};
   /* 기록 적은 학생 먼저: 수업 기록장(tt_journal_v1)에 이 반 학생별로 남은 기록 수 (교실 기기에서도 됨) */
   var INTERNAL = ["과제 미제출", "집중 부족", "준비물 미지참", "지원 필요"];
   function recCounts(){
-    var J = TT.store.get("tt_journal_v1", null), cc = code(cls), out = {};
+    var J = TT.store.get("tt_journal_v1", null), cc = code(pc()), out = {};
     if(J && Array.isArray(J.records)) J.records.forEach(function(r){
       if(r.cls !== cc) return;
       var good = (r.tags || []).some(function(t){ return INTERNAL.indexOf(t) < 0; }) || !!r.text;
@@ -318,24 +326,23 @@
     });
     return out;
   }
-  function picks(){ var k = code(cls); return C.picks[k] = C.picks[k] || {}; }
+  function picks(){ var k = code(pc()); return C.picks[k] = C.picks[k] || {}; }
   function pool(){
-    var pk = picks(), list = cls.students.filter(function(s){ return !P.off[s.no] && !(P.noRepeat && P.used[s.no]); });
-    if(P.recFirst && list.length){ var rc = recCounts(), mr = Math.min.apply(null, list.map(function(s){ return rc[s.no] || 0; })); list = list.filter(function(s){ return (rc[s.no] || 0) === mr; }); }
+    var pk = picks(), list = pc().students.filter(function(s){ return !P.off[s.no] && !(P.noRepeat && P.used[s.no]); });
+    if(P.recFirst && !pc().num && list.length){ var rc = recCounts(), mr = Math.min.apply(null, list.map(function(s){ return rc[s.no] || 0; })); list = list.filter(function(s){ return (rc[s.no] || 0) === mr; }); }
     if(P.fair && list.length){ var min = Math.min.apply(null, list.map(function(s){ return pk[s.no] || 0; })); list = list.filter(function(s){ return (pk[s.no] || 0) === min; }); }
     return list;
   }
   function renderPick(){
-    if(!cls){ TT.ui.needRoster(m); return; }
     var stage = h("div", "stage"); stage.appendChild(h("div", "light"));
     var hint = h("div", "hint", P.last.length ? "" : "누가 나올까요?"), nm = h("div", "nm", P.last.length === 1 ? label(P.last[0]) : P.last.length ? "" : "?");
     stage.appendChild(hint); stage.appendChild(nm);
     if(P.last.length > 1){ var many = h("div", "many"); P.last.forEach(function(s, i){ var c = h("div", "c", label(s)); c.style.animationDelay = (i * .25) + "s"; many.appendChild(c); }); stage.appendChild(many); }
     var acts = h("div", "acts2");
-    if(P.last.length){
+    if(P.last.length && !pc().num){
       [["👍 발표", ["발표함"], false], ["⭐ 잘함", ["발표함"], true]].forEach(function(x){
         var b = h("button", "", x[0]); b.type = "button";
-        b.onclick = function(){ var ok = P.last.every(function(s){ return jAdd(cls, s, x[1], "", x[2]); }); if(ok){ b.classList.add("done"); b.textContent = "✔ 기록함"; b.disabled = true; } else TT.ui.toast("수업 기록장을 한 번 열어 이 반을 준비하면 기록됩니다."); };
+        b.onclick = function(){ var ok = P.last.every(function(s){ return jAdd(pc(), s, x[1], "", x[2]); }); if(ok){ b.classList.add("done"); b.textContent = "✔ 기록함"; b.disabled = true; } else TT.ui.toast("수업 기록장을 한 번 열어 이 반을 준비하면 기록됩니다."); };
         acts.appendChild(b);
       });
       var w = h("button", "", "✍️ 한 줄 기록"); w.type = "button";
@@ -343,20 +350,26 @@
     }
     stage.appendChild(acts); m.appendChild(stage);
     var row = h("div", "row");
+    if(pc().num){                                                       // 명단 없음: 1번부터 N번까지
+      row.appendChild(h("span", "muted", "1번부터"));
+      var mx = h("input", "num"); mx.type = "number"; mx.min = 2; mx.max = 99; mx.value = pc().students.length; mx.style.width = "4.5em"; mx.title = "몇 번까지 뽑을지 (2~99)";
+      mx.onchange = function(){ var v = Math.max(2, Math.min(99, parseInt(mx.value, 10) || 30)); C.numMax = v; saveC(); P.used = {}; P.off = {}; P.last = []; render(); };
+      row.appendChild(mx); row.appendChild(h("span", "muted", "번까지 ·"));
+    }
     var go = btn("🎲 뽑기", "primary go", function(){ roll(stage, nm, hint, acts); }); row.appendChild(go);
     row.appendChild(h("span", "muted", "한 번에"));
     var n = h("select", "num"); [1,2,3,4,5].forEach(function(i){ var o = h("option", "", i + "명"); o.value = i; n.appendChild(o); }); n.value = P.n; n.onchange = function(){ P.n = +n.value; }; row.appendChild(n);
     function ck(lbl, key, tip){ var l = h("label", "chk"); l.title = tip; var c = h("input"); c.type = "checkbox"; c.checked = P[key]; c.onchange = function(){ P[key] = c.checked; render(); }; l.appendChild(c); l.appendChild(document.createTextNode(lbl)); row.appendChild(l); }
     ck("뽑힌 학생 다시 안 나오기", "noRepeat", "이번 시간에 뽑힌 학생은 빼고 뽑습니다");
     ck("공평 뽑기", "fair", "지금까지 덜 뽑힌 학생 중에서 뽑습니다(이 반 누적)");
-    ck("기록 적은 학생 먼저", "recFirst", "수업 기록장에 기록이 가장 적은 학생 중에서 뽑습니다(생기부 근거를 고르게)");
+    if(!pc().num) ck("기록 적은 학생 먼저", "recFirst", "수업 기록장에 기록이 가장 적은 학생 중에서 뽑습니다(생기부 근거를 고르게)");
     row.appendChild(h("span", "sp"));
     row.appendChild(btn("처음부터", "", function(){ P.used = {}; P.last = []; render(); }));
-    row.appendChild(btn("누적 초기화", "", function(){ TT.ui.confirm("공평 뽑기 누적 초기화", "이 반의 지금까지 뽑힌 횟수를 0으로 돌립니다.", "초기화", function(){ C.picks[code(cls)] = {}; saveC(); render(); }); }));
+    row.appendChild(btn("누적 초기화", "", function(){ TT.ui.confirm("공평 뽑기 누적 초기화", "이 반의 지금까지 뽑힌 횟수를 0으로 돌립니다.", "초기화", function(){ C.picks[code(pc())] = {}; saveC(); render(); }); }));
     m.appendChild(row);
     var chips = h("div", "chips"), pk = picks(), rc0 = P.recFirst ? recCounts() : {};
-    cls.students.forEach(function(s){
-      var b = h("button", "chipb" + (P.off[s.no] ? " off" : P.used[s.no] ? " used" : ""), (C.mask ? "" : s.no + " ") + label(s)); b.type = "button";
+    pc().students.forEach(function(s){
+      var b = h("button", "chipb" + (P.off[s.no] ? " off" : P.used[s.no] ? " used" : ""), (pc().num ? s.no + "번" : (C.mask ? "" : s.no + " ") + label(s))); b.type = "button";
       if(P.recFirst){ var rcn = (rc0[s.no] || 0); b.appendChild(h("sup", "", "✍️" + rcn)); }
       else if(pk[s.no]){ var sp = h("sup", "", "×" + pk[s.no]); b.appendChild(sp); }
       b.title = "누르면 이번 뽑기에서 빼기/넣기 (결석 등)";
@@ -364,19 +377,19 @@
       chips.appendChild(b);
     });
     m.appendChild(chips);
-    info.textContent = "후보 " + pool().length + "명 · 이름을 누르면 결석 등으로 뺄 수 있어요" + (P.recFirst ? " · 기록 적은 학생 우선" : "") + (P.fair ? " · 덜 뽑힌 학생 우선" : "");
+    info.textContent = (pc().num ? "명단이 없어 번호로 뽑아요(학급 명렬표를 넣으면 이름으로) · " : "") + "후보 " + pool().length + "명 · " + (pc().num ? "번호" : "이름") + "을 누르면 결석 등으로 뺄 수 있어요" + (P.recFirst && !pc().num ? " · 기록 적은 학생 우선" : "") + (P.fair ? " · 덜 뽑힌 학생 우선" : "");
   }
   function roll(stage, nm, hint, acts){
     if(P.rolling) return;
     var cand = pool();
-    if(!cand.length){ if(P.noRepeat && cls.students.some(function(s){ return P.used[s.no]; })){ P.used = {}; cand = pool(); } }
+    if(!cand.length){ if(P.noRepeat && pc().students.some(function(s){ return P.used[s.no]; })){ P.used = {}; cand = pool(); } }
     if(!cand.length){ TT.ui.toast("뽑을 학생이 없습니다."); return; }
     ac();
     var k = Math.min(P.n, cand.length), win = [], c2 = cand.slice();
     while(win.length < k){ win.push(c2.splice(rnd(c2.length), 1)[0]); }
     P.rolling = true; stage.classList.add("rolling"); acts.innerHTML = ""; var mm = stage.querySelector(".many"); if(mm) mm.remove();
     hint.textContent = "두구두구두구…"; nm.classList.remove("pop"); nm.classList.add("roll");
-    var all = cls.students.filter(function(s){ return !P.off[s.no]; }), t = 0, delay = 45, total = 2600 + rnd(700);
+    var all = pc().students.filter(function(s){ return !P.off[s.no]; }), t = 0, delay = 45, total = 2600 + rnd(700);
     (function step(){
       nm.textContent = label(all[rnd(all.length)]); tick();
       t += delay; delay = Math.min(420, delay * 1.09);
@@ -401,12 +414,12 @@
     setTimeout(function(){ Array.prototype.forEach.call(stage.querySelectorAll(".conf"), function(x){ x.remove(); }); }, 1700);
   }
   function writeLine(list){
-    if(!TT.classroom){ TT.notes.quick({cls: cls.id, nos: list.map(function(s){ return s.no; }), area: "subj", src: "수업 도구"}); return; }
+    if(!TT.classroom){ TT.notes.quick({cls: pc().id, nos: list.map(function(s){ return s.no; }), area: "subj", src: "수업 도구"}); return; }
     var d = document.createElement("dialog"), f = document.createElement("form"); d.appendChild(f); document.body.appendChild(d);
     f.innerHTML = '<h2>✍️ 한 줄 기록</h2><p>' + list.map(function(s){ return s.no + "번"; }).join(", ") + ' · 수업 기록장에 남기고, 내 기기에서 학생 기록으로 모입니다. (교실 기기에는 지난 기록이 보이지 않아요)</p><textarea maxlength="300" placeholder="예: 이차함수 그래프를 칠판에 그려 설명함"></textarea><div class="acts"><span></span><div class="r"><button type="button" class="btn">취소</button><button type="submit" class="btn primary">저장</button></div></div>';
     d.addEventListener("close", function(){ d.remove(); });
     f.querySelector("button[type=button]").onclick = function(){ d.close(); };
-    f.onsubmit = function(e){ e.preventDefault(); var t = f.querySelector("textarea").value.trim(); if(!t) return; var ok = list.every(function(s){ return jAdd(cls, s, [], t, false); }); d.close(); TT.ui.toast(ok ? "기록했습니다." : "수업 기록장을 한 번 열어 이 반을 준비하면 기록됩니다."); };
+    f.onsubmit = function(e){ e.preventDefault(); var t = f.querySelector("textarea").value.trim(); if(!t) return; var ok = list.every(function(s){ return jAdd(pc(), s, [], t, false); }); d.close(); TT.ui.toast(ok ? "기록했습니다." : "수업 기록장을 한 번 열어 이 반을 준비하면 기록됩니다."); };
     d.showModal(); f.querySelector("textarea").focus();
   }
 

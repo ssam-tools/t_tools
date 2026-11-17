@@ -123,7 +123,7 @@
   }
   var from = null;                                                      // 마지막으로 누른 단추(창을 그 옆에)
   function isSide(){ return hb && hb.offsetParent !== null; }            // 지금 메뉴 막대의 부엉이가 보이는가(넓은 화면)
-  function seen(el){ return el && el.offsetParent !== null; }
+  function seen(el){ return !!el && (el.offsetParent !== null || (el.offsetWidth > 0 && getComputedStyle(el).position === "fixed")); }   // 고정(fixed) 단추는 offsetParent가 없음
   function place(){                                                     // 창·말풍선 자리: 누른 단추 옆 / 휴대폰은 오른쪽 아래
     [box, tip].forEach(function(el){ el.style.top = el.style.bottom = el.style.left = el.style.right = el.style.borderRadius = el.style.maxHeight = ""; });
     var h = window.innerHeight, w = window.innerWidth;
@@ -133,7 +133,16 @@
       tip.style.top = yy + "px"; tip.style.bottom = "auto"; tip.style.right = rt; tip.style.borderRadius = "14px 4px 14px 14px";
       return;
     }
-    if(!isSide()) return;                                               // 메뉴 막대 부엉이 → 오른쪽
+    if(!isSide()){                                                      // 떠 있는 부엉이 → 부엉이 위(자리가 없으면 아래), 오른쪽 끝 맞춤
+      if(!seen(btn)) return;
+      var b = btn.getBoundingClientRect(), bw = Math.min(360, w - 24), lx = Math.round(Math.max(12, Math.min(b.right - bw, w - bw - 12)));
+      box.style.left = lx + "px"; box.style.right = "auto";
+      if(b.top > 320 || b.top > h - b.bottom){ box.style.top = "auto"; box.style.bottom = Math.round(h - b.top + 14) + "px"; box.style.maxHeight = Math.round(b.top - 26) + "px"; }
+      else { box.style.bottom = "auto"; box.style.top = Math.round(b.bottom + 14) + "px"; box.style.maxHeight = Math.round(h - b.bottom - 26) + "px"; }
+      var tl = b.left > 260; tip.style.top = Math.round(b.top + 16) + "px"; tip.style.bottom = "auto";
+      if(tl){ tip.style.right = Math.round(w - b.left + 10) + "px"; tip.style.left = "auto"; } else { tip.style.left = Math.round(b.right + 10) + "px"; tip.style.right = "auto"; tip.style.borderRadius = "14px 14px 14px 4px"; }
+      return;
+    }
     var r = hb.getBoundingClientRect(), x = Math.round(r.right + 12) + "px";
     var y = Math.max(12, Math.min(r.top - 20, h - 560));
     box.style.left = x; box.style.right = "auto"; box.style.top = y + "px"; box.style.bottom = "auto"; box.style.maxHeight = (h - y - 16) + "px";
@@ -165,7 +174,7 @@
       + '<button type="button" class="bt" data-a="run"><i>⚡</i><span>바로 실행<small>자주 하는 일</small></span></button>'
       + "</div>"
       + ('<button type="button" class="bt" data-a="voice" style="width:100%;margin-top:6px"><i>🎙️</i><span>말로 기록<small>상담 · 학부모 상담 · 회의 · 수업 관찰 · 할 일</small></span></button>')
-      + '<p class="nt">🔒 기록은 이 기기 안에만 저장돼요. 단축키: <b>Alt+B</b> 쌤비 · <b>Ctrl+K</b> 찾기</p>';
+      + '<p class="nt">🔒 기록은 이 기기 안에만 저장돼요.<br>⌨️ 단축키: <b>Alt+B</b> 쌤비 · <b>Ctrl+K</b> 찾기</p>';
   };
   V.listen = function(a){
     a = a || {};
@@ -365,6 +374,56 @@
     find(q);
   }
   var pend = null;
+
+  /* ── 비켜 서기 (v1.10.3): 부엉이가 글자·단추·입력 칸을 가리면 빈 곳으로 옮깁니다 ── */
+  var SBK = "sbPos";
+  function mine(el){ return el === btn || btn.contains(el) || box.contains(el) || tip.contains(el) || el === box || el === tip; }
+  function covers(x, y, ww, hh){                                        // 그 자리에 가려지는 내용이 있는가 (5×5 점 검사)
+    var M = 4;
+    for(var i = 0; i < 5; i++) for(var j = 0; j < 5; j++){
+      var px = x + M + (ww - 2 * M) * i / 4, py = y + M + (hh - 2 * M) * j / 4;
+      var L = document.elementsFromPoint(px, py) || [], el = null;
+      for(var k = 0; k < L.length; k++) if(!mine(L[k])){ el = L[k]; break; }
+      if(!el || el === document.body || el === document.documentElement) continue;
+      if(el.closest && el.closest("button,a,input,select,textarea,label,img,canvas,video,iframe,svg,summary,[role=button],[contenteditable=true],.tt-rail,#mnav,.mnav,header")) return true;
+      var c = el.childNodes;
+      for(var t = 0; t < c.length; t++){
+        if(c[t].nodeType !== 3 || !/\S/.test(c[t].nodeValue)) continue;
+        var r = document.createRange(); r.selectNodeContents(c[t]); var R = r.getClientRects();
+        for(var q = 0; q < R.length; q++){ var Q = R[q]; if(px >= Q.left - 6 && px <= Q.right + 6 && py >= Q.top - 6 && py <= Q.bottom + 6) return true; }
+      }
+    }
+    return false;
+  }
+  function spots(){                                                     // 후보 자리: 오른쪽 아래(기본) → 오른쪽 위로 → 아래 줄 왼쪽으로 → 왼쪽 → 화면 전체
+    var w = window.innerWidth, h = window.innerHeight, s = btn.offsetWidth || 78, g = 18, out = [];
+    var lm = 12; ["#mnav", ".tt-rail"].forEach(function(q){ var e = document.querySelector(q); if(e && e.offsetParent !== null){ var r = e.getBoundingClientRect(); if(r.width < w / 3) lm = Math.max(lm, r.right + 12); } });
+    var x1 = w - s - 22, y1 = h - s - (w <= 760 ? 84 : 22), stepY = s * 0.75, stepX = s + 12, x, y;
+    for(y = y1; y >= 70; y -= stepY) out.push([x1, y]);
+    for(x = x1 - stepX; x >= lm; x -= stepX) out.push([x, y1]);
+    for(y = y1 - stepY; y >= 70; y -= stepY) out.push([lm, y]);
+    for(y = y1 - stepY; y >= 70; y -= stepY) for(x = x1 - stepX; x > lm; x -= stepX) out.push([x, y]);
+    return out.map(function(p){ return [Math.round(p[0]), Math.round(p[1])]; });
+  }
+  var cur = null, moving = false;
+  function setPos(p){ cur = p; btn.style.left = p[0] + "px"; btn.style.top = p[1] + "px"; btn.style.right = btn.style.bottom = "auto"; }
+  function avoid(){
+    if(moving || !box.hidden || !seen(btn) || (btn.matches && btn.matches(":hover")) || document.querySelector("dialog[open]")) return;
+    var s = btn.offsetWidth || 78, L = spots(); if(!L.length) return;
+    if(cur && (cur[0] > window.innerWidth - s || cur[1] > window.innerHeight - s)) cur = null;   // 창 크기가 바뀌어 밖으로 나갔으면 다시
+    var first = cur || L[0];
+    if(!covers(first[0], first[1], s, s)){ if(!cur) setPos(first); return; }
+    for(var i = 0; i < L.length; i++) if(!covers(L[i][0], L[i][1], s, s)){
+      moving = true; btn.style.transition = "left .35s ease,top .35s ease"; setPos(L[i]);
+      setTimeout(function(){ moving = false; btn.style.transition = ""; }, 400); return;
+    }
+    if(!cur) setPos(L[0]);                                               // 빈 곳이 없으면 기본 자리
+  }
+  var avT = null; function avoidSoon(){ clearTimeout(avT); avT = setTimeout(avoid, 250); }
+  window.addEventListener("resize", function(){ cur = null; avoidSoon(); });
+  window.addEventListener("scroll", avoidSoon, true);
+  document.addEventListener("click", function(){ setTimeout(avoidSoon, 300); }, true);
+  setTimeout(avoid, 900); setInterval(avoid, 2500);
 
   /* ── 누르기 ── */
   btn.addEventListener("click", function(){ toggle(btn); });
