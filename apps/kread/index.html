@@ -105,6 +105,15 @@
   .bank{display:flex;flex-wrap:wrap;gap:6px;flex:none;max-height:22dvh;overflow:auto}
   .bank button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:15px;font-weight:700;cursor:pointer}
   .bank button:disabled{opacity:.25}
+  .kbar{display:grid;grid-template-columns:96px 1fr 44px;gap:8px;align-items:center;font-size:13.5px}
+  .kbar i{display:block;height:10px;border-radius:6px;background:#eef1f6;overflow:hidden}.kbar i b{display:block;height:100%;background:var(--ac);border-radius:6px}
+  .kbar.lo i b{background:var(--ng)}.kbar em{font-style:normal;text-align:right;color:var(--sub)}
+  .snt{display:flex;flex-direction:column;gap:7px}
+  .snt div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:15px;line-height:1.55;word-break:keep-all;display:flex;gap:8px;align-items:flex-start}
+  .snt div p{flex:1}.snt div small{color:var(--sub);font-size:11.5px;display:block}
+  .snt div button{border:0;background:none;color:var(--sub);font-size:17px;cursor:pointer}
+  .chk2{display:flex;flex-wrap:wrap;gap:6px}.chk2 span{font-size:13px;border-radius:999px;padding:4px 10px;background:#eef1f6;color:var(--sub)}.chk2 span.on{background:var(--okb);color:var(--ok);font-weight:800}
+  @media (max-height:760px){.vtip{display:none}}
   .dlv{font-size:40px;font-weight:900;color:var(--ac);line-height:1.1}
   .ch{display:flex;flex-direction:column;gap:8px}
   .ch button{border:1.5px solid var(--line);background:#fff;border-radius:13px;padding:12px 13px;font:inherit;font-size:15.5px;text-align:left;line-height:1.45;cursor:pointer;word-break:keep-all;display:flex;gap:8px}
@@ -310,6 +319,7 @@ function showList(){
   view(
     '<div class="seg">' + D.levels.map(function(l){ var ok = lv.indexOf(l.lv) >= 0; return '<button aria-pressed="' + (l.lv === cur) + '"' + (ok ? "" : " disabled") + ' onclick="S.lv=' + l.lv + ';save();showList()">' + l.name + "</button>"; }).join("") + "</div>" +
     '<div class="muted">' + esc((D.levels.filter(function(l){ return l.lv === cur; })[0] || {}).desc || "") + " · 지문을 고르세요</div>" +
+    (wrongList().length ? '<div class="tip">📕 오답 노트에 ' + wrongList().length + '문항이 있어요. 다시 풀면 실력이 돼요.<button onclick="showWrong()">오답 노트</button></div>' : "") +
     '<div class="plist sc grow">' + list.map(function(p){
       var b = bestOf(p.id);
       return '<button class="pi" onclick="readSetup(\'' + p.id + '\')"><span class="tg">' + p.area + '</span><span class="tt"><b>' + esc(p.title) + "</b><span>" + p.type + " · " + p.chars + "자</span></span>" +
@@ -336,7 +346,7 @@ function gistQ(p){                     // 문단 요지 고르기 — 문단 하
   var n = p.gist.length, i = Math.floor(Math.random() * n), others = pick(p.gist.filter(function(_, j){ return j !== i; }), 3, []);
   var c = shuffle([p.gist[i]].concat(others));
   var u = unitName(p);
-  return {k: "gist", q: (i + 1) + u + "의 " + (p.genre ? "내용" : "요지") + "으로 가장 알맞은 것은?", c: c, a: c.indexOf(p.gist[i]), e: (i + 1) + u + ": " + p.gist[i]};
+  return {gen: "gist", k: "gist", q: (i + 1) + u + "의 " + (p.genre ? "내용" : "요지") + "으로 가장 알맞은 것은?", c: c, a: c.indexOf(p.gist[i]), e: (i + 1) + u + ": " + p.gist[i]};
 }
 function orderQ(p){                    // 문단 순서 배열 — 섞인 요지를 원래 순서로
   var n = p.gist.length, sh = shuffle(p.gist.map(function(_, i){ return i; }));
@@ -349,7 +359,7 @@ function orderQ(p){                    // 문단 순서 배열 — 섞인 요지
     var L = lab(o); if(!seen[L]){ seen[L] = 1; c.push(L); }
   }
   c = shuffle(c);
-  return {k: "order", q: "아래는 윗글 각 " + unitName(p) + "의 " + (p.genre ? "내용" : "요지") + "을 섞어 놓은 것이다. 글의 순서대로 바르게 늘어놓은 것은?", list: sh.map(function(pi, j){ return "(" + GL[j] + ") " + p.gist[pi]; }), c: c, a: c.indexOf(lab(right)),
+  return {gen: "order", k: "order", q: "아래는 윗글 각 " + unitName(p) + "의 " + (p.genre ? "내용" : "요지") + "을 섞어 놓은 것이다. 글의 순서대로 바르게 늘어놓은 것은?", list: sh.map(function(pi, j){ return "(" + GL[j] + ") " + p.gist[pi]; }), c: c, a: c.indexOf(lab(right)),
     e: "정답 순서: " + lab(right) + ". '그러나·따라서·또' 같은 이어 주는 말과, 개념 소개 → 설명 → 정리의 흐름이 순서의 단서예요."};
 }
 function buildQs(p, noExtra){
@@ -361,14 +371,14 @@ function buildQs(p, noExtra){
   return qs;
 }
 function buildBase(p){
-  return p.qs.map(function(q){
+  return p.qs.map(function(q, si){
     if(q.k === "vocab"){
       var w = W[q.w], wr = pick(D.words.map(function(x){ return x.m; }), 3, [w.m]), c = shuffle([w.m].concat(wr));
       return {k: "vocab", q: p.genre ? "문학 용어 '" + q.w + "'의 뜻으로 가장 알맞은 것은?" : "윗글에 쓰인 '" + q.w + "'의 뜻으로 가장 알맞은 것은?", c: c, a: c.indexOf(w.m), e: "예) " + w.ex.replace(/[\[\]]/g, ""), w: q.w};
     }
-    if(q.k === "ox") return q;
+    if(q.k === "ox") return Object.assign({src: si}, q);
     var idx = shuffle(q.c.map(function(_, i){ return i; }));
-    return {k: q.k, q: q.q, c: idx.map(function(i){ return q.c[i]; }), a: idx.indexOf(q.a), e: q.e};
+    return {k: q.k, q: q.q, c: idx.map(function(i){ return q.c[i]; }), a: idx.indexOf(q.a), e: q.e, src: si};
   });
 }
 var KN = {main: "중심 내용", struct: "글의 구조", ox: "내용 일치 O·X", apply: "적용·추론", vocab: "어휘", gist: "흐름 파악", order: "순서 배열", dv: "어휘 확인", word: "시어·표현", style: "표현·서술상 특징", char: "인물 관계"};
@@ -445,6 +455,7 @@ function qAns(v, el){
   var bs = el.parentNode.querySelectorAll("button");
   Array.prototype.forEach.call(bs, function(b, i){ b.disabled = true; var val = q.k === "ox" ? i === 0 : i; if(val === q.a) b.classList.add("ok"); else if(b === el) b.classList.add("ng"); });
   if(q.k === "vocab") gradeWord(q.w, ok, true);
+  else if(!R.diag) wrongTrack(R.p, q, ok);
   $("fb").innerHTML = '<div class="fb ' + (ok ? "ok" : "ng") + '"><b>' + (ok ? "맞았어요 👍" : "아쉬워요. 정답: " + (q.k === "ox" ? (q.a ? "O" : "X") : "①②③④⑤"[q.a])) + "</b>" + esc(q.e) + "</div>";
   $("nx").innerHTML = '<button class="btn" onclick="' + (R.qi + 1 < R.qs.length ? "R.qi++;qShow()" : "readResult()") + '">' + (R.qi + 1 < R.qs.length ? "다음 →" : "결과 보기") + "</button>";
   try{ $("fb").scrollIntoView({block: "nearest", behavior: "smooth"}); }catch(e){}
@@ -544,6 +555,117 @@ function mapCheck(){
     '<button class="btn" onclick="' + (R.today ? "go(\'today\')" : "go(\'read\')") + '">' + (R.today ? "마치기" : "목록으로") + "</button>";
 }
 
+/* ════════ 📕 오답 노트 ════════ */
+function wrongKey(pid, q){ return pid + ":" + (q.gen || q.src); }
+function wrongTrack(p, q, ok){
+  if(q.src == null && !q.gen) return;
+  var k = S.kst || (S.kst = {}), x = k[q.k] || (k[q.k] = [0, 0]); x[0]++; if(ok) x[1]++;
+  var w = S.wrong || (S.wrong = {}), key = wrongKey(p.id, q);
+  if(!ok){ var o = w[key] || (w[key] = {p: p.id, n: 0}); if(q.gen) o.g = q.gen; else o.i = q.src; o.n++; o.d = ymd(); }
+  save();
+}
+function wrongList(){ var w = S.wrong || {}; return Object.keys(w).filter(function(k){ return P[w[k].p]; }).map(function(k){ var o = w[k]; o.key = k; return o; }).sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : b.n - a.n; }); }
+function wrongQ(o){
+  var p = P[o.p];
+  if(o.g === "gist") return gistQ(p);
+  if(o.g === "order") return orderQ(p);
+  var q = p.qs[o.i]; if(!q) return null;
+  if(q.k === "ox") return Object.assign({src: o.i}, q);
+  var idx = shuffle(q.c.map(function(_, i){ return i; }));
+  return {k: q.k, q: q.q, c: idx.map(function(i){ return q.c[i]; }), a: idx.indexOf(q.a), e: q.e, src: o.i};
+}
+function showWrong(){
+  var L = wrongList(), k = S.kst || {}, order = ["main", "struct", "ox", "apply", "gist", "order", "word", "style", "char"];
+  var bars = order.filter(function(x){ return k[x] && k[x][0]; }).map(function(x){ var r = Math.round(k[x][1] / k[x][0] * 100); return '<div class="kbar' + (r < 60 ? " lo" : "") + '"><span>' + KN[x] + '</span><i><b style="width:' + r + '%"></b></i><em>' + r + "%</em></div>"; }).join("");
+  var weak = order.filter(function(x){ return k[x] && k[x][0] >= 3; }).sort(function(a, b){ return k[a][1] / k[a][0] - k[b][1] / k[b][0]; })[0];
+  var tipK = {main: "첫 문단과 마지막 문단에서 글쓴이가 가장 하고 싶은 말을 찾아요.", struct: "'그러나·따라서·첫째' 같은 이어 주는 말에 표시하며 읽어요.", ox: "선택지의 낱말 하나하나를 지문과 맞대어 확인해요.", apply: "지문의 원리를 한 문장으로 정리한 뒤 보기에 대어 봐요.",
+    gist: "문단마다 다 읽고 나서 '이 문단은 ○○ 이야기'라고 속으로 말해요.", order: "개념 소개 → 설명 → 정리의 흐름과 이어 주는 말을 잡아요.", word: "표현이 무엇을 무엇처럼 나타냈는지 따져요.", style: "누가 말하는지, 어떤 방식으로 말하는지 먼저 봐요.", char: "인물마다 처음과 끝의 마음이 어떻게 바뀌는지 적어 봐요."};
+  view('<div class="rtop"><b>📕 오답 노트</b><button class="link" style="margin-left:auto" onclick="go(TAB)">← 돌아가기</button></div>' +
+    '<div class="card" style="display:flex;flex-direction:column;gap:7px"><b style="font-size:15px">유형별 정답률</b>' + (bars || '<div class="muted">지문을 읽고 문제를 풀면 나와요.</div>') +
+      (weak ? '<div class="muted" style="margin-top:4px">💡 <b>' + KN[weak] + "</b>이(가) 가장 약해요. " + (tipK[weak] || "") + "</div>" : "") + "</div>" +
+    '<div class="card sc grow" style="display:flex;flex-direction:column;gap:6px"><b style="font-size:15px">다시 풀 문항 ' + L.length + "개</b>" +
+      (L.length ? L.map(function(o){ var p = P[o.p], q = o.g ? {k: o.g} : p.qs[o.i] || {}; return '<div class="muted" style="display:flex;gap:8px"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(p.title) + "</span><span>" + (KN[q.k] || "") + "</span><span>" + (o.n > 1 ? "✕" + o.n : "") + "</span></div>"; }).join("")
+        : '<div class="muted" style="padding:16px;text-align:center">틀린 문항이 없어요. 👍</div>') + "</div>" +
+    '<button class="btn" onclick="wrongRun()"' + (L.length ? "" : " disabled") + '>다시 풀기 (최대 10문항)</button>');
+}
+var WR = null;
+function wrongRun(){
+  var L = wrongList().slice(0, 10).map(function(o){ return {o: o, q: wrongQ(o)}; }).filter(function(x){ return x.q; });
+  if(!L.length) return showWrong();
+  WR = {L: L, i: 0, ok: 0}; wShow();
+}
+function wShow(){
+  var it = WR.L[WR.i], q = it.q, p = P[it.o.p];
+  var body = q.k === "ox" ? '<div class="ox"><button onclick="wAns(true,this)">O</button><button onclick="wAns(false,this)">X</button></div>'
+    : '<div class="ch">' + q.c.map(function(c, i){ return '<button onclick="wAns(' + i + ',this)"><em>' + "①②③④⑤"[i] + "</em><span>" + esc(c) + "</span></button>"; }).join("") + "</div>";
+  view('<div class="rtop"><b>📕 오답 다시 풀기</b><span class="muted" style="margin-left:auto">' + (WR.i + 1) + " / " + WR.L.length + "</span></div>" +
+    '<div class="qk" style="display:flex;gap:8px;align-items:center"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(p.title) + " · " + KN[q.k] + '</span><button class="link" onclick="wText()">📄 지문 보기</button></div>' +
+    '<div class="qa sc grow"><div class="q">' + esc(q.q) + "</div>" +
+    (q.list ? '<ul class="glist">' + q.list.map(function(t){ return "<li><b>" + esc(t.slice(0, 3)) + "</b>" + esc(t.slice(4)) + "</li>"; }).join("") + "</ul>" : "") +
+    body + '<div id="fb"></div></div><div id="nx"></div>');
+}
+function wText(){ var p = P[WR.L[WR.i].o.p]; modal('<h2>' + esc(p.title) + '</h2><div class="text sc' + (p.genre === "poem" ? " poem" : "") + '" style="max-height:62dvh">' + p.paras.map(function(x){ return "<p>" + esc(x) + "</p>"; }).join("") + '</div><button class="btn" data-close>닫기</button>'); }
+function wAns(v, el){
+  var it = WR.L[WR.i], q = it.q, ok = v === q.a;
+  Array.prototype.forEach.call(el.parentNode.querySelectorAll("button"), function(b, i){ b.disabled = true; var val = q.k === "ox" ? i === 0 : i; if(val === q.a) b.classList.add("ok"); else if(b === el) b.classList.add("ng"); });
+  var k = S.kst || (S.kst = {}), x = k[q.k] || (k[q.k] = [0, 0]); x[0]++; if(ok) x[1]++;
+  if(ok){ delete S.wrong[it.o.key]; S.wfix = (S.wfix || 0) + 1; WR.ok++; } else { it.o.n++; it.o.d = ymd(); }
+  day().v++; save();
+  $("fb").innerHTML = '<div class="fb ' + (ok ? "ok" : "ng") + '"><b>' + (ok ? "맞았어요! 오답 노트에서 빠져요 🎉" : "아쉬워요. 정답: " + (q.k === "ox" ? (q.a ? "O" : "X") : "①②③④⑤"[q.a]) + " · 노트에 남겨 둘게요") + "</b>" + esc(q.e) + "</div>";
+  try{ $("fb").scrollIntoView({block: "nearest", behavior: "smooth"}); }catch(e){}
+  $("nx").innerHTML = '<button class="btn" onclick="' + (WR.i + 1 < WR.L.length ? "WR.i++;wShow()" : "wEnd()") + '">' + (WR.i + 1 < WR.L.length ? "다음 →" : "끝") + "</button>";
+}
+function wEnd(){
+  var n = WR.L.length, ok = WR.ok, left = wrongList().length;
+  view('<div class="hero"><div class="big">' + ok + " / " + n + ' 해결!</div><div class="t">' + (ok === n ? "모두 해결했어요. 같은 실수를 줄이는 게 진짜 실력이에요." : "틀린 문항은 노트에 남아요. 지문을 다시 보고 해설을 확인해요.") + "</div></div>" +
+    '<div class="card cmp">남은 오답 <b>' + left + "문항</b> · 지금까지 해결한 오답 <b>" + (S.wfix || 0) + "개</b></div>" +
+    '<div class="grow"></div><div class="row"><button class="btn sub" onclick="showWrong()">오답 노트</button><button class="btn" onclick="go(\'read\')">읽기로</button></div>');
+}
+
+/* ════════ ✍️ 배운 단어로 문장 쓰기 (채점 없음) ════════ */
+var SW = null;
+function sentPick(skip){
+  var used = {}; (S.sent || []).forEach(function(x){ used[x.w] = (used[x.w] || 0) + 1; });
+  var studied = D.words.filter(function(w){ var r = S.wd[w.w]; return r && r.n > 0 && w.w !== skip; });
+  var pool = studied.length ? studied : D.words.filter(function(w){ return w.w !== skip; }).slice(0, 20);
+  pool = shuffle(pool).sort(function(a, b){ return (used[a.w] || 0) - (used[b.w] || 0) || ((S.wd[b.w] || {}).b || 0) - ((S.wd[a.w] || {}).b || 0); });
+  return {w: pool[0], studied: !!studied.length};
+}
+function showSent(word){
+  var pk = word ? {w: W[word], studied: true} : sentPick(SW && SW.w);
+  SW = {w: pk.w.w}; var w = pk.w;
+  view('<div class="rtop"><b>✍️ 배운 단어로 문장 쓰기</b><button class="link" style="margin-left:auto" onclick="go(\'vocab\')">← 어휘</button></div>' +
+    '<div class="card wcard" style="padding:12px"><div class="w" style="font-size:28px">' + esc(w.w) + '</div><div class="h">' + esc(w.h) + '</div><div class="m">' + esc(w.m) + '</div><div class="exs">예) ' + exHTML(w.ex) + "</div></div>" +
+    (pk.studied ? "" : '<div class="muted">아직 공부한 단어가 없어서 앞쪽 단어를 골랐어요. 어휘 훈련을 하면 배운 단어가 나와요.</div>') +
+    '<textarea id="snT" rows="3" placeholder="\'' + esc(w.w) + '\'을(를) 넣어 내 경험이나 생각으로 한 문장을 써 보세요." oninput="sentCheck()"></textarea>' +
+    '<div class="chk2" id="snC"></div>' +
+    '<div class="muted">채점은 없어요. 예문을 그대로 베끼지 말고 <b>내 생활</b>에서 문장을 만들어 보세요. 쓴 문장은 이 휴대폰에만 저장돼요.</div>' +
+    '<div class="grow"></div><div class="row"><button class="btn gray" onclick="showSentBook()">내 문장 ' + (S.sent || []).length + '개</button><button class="btn sub" onclick="showSent()">다른 단어</button><button class="btn" id="snS" onclick="sentSave()" disabled>저장</button></div>');
+  sentCheck();
+}
+function sentCheck(){
+  var t = ($("snT") || {}).value || "", w = SW.w, ex = W[w].ex.replace(/[\[\]]/g, "");
+  var has = t.indexOf(w) >= 0, end = /[.!?。…]\s*$/.test(t.trim()), len = t.replace(/\s/g, "").length >= 10, copy = t.trim() && t.replace(/\s/g, "") === ex.replace(/\s/g, "");
+  $("snC").innerHTML = '<span class="' + (has ? "on" : "") + '">' + (has ? "✓" : "○") + " '" + esc(w) + "' 넣기</span>" +
+    '<span class="' + (len ? "on" : "") + '">' + (len ? "✓" : "○") + " 10자 이상</span>" +
+    '<span class="' + (end ? "on" : "") + '">' + (end ? "✓" : "○") + " 문장 끝맺기(. ? !)</span>" +
+    (copy ? '<span>⚠️ 예문과 똑같아요</span>' : "");
+  $("snS").disabled = !(has && t.trim().length);
+}
+function sentSave(){
+  var t = $("snT").value.trim(); if(!t) return;
+  (S.sent || (S.sent = [])).unshift({w: SW.w, t: t.slice(0, 300), d: ymd()}); if(S.sent.length > 300) S.sent.length = 300;
+  day().v++; save();
+  modal('<h2>저장했어요 ✍️</h2><p class="cmp"><b>' + esc(SW.w) + "</b> — " + esc(t) + '</p><p class="muted">자기 문장으로 써 본 단어는 훨씬 오래 기억돼요.</p><div class="row"><button class="btn gray" data-close onclick="showSentBook()">내 문장 모음</button><button class="btn" data-close onclick="showSent()">한 문장 더</button></div>');
+}
+function showSentBook(){
+  var L = S.sent || [];
+  view('<div class="rtop"><b>📒 내 문장 모음 ' + L.length + '개</b><button class="link" style="margin-left:auto" onclick="showSent()">✍️ 쓰기</button></div>' +
+    '<div class="snt sc grow">' + (L.length ? L.map(function(x, i){ var tt = esc(x.t).split(esc(x.w)).join("<b>" + esc(x.w) + "</b>"); return "<div><p>" + tt + "<small>" + esc(x.w) + " · " + x.d.slice(5).replace("-", "/") + '</small></p><button title="지우기" onclick="S.sent.splice(' + i + ',1);save();showSentBook()">×</button></div>'; }).join("")
+      : '<div class="muted" style="padding:24px;text-align:center">아직 쓴 문장이 없어요.</div>') + "</div>" +
+    '<div class="row"><button class="btn gray" onclick="go(\'vocab\')">어휘로</button><button class="btn" onclick="showSent()">새 문장 쓰기</button></div>');
+}
+
 /* ════════ 🧭 진단 읽기 ════════ */
 function diagStart(){
   if(!D.diag) return;
@@ -605,8 +727,9 @@ function showVocab(){
       '<button class="tile" onclick="vocabMet()"' + (met ? "" : " disabled") + '><i>📄</i><b>지문에서 만난 단어</b><span>' + met + "개 · 읽은 지문 속 단어</span></button>" +
       '<button class="tile" onclick="showBook()"><i>📒</i><b>단어장</b><span>익힘 ' + ms + " / " + D.words.length + "</span></button>" +
       '<button class="tile" onclick="vocabMix()"><i>🎯</i><b>수능형 10문제</b><span>뜻·단어·바꿔 쓰기 섞어서</span></button>' +
+      '<button class="tile" style="grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:10px 12px" onclick="showSent()"><i>✍️</i><span style="flex:1"><b style="margin:0;color:var(--ink)">배운 단어로 문장 쓰기</b>채점 없이 내 문장으로 · 지금까지 ' + (S.sent || []).length + "개</span><b style=\"margin:0\">›</b></button>" +
     "</div>" +
-    '<div class="card cmp"><b>어휘 공부 요령</b><br>① 한자 뜻으로 쪼개 보기 (受 받을 수 → 수용·수혜) ② 예문 속에서 뜻 짐작하기 ③ 바꿔 쓸 말 떠올리기 (기인하다 → 비롯되다). 틀린 단어는 내일 다시 나와요.</div>' +
+    '<div class="card cmp vtip"><b>어휘 공부 요령</b><br>① 한자 뜻으로 쪼개 보기 (受 받을 수 → 수용·수혜) ② 예문 속에서 뜻 짐작하기 ③ 바꿔 쓸 말 떠올리기 (기인하다 → 비롯되다). 틀린 단어는 내일 다시 나와요.</div>' +
     '<div class="grow"></div><div class="muted" style="text-align:center">새 단어 ' + nw + "개 남음 · 맞히면 1→3→7→16일 뒤 다시 · 4번 연속 맞히면 익힘</div>"
   );
 }
@@ -669,7 +792,7 @@ function showHanja(){
       : '<div class="card cmp grow">위에서 한자를 누르세요. 한자 하나의 뜻을 알면 그 한자가 들어간 낯선 단어도 뜻을 짐작할 수 있어요.<br><br>예) <b>推</b>(헤아릴 추) → 추론 · 유추 · 추정 : 모두 "미루어 헤아린다"는 뜻이 들어 있어요.</div>'));
 }
 function lvTag(w){ var r = S.wd[w]; return !r || !r.n ? '<i class="lv lv0">아직</i>' : r.b >= 4 ? '<i class="lv lv2">익힘</i>' : '<i class="lv lv1">공부 중</i>'; }
-function wordPop(w){ modal(cardHTML(W[w]) + '<button class="btn" data-close>닫기</button>'); }
+function wordPop(w){ modal(cardHTML(W[w]) + '<div class="row"><button class="btn sub" data-close onclick="showSent(\'' + w + '\')">✍️ 이 단어로 문장</button><button class="btn" data-close>닫기</button></div>'); }
 var BF = "all";
 function showBook(){
   var L = D.words.filter(function(w){ var r = S.wd[w.w]; return BF === "all" || (BF === "new" ? !r || !r.n : BF === "ok" ? r && r.b >= 4 : r && r.n && r.b < 4); });
@@ -696,8 +819,9 @@ function showGrow(){
   var acc = S.reads.length ? Math.round(avg(S.reads.slice(-10), function(r){ return r.a; }) * 100) : 0;
   var days = []; for(var i = 13; i >= 0; i--){ var k = addDays(-i), x = S.days[k]; days.push('<i class="' + (x && x.r > 0 && x.tv ? "f" : active(k) ? "r" : "") + (i === 0 ? " t" : "") + '" title="' + k + '"></i>'); }
   var B = [["🌱 첫 지문", S.reads.length >= 1], ["🔥 3일 연속", (S.best || 0) >= 3], ["🔥 7일 연속", (S.best || 0) >= 7], ["📚 지문 5편", Object.keys(uniq).length >= 5],
-           ["🎯 만점", S.reads.some(function(r){ return r.a === 1; })], ["🧠 단어 20개 익힘", mastered() >= 20], ["🚀 2단계 도전", S.reads.some(function(r){ return (P[r.p] || {}).lv >= 2; })], ["⚡ 유효 속도 600", S.reads.some(function(r){ return r.e >= 600; })], ["🗺️ 구조도 5편", Object.keys(S.maps || {}).length >= 5]];
+           ["🎯 만점", S.reads.some(function(r){ return r.a === 1; })], ["🧠 단어 20개 익힘", mastered() >= 20], ["🚀 2단계 도전", S.reads.some(function(r){ return (P[r.p] || {}).lv >= 2; })], ["⚡ 유효 속도 600", S.reads.some(function(r){ return r.e >= 600; })], ["🗺️ 구조도 5편", Object.keys(S.maps || {}).length >= 5], ["📕 오답 10개 해결", (S.wfix || 0) >= 10], ["✍️ 내 문장 10개", (S.sent || []).length >= 10]];
   view(
+    (Object.keys(S.kst || {}).length ? '<button class="tip" style="width:100%;font:inherit;font-size:14px;cursor:pointer;text-align:left" onclick="showWrong()">📕 오답 노트 ' + wrongList().length + "문항 · 유형별 정답률 보기<b style=\"margin-left:auto\">›</b></button>" : "") +
     '<div class="stats"><div class="stat"><b>' + st + '</b><span>연속 일수 (최고 ' + (S.best || 0) + ')</span></div><div class="stat"><b>' + acc + '%</b><span>최근 정답률</span></div><div class="stat"><b>' + mastered() + '</b><span>익힌 단어</span></div></div>' +
     '<div class="chart">' + chartSVG(rs) + "</div>" +
     '<div><div class="muted" style="margin-bottom:5px">최근 14일 <span style="color:var(--ac)">■</span> 오늘 훈련 완료 <span style="color:#9fb4ea">■</span> 조금 함</div><div class="days">' + days.join("") + "</div></div>" +
