@@ -698,7 +698,7 @@
     }).join("") : '<div class="fh">' + (inp.value.trim() ? "맞는 것이 없습니다" : "종례 바구니가 비어 있습니다") + "</div>";
     var on = list.querySelector(".fr.on"); if(on) on.scrollIntoView({block: "nearest"});
   }
-  function openFind(){
+  function openFind(q0){
     if(!dlg){
       dlg = document.createElement("dialog"); dlg.id = "tdFind";
       dlg.innerHTML = '<input type="text" placeholder="학생·도구·내선번호·자료 찾기, 또는 한 줄 입력 (종례: … / 할 일: …)" autocomplete="off" spellcheck="false" aria-label="찾기·빠른 입력">'
@@ -724,7 +724,7 @@
       });
       dlg.addEventListener("click", function(e){ if(e.target === dlg) closeFind(); });
     }
-    inp.value = ""; pasted = null; inp.placeholder = "학생·도구·내선번호·자료 찾기, 또는 한 줄 입력 (종례: … / 할 일: …)"; sel = 0; draw();
+    inp.value = typeof q0 === "string" ? q0 : ""; pasted = null; inp.placeholder = "학생·도구·내선번호·자료 찾기, 또는 한 줄 입력 (종례: … / 할 일: …)"; sel = 0; draw();
     if(!dlg.open) dlg.showModal(); inp.focus();
   }
   function closeFind(){ if(dlg && dlg.open) dlg.close(); }
@@ -851,7 +851,15 @@
     if(typeof ttTool === "function" && ttTool("stucard")) location.href = "apps/stucard/?c=" + encodeURIComponent(c.id) + "&no=" + encodeURIComponent(st.no);
     else TT.notes.card(c, st);
   }
-  window.TT_TODAY = {render: render, menuNow: menuNow, status: status, openStudent: openStudent};
+  /* 쌤비(shared/ssambi.js) 오늘 브리핑용 — 읽기만 함 */
+  function brief(){
+    var d = new Date(), w = d.getDay(), wd = w >= 1 && w <= 5, TTT = TT.timetable, td = ymd(d);
+    var L = wd && TTT.has() ? TTT.day(d).map(function(s){ return {n: s.n, c: clsName(s), start: s.start, end: s.end, chg: !!s.chg}; }) : [];
+    var items = []; try{ items = collect().map(function(x){ return {ic: x.ic, t: x.t, n: x.n, href: x.href || "", lv: x.lv}; }); }catch(e){}
+    var todos = myTodos(), due = todos.filter(function(x){ return x.date && x.date <= td; });
+    return {weekday: wd, hasTT: TTT.has(), lessons: L, items: items, bag: bagNow().map(function(x){ return x.text; }), todo: todos.length, todoDue: due.map(function(x){ return x.text; }), att: attToday(), close: wd ? closeMin(w) : 0};
+  }
+  window.TT_TODAY = {render: render, menuNow: menuNow, status: status, openStudent: openStudent, brief: brief};
   window.addEventListener("pageshow", render);
   window.addEventListener("tt-mytodo-change", render);
   window.addEventListener("tt-auto-change", render);
