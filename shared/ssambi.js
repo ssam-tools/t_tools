@@ -156,7 +156,7 @@
       + '<div class="row" style="margin-top:0"><input id="sbTxt" type="text" placeholder="또는 글로: 12번 지각" style="flex:1;min-width:0;height:40px;border:1px solid var(--line,#dde3ea);border-radius:10px;padding:0 10px;font:inherit;background:var(--card,#fff);color:inherit" autocomplete="off">'
       + '<button type="button" class="bt p" data-a="typed" style="flex:none;min-height:40px">확인</button></div>'
       + '<div class="row">' + (noSR ? "" : '<button type="button" class="bt" data-a="relisten">🎤 다시 듣기</button>') + "</div>"
-      + '<div class="ex" style="margin-top:8px">이렇게 말해 보세요<br><b>12번 지각</b> · <b>5번 결석</b> · <b>3번 휴대폰 지도</b> · <b>종례 내일 체육복</b> · <b>할 일 금요일 공문 회신</b> · <b>결석신고서 열어</b> · <b>찾아 줘 교복</b> · <b>브리핑</b></div>'
+      + '<div class="ex" style="margin-top:8px">이렇게 말해 보세요<br><b>12번 지각</b> · <b>5번 결석</b> · <b>3번 휴대폰 지도</b> · <b>3반 5번 칠판 풀이</b> · <b>종례 내일 체육복</b> · <b>할 일 금요일 공문 회신</b> · <b>결석신고서 열어</b> · <b>찾아 줘 교복</b> · <b>브리핑</b></div>'
       + '<p class="nt">🔒 음성 인식은 브라우저 회사 서버를 거칠 수 있어요. 학생은 <b>이름 대신 번호</b>로 말해 주세요.</p>';
   };
   V.confirm = function(c){
@@ -262,6 +262,32 @@
     G.gd.push({id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), sid: String(c.who.no), date: ymd(d), time: ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2), kind: c.kind, how: "개별", memo: "", grp: "", created: Date.now(), src: "ssambi"});
     return TT.store.set(KEYG, G);
   }
+  /* 보완 7단계: "3반 5번 칠판 풀이" / "2학년 1반 12번 질문함" → 수업 기록장 학생 기록 */
+  var JTAGS = ["적극 참여", "성실함", "집중", "모둠 협력", "질문함", "심화 질문", "다양한 풀이", "오개념 수정", "발표함", "칠판 풀이", "친구 설명", "과제 성실", "수행 우수", "과제 미제출", "집중 부족", "준비물 미지참", "지원 필요"];
+  function recCmd(t){
+    var J = TT.store.get("tt_journal_v1", null); if(!J || J.v !== 2 || !J.students) return null;
+    var w = t.replace(/\s/g, ""), tag = JTAGS.filter(function(x){ return w.indexOf(x.replace(/\s/g, "")) >= 0; }).sort(function(a, b){ return b.length - a.length; })[0];
+    if(!tag && /발표/.test(w)) tag = "발표함"; if(!tag && /질문/.test(w)) tag = "질문함";
+    if(!tag) return null;
+    var cm = t.match(/(?:(\d)\s*학년\s*)?(\d{1,2}|[일이삼사오육칠팔구]?십[일이삼사오육칠팔구]?|[일이삼사오육칠팔구])\s*반/), nm = t.match(/(\d{1,2}|[일이삼사오육칠팔구]?십[일이삼사오육칠팔구]?|[일이삼사오육칠팔구])\s*번/);
+    if(!cm || !nm) return null;
+    var R = {}; try{ TT.roster.classes().forEach(function(x){ if(x.grade != null && x.cls != null && x.students.length) R[x.grade * 100 + x.cls] = x.students; }); }catch(e){}
+    Object.keys(J.students).forEach(function(k){ if(J.students[k] && J.students[k].length) R[k] = J.students[k]; });
+    var cls = korNum(cm[2]), no = korNum(nm[1]), codes = Object.keys(R).map(Number).filter(function(c){ return c % 100 === cls && (!cm[1] || Math.floor(c / 100) === +cm[1]); });
+    if(!codes.length) return {err: cls + "반이 수업 기록장에 없어요."};
+    if(codes.length > 1) return {err: "몇 학년 " + cls + "반인지 말해 주세요 (예: 3학년 " + cls + "반)."};
+    var c = codes[0], st = (R[c] || []).filter(function(x){ return +x.no === no; })[0];
+    if(!st) return {err: Math.floor(c / 100) + "-" + cls + " " + no + "번 학생이 없어요."};
+    return {c: c, no: no, name: st.name, tag: tag};
+  }
+  function saveRec(r){
+    var J = TT.store.get("tt_journal_v1", null); if(!J) return false;
+    J.records = J.records || []; J.nextId = J.nextId || 1; var d = new Date(), per = 0;
+    try{ var L = TT.timetable.day(d).filter(function(s){ return +s.cls === r.c; }), m = d.getHours() * 60 + d.getMinutes(), past = L.filter(function(s){ return s.start <= m + 10; }); per = (past.length ? past[past.length - 1] : L[0] || {}).n || 0; }catch(e){}
+    var les = ""; try{ les = TT.notes && TT.notes.lessonNow ? TT.notes.lessonNow(r.c) : ""; }catch(e){}
+    J.records.push({id: J.nextId++, date: ymd(d), period: per, cls: r.c, no: r.no, tags: [r.tag], text: "", star: false, ts: Date.now(), les: les || "", src: "ssambi"});
+    return TT.store.set("tt_journal_v1", J);
+  }
   function saveAtt(c){
     var G = TT.store.get(KEYG, null); if(!G || typeof G !== "object") return null;   // 출결을 한 번도 열지 않았으면(예전 자료 옮기기 전) 쓰지 않음
     G.att = G.att || {}; var td = ymd(new Date()), no = String(c.who.no);
@@ -290,6 +316,13 @@
     if(/^(오늘\s*)?브리핑|^오늘\s*(일정|할\s*일\s*알려|뭐\s*있)/.test(t)){ show("brief"); return; }
     var fm = t.match(/^(.+?)\s*(찾아\s*줘|찾아|검색해\s*줘|검색)$/) || t.match(/^(?:찾아\s*줘|찾아|검색)\s+(.+)$/);
     if(fm){ find(fm[1]); return; }
+    var rc = recCmd(t);
+    if(rc && rc.err){ if(say) say.innerHTML = '<span class="er">' + rc.err + "</span>"; return; }
+    if(rc){
+      pend = function(){ close(); TT.ui.toast(saveRec(rc) ? "🦉 " + Math.floor(rc.c / 100) + "-" + (rc.c % 100) + " " + rc.no + "번 · " + rc.tag + " 기록했어요" : "저장하지 못했어요."); };
+      show("confirm", {html: "<b>" + Math.floor(rc.c / 100) + "-" + (rc.c % 100) + " " + rc.no + "번 " + esc(rc.name) + "</b><br><span class=\"ok\">" + esc(rc.tag) + "</span> 수업 기록으로 남길까요?", yes: "기록", note: "메모·★는 수업 기록장 › 학생에서 붙일 수 있어요."});
+      return;
+    }
     var gd = gdCmd(t);
     if(gd && gd.err){ if(say) say.innerHTML = '<span class="er">' + gd.err + "</span>"; return; }
     if(gd){

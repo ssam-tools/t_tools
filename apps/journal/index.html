@@ -531,7 +531,7 @@ function vStudents(){
   const total=S.records.filter(r=>r.cls===c).length,without=ro.filter(s=>st[s.no].n===0).length;
   const used=[];TAGS.forEach(g=>g.tags.forEach(t=>{if(S.records.some(r=>r.cls===c&&r.tags.indexOf(t)>=0))used.push(t);}));
   if(ui.fTag&&used.indexOf(ui.fTag)<0)ui.fTag='';
-  h+='<p class="sum">학생 '+ro.length+'명 · 기록 '+total+'건 · 기록 없는 학생 '+without+'명</p>';
+  h+='<div class="tool"><p class="sum" style="margin:0">학생 '+ro.length+'명 · 기록 '+total+'건 · 기록 없는 학생 '+without+'명</p><button class="btn sm primary" data-act="openSetukAll" data-c="'+c+'">📝 세특 모아 보기</button></div>';
   h+='<div class="seg" role="group" aria-label="정렬"><button class="'+(ui.sort==='no'?'on':'')+'" data-act="sort" data-s="no">번호순</button><button class="'+(ui.sort==='few'?'on':'')+'" data-act="sort" data-s="few">기록 적은 순</button></div>';
   h+='<div class="chips-scroll" role="group" aria-label="태그로 찾기"><button class="chip '+(!ui.fTag?'on':'')+'" data-act="fTag" data-t="">전체</button>'+used.map(t=>'<button class="chip '+(ui.fTag===t?'on':'')+'" data-act="fTag" data-t="'+esc(t)+'">'+esc(t)+'</button>').join('')+'</div>';
   let rows=ro.map(s=>({s:s,x:st[s.no]}));
@@ -571,12 +571,60 @@ function sStu(){
   const s=ui.sheet,c=s.c,no=s.no;
   const all=S.records.filter(r=>r.cls===c&&r.no===no).sort((a,b)=>b.date.localeCompare(a.date)||b.ts-a.ts);
   const list=s.onlyStar?all.filter(r=>r.star):all,stars=all.filter(r=>r.star).length;
-  let b='<div class="tool"><button class="chip '+(s.onlyStar?'on':'')+'" data-act="onlyStar" aria-pressed="'+!!s.onlyStar+'">★ 표시한 기록만</button><button class="btn sm" data-act="copyNotes">★ 기록 복사</button></div>';
+  let b='<div class="tool"><button class="chip '+(s.onlyStar?'on':'')+'" data-act="onlyStar" aria-pressed="'+!!s.onlyStar+'">★ 표시한 기록만</button><span><button class="btn sm" data-act="copyNotes">★ 기록 복사</button> <button class="btn sm primary" data-act="openSetuk" data-c="'+c+'" data-no="'+no+'">📝 세특 초안</button></span></div>';
   if(s.copyText)b+='<div class="field"><textarea class="copybox" id="copybox" readonly rows="6" aria-label="복사할 내용">'+esc(s.copyText)+'</textarea><p class="hint">자동 복사가 되지 않았어요. 위 내용을 길게 눌러 복사하세요.</p></div>';
   if(!list.length)b+='<div class="empty"><p>'+(s.onlyStar?'★로 표시한 기록이 없어요.':'아직 기록이 없어요.')+'</p></div>';
   let last='';
   list.forEach(r=>{if(r.date!==last){b+='<h3 class="dh">'+fmtMD(r.date)+'<span>'+DAY[weekdayOf(r.date)]+'</span></h3>';last=r.date;}b+=recItem(r);});
   return shell(labelOf(c,no),'기록 '+all.length+'건 · ★ '+stars+'건',b,true);
+}
+/* ---------- 보완 7단계: 세특 초안 (이 기기 안에서 규칙으로 만듦 · 기록에 없는 내용은 만들지 않음) ---------- */
+const PHR={'적극 참여':'수업 활동에 적극적으로 참여함','성실함':'성실한 태도로 꾸준히 수업에 임함','집중':'높은 집중력으로 수업에 몰입함','모둠 협력':'모둠 활동에서 친구들과 협력하여 문제를 해결함',
+  '질문함':'궁금한 점을 스스로 질문하며 개념을 확인함','심화 질문':'배운 내용을 넓히는 심화 질문을 던짐','다양한 풀이':'한 문제를 여러 방법으로 풀어 보고 풀이를 비교함','오개념 수정':'자신의 오개념을 발견하고 스스로 바로잡음',
+  '발표함':'자신의 생각과 풀이 과정을 발표함','칠판 풀이':'칠판 앞에서 풀이 과정을 논리적으로 설명함','친구 설명':'어려워하는 친구에게 풀이를 차근차근 설명해 줌','과제 성실':'과제를 꾸준하고 성실하게 수행함','수행 우수':'수행평가에서 우수한 결과를 보임'};
+/* 나이스 바이트: 한글 3, 영문·숫자·공백 1, 줄바꿈 2 */
+function neisBytes(t){let n=0;for(const ch of String(t||'')){const c=ch.codePointAt(0);n+=ch==='\n'?2:c<128?1:3;}return n;}
+function evidence(c,no){
+  const all=S.records.filter(r=>r.cls===c&&r.no===no).sort((a,b)=>a.date.localeCompare(b.date)||a.ts-b.ts);
+  const tc={},units={},memos=[];
+  all.forEach(r=>{r.tags.forEach(t=>{if(isInternal(t))return;tc[t]=(tc[t]||0)+1;const u=r.les||'';if(u)(units[t]=units[t]||[]).indexOf(u)<0&&units[t].push(u);});
+    if(r.text&&!r.tags.some(isInternal))memos.push({t:r.text.trim().replace(/[.。]$/,''),star:r.star,les:r.les||'',d:r.date});});
+  return {all:all,tc:tc,units:units,memos:memos};
+}
+function unitWord(u){u=String(u||'').replace(/\s*\d+차시$/,'').trim();return u?"'"+u+"'":'';}
+function draftTexts(c,no){
+  const E=evidence(c,no),top=Object.keys(E.tc).sort((a,b)=>E.tc[b]-E.tc[a]).slice(0,4),ms=E.memos.slice().sort((a,b)=>(b.star?1:0)-(a.star?1:0)).slice(0,3);
+  if(!top.length&&!ms.length)return [];
+  const end=s=>s.replace(/함$/,'하며').replace(/줌$/,'주며').replace(/임$/,'이며').replace(/보임$/,'보이며').replace(/던짐$/,'던지며').replace(/바로잡음$/,'바로잡으며');
+  /* A 구체 활동형: 메모(★ 먼저) + 단원 */
+  const A=[];
+  ms.forEach(m=>A.push((m.les?unitWord(m.les)+' 수업에서 ':'')+m.t+(/[함됨음임줌봄냄]$/.test(m.t)?'.':'함.')));
+  top.slice(0,2).forEach(t=>{if(PHR[t]){const u=(E.units[t]||[])[0];A.push((u?unitWord(u)+' 단원 등에서 ':'')+PHR[t]+'.');}});
+  /* B 역량 요약형: 태그 문장 이어 쓰기 + 대표 메모 하나 */
+  const ph=top.map(t=>PHR[t]).filter(Boolean),B=[];
+  if(ph.length){B.push(ph.slice(0,-1).map(end).join(', ')+(ph.length>1?', ':'')+ph[ph.length-1]+'.');}
+  if(ms[0])B.push('특히 '+(ms[0].les?unitWord(ms[0].les)+' 수업에서 ':'')+ms[0].t+(/[함됨음임줌봄냄]$/.test(ms[0].t)?'.':'함.'));
+  return [{k:'구체 활동형',t:A.join(' ')},{k:'역량 요약형',t:B.join(' ')}].filter(x=>x.t);
+}
+function sSetuk(){
+  const s=ui.sheet,c=s.c,no=s.no,E=evidence(c,no),key=c+'|'+no,saved=(S.drafts||{})[key]||'';
+  if(ui.draft.setuk==null)ui.draft.setuk=saved;
+  const V=draftTexts(c,no),txt=ui.draft.setuk,by=neisBytes(txt);
+  let b='<div class="tool"><span class="meta">근거 기록 '+E.all.length+'건 · 꼬리표 '+Object.keys(E.tc).map(t=>esc(t)+' '+E.tc[t]).join(', ')+'</span><button class="btn sm" data-act="openStu" data-c="'+c+'" data-no="'+no+'">← 기록 보기</button></div>';
+  if(!V.length)b+='<div class="empty"><p>초안을 만들 기록이 아직 없어요. 수업 중 꼬리표·메모를 남기면 여기서 문장으로 모아 드려요.</p></div>';
+  else b+=V.map((v,i)=>'<div class="rec"><div class="rec-top"><span class="pill">'+esc(v.k)+'</span><span class="meta">'+neisBytes(v.t)+'바이트</span><button class="btn sm" data-act="pickDraft" data-i="'+i+'">이 문장 쓰기</button></div><p class="rec-text">'+esc(v.t)+'</p></div>').join('');
+  b+='<div class="field"><label for="setuk">세특 초안 (고쳐 쓰기) <span class="meta" id="sbytes" style="'+(by>1500?'color:var(--bad);font-weight:700':'')+'">'+by+' / 1500바이트</span></label><textarea id="setuk" data-draft="setuk" rows="6" placeholder="위 문장을 고르거나 직접 쓰세요. 기록에 없는 내용은 넣지 마세요.">'+esc(txt)+'</textarea></div>';
+  b+='<div class="tool"><button class="btn sm" data-act="aiPrompt">🤖 AI 다듬기 요청문 복사</button><span><button class="btn sm" data-act="copySetuk">복사</button> <button class="btn sm primary" data-act="saveSetuk">저장</button></span></div>';
+  b+='<p class="hint">나이스 기준: 한글 3바이트·영문/숫자/공백 1바이트·줄바꿈 2바이트. 요청문에는 이름 없이 반·번호도 빼고 기록만 들어가요.</p>';
+  if(s.copyText)b+='<div class="field"><textarea class="copybox" id="copybox" readonly rows="6">'+esc(s.copyText)+'</textarea><p class="hint">자동 복사가 되지 않았어요. 위 내용을 길게 눌러 복사하세요.</p></div>';
+  return shell('📝 세특 초안 · '+labelOf(c,no),'수업 기록을 근거로 만든 초안이에요 — 꼭 고쳐서 쓰세요',b,true);
+}
+function sSetukAll(){
+  const c=ui.sheet.c,ro=S.students[c]||[],st=statsFor(c);
+  let b='<p class="sum">'+cn(c)+' · 기록 1건 이하 학생 '+ro.filter(x=>st[x.no].n<=1).length+'명 · 저장한 초안 '+ro.filter(x=>(S.drafts||{})[c+'|'+x.no]).length+'명</p><div class="card">';
+  b+=ro.map(x=>{const n=st[x.no].n,dr=(S.drafts||{})[c+'|'+x.no]||'';return '<button class="srow" data-act="openSetuk" data-c="'+c+'" data-no="'+x.no+'"><span class="no">'+x.no+'</span><span class="nm">'+(S.hideNames?x.no+'번':esc(x.name))+'</span><span class="r">'+(n<=1?'<span class="pill warn">기록 '+n+'</span>':'<span>기록 <b>'+n+'</b></span>')+(dr?' <span class="pill ok">초안 '+neisBytes(dr)+'B</span>':'')+'</span></button>';}).join('');
+  b+='</div><div class="tool" style="margin-top:10px"><button class="btn sm" data-act="exportSetuk">초안 모두 CSV로</button></div>';
+  return shell('📝 세특 모아 보기','학생을 누르면 초안을 만들고 고칠 수 있어요',b,true);
 }
 function sTT(){
   const s=ui.sheet,w=new Date().getDay();
@@ -638,7 +686,7 @@ function sSettings(){
 function renderSheet(){
   const s=ui.sheet;
   if(!s){$sheet.innerHTML='';document.documentElement.classList.remove('lock');return;}
-  const map={rec:sRec,stu:sStu,tt:sTT,cls:sClass,cur:sCur,memo:sMemo,skip:sSkip,roster:sRoster,settings:sSettings};
+  const map={setuk:sSetuk,setukAll:sSetukAll,rec:sRec,stu:sStu,tt:sTT,cls:sClass,cur:sCur,memo:sMemo,skip:sSkip,roster:sRoster,settings:sSettings};
   $sheet.innerHTML=map[s.type]();
   document.documentElement.classList.add('lock');
   const sh=$sheet.querySelector('.sheet');if(sh)sh.focus({preventScroll:true});
@@ -777,6 +825,16 @@ function act(a,t){
       try{navigator.clipboard.writeText(txt).then(()=>toast('★ 기록을 복사했어요'),fallback);}catch(e){fallback();}
       break;
     }
+    case 'openSetuk':ui.draft={setuk:null};openSheet({type:'setuk',c:+d.c,no:+d.no});break;
+    case 'openSetukAll':openSheet({type:'setukAll',c:+d.c});break;
+    case 'pickDraft':{const V=draftTexts(ui.sheet.c,ui.sheet.no),v=V[+d.i];if(v){ui.draft.setuk=v.t;renderSheet();}break;}
+    case 'saveSetuk':{const s2=ui.sheet;S.drafts=S.drafts||{};const v=(ui.draft.setuk||'').trim();if(v)S.drafts[s2.c+'|'+s2.no]=v;else delete S.drafts[s2.c+'|'+s2.no];save();toast('세특 초안을 저장했어요');break;}
+    case 'copySetuk':{const s2=ui.sheet,v=(ui.draft.setuk||'').trim();if(!v){toast('복사할 초안이 없어요');break;}try{navigator.clipboard.writeText(v).then(()=>toast('초안을 복사했어요'),()=>{s2.copyText=v;renderSheet();});}catch(e){s2.copyText=v;renderSheet();}break;}
+    case 'aiPrompt':{const s2=ui.sheet,E=evidence(s2.c,s2.no);if(!E.all.length){toast('기록이 없어요');break;}
+      const lines=E.all.filter(r=>!r.tags.some(isInternal)||r.text).map(r=>'- '+r.date+(r.les?' ['+r.les+']':'')+' '+r.tags.filter(t=>!isInternal(t)).join(', ')+(r.text?' / '+r.text:''));
+      const q='다음은 중학교 수학 수업에서 한 학생에 대해 교사가 남긴 관찰 기록입니다. 이 기록에 있는 내용만으로 교과 세부능력 및 특기사항 문장을 써 주세요.\n조건: 학생 이름·성별을 쓰지 않음, 기록에 없는 활동·성취를 지어내지 않음, \'~함.\' 문체, 나이스 기준 1500바이트(한글 약 500자) 이내.\n\n[관찰 기록]\n'+lines.join('\n')+((ui.draft.setuk||'').trim()?'\n\n[교사 초안]\n'+ui.draft.setuk.trim():'');
+      try{navigator.clipboard.writeText(q).then(()=>toast('요청문을 복사했어요 · 문서 도우미나 쓰던 AI에 붙여 넣으세요'),()=>{s2.copyText=q;renderSheet();});}catch(e){s2.copyText=q;renderSheet();}break;}
+    case 'exportSetuk':{const c=ui.sheet.c,rows=[['반','번호','이름','기록 수','초안','바이트']],st=statsFor(c);(S.students[c]||[]).forEach(x=>{const dr=(S.drafts||{})[c+'|'+x.no]||'';rows.push([cs(c),x.no,x.name,st[x.no].n,dr,dr?neisBytes(dr):'']);});exportFile('세특초안_'+cs(c)+'_'+dkey(new Date())+'.csv',csv(rows));break;}
     case 'openRoster':{const c=+d.c;ui.draft={ros:(S.students[c]||[]).map(s=>s.no+' '+s.name).join('\n')};openSheet({type:'roster',c:c});break;}
     case 'rosterCls':{const c=+d.c;ui.draft={ros:(S.students[c]||[]).map(s=>s.no+' '+s.name).join('\n')};ui.sheet.c=c;renderSheet();break;}
     case 'saveRoster':{
@@ -803,7 +861,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-act]');if(!t)return;
   act(t.dataset.act,t);
 });
-document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.draft)ui.draft[t.dataset.draft]=t.value;});
+document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.draft)ui.draft[t.dataset.draft]=t.value;if(t&&t.id==='setuk'){const b=document.getElementById('sbytes'),n=neisBytes(t.value);if(b){b.textContent=n+' / 1500바이트';b.style.color=n>1500?'var(--bad)':'';b.style.fontWeight=n>1500?'700':'';}}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!ui.sheet&&ui.tab==='today')render();});
 
