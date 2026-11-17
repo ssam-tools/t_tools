@@ -79,6 +79,7 @@
   .pctl{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:var(--sub)}
   .text{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 15px;font-size:var(--fs);line-height:1.85;word-break:keep-all}
   .text p{margin-bottom:.9em;text-indent:.6em}.text p:last-child{margin-bottom:0}
+  .poem p{white-space:pre-line;text-indent:0;margin-bottom:1.3em;padding-left:.4em}
   .text .u{border-radius:5px;transition:background .15s,color .15s}
   .text.pacing .u{color:#a5adbb}.text.pacing .u.past{color:#5b6576}.text.pacing .u.on{color:var(--ink);background:#fff1a8}
   .gist{display:block;margin:-.4em 0 1em;font-size:13.5px;line-height:1.5;color:var(--ac);background:var(--ac2);border-radius:9px;padding:6px 9px;text-indent:0}
@@ -242,17 +243,20 @@ function copyAddr(b){ var u = location.href.split("?")[0].split("#")[0]; (naviga
 function readsOf(pid){ return S.reads.filter(function(r){ return r.p === pid; }); }
 function bestOf(pid){ var b = null; readsOf(pid).forEach(function(r){ if(!b || r.e > b.e) b = r; }); return b; }
 function avg(a, f){ if(!a.length) return 0; return a.reduce(function(s, x){ return s + f(x); }, 0) / a.length; }
+function lvName(lv){ var l = D.levels.filter(function(x){ return x.lv === lv; })[0]; return l ? l.name : lv + "단계"; }
+function isLitR(r){ return !!(P[r.p] || {}).genre; }
+function readsSpeed(){ return S.reads.filter(function(r){ return !isLitR(r); }); }
 function levels(){ return D.levels.filter(function(l){ return D.passages.some(function(p){ return p.lv === l.lv; }); }).map(function(l){ return l.lv; }); }
 function recommend(){
   var lv = S.lv, L = D.passages.filter(function(p){ return p.lv === lv; });
   var un = L.filter(function(p){ return !readsOf(p.id).length; });
   if(un.length) return un[0];
-  var nx = D.passages.filter(function(p){ return p.lv > lv && !readsOf(p.id).length; });
+  var nx = D.passages.filter(function(p){ return p.lv > lv && !p.genre && !readsOf(p.id).length; });
   if(nx.length) return nx[0];
   return L.slice().sort(function(a, b){ return (bestOf(a.id) || {e: 0}).e - (bestOf(b.id) || {e: 0}).e; })[0] || D.passages[0];
 }
 function levelUpTip(){
-  var nx = levels().filter(function(l){ return l > S.lv; })[0]; if(!nx) return "";
+  var nx = levels().filter(function(l){ return l > S.lv && l !== 9; })[0]; if(!nx || S.lv === 9) return "";
   var rs = S.reads.filter(function(r){ return (P[r.p] || {}).lv === S.lv; }).slice(-3);
   if(rs.length < 3 || avg(rs, function(r){ return r.a; }) < 0.8) return "";
   return '<div class="tip">🚀 최근 3편 정답률 80% 이상! ' + nx + '단계에 도전해 볼까요?<button onclick="S.lv=' + nx + ';save();go(TAB)">올리기</button></div>';
@@ -272,14 +276,14 @@ function mastered(){ return D.words.filter(function(w){ var r = S.wd[w.w]; retur
 function todayWords(){ var d = dueWords().slice(0, 3); return d.concat(newWords().slice(0, 5 - d.length)); }
 function showToday(){
   var t = day(), st = streak(), rp = recommend(), vDone = !!t.tv, rDone = t.r > 0;
-  var last = S.reads.slice(-1)[0], dows = ["일", "월", "화", "수", "목", "금", "토"], d = new Date();
+  var last = readsSpeed().slice(-1)[0], dows = ["일", "월", "화", "수", "목", "금", "토"], d = new Date();
   var all = vDone && rDone;
   view(
     '<div class="hero"><div class="fire"><b>🔥 ' + st + '</b>일 연속</div><div class="t">' + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + dows[d.getDay()] + '요일 · 하루 10분</div>' +
     '<div class="big">' + (all ? "오늘 훈련 완료! 👏" : "오늘의 훈련") + '</div></div>' +
     (!S.diag && !S.reads.length ? '<div class="tip">🧭 처음이에요? 3분 진단으로 나에게 맞는 단계를 찾아요.<button onclick="diagStart()">진단하기</button></div>' : levelUpTip()) +
     '<div class="card step' + (vDone ? " done" : "") + '"><div class="n">' + (vDone ? "✓" : "1") + '</div><div class="tx"><b>어휘 5개</b><span>복습 ' + Math.min(3, dueWords().length) + "개 + 새 단어 · 약 3분</span></div></div>" +
-    '<div class="card step' + (rDone ? " done" : "") + '"><div class="n">' + (rDone ? "✓" : "2") + '</div><div class="tx"><b>지문 1편 · ' + esc(rp.title) + '</b><span>' + rp.lv + "단계 · " + rp.area + " · " + rp.chars + "자 · 약 5분</span></div></div>" +
+    '<div class="card step' + (rDone ? " done" : "") + '"><div class="n">' + (rDone ? "✓" : "2") + '</div><div class="tx"><b>지문 1편 · ' + esc(rp.title) + '</b><span>' + lvName(rp.lv) + " · " + rp.area + " · " + rp.chars + "자 · 약 5분</span></div></div>" +
     '<div class="stats"><div class="stat"><b>' + (last ? last.e : "–") + '</b><span>최근 유효 속도</span></div><div class="stat"><b>' + mastered() + '</b><span>익힌 단어</span></div><div class="stat"><b>' + S.reads.length + '</b><span>읽은 지문</span></div></div>' +
     '<div class="grow"></div>' +
     (all ? '<div class="row"><button class="btn sub" onclick="go(\'read\')">지문 더 읽기</button><button class="btn sub" onclick="go(\'vocab\')">어휘 더 하기</button></div>'
@@ -314,12 +318,12 @@ function showList(){
   );
 }
 function readSetup(pid, fromToday){
-  var p = P[pid], last = S.reads.slice(-3), base = last.length ? Math.round(avg(last, function(r){ return r.cpm; }) * 1.1 / 10) * 10 : S.diag ? Math.round(S.diag.cpm * 1.1 / 10) * 10 : 450;
-  R = {p: p, today: !!fromToday, mode: (S.mode || "normal"), pre: !!S.pre, cpm: Math.max(200, Math.min(1500, S.pace || base))};
+  var p = P[pid], last = readsSpeed().slice(-3), base = last.length ? Math.round(avg(last, function(r){ return r.cpm; }) * 1.1 / 10) * 10 : S.diag ? Math.round(S.diag.cpm * 1.1 / 10) * 10 : 450;
+  R = {p: p, today: !!fromToday, mode: p.genre ? "normal" : (S.mode || "normal"), pre: !!S.pre, cpm: Math.max(200, Math.min(1500, S.pace || base))};
   var M = [["normal", "📖", "보통 읽기", "내 속도로 읽고 다 읽으면 버튼을 눌러요."], ["pacer", "🟨", "페이서", "문장이 정한 속도로 밝아져요. 조금 빠르게 따라가는 연습."], ["chunk", "✂️", "끊어 읽기", "의미 덩어리(3어절)씩 밝아져요. 덩어리로 읽는 연습."]];
   view(
-    '<div><div class="qk">' + p.lv + "단계 · " + p.area + " · " + p.type + '</div><h2>' + esc(p.title) + '</h2><div class="muted">' + p.chars + "자 · 문항 " + p.qs.length + "개 · 다 읽으면 지문이 가려져요</div></div>" +
-    '<div class="opt">' + M.map(function(m){ return '<button class="mode" aria-pressed="' + (R.mode === m[0]) + '" onclick="setMode(\'' + m[0] + '\')"><i>' + m[1] + "</i><div><b>" + m[2] + "</b><span>" + m[3] + "</span></div></button>"; }).join("") + "</div>" +
+    '<div><div class="qk">' + lvName(p.lv) + " · " + p.area + (p.genre ? "" : " · " + p.type) + '</div><h2>' + esc(p.title) + '</h2><div class="muted">' + p.chars + "자 · 문항 " + p.qs.length + "개 · 다 읽으면 지문이 가려져요</div></div>" +
+    (p.genre ? '<div class="card cmp">' + (p.genre === "poem" ? "📝 시는 빨리 읽기보다 <b>천천히, 소리 내듯</b> 읽어요. 누가 말하는지(화자), 어떤 장면과 감각이 떠오르는지, 마음이 어떻게 바뀌는지 따라가 보세요." : "📝 소설은 <b>누가 이야기하는지(시점)</b>, 인물끼리 어떤 사이인지, 무엇이 부딪치고(갈등) 어떻게 바뀌는지 따라가며 읽어요.") + "<br><span class=\"muted\">문학은 읽기 속도 기록에 넣지 않아요.</span></div>" : '<div class="opt">' + M.map(function(m){ return '<button class="mode" aria-pressed="' + (R.mode === m[0]) + '" onclick="setMode(\'' + m[0] + '\')"><i>' + m[1] + "</i><div><b>" + m[2] + "</b><span>" + m[3] + "</span></div></button>"; }).join("") + "</div>") +
     '<div class="pace" id="paceRow"' + (R.mode === "normal" ? ' style="display:none"' : "") + '>속도 <input type="range" min="200" max="1500" step="10" value="' + R.cpm + '" oninput="R.cpm=+this.value;$(\'pv\').textContent=this.value"><span><b id="pv">' + R.cpm + "</b>자/분</span></div>" +
     '<label class="chk"><input type="checkbox"' + (R.pre ? " checked" : "") + ' onchange="R.pre=this.checked">🔎 문제 먼저 훑어보고 읽기 (실전 전략)</label>' +
     '<div class="grow"></div><div class="row"><button class="btn gray" onclick="go(R.today?\'today\':\'read\')">뒤로</button><button class="btn" style="flex:2" onclick="readGo()">읽기 시작 ▶</button></div>'
@@ -327,10 +331,12 @@ function readSetup(pid, fromToday){
 }
 function setMode(m){ R.mode = m; Array.prototype.forEach.call(document.querySelectorAll(".mode"), function(b, i){ b.setAttribute("aria-pressed", ["normal", "pacer", "chunk"][i] === m); }); $("paceRow").style.display = m === "normal" ? "none" : ""; }
 var GL = "가나다라마바사아";
+function unitName(p){ return p.genre === "poem" ? "연" : "문단"; }
 function gistQ(p){                     // 문단 요지 고르기 — 문단 하나를 골라 그 요지를 맞힘
   var n = p.gist.length, i = Math.floor(Math.random() * n), others = pick(p.gist.filter(function(_, j){ return j !== i; }), 3, []);
   var c = shuffle([p.gist[i]].concat(others));
-  return {k: "gist", q: (i + 1) + "문단의 요지로 가장 알맞은 것은?", c: c, a: c.indexOf(p.gist[i]), e: (i + 1) + "문단 요지: " + p.gist[i]};
+  var u = unitName(p);
+  return {k: "gist", q: (i + 1) + u + "의 " + (p.genre ? "내용" : "요지") + "으로 가장 알맞은 것은?", c: c, a: c.indexOf(p.gist[i]), e: (i + 1) + u + ": " + p.gist[i]};
 }
 function orderQ(p){                    // 문단 순서 배열 — 섞인 요지를 원래 순서로
   var n = p.gist.length, sh = shuffle(p.gist.map(function(_, i){ return i; }));
@@ -343,7 +349,7 @@ function orderQ(p){                    // 문단 순서 배열 — 섞인 요지
     var L = lab(o); if(!seen[L]){ seen[L] = 1; c.push(L); }
   }
   c = shuffle(c);
-  return {k: "order", q: "아래는 윗글 각 문단의 요지를 섞어 놓은 것이다. 글의 순서대로 바르게 늘어놓은 것은?", list: sh.map(function(pi, j){ return "(" + GL[j] + ") " + p.gist[pi]; }), c: c, a: c.indexOf(lab(right)),
+  return {k: "order", q: "아래는 윗글 각 " + unitName(p) + "의 " + (p.genre ? "내용" : "요지") + "을 섞어 놓은 것이다. 글의 순서대로 바르게 늘어놓은 것은?", list: sh.map(function(pi, j){ return "(" + GL[j] + ") " + p.gist[pi]; }), c: c, a: c.indexOf(lab(right)),
     e: "정답 순서: " + lab(right) + ". '그러나·따라서·또' 같은 이어 주는 말과, 개념 소개 → 설명 → 정리의 흐름이 순서의 단서예요."};
 }
 function buildQs(p, noExtra){
@@ -358,14 +364,14 @@ function buildBase(p){
   return p.qs.map(function(q){
     if(q.k === "vocab"){
       var w = W[q.w], wr = pick(D.words.map(function(x){ return x.m; }), 3, [w.m]), c = shuffle([w.m].concat(wr));
-      return {k: "vocab", q: "윗글에 쓰인 '" + q.w + "'의 뜻으로 가장 알맞은 것은?", c: c, a: c.indexOf(w.m), e: "예) " + w.ex.replace(/[\[\]]/g, ""), w: q.w};
+      return {k: "vocab", q: p.genre ? "문학 용어 '" + q.w + "'의 뜻으로 가장 알맞은 것은?" : "윗글에 쓰인 '" + q.w + "'의 뜻으로 가장 알맞은 것은?", c: c, a: c.indexOf(w.m), e: "예) " + w.ex.replace(/[\[\]]/g, ""), w: q.w};
     }
     if(q.k === "ox") return q;
     var idx = shuffle(q.c.map(function(_, i){ return i; }));
     return {k: q.k, q: q.q, c: idx.map(function(i){ return q.c[i]; }), a: idx.indexOf(q.a), e: q.e};
   });
 }
-var KN = {main: "중심 내용", struct: "글의 구조", ox: "내용 일치 O·X", apply: "적용·추론", vocab: "어휘", gist: "문단 요지", order: "문단 순서", dv: "어휘 확인"};
+var KN = {main: "중심 내용", struct: "글의 구조", ox: "내용 일치 O·X", apply: "적용·추론", vocab: "어휘", gist: "흐름 파악", order: "순서 배열", dv: "어휘 확인", word: "시어·표현", style: "표현·서술상 특징", char: "인물 관계"};
 function readGo(){
   if(!R.diag){ S.mode = R.mode; S.pre = R.pre; if(R.mode !== "normal") S.pace = R.cpm; save(); }
   R.qs = R.diag ? diagQs() : buildQs(R.p); R.ans = []; R.qi = 0;
@@ -376,6 +382,7 @@ function readGo(){
   } else readRun();
 }
 function units(p, mode){
+  if(p.genre === "poem") return p.paras.map(function(par){ return par.split("\n"); });
   return p.paras.map(function(par){
     var ss = par.match(/[^.?!]+[.?!]+["'”’」)]*\s*|[^.?!]+$/g) || [par];
     if(mode !== "chunk") return ss.map(function(s){ return s.trim(); });
@@ -386,13 +393,13 @@ function units(p, mode){
 function readRun(){
   var p = R.p, U = units(p, R.mode), k = 0, pacing = R.mode !== "normal";
   R.n = 0;
-  var html = U.map(function(us){ return "<p>" + us.map(function(u){ return '<span class="u" id="u' + (k++) + '">' + esc(u) + "</span>"; }).join(" ") + "</p>"; }).join("");
+  var html = U.map(function(us){ return "<p>" + us.map(function(u){ return '<span class="u" id="u' + (k++) + '">' + esc(u) + "</span>"; }).join(p.genre === "poem" ? "\n" : " ") + "</p>"; }).join("");
   R.n = k; R.idx = 0; R.lens = []; U.forEach(function(us){ us.forEach(function(u){ R.lens.push(u.replace(/\s/g, "").length); }); });
   view(
     '<div class="rtop"><b style="font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(p.title) + "</b>" +
     (pacing ? '<span class="pctl"><button class="ib" onclick="paceAdj(-50)">−</button><span id="pcv">' + R.cpm + '</span><button class="ib" onclick="paceAdj(50)">+</button><button class="ib" id="pz" onclick="pausePace()">⏸</button></span>' : "") +
     '<span class="clk" id="clk">0:00</span></div>' +
-    '<div class="text sc grow' + (pacing ? " pacing" : "") + '" id="txt">' + html + "</div>" +
+    '<div class="text sc grow' + (pacing ? " pacing" : "") + (p.genre === "poem" ? " poem" : "") + '" id="txt">' + html + "</div>" +
     '<button class="btn" onclick="readDone()">다 읽었어요 ✓</button>'
   );
   R.t0 = Date.now(); R.paused = 0; R.pz = 0;
@@ -420,7 +427,7 @@ function readDone(){
   view(
     '<div class="qk">지문은 가렸어요 🙈</div><h2>내 말로 한 줄 요약</h2>' +
     '<div class="muted">무엇에 대한 글이고, 핵심이 무엇인지 한 문장으로 써 보세요. 나중에 모범 요약과 비교해요. (시간에 포함되지 않아요)</div>' +
-    '<textarea id="sumT" rows="4" placeholder="예) 이 글은 ○○이 △△하는 원리를 설명한다."></textarea>' +
+    '<textarea id="sumT" rows="4" placeholder="' + (R.p.genre === "poem" ? "예) 이 시는 화자가 ○○을 보며 △△을 느끼는 모습을 그린다." : R.p.genre ? "예) ○○이 △△ 일을 겪으며 □□을 깨닫는 이야기이다." : "예) 이 글은 ○○이 △△하는 원리를 설명한다.") + '"></textarea>' +
     '<div class="grow"></div><div class="row"><button class="btn gray" onclick="R.sum=\'\';qShow()">건너뛰기</button><button class="btn" style="flex:2" onclick="R.sum=$(\'sumT\').value.trim();qShow()">문제 풀기 →</button></div>'
   );
 }
@@ -445,13 +452,15 @@ function qAns(v, el){
 function readResult(){
   if(R.diag) return diagResult();
   var p = R.p, ok = R.ans.filter(Boolean).length, a = ok / R.qs.length, cpm = Math.round(p.chars / (R.sec / 60)), e = Math.round(cpm * a);
-  var prev = S.reads.slice(-5), pe = prev.length ? Math.round(avg(prev, function(r){ return r.e; })) : null;
+  var prev = readsSpeed().slice(-5), pe = prev.length ? Math.round(avg(prev, function(r){ return r.e; })) : null;
   S.reads.push({p: p.id, d: ymd(), s: Math.round(R.sec), cpm: cpm, a: Math.round(a * 100) / 100, e: e, m: R.mode});
   day().r++;
   p.words.forEach(function(w){ var r = S.wd[w] || (S.wd[w] = {b: 0, n: 0, x: 0, due: ymd()}); r.met = 1; });
   save(); R.done = {ok: ok, a: a, cpm: cpm, e: e};
   var diff = pe == null ? "" : e >= pe ? '<small class="up">▲ ' + (e - pe) + " (최근 평균 " + pe + ")</small>" : '<small class="down">▼ ' + (pe - e) + " (최근 평균 " + pe + ")</small>";
-  var adv = cpm > 1300 ? "⚠️ 너무 빨리 넘겼어요. 정말 끝까지 읽었나요? <b>유효 속도는 정확하게 읽어야 올라가요.</b>"
+  if(p.genre) diff = "";
+  var adv = p.genre ? (a === 1 ? "만점! 화자·인물의 마음을 잘 따라갔어요. 구조도로 작품의 흐름을 정리해 보세요." : "틀린 문항의 해설을 보고, 작품에서 그 부분을 다시 찾아 읽어 보세요. 문학은 속도보다 <b>마음과 표현을 따라가는 것</b>이 중요해요.")
+          : cpm > 1300 ? "⚠️ 너무 빨리 넘겼어요. 정말 끝까지 읽었나요? <b>유효 속도는 정확하게 읽어야 올라가요.</b>"
           : a < 0.6 ? "정답률이 낮아요. 다음에는 <b>조금 천천히</b>, 문단마다 핵심 문장을 잡으며 읽어 보세요."
           : a === 1 ? "만점! 다음에는 <b>페이서 속도를 조금 올려</b> 도전해 보세요."
           : "좋아요. 틀린 문항의 해설을 지문에서 다시 확인해 보세요.";
@@ -468,14 +477,14 @@ function readResult(){
 }
 function review(){
   var p = R.p;
-  view('<div class="rtop"><b>' + esc(p.title) + '</b><span class="muted" style="margin-left:auto">파란 글 = 문단 요지</span></div>' +
-    '<div class="text sc grow">' + p.paras.map(function(par, i){ return "<p>" + esc(par) + '</p><span class="gist">' + (i + 1) + "문단 · " + esc(p.gist[i] || "") + "</span>"; }).join("") + "</div>" +
+  view('<div class="rtop"><b>' + esc(p.title) + '</b><span class="muted" style="margin-left:auto">파란 글 = ' + unitName(p) + ' 요지</span></div>' +
+    '<div class="text sc grow' + (p.genre === "poem" ? " poem" : "") + '">' + p.paras.map(function(par, i){ return "<p>" + esc(par) + '</p><span class="gist">' + (i + 1) + unitName(p) + " · " + esc(p.gist[i] || "") + "</span>"; }).join("") + "</div>" +
     '<div class="row"><button class="btn gray" onclick="readResultAgain()">결과로</button>' + (D.maps && D.maps[p.id] ? '<button class="btn sub" onclick="mapRun()">🗺️ 구조도</button>' : "") + '<button class="btn" onclick="' + (R.today ? "go(\'today\')" : "go(\'read\')") + '">' + (R.today ? "오늘 훈련 마치기" : "목록으로") + "</button></div>");
 }
 function readResultAgain(){ var d = R.done; S.reads.pop(); day().r--; readResult(); }
 
 /* ════════ 🗺️ 구조도 채우기 ════════ */
-var MH = {"과정": "단계가 차례로 이어지는 글", "원인-결과": "원인이 결과를 낳는 글", "정의-예시": "개념을 정의하고 예로 보여 주는 글", "비교·대조": "두 대상을 같은 기준으로 견주는 글",
+var MH = {"시": "화자·상황·표현·정서의 흐름", "소설": "시점·인물·사건·깨달음의 흐름", "과정": "단계가 차례로 이어지는 글", "원인-결과": "원인이 결과를 낳는 글", "정의-예시": "개념을 정의하고 예로 보여 주는 글", "비교·대조": "두 대상을 같은 기준으로 견주는 글",
   "문제-해결": "문제를 제기하고 해결을 찾는 글", "개념-비판": "개념을 설명하고 한계를 따지는 글", "원리": "어떤 것이 작동하는 이치를 밝히는 글"};
 var MP = null;
 function mapRun(){
@@ -486,7 +495,7 @@ function mapRun(){
       (m.t ? '<div class="mb"><span class="ml">정리</span><div>' + cell(m.t) + "</div></div>" : "")
     : '<div class="mwrap">' + m.b.map(function(r, i){ return (i ? '<div class="mar">▼</div>' : "") + '<div class="mb"><span class="ml">' + esc(r[0]) + "</span><div>" + cell(r[1]) + "</div></div>"; }).join("") + "</div>";
   MP = {ans: ans, fill: ans.map(function(){ return null; }), sel: 0, bank: shuffle(ans.concat(m.x || [])), done: false};
-  view('<div class="rtop"><b>🗺️ 구조도 · ' + esc(p.type) + '</b><span class="muted" style="margin-left:auto;font-size:12px">' + esc(MH[p.type] || "") + "</span></div>" +
+  view('<div class="rtop"><b>🗺️ ' + (p.genre ? "작품 지도 · " : "구조도 · ") + esc(p.type) + '</b><span class="muted" style="margin-left:auto;font-size:12px">' + esc(MH[p.type] || "") + "</span></div>" +
     '<div class="muted">빈칸을 누르고 아래 낱말을 골라 채우세요. 채운 칸을 다시 누르면 비워져요.</div>' +
     '<div class="sc grow" id="mapv">' + body + "</div>" +
     '<div class="bank" id="bank"></div><div id="mfb"></div>' +
@@ -571,7 +580,7 @@ function diagResult(){
     '<div class="card" style="text-align:center"><div class="dlv">' + lv + '단계</div><div class="muted">' + esc((D.levels.filter(function(l){ return l.lv === lv; })[0] || {}).desc || "") + '</div><p class="cmp" style="margin-top:8px">' + why + "</p>" +
     (fast ? '<p class="muted">⚠️ 읽기 속도가 너무 빨라요. 끝까지 읽지 않았다면 속도는 빼고 추천했어요.</p>' : "") + "</div>" +
     '<div class="muted" style="text-align:center">다른 단계로 시작하고 싶으면 고르세요</div>' +
-    '<div class="seg">' + D.levels.map(function(l){ return '<button aria-pressed="' + (l.lv === lv) + '"' + (levels().indexOf(l.lv) >= 0 ? "" : " disabled") + ' onclick="diagSave(' + l.lv + ')">' + l.name + "</button>"; }).join("") + "</div>" +
+    '<div class="seg">' + D.levels.filter(function(l){ return !l.lit; }).map(function(l){ return '<button aria-pressed="' + (l.lv === lv) + '"' + (levels().indexOf(l.lv) >= 0 ? "" : " disabled") + ' onclick="diagSave(' + l.lv + ')">' + l.name + "</button>"; }).join("") + "</div>" +
     '<div class="grow"></div><button class="btn" onclick="diagSave(' + lv + ')">' + lv + "단계로 시작하기</button>");
 }
 function diagSave(lv){ var g = R.dg; g.pick = lv; S.diag = g; S.lv = lv; save(); go("today"); }
@@ -683,7 +692,7 @@ function chartSVG(rs){
     '<text x="' + l + '" y="' + (h - 5) + '" font-size="10" fill="#667085">━ 유효 속도   ┅ 읽기 속도 (최근 ' + rs.length + "편)</text></svg>";
 }
 function showGrow(){
-  var rs = S.reads.slice(-12), st = streak(), uniq = {}; S.reads.forEach(function(r){ uniq[r.p] = 1; });
+  var rs = readsSpeed().slice(-12), st = streak(), uniq = {}; S.reads.forEach(function(r){ uniq[r.p] = 1; });
   var acc = S.reads.length ? Math.round(avg(S.reads.slice(-10), function(r){ return r.a; }) * 100) : 0;
   var days = []; for(var i = 13; i >= 0; i--){ var k = addDays(-i), x = S.days[k]; days.push('<i class="' + (x && x.r > 0 && x.tv ? "f" : active(k) ? "r" : "") + (i === 0 ? " t" : "") + '" title="' + k + '"></i>'); }
   var B = [["🌱 첫 지문", S.reads.length >= 1], ["🔥 3일 연속", (S.best || 0) >= 3], ["🔥 7일 연속", (S.best || 0) >= 7], ["📚 지문 5편", Object.keys(uniq).length >= 5],
