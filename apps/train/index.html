@@ -54,6 +54,7 @@
   .set{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:12px}
   .set textarea{flex:1;min-height:0;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;resize:none}
   .muted{font-size:12.5px;color:var(--sub);line-height:1.5}
+  .cert{border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13.5px;line-height:1.55;background:var(--t-field,#fbfcfd)}.cert b{color:var(--ink)}.cert .w{color:var(--danger);font-weight:700}.cert .k{display:inline-block;min-width:62px;color:var(--sub);font-weight:700}
   .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--sub);text-align:center}
   .empty .big{font-size:44px}
   @media (max-width:760px){ .two,.set{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} .names{max-height:240px} }
@@ -116,14 +117,30 @@
     f.innerHTML = '<div class="me">' + esc(s.name) + ' <small style="font-size:14px;color:var(--sub)">' + esc(s.dept) + '</small></div><div class="st no" id="st">제출 여부 확인 중…</div>'
       + '<h2>② 이수증 파일 또는 이수번호 (둘 중 하나만 내도 돼요)</h2>'
       + '<label class="drop" id="drop"><input type="file" id="f" accept=".pdf,.jpg,.jpeg,.png" hidden><b>📄 이수증 파일 고르기</b> (PDF·사진, 10MB까지)<br>또는 여기로 끌어다 놓기</label>'
-      + '<input type="text" id="num" maxlength="60" placeholder="이수번호 (예: 2026-123456)" autocomplete="off">'
+      + '<input type="text" id="num" maxlength="60" placeholder="이수번호 (예: 경남교연-2026-123456) · 이수증 PDF를 고르면 저절로 채워져요" autocomplete="off">'
       + '<p class="muted">이수증은 학교 구글 드라이브의 비공개 폴더에 저장되고 연수 담당자만 볼 수 있습니다. 다시 내면 앞의 것으로 바뀝니다.</p>'
       + '<div class="go"><button type="button" class="btn primary" id="send">📤 내기</button></div>';
     var drop = $("drop");
     function pick(fl){ if(!fl) return; if(fl.size > 10 * 1024 * 1024){ TT.ui.toast("10MB보다 큰 파일은 낼 수 없습니다."); return; } file = fl; drop.classList.add("on"); drop.innerHTML = "<b>✔ " + esc(fl.name) + "</b> (" + Math.max(1, Math.round(fl.size / 1024)) + "KB) · 다른 파일로 바꾸려면 누르기"; drop.appendChild($("f") || (function(){ var i = document.createElement("input"); i.type = "file"; i.id = "f"; i.hidden = true; i.accept = ".pdf,.jpg,.jpeg,.png"; return i; })()); }
-    drop.addEventListener("change", function(e){ if(e.target.id === "f") pick(e.target.files[0]); });
+    var certBox = document.createElement("div"); certBox.className = "cert"; certBox.hidden = true; $("num").parentNode.insertBefore(certBox, $("num").nextSibling);
+    function readIt(fl){
+      certBox.hidden = true; if(!fl || !/\.pdf$/i.test(fl.name)) return;
+      certBox.hidden = false; certBox.textContent = "🔎 이수증 글자를 이 기기 안에서 읽는 중…";
+      certRead(fl).then(function(c){
+        if(!c){ certBox.innerHTML = "이수증 글자를 읽지 못했어요(사진으로 만든 PDF일 수 있어요). 이수번호는 직접 적어 주세요."; return; }
+        if(c.num && !$("num").value.trim()) $("num").value = c.num;
+        var mine = c.flat.indexOf(String(s.name).replace(/\s/g, "")) >= 0;
+        certBox.innerHTML = "<div><b>✨ 이수증에서 읽었어요</b> (확인만 하고 내기)</div>"
+          + (c.num ? '<div><span class="k">이수번호</span>' + esc(c.num) + "</div>" : '<div class="w">이수번호를 찾지 못했어요. 직접 적어 주세요.</div>')
+          + (c.course ? '<div><span class="k">과정</span>' + esc(c.course) + "</div>" : "")
+          + (c.hours || c.period ? '<div><span class="k">시간·기간</span>' + esc([c.hours ? c.hours + "시간" : "", c.period].filter(Boolean).join(" · ")) + "</div>" : "")
+          + (c.items.length ? '<div><span class="k">차시</span>' + c.items.length + "개 (" + esc(c.items.slice(0, 4).join(", ")) + (c.items.length > 4 ? " …" : "") + ")</div>" : "")
+          + (mine ? "" : '<div class="w">⚠️ 이수증에서 「' + esc(s.name) + '」 이름이 보이지 않아요. 내 이수증이 맞는지 확인해 주세요.</div>');
+      }).catch(function(){ certBox.innerHTML = "이수증 글자를 읽지 못했어요. 이수번호는 직접 적어 주세요."; });
+    }
+    drop.addEventListener("change", function(e){ if(e.target.id === "f") pick(e.target.files[0]); readIt(file); });
     drop.addEventListener("dragover", function(e){ e.preventDefault(); drop.classList.add("on"); });
-    drop.addEventListener("drop", function(e){ e.preventDefault(); pick(e.dataTransfer.files[0]); });
+    drop.addEventListener("drop", function(e){ e.preventDefault(); pick(e.dataTransfer.files[0]); readIt(file); });
     post({action: "trmine", staffId: s.id, tok: o.tok}).then(function(r){
       var st = $("st"); if(!st) return;
       if(r.done){ st.className = "st ok"; st.textContent = "✔ 냈습니다 (" + r.at + ")" + (r.num ? " · 이수번호 " + r.num : "") + (r.fileName ? " · 이수증 파일 있음" : ""); }
@@ -140,6 +157,37 @@
       if(file){ var fr = new FileReader(); fr.onload = function(){ send(String(fr.result).split(",")[1]); }; fr.readAsDataURL(file); } else send("");
     };
   }
+
+  /* ================= 이수증 PDF 자동 읽기 (PLAN_통일 4단계) =================
+     PDF 글자를 이 기기 안에서(pdf.js, shared/vendor) 읽어 이수번호·과정·시간·기간·차시를 찾습니다. 서버로 보내는 것은 원래대로 파일과 이수번호뿐입니다.
+     이름은 고른 이름이 이수증에 있는지만 확인합니다(생년월일 등은 읽어 두지 않음). */
+  var PJ = null;
+  function certRead(fl){
+    var base = new URL("../../shared/vendor/pdfjs/", location.href).href;
+    var lib = PJ ? Promise.resolve(PJ) : import(base + "pdf.min.mjs").then(function(m){ m.GlobalWorkerOptions.workerSrc = base + "pdf.worker.min.mjs"; PJ = m; return m; });
+    return Promise.all([lib, fl.arrayBuffer()]).then(function(a){
+      return a[0].getDocument({data: new Uint8Array(a[1]), cMapUrl: base + "cmaps/", cMapPacked: true, isEvalSupported: false}).promise;
+    }).then(function(d){
+      var ps = []; for(var i = 1; i <= Math.min(2, d.numPages); i++) ps.push(d.getPage(i).then(function(p){ return p.getTextContent(); }));
+      return Promise.all(ps);
+    }).then(function(tcs){
+      var t = tcs.map(function(tc){ return tc.items.map(function(it){ return (it.str || "") + (it.hasEOL ? "\n" : " "); }).join(""); }).join("\n");
+      return certParse(t);
+    });
+  }
+  function certParse(t){
+    var flat = String(t).replace(/\s+/g, "");
+    if(flat.length < 20) return null;
+    var c = {flat: flat, num: "", course: "", hours: "", period: "", items: []}, m;
+    m = /제([가-힣A-Za-z]{1,10}-?\d{4}-\d{3,})호/.exec(flat) || /([가-힣A-Za-z]{2,10}-\d{4}-\d{3,})/.exec(flat) || /이수번호:?([0-9A-Za-z가-힣-]{6,30})/.exec(flat);
+    if(m) c.num = m[1];
+    m = /이수시간:?(\d{1,3})시간/.exec(flat); if(m) c.hours = m[1];
+    m = /(\d{4}\.\d{1,2}\.\d{1,2})\.?~(\d{4}\.\d{1,2}\.\d{1,2})\.?/.exec(flat); if(m) c.period = m[1] + "~" + m[2];
+    m = /과\s*정\s*명\s*:?\s*([\s\S]{2,80}?)\s*(?:연\s*수\s*기\s*간|이\s*수\s*시\s*간|위와|$)/.exec(String(t)); if(m) c.course = m[1].replace(/\s+/g, " ").trim();
+    m = /((?:\d?[가-힣]{2,16}\d{0,2},){3,}\d?[가-힣]{2,16}\d{0,2})/.exec(flat); if(m){ c.items = m[1].split(","); c.items[0] = c.items[0].replace(/^.*연수차?시?/, ""); c.items = c.items.filter(Boolean); }
+    return c;
+  }
+  window.__certParse = certParse;
 
   /* ================= 담당자 ================= */
   function admView(){
