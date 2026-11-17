@@ -49,7 +49,7 @@
     <h1>📇 학생 카드</h1>
   </div>
   <div class="bar">
-    <span class="pick"><select id="clsSel" aria-label="학급 선택"></select><select id="stuSel" aria-label="학생 선택"></select></span>
+    <span class="pick"><select id="clsSel" aria-label="학급 선택"></select><select id="stuSel" aria-label="학생 선택"></select><button class="btn" id="pk" title="번호 칸에서 학생 고르기">👆</button></span>
     <span class="nav2"><button class="btn" id="prev" title="앞 번호">◀</button><button class="btn" id="next" title="다음 번호">▶</button></span>
     <button class="btn primary" id="addRec">✍️ 기록 더하기</button>
     <button class="btn" id="print">🖨 인쇄</button>
@@ -84,6 +84,7 @@
     if(st) sel.value = st.no;
     draw();
   }
+  $("pk").onclick = function(){ TT.ui.pickStudent({cls: cls && cls.id, sel: st && st.no, title: "학생 카드 — 누구를 볼까요?"}, function(r){ var cs = $("clsSel"); if(cs.value !== r.cls.id){ cs.value = r.cls.id; cs.dispatchEvent(new Event("change")); } $("stuSel").value = r.no; $("stuSel").onchange(); }); };   // PLAN_다듬기 4단계
   $("stuSel").onchange = function(){ st = cls.students.filter(function(s){ return String(s.no) === this.value; }, this)[0] || null; draw(); };
   function move(k){ if(!cls || !st) return; var i = cls.students.indexOf(st), j = i + k; if(j < 0 || j >= cls.students.length) return; st = cls.students[j]; $("stuSel").value = st.no; draw(); }
   $("prev").onclick = function(){ move(-1); }; $("next").onclick = function(){ move(1); };
@@ -108,9 +109,13 @@
     /* ① 학생 기록 (TT.notes) */
     var D = N.load(), R = D.recs.filter(function(r){ return r.k === k; }).sort(function(a, b){ return (b.date || "") < (a.date || "") ? -1 : 1; });
     var by = {}; R.forEach(function(r){ by[r.area] = (by[r.area] || 0) + 1; });
+    /* PLAN_다듬기 4단계: 수업 기록장(tt_journal_v1)에 남긴 이 학생의 수업 중 기록도 함께 */
+    var JR = []; try{ var JS = TT.store.get("tt_journal_v1", null), code = cls.grade != null && cls.cls != null ? cls.grade * 100 + cls.cls : null; if(JS && code) JR = (JS.records || []).filter(function(r){ return +r.cls === code && +r.no === +st.no; }); }catch(e){}
+    if(JR.length){ by.__j = JR.length; R = R.concat(JR.map(function(r){ return {date: r.date, area: "__j", text: ((r.tags || []).join(" · ") + (r.text ? " — " + r.text : "")).replace(/^ — /, "") + (r.les ? " (" + r.les + ")" : "")}; })).sort(function(a, b){ return (b.date || "") < (a.date || "") ? -1 : 1; }); }
+    function AR(a){ return a === "__j" ? "📒 수업 기록" : N.area(a); }
     $("bRec").innerHTML = '<h2>✍️ 학생 기록 <span class="n">' + R.length + '</span><a href="../record/">' + TN("record", "생기부 도우미") + " →</a></h2>"
-      + (R.length ? '<div class="sum">' + Object.keys(by).map(function(a){ return "<span>" + esc(N.area(a)) + " " + by[a] + "</span>"; }).join("") + "</div>" : "")
-      + '<div class="ls">' + (R.length ? R.map(function(r){ return '<div class="r"><span class="d">' + md(r.date) + '</span><span class="a">' + esc(N.area(r.area)) + '</span><span class="t">' + esc(r.text) + "</span></div>"; }).join("")
+      + (R.length ? '<div class="sum">' + Object.keys(by).map(function(a){ return "<span>" + esc(AR(a)) + " " + by[a] + "</span>"; }).join("") + "</div>" : "")
+      + '<div class="ls">' + (R.length ? R.map(function(r){ return '<div class="r"><span class="d">' + md(r.date) + '</span><span class="a">' + esc(AR(r.area)) + '</span><span class="t">' + esc(r.text) + "</span></div>"; }).join("")
         : '<div class="none">아직 기록이 없습니다. [✍️ 기록 더하기]로 본 것·한 것을 한 줄씩 남기세요.</div>') + "</div>";
     /* ② 출결 · ③ 상담 (생활지도 tt_guide_v1 — 우리 반만) */
     var G = TT.store.get("tt_guide_v1", null), no = String(st.no);

@@ -39,6 +39,7 @@
   .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.row>*{min-width:0}
   .row select,.row input[type=text],.row input[type=date]{flex:1;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:8px 9px;background:var(--card);color:var(--ink);max-width:none}
   .grow{flex:1}
+  .pkb{flex:1;font:inherit;font-size:15px;font-weight:800;border:1.5px solid #1D9E75;background:#E1F5EE;color:#04342C;border-radius:10px;padding:9px 10px;cursor:pointer;text-align:left}
   .note{font-size:12px;color:var(--sub);line-height:1.45}
   .consent{border:1px solid #EF9F27;background:#FFF6E5;border-radius:12px;padding:8px 10px;font-size:13px;line-height:1.45;color:#5a3d00}
   .consent label{display:flex;gap:6px;align-items:center;font-weight:800;margin-top:4px}
@@ -235,7 +236,7 @@
     $("tgtLb").hidden = !k.tg;
     if(k.tg === "stu" || k.tg === "cls"){
       h += '<select id="cSel" aria-label="학급">' + (CL.length ? CL.map(function(c){ return '<option value="' + esc(c.id) + '"' + (c.id === S.cls ? " selected" : "") + ">" + esc(c.name) + (HOME && c.id === HOME.id ? " ★" : "") + "</option>"; }).join("") : "<option value=''>명렬표 없음</option>") + "</select>";
-      if(k.tg === "stu") h += '<select id="nSel" aria-label="학생"><option value="">학생 고르기</option>' + stus().map(function(s){ return '<option value="' + s.no + '"' + (String(s.no) === String(S.no) ? " selected" : "") + ">" + s.no + "번 " + esc(s.name) + "</option>"; }).join("") + "</select>";
+      if(k.tg === "stu"){ var sv = stu(); h += '<button type="button" class="pkb" id="nPick" aria-label="학생 고르기">' + (sv ? "👆 " + sv.no + "번 " + esc(sv.name) : "👆 학생 고르기") + "</button>"; }   // PLAN_다듬기 4단계: 공통 학생 고르기 창
     } else if(k.tg === "mtg") h += '<input type="text" id="mName" maxlength="40" placeholder="회의 이름 (예: 3학년 협의회)" value="' + esc(S.mtg) + '" autocomplete="off">';
     $("tgt").innerHTML = h;
     $("ways").innerHTML = WAYS.map(function(w){ return '<button type="button" data-w="' + w.id + '" aria-pressed="' + (w.id === S.way) + '"><i>' + w.ic + "</i>" + esc(w.n) + "<small>" + esc(w.s) + "</small></button>"; }).join("");
@@ -262,6 +263,7 @@
     b.innerHTML = "💾 끝내지 않은 글이 있어요 (" + t.length + "자, " + md(ymd(at)) + " " + at.getHours() + ":" + pad(at.getMinutes()) + ')<span class="grow"></span><button type="button" class="btn" data-a="resume" style="padding:4px 10px;font-size:13px">이어 쓰기</button><button type="button" class="btn" data-a="drop" style="padding:4px 10px;font-size:13px">지우기</button>';
   }
   $("s1").addEventListener("click", function(e){
+    if(e.target.closest && e.target.closest("#nPick")){ TT.ui.pickStudent({cls: S.cls, sel: S.no, title: "누구를 기록할까요?"}, function(r){ S.cls = r.cls.id; S.no = String(r.no); draw1(); }); return; }
     var b = e.target.closest("[data-k],[data-w],[data-a]"); if(!b) return;
     if(b.dataset.k){ S.kind = b.dataset.k; if(S.kind === "mtg" && S.way === "live") S.way = "sum"; S.agreed = false; draw1(); }
     else if(b.dataset.w){ S.way = b.dataset.w; draw1(); }

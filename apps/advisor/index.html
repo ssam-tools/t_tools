@@ -491,9 +491,9 @@ function renderNav(){const cur=isView(S.tab)?'room':S.tab;$('#nav').innerHTML=TA
 function curStudent(){return S.students.find(s=>s.id===S.selected)||null}
 function studentPicker(){
   if(!S.students.length)return '<div class="card"><p>학생이 없습니다. 📥 성적 넣기 탭에서 NEIS 일람표를 불러오거나 학생을 추가해 주세요.</p></div>';
-  return `<div class="card row"><label>학생 선택<select id="pick">${S.students.slice().sort((a,b)=>a.cls-b.cls||a.no-b.no).map(s=>`<option value="${s.id}" ${s.id===S.selected?'selected':''}>${esc(dispName(s))}</option>`).join('')}</select></label></div>`;
+  return `<div class="card row"><label>학생 선택<select id="pick">${S.students.slice().sort((a,b)=>a.cls-b.cls||a.no-b.no).map(s=>`<option value="${s.id}" ${s.id===S.selected?'selected':''}>${esc(dispName(s))}</option>`).join('')}</select></label><button class="btn sec sm" id="pk2" title="번호 칸에서 학생 고르기">👆 번호로</button></div>`;
 }
-function bindPicker(){const p=$('#pick');if(p)p.onchange=()=>{S.selected=p.value;save();render()}}
+function bindPicker(){const p=$('#pick');if(p)p.onchange=()=>{S.selected=p.value;save();render()};const k=$('#pk2');if(k)k.onclick=()=>{const c=curStudent();let rc=null;try{const d=TT.roster.load(),h=TT.roster.home(d),g=h&&h.grade!=null?h.grade:3;rc=d.classes.find(x=>x.grade===g&&c&&+x.cls===+c.cls)}catch(e){}TT.ui.pickStudent({cls:rc&&rc.id,sel:c&&c.no,title:'진학 — 누구를 볼까요?'},r=>{const st=S.students.find(x=>+x.cls===+r.cls.cls&&+x.no===+r.no);if(!st){TT.ui.toast(r.no+'번은 아직 성적이 없어요. 📥 성적 넣기에서 넣어 주세요.');return}S.selected=st.id;save();render()})}}
 function render(){
   renderNav();
   if(!S.selected&&S.students.length)S.selected=S.students[0].id;

@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "1.28.0";
+  var VERSION = "1.29.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -354,6 +354,30 @@ var TT = (function(){
       window.addEventListener("storage", function(e){ if(e.key === KEY){ cur = fill(); onChange(cur); } });
       onChange(cur);
       return { current: function(){ return cur; } };
+    },
+    /* PLAN_다듬기 4단계: 학생 고르기 창 (모든 도구 공통) — 출결처럼 반을 고르고 번호 칸을 누름.
+       opt: {cls: 학급 id(없으면 우리 반), title, sel: 지금 고른 번호}, cb({cls: 학급, no, name}) */
+    pickStudent: function(opt, cb){
+      opt = opt || {};
+      if(!document.getElementById("ttPkCss")){ var st = el("style"); st.id = "ttPkCss"; st.textContent = ".tt-pk{border:0;border-radius:18px;padding:14px 16px;width:min(760px,96vw);max-height:92vh;box-shadow:0 18px 50px rgba(20,40,70,.28);font-family:var(--t-font,'Malgun Gothic',system-ui,sans-serif);color:var(--t-ink,#1d2733);background:var(--t-card,#fff)}.tt-pk::backdrop{background:rgba(20,30,45,.4)}.tt-pk h3{font-size:17px;font-weight:800;margin:0 0 8px;display:flex;gap:8px;align-items:center}.tt-pk h3 button{margin-left:auto;font:inherit;font-size:13px;border:1px solid var(--t-line,#dde3ea);background:var(--t-card,#fff);border-radius:9px;padding:4px 10px;cursor:pointer}.tt-pk .cs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}.tt-pk .cs button{font:inherit;font-size:13.5px;font-weight:700;border:1px solid var(--t-line,#dde3ea);background:var(--t-card,#fff);border-radius:999px;padding:4px 12px;cursor:pointer;color:var(--t-sub,#5b6773)}.tt-pk .cs button.on{background:var(--t-accent,#2f6fb5);border-color:var(--t-accent,#2f6fb5);color:#fff}.tt-pk .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px;max-height:62vh;overflow:auto}.tt-pk .g button{font:inherit;border:1px solid var(--t-line,#dde3ea);background:var(--t-card,#fff);border-radius:12px;padding:8px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;color:var(--t-ink,#1d2733)}.tt-pk .g button small{font-size:11.5px;color:var(--t-sub,#5b6773);font-weight:700}.tt-pk .g button b{font-size:15.5px}.tt-pk .g button:hover,.tt-pk .g button.on{border-color:var(--t-accent,#2f6fb5);background:var(--t-accent-soft,#e6f0fa)}"; document.head.appendChild(st); }
+      var d = roster.load(), list = roster.classes(d).filter(function(c){ return c.students.length > 0; }).sort(function(a, b){ return (b.id === d.home) - (a.id === d.home); });
+      if(!list.length){ ui.toast("먼저 학급 명렬표에 학생 명단을 넣어 주세요."); return; }
+      var cid = list.some(function(c){ return c.id === opt.cls; }) ? opt.cls : list[0].id;
+      var dlg = el("dialog", "tt-pk"); dlg.setAttribute("aria-label", "학생 고르기"); document.body.appendChild(dlg);
+      function draw(){
+        var c = list.filter(function(x){ return x.id === cid; })[0];
+        dlg.innerHTML = "<h3>👆 " + (opt.title || "학생 고르기") + '<button type="button" data-x>닫기 Esc</button></h3>'
+          + (list.length > 1 ? '<div class="cs">' + list.map(function(x){ return '<button type="button" data-c="' + x.id + '" class="' + (x.id === cid ? "on" : "") + '">' + (x.id === d.home ? "★ " : "") + x.name.replace(/[<>&]/g, "") + "</button>"; }).join("") + "</div>" : "")
+          + '<div class="g">' + c.students.slice().sort(byNo).map(function(s){ return '<button type="button" data-n="' + s.no + '" class="' + (String(s.no) === String(opt.sel) && c.id === opt.cls ? "on" : "") + '"><small>' + s.no + "번</small><b>" + String(s.name || "").replace(/[<>&]/g, "") + "</b></button>"; }).join("") + "</div>";
+      }
+      dlg.addEventListener("click", function(e){
+        var t = e.target.closest ? e.target.closest("button") : null;
+        if(e.target === dlg || (t && t.hasAttribute("data-x"))){ dlg.close(); return; }
+        if(t && t.dataset.c){ cid = t.dataset.c; draw(); return; }
+        if(t && t.dataset.n){ var c = list.filter(function(x){ return x.id === cid; })[0], s = c.students.filter(function(x){ return String(x.no) === t.dataset.n; })[0]; dlg.close(); if(cb) cb({cls: c, no: +t.dataset.n, name: s ? s.name : ""}); }
+      });
+      dlg.addEventListener("close", function(){ dlg.remove(); });
+      draw(); dlg.showModal();
     },
     /* 명단이 없을 때 보여 줄 안내 (명렬표로 가는 버튼 포함) */
     needRoster: function(host){
