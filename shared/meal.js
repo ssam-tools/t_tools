@@ -1,5 +1,5 @@
 /* 보완 3단계 (v1.6.0): 오늘 급식 — 나이스 교육정보 개방 포털(open.neis.go.kr) 급식식단정보
-   - 첫 화면 날짜 줄에 "🍚 오늘 점심: 잡곡밥 · 순두부찌개 …" 한 줄 (점심 이후에는 '내일 점심')
+   - 첫 화면 날짜 줄에 "🍚 급식" 단추 (v1.10.1) — 마우스를 올리면 오늘/내일 점심 메뉴, 누르면 급식 창
    - 누르면 오늘 메뉴 전체 + 열량 + 이번 주 식단(월~금), 학교 찾기·인증키 설정
    - 학교 코드(교육청 neisA · 학교 neisS · 인증키 neisKey)는 tt_school_v1 → 학기초 세팅 파일로 다른 선생님께 함께 감
    - 받은 식단은 이 기기에 저장(snmeal_v1, 2주) → 인터넷이 잠깐 안 돼도 보임. 학생 자료는 보내지 않습니다(학교 코드·날짜만). */
@@ -73,6 +73,8 @@
     + ".meal b{color:var(--t-ok,#1d7a46);flex:none}.meal span{overflow:hidden;text-overflow:ellipsis}"
     + ".meal.hot{background:#fff1d6;box-shadow:0 0 0 2px #f0b450 inset}.meal.hot b{color:#b4640a}"
     + ".meal.off{background:var(--t-chip,#eceff3);color:var(--sub)}"
+    + "#mealPop{position:fixed;z-index:80;min-width:180px;max-width:280px;background:var(--card,#fff);color:var(--ink,#1f2a37);border:1px solid var(--line,#dde3ea);border-radius:12px;box-shadow:0 10px 26px rgba(30,60,100,.18);padding:9px 12px;font-size:14px;line-height:1.55;pointer-events:none}"
+    + "#mealPop[hidden]{display:none}#mealPop h4{margin:0 0 4px;font-size:13px;color:var(--t-ok,#1d7a46)}#mealPop .cal{color:var(--sub);font-size:11.5px;margin-top:3px}#mealPop .ft{color:var(--sub);font-size:11px;margin-top:5px;border-top:1px dashed var(--line,#dde3ea);padding-top:4px}"
     + "@media (max-width:760px){.meal{max-width:calc(100vw - 40px);margin:4px 0 0}}"
     + "#dlgMeal{max-width:min(720px,94vw);width:720px}#dlgMeal h2{margin:0 0 8px}"
     + "#dlgMeal .mwk{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:8px 0}"
@@ -89,20 +91,34 @@
     return dishes(x.raw, opt().allergy).slice(0, 5).join(" · ");
   }
   function hot(){ var d = new Date(), m = d.getHours() * 60 + d.getMinutes(), w = d.getDay(); return w >= 1 && w <= 5 && m >= 660 && m < 770; }   // 11:00~12:50
+  var popHTML = "";
   function paint(){
     if(!chip) return;
     var s = sch();
-    if(!s.neisA || !s.neisS){ if(opt().hideSetup){ chip.hidden = true; return; } chip.hidden = false; chip.className = "meal off"; chip.innerHTML = "🍚 <span>급식 연결하기</span>"; return; }
-    var t = target();
+    if(!s.neisA || !s.neisS){ popHTML = ""; if(opt().hideSetup){ chip.hidden = true; return; } chip.hidden = false; chip.className = "meal off"; chip.innerHTML = "🍚 <span>급식 연결하기</span>"; chip.title = ""; return; }
+    var t = target(), DW = "일월화수목금토";
+    chip.hidden = false; chip.className = "meal"; chip.innerHTML = "🍚 <b>급식</b>"; chip.title = "";   // v1.10.1: 메뉴는 마우스를 올리면, 누르면 급식 창
     week(monday(t.d), function(days, err){
-      var txt = lineText(days, t);
-      if(err && !days){ chip.hidden = false; chip.className = "meal off"; chip.innerHTML = "🍚 <span>급식을 불러오지 못했어요</span>"; return; }
-      if(!txt){ chip.hidden = true; return; }   // 급식 없는 날(주말·방학·재량휴업일)
-      chip.hidden = false; chip.className = "meal" + (t.lab === "오늘 점심" && hot() ? " hot" : "");
-      chip.innerHTML = "🍚 <b>" + t.lab + "</b><span>" + esc(txt) + "</span>";
-      chip.title = t.lab + ": " + txt;
+      var x = days && days[ymd(t.d)], hd = "<h4>" + t.lab + " · " + (t.d.getMonth() + 1) + "/" + t.d.getDate() + " (" + DW[t.d.getDay()] + ")</h4>";
+      if(err && !days){ chip.className = "meal off"; popHTML = hd + "급식을 불러오지 못했어요."; }
+      else if(!x){ popHTML = hd + '<span class="muted">급식 없음</span>'; }
+      else {
+        chip.className = "meal" + (t.lab === "오늘 점심" && hot() ? " hot" : "");
+        popHTML = hd + dishes(x.raw, opt().allergy).map(esc).join("<br>") + (x.cal ? '<div class="cal">' + esc(x.cal) + "</div>" : "");
+      }
+      popHTML += '<div class="ft">누르면 이번 주 식단</div>';
+      if(pop && !pop.hidden) pop.innerHTML = popHTML;
     });
   }
+  var pop = null;
+  function showPop(){
+    if(!popHTML || !chip || chip.hidden) return;
+    if(!pop){ pop = document.createElement("div"); pop.id = "mealPop"; pop.hidden = true; document.body.appendChild(pop); }
+    pop.innerHTML = popHTML; pop.hidden = false;
+    var r = chip.getBoundingClientRect(), w = pop.offsetWidth;
+    pop.style.top = Math.round(r.bottom + 6) + "px"; pop.style.left = Math.round(Math.max(8, Math.min(r.left, window.innerWidth - w - 8))) + "px";
+  }
+  function hidePop(){ if(pop) pop.hidden = true; }
   function wkHTML(days, mon, err){
     var t = target(), DW = "월화수목금";
     if(err && !days) return '<p class="muted">급식을 불러오지 못했어요. 인터넷 연결을 확인하거나, 아래에서 인증키를 넣어 보세요. (' + esc(err.message || "") + ")</p>";
@@ -140,7 +156,7 @@
     if(has){
       h += '<div class="row2"><button type="button" class="btn" data-m="prev">◀ 지난주</button><b>' + (shownMon.getMonth() + 1) + "/" + shownMon.getDate() + ' 주</b><button type="button" class="btn" data-m="next">다음 주 ▶</button>'
         + '<label style="margin-left:auto"><input type="checkbox" id="mAll"' + (o.allergy ? " checked" : "") + "> 알레르기 번호 보기</label></div><div id=\"mBody\"></div>";
-    }else h += '<p>학교를 한 번 찾아 연결하면 첫 화면에 오늘 점심이 한 줄로 나옵니다. (학기초 세팅 파일에도 함께 들어가 다른 선생님은 설정할 필요 없음)</p>';
+    }else h += '<p>학교를 한 번 찾아 연결하면 첫 화면에 🍚 급식 단추가 나옵니다(마우스를 올리면 메뉴). (학기초 세팅 파일에도 함께 들어가 다른 선생님은 설정할 필요 없음)</p>';
     h += '<div class="mset"><b>학교 찾기</b><div class="row2"><input type="text" id="mQ" placeholder="학교 이름 (예: 마산서중)" value="' + esc((s.name || "").replace(/학교$/, "")) + '" style="flex:1"><button type="button" class="btn" data-m="find">찾기</button></div><div class="mres" id="mRes"></div>'
       + '<details style="margin-top:8px"><summary>나이스 인증키 (선택)</summary><p class="muted" style="margin:4px 0">open.neis.go.kr 에서 무료로 받은 키를 넣으면 더 안정적으로 불러옵니다. 키 없이도 됩니다.</p>'
       + '<div class="row2"><input type="text" id="mKey" value="' + esc(s.neisKey || "") + '" placeholder="인증키" style="flex:1"><button type="button" class="btn" data-m="key">저장</button></div></details>'
@@ -162,7 +178,9 @@
     var st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st);
     chip = document.createElement("button"); chip.type = "button"; chip.id = "mealChip"; chip.className = "meal"; chip.hidden = true;
     var lt = document.getElementById("leadTxt"); if(lt && lt.nextSibling) lead.insertBefore(chip, lt.nextSibling); else lead.appendChild(chip);
-    chip.addEventListener("click", openDlg);
+    chip.addEventListener("click", function(){ hidePop(); openDlg(); });
+    chip.addEventListener("mouseenter", showPop); chip.addEventListener("mouseleave", hidePop);
+    chip.addEventListener("focus", showPop); chip.addEventListener("blur", hidePop);
     paint(); setInterval(paint, 5 * 60000);
   }
   /* 쌤비 브리핑용: 저장된 오늘 점심 한 줄 (없으면 "") */

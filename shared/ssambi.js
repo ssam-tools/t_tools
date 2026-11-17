@@ -1,4 +1,4 @@
-/* 쌤 노트 · 마스코트 챗봇 "쌤비" (쌤의 비서, 안경 쓴 부엉이) — v1.1 (v1.2.2: PC는 왼쪽 메뉴 막대 '학교' 아래, Alt+B)
+/* 쌤 노트 · 마스코트 챗봇 "쌤비" (쌤의 비서, 안경 쓴 부엉이) — v1.1 (v1.10.2: 모든 화면 오른쪽 아래에 떠 있는 둥근 쌤비 + 첫 화면 위쪽 단추, Alt+B)
    휴대폰은 오른쪽 아래, 넓은 화면은 왼쪽 메뉴 막대 부엉이를 누르면(또는 Alt+B) 창이 열립니다. 한 화면(스크롤 없이)에 네 가지:
    ① 🎤 말로 입력 — 브라우저 음성 인식(크롬·엣지·삼성 인터넷). 알아들은 말을 이렇게 나눕니다.
         "12번 지각" / "홍길동 결석" → 우리 반 오늘 출결에 기록 (확인 단추를 눌러야 저장)
@@ -21,7 +21,10 @@
   function hm(m){ return Math.floor(m / 60) + ":" + pad(m % 60); }
   function tool(id){ return typeof ttTool === "function" ? ttTool(id) : null; }
   function tname(id, fb){ var t = tool(id); return t ? t.name : fb; }
-  function go(href){ if(href) location.href = href; }
+  /* v1.10.1: 도구 화면(apps/…)에서도 쌤비가 나옵니다. 주소는 쌤 노트 맨 위(TT.BASE) 기준으로 */
+  var BASE = TT.BASE || "", HOME = !/\/apps\/[^\/]+\/(index\.html)?$/.test(location.pathname);
+  function abs(href){ return !href || /^([a-z]+:|\/|#)/i.test(href) ? href : BASE + href; }
+  function go(href){ if(href) location.href = abs(href); }
   var VO = window.TTVoice, SR = !!(VO && VO.supported);           // 말→글은 공통 엔진(shared/voice.js)을 씁니다
 
   /* ── 부엉이 그림 (직접 그린 SVG, 외부 파일 없음) ── */
@@ -35,12 +38,16 @@
 
   var st = document.createElement("style");
   st.textContent = ""
-    + "#sbBtn{position:fixed;right:16px;bottom:18px;z-index:70;width:64px;height:64px;border:0;padding:0;border-radius:50%;background:none;cursor:pointer;filter:drop-shadow(0 4px 10px rgba(15,110,86,.28));-webkit-tap-highlight-color:transparent;transition:transform .15s}"
-    + "#sbBtn:hover{transform:translateY(-2px) scale(1.04)}#sbBtn svg{width:100%;height:100%;display:block}"
+    + "#sbBtn{position:fixed;right:22px;bottom:22px;z-index:70;width:78px;height:78px;border:0;padding:5px;border-radius:50%;background:#fff;cursor:pointer;box-shadow:0 0 0 3px #1D9E75,0 10px 26px rgba(15,110,86,.38);-webkit-tap-highlight-color:transparent;transition:transform .18s,box-shadow .18s;animation:sbBob 3.6s ease-in-out infinite}"
+    + "@keyframes sbBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}"
+    + "#sbBtn .nm{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);background:#1D9E75;color:#fff;font-size:11.5px;font-weight:800;line-height:1;padding:4px 9px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 6px rgba(15,110,86,.3);font-family:inherit}"
+    + "#sbBtn .dot{position:absolute;right:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#EF9F27;border:2px solid #fff;animation:sbDot 1.8s infinite}@keyframes sbDot{50%{transform:scale(1.25)}}"
+    + "#sbBtn.open{animation:none;box-shadow:0 0 0 4px #0F6E56,0 10px 26px rgba(15,110,86,.45)}#sbBtn.open .dot{display:none}"
+    + "#sbBtn:hover{animation:none;transform:translateY(-4px) scale(1.07);box-shadow:0 0 0 4px #1D9E75,0 14px 30px rgba(15,110,86,.45)}#sbBtn svg{width:100%;height:100%;display:block}"
     + "#sbBtn.on .sbEye{animation:sbBlink 3.2s infinite}@keyframes sbBlink{0%,92%,100%{transform:none}95%{transform:scaleY(.1)}}#sbBtn .sbEye{transform-origin:40px 39px}"
     + "#sbBtn.lis{animation:sbPulse 1s infinite}@keyframes sbPulse{50%{filter:drop-shadow(0 0 0 6px rgba(29,158,117,.35)) drop-shadow(0 0 14px rgba(29,158,117,.6))}}"
-    + "#sbTip{position:fixed;right:88px;bottom:34px;z-index:70;max-width:min(240px,60vw);background:var(--card,#fff);color:var(--ink,#1f2a37);border:1px solid var(--line,#dde3ea);border-radius:14px 14px 4px 14px;padding:7px 11px;font-size:13px;line-height:1.45;box-shadow:0 6px 18px rgba(30,60,100,.14);cursor:pointer}"
-    + "#sbBox{position:fixed;right:16px;bottom:92px;z-index:71;width:min(360px,calc(100vw - 24px));max-height:calc(100vh - 120px);overflow:auto;background:var(--card,#fff);color:var(--ink,#1f2a37);border:1px solid var(--line,#dde3ea);border-radius:16px;box-shadow:0 14px 36px rgba(30,60,100,.22);padding:12px 14px;font-size:14px;line-height:1.5}"
+    + "#sbTip{position:fixed;right:112px;bottom:44px;z-index:70;max-width:min(240px,60vw);background:var(--card,#fff);color:var(--ink,#1f2a37);border:1px solid var(--line,#dde3ea);border-radius:14px 14px 4px 14px;padding:7px 11px;font-size:13px;line-height:1.45;box-shadow:0 6px 18px rgba(30,60,100,.14);cursor:pointer}"
+    + "#sbBox{position:fixed;right:22px;bottom:118px;z-index:71;width:min(360px,calc(100vw - 24px));max-height:calc(100vh - 140px);overflow:auto;background:var(--card,#fff);color:var(--ink,#1f2a37);border:1px solid var(--line,#dde3ea);border-radius:16px;box-shadow:0 14px 36px rgba(30,60,100,.22);padding:12px 14px;font-size:14px;line-height:1.5}"
     + "#sbBox[hidden],#sbTip[hidden]{display:none}"
     + "#sbBox .hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}#sbBox .hd .av{width:34px;height:34px;flex:none}#sbBox .hd .av svg{width:100%;height:100%}"
     + "#sbBox .hd b{font-size:15px}#sbBox .hd .x,#sbBox .hd .bk{margin-left:auto;border:0;background:none;font:inherit;font-size:18px;cursor:pointer;color:var(--sub,#5b6775);padding:2px 6px;border-radius:8px}#sbBox .hd .bk{margin-left:0;font-size:15px}"
@@ -61,7 +68,7 @@
     + "#sbBox li a{color:inherit;text-decoration:none;display:flex;gap:6px;flex:1;min-width:0}#sbBox li a:hover{text-decoration:underline}"
     + "#sbBox li .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#sbBox li .n{flex:none;font-size:11.5px;font-weight:800;border-radius:999px;padding:0 7px;background:#FAEEDA;color:#854F0B}"
     + "#sbBox li .n.hi{background:#FCEBEB;color:#A32D2D}"
-    + "@media (max-width:760px){#sbBtn{bottom:calc(84px + env(safe-area-inset-bottom,0px));width:56px;height:56px;right:12px}#sbTip{bottom:calc(96px + env(safe-area-inset-bottom,0px));right:76px}#sbBox{bottom:calc(148px + env(safe-area-inset-bottom,0px));right:12px;max-height:calc(100vh - 170px)}}"
+    + "@media (max-width:760px){#sbBtn{bottom:calc(84px + env(safe-area-inset-bottom,0px));width:62px;height:62px;right:14px;padding:4px}#sbTip{bottom:calc(98px + env(safe-area-inset-bottom,0px));right:86px}#sbBox{bottom:calc(160px + env(safe-area-inset-bottom,0px));right:12px;max-height:calc(100vh - 170px)}}"
     /* v1.2.2 넓은 화면(PC): 왼쪽 메뉴 막대 '학교' 아래에 큰 부엉이, 창은 그 오른쪽으로. 휴대폰: 오른쪽 아래 그대로 */
     + ".mnav .sbRail{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;height:84px;margin-top:6px;border:0;background:none;cursor:pointer;border-radius:14px;font:inherit;font-size:11.5px;font-weight:800;color:#0F6E56;-webkit-tap-highlight-color:transparent;padding:0}"
     + ".mnav .sbRail svg{width:60px;height:60px;display:block;filter:drop-shadow(0 3px 6px rgba(15,110,86,.28));transition:transform .2s}"
@@ -74,17 +81,27 @@
     + "@media (max-width:760px){.sbHd{display:none!important}}"
     + "@media (min-width:761px){body.sbSide #sbBtn{display:none}}"
     + "@media (max-width:760px){.mnav .sbRail{display:none!important}}"
-    + "@media print{#sbBtn,#sbBox,#sbTip,.sbRail,.sbHd{display:none!important}}";
+    + ".tt-rail .sbFoot{color:#0F6E56!important;background:#E1F5EE!important}.tt-rail .sbFoot:hover,.tt-rail .sbFoot.open{background:#1D9E75!important;color:#fff!important}"
+    + ".tt-rail .sbFoot svg{width:22px;height:22px;flex:none}.tt-rail .sbFoot .sbEye{animation:sbBlink 3.2s infinite;transform-origin:40px 39px}.tt-rail .sbFoot.lis svg{animation:sbPulse 1s infinite}"
+    + "@media (min-width:900px) and (min-height:460px){html.sbRailOn #sbBtn{display:none}}"
+    + "@media print{#sbBtn,#sbBox,#sbTip,.sbRail,.sbHd,.sbFoot{display:none!important}}";
   document.head.appendChild(st);
 
   var btn = document.createElement("button");
   btn.id = "sbBtn"; btn.type = "button"; btn.className = "on"; btn.title = "쌤비 — 말로 입력 · 찾기 · 오늘 브리핑 · 바로 실행 (Alt+B)"; btn.setAttribute("aria-label", "쌤비 열기");
-  btn.innerHTML = OWL; document.body.appendChild(btn);
+  btn.innerHTML = OWL + '<span class="nm">쌤비</span>' + (sessionStorage.getItem("sbSeen") ? "" : '<span class="dot"></span>'); document.body.appendChild(btn);
   var box = document.createElement("div"); box.id = "sbBox"; box.hidden = true; box.setAttribute("role", "dialog"); box.setAttribute("aria-label", "쌤비");
   document.body.appendChild(box);
   var tip = document.createElement("div"); tip.id = "sbTip"; tip.hidden = true; document.body.appendChild(tip);
   /* PC: 첫 화면 왼쪽 메뉴 막대(#mnav) '학교' 아래에 큰 부엉이. 메뉴 막대는 화면을 옮길 때마다 새로 그려지므로 그때마다 다시 넣습니다. */
-  var nav = document.getElementById("mnav"), hb = null;
+  var nav = null, hb = null, rail = null;   // v1.10.2: 메뉴 막대 대신 모든 화면 오른쪽 아래에 떠 있는 둥근 쌤비 (첫 화면 위쪽 단추는 그대로)
+  if(rail){                                                             // 도구 화면: 왼쪽 메뉴 막대 아래칸(설정 위)에 작은 부엉이
+    hb = document.createElement("button"); hb.type = "button"; hb.className = "tt-ri sbFoot"; hb.title = "쌤비 — 말로 입력 · 찾기 · 오늘 브리핑 · 말로 기록 (Alt+B)"; hb.setAttribute("aria-label", "쌤비 열기 (Alt+B)");
+    hb.innerHTML = OWL + "<b>쌤비</b>";
+    var ft = rail.querySelector(".tt-foot"); if(ft) ft.insertBefore(hb, ft.firstChild); else rail.appendChild(hb);
+    document.documentElement.classList.add("sbRailOn");
+    setTimeout(function(){ window.dispatchEvent(new Event("resize")); }, 0);
+  }
   if(nav){
     hb = document.createElement("button"); hb.type = "button"; hb.className = "sbRail"; hb.title = "쌤비 — 말로 입력 · 찾기 · 오늘 브리핑 · 말로 기록 (Alt+B)"; hb.setAttribute("aria-label", "쌤비 열기 (Alt+B)");
     hb.innerHTML = OWL + "<span>쌤비</span><small>Alt+B</small>";
@@ -98,7 +115,7 @@
     setTimeout(function(){ hb.classList.add("hop"); setTimeout(function(){ hb.classList.remove("hop"); }, 2000); }, 1200);   // 처음 열 때 한 번 폴짝
   }
   /* PC: 위쪽 머리글 🔎 찾기 앞에도 쌤비 단추 (v1.2.3 — 두 곳 모두) */
-  var bar = document.querySelector("header .bar"), hd = null;
+  var bar = HOME && document.querySelector("header .bar"), hd = null;
   if(bar){
     hd = document.createElement("button"); hd.type = "button"; hd.className = "qrec sbHd"; hd.title = "쌤비 — 말로 입력 · 찾기 · 오늘 브리핑 · 말로 기록 (Alt+B)"; hd.setAttribute("aria-label", "쌤비 열기 (Alt+B)");
     hd.innerHTML = OWL + '<span class="ql"> 쌤비 <small>Alt+B</small></span>';
@@ -123,7 +140,7 @@
     tip.style.left = x; tip.style.right = "auto"; tip.style.top = Math.round(r.top + 14) + "px"; tip.style.bottom = "auto"; tip.style.borderRadius = "4px 14px 14px 14px";
   }
   function lis(on){ btn.classList.toggle("lis", on); if(hb) hb.classList.toggle("lis", on); if(hd) hd.classList.toggle("lis", on); }
-  function mark(){ if(hb) hb.classList.toggle("open", !box.hidden && from !== hd); }
+  function mark(){ if(hb) hb.classList.toggle("open", !box.hidden && from !== hd); btn.classList.toggle("open", !box.hidden && from !== hd); if(!box.hidden){ var d = btn.querySelector(".dot"); if(d) d.remove(); try{ sessionStorage.setItem("sbSeen", "1"); }catch(e){} } }
   function toggle(src){ if(box.hidden){ from = src || null; open("menu"); } else if(src && src !== from && seen(src)){ from = src; place(); mark(); } else close(); }
 
   function head(title, back){
@@ -132,7 +149,9 @@
   }
   function open(view, arg){ tip.hidden = true; place(); box.hidden = false; mark(); show(view || "menu", arg); }
   function close(){ stopListen(); box.hidden = true; mark(); }
-  function show(view, arg){ box.innerHTML = (V[view] || V.menu)(arg); var f = box.querySelector("[autofocus]"); if(f) f.focus(); }
+  function show(view, arg){ box.innerHTML = (V[view] || V.menu)(arg);
+    Array.prototype.forEach.call(box.querySelectorAll("a[href]"), function(a){ a.setAttribute("href", abs(a.getAttribute("href"))); });
+    var f = box.querySelector("[autofocus]"); if(f) f.focus(); }
 
   /* ── 화면들 ── */
   var V = {};
@@ -167,7 +186,8 @@
   };
   V.brief = function(){
     var B = window.TT_TODAY && TT_TODAY.brief ? TT_TODAY.brief() : null;
-    if(!B) return head("☀️ 오늘 브리핑", true) + '<div class="say ph">브리핑은 첫 화면에서 볼 수 있어요.</div>';
+    if(!B){ if(!HOME){ setTimeout(function(){ go("?sb=brief"); }, 0); return head("☀️ 오늘 브리핑", true) + '<div class="say ph">첫 화면으로 가서 브리핑을 열어요…</div>'; }
+      return head("☀️ 오늘 브리핑", true) + '<div class="say ph">브리핑을 불러오지 못했어요.</div>'; }
     var d = new Date(), DOW = "일월화수목금토", m = d.getHours() * 60 + d.getMinutes(), h = "";
     h += '<div class="sec">📅 ' + (d.getMonth() + 1) + "월 " + d.getDate() + "일 (" + DOW[d.getDay()] + ")" + (B.weekday && B.close ? " · 종례 " + hm(B.close) : "") + "</div>";
     if(!B.weekday) h += '<div class="ex">주말이에요. 푹 쉬세요!</div>';
@@ -309,7 +329,7 @@
       [x.name, x.short, x.old].some(function(n){ return n && n.replace(/\s/g, "") === w; }); })[0];
     return hit ? hit.href : null;
   }
-  function find(q){ close(); if(window.TT_FIND) TT_FIND.open(q || ""); else TT.ui.toast("찾기는 첫 화면에서 쓸 수 있어요."); }
+  function find(q){ close(); if(window.TT_FIND) TT_FIND.open(q || ""); else go("?sb=find" + (q ? "&q=" + encodeURIComponent(q) : "")); }   // 도구 화면: 첫 화면 찾기 창으로
   function handle(raw){
     var t = norm(raw); if(!t) return;
     var say = box.querySelector("#sbSay"); if(say){ say.classList.remove("ph"); say.textContent = t; }
@@ -407,6 +427,12 @@
     }catch(e){}
   }, 1500);
 
+  (function(){                                                          // 도구 화면에서 넘어온 요청 (?sb=brief / ?sb=find&q=…)
+    var m = /[?&]sb=(\w+)/.exec(location.search); if(!m || !HOME) return;
+    var q = /[?&]q=([^&]*)/.exec(location.search); q = q ? decodeURIComponent(q[1]) : "";
+    history.replaceState(null, "", location.pathname + location.hash);
+    setTimeout(function(){ if(m[1] === "find"){ if(window.TT_FIND) TT_FIND.open(q); } else { from = seen(hb) ? hb : null; open(m[1] === "brief" ? "brief" : "menu"); } }, 400);
+  })();
   if(location.hash === "#ssambi"){ history.replaceState(null, "", location.pathname + location.search); setTimeout(function(){ open("menu"); }, 300); }   // 말로 기록 화면의 🦉 쌤비에게
   window.TT_SSAMBI = {open: open, close: close, handle: handle};
 })();

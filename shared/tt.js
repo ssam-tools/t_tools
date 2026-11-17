@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "1.10.0";
+  var VERSION = "1.10.2";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -659,6 +659,12 @@ var TT = (function(){
         btn.addEventListener("click", function(e){ e.preventDefault(); sheet.hidden = false; });
         a.parentNode.insertBefore(btn, a.nextSibling);
       });
+      /* v1.10.1: 도구 화면에도 쌤비(오른쪽 아래 둥근 캐릭터 · Alt+B). 교실 기기 모드에서는 숨김 */
+      if(!classroom && !window.TT_SSAMBI && !document.getElementById("sbBtn")) (function(){
+        function add(src, cb){ var s = document.createElement("script"); s.src = BASE + src; s.onload = cb || null; s.onerror = cb || null; document.head.appendChild(s); }
+        function sb(){ add("shared/ssambi.js"); }
+        if(window.TTVoice) sb(); else add("shared/voice.js", sb);
+      })();
     }
     /* 교과 팩(subjects/*.js)까지 불러온 뒤 그림. 도구 화면에서는 모든 팩을 불러 지금 도구가 어느 팩 것이든 메뉴에 보이게 */
     function withPack(){ if(typeof ttPackLoad === "function") ttPackLoad(BASE, build, true); else build(); }
