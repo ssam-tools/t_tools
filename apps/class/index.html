@@ -141,6 +141,7 @@
   <span class="priv">🔒 학생 사진은 쓰지 않음 · 칠판·소음은 저장하지 않음</span>
 </footer>
 <script src="../../shared/tt.js"></script>
+<script src="../../shared/ink.js"></script>
 <script>
 (function(){
   "use strict";
@@ -195,6 +196,7 @@
 
   function render(){
     if(boardRO){ boardRO.disconnect(); boardRO = null; }
+    if(tab !== "board") try{ INK.setActive(false); INK.hideOverlays(); }catch(e){}
     m.textContent = ""; info.textContent = "";
     ({board: renderBoard, pick: renderPick, timer: renderTimer, score: renderScore, noise: renderNoise})[tab]();
     if(T.done && tab !== "timer"){                                    // 다른 도구를 보는 중에 타이머가 끝나면: 끌 때까지 울리고 끄기 단추를 띄움
@@ -219,62 +221,46 @@
   }
   function ymd(){ var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth()+1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
 
-  /* ================= 칠판 ================= */
-  var B = {pages: [{bg: "grid", strokes: []}], p: 0, color: null, size: 4, erase: false, dark: true, cleared: null};
-  var boardRO = null;
-  var PEN_D = ["#ffffff", "#ffe066", "#ff8a8a", "#7fd3ff", "#9cf29c"], PEN_L = ["#1d2733", "#d62828", "#1f6fd1", "#16884a", "#8a3ffc"];
+  /* ================= 칠판 ================= (v1.11: 공통 판서 엔진 shared/ink.js — 펜·곧은 형광펜·지우개·레이저·가림막·글상자·작도·각도기·그래프)
+     판서는 이 기기에 저장됩니다(tt_chalk_v1: 쪽마다 바탕·판서). 학생 이름은 들어가지 않습니다. */
+  var CK = "tt_chalk_v1", B = TT.store.get(CK, null) || {};
+  if(!Array.isArray(B.pages) || !B.pages.length) B.pages = [{bg: "grid", objs: []}];
+  B.pages.forEach(function(pg){ if(!Array.isArray(pg.objs)) pg.objs = []; delete pg.strokes; });
+  B.p = Math.min(B.p || 0, B.pages.length - 1); if(B.dark == null) B.dark = true;
+  var chalkT = null;
+  function saveB(){ clearTimeout(chalkT); chalkT = setTimeout(function(){ if(!TT.store.set(CK, {pages: B.pages, p: B.p, dark: B.dark})) TT.ui.toast("판서를 저장하지 못했어요(저장 공간). 🖼️ 그림 저장을 써 주세요."); }, 400); }
+  var boardRO = null, BW = 0, BH = 0;
+  var INK = TTInk.create({
+    dark: function(){ return B.dark; }, menuDown: true, onChange: saveB,
+    frame: function(W, H){ var k = B.pages[B.p].bg; if(k === "none" || k === "line") return null; return {ox: W / 2, oy: H / 2, u: 40, grid: k === "grid" || k === "axis", axis: k === "axis", numline: k === "numline"}; }
+  });
   function renderBoard(){
+    INK.setActive(true);
     var tools = h("div", "btools");
-    var pens = B.dark ? PEN_D : PEN_L; if(pens.indexOf(B.color) < 0) B.color = pens[0];
-    pens.forEach(function(c){ var b = h("button", "sw"); b.type = "button"; b.style.background = c; b.title = "펜 색"; b.setAttribute("aria-pressed", !B.erase && B.color === c); b.onclick = function(){ B.color = c; B.erase = false; render(); }; tools.appendChild(b); });
-    var sz = h("select", "bsel"); [["2","가늘게"],["4","보통"],["8","굵게"],["16","아주 굵게"]].forEach(function(x){ var o = h("option", "", x[1]); o.value = x[0]; sz.appendChild(o); }); sz.value = String(B.size); sz.onchange = function(){ B.size = +sz.value; };
-    tools.appendChild(sz);
-    var er = btn("🧽 지우개", B.erase ? "primary" : "", function(){ B.erase = !B.erase; render(); }); tools.appendChild(er);
-    tools.appendChild(btn("↶ 되돌리기", "", function(){ var pg = B.pages[B.p]; if(B.cleared && B.cleared.p === B.p && !pg.strokes.length){ pg.strokes = B.cleared.s; B.cleared = null; } else pg.strokes.pop(); draw(); }));
-    tools.appendChild(btn("🗑 이 쪽 지우기", "", function(){ var pg = B.pages[B.p]; if(!pg.strokes.length) return; B.cleared = {p: B.p, s: pg.strokes}; pg.strokes = []; draw(); TT.ui.toast("지웠습니다. ↶ 되돌리기로 살릴 수 있어요."); }));
-    tools.appendChild(h("span", "sp"));
-    var bg = h("select", "bsel"); bg.setAttribute("aria-label", "바탕");
+    var bg = h("select", "bsel"); bg.setAttribute("aria-label", "바탕"); bg.title = "바탕";
     [["none","바탕 없음"],["grid","모눈"],["axis","좌표평면"],["line","줄 공책"],["numline","수직선"]].forEach(function(x){ var o = h("option", "", x[1]); o.value = x[0]; bg.appendChild(o); });
-    bg.value = B.pages[B.p].bg; bg.onchange = function(){ B.pages[B.p].bg = bg.value; draw(); };
-    tools.appendChild(bg);
-    tools.appendChild(btn(B.dark ? "⬜ 흰 칠판" : "🟩 초록 칠판", "", function(){ B.dark = !B.dark; B.color = null; render(); }));
-    tools.appendChild(btn("◀", "", function(){ if(B.p > 0){ B.p--; render(); } }));
-    tools.appendChild(h("span", "pg", (B.p + 1) + " / " + B.pages.length));
-    tools.appendChild(btn("▶", "", function(){ if(B.p < B.pages.length - 1){ B.p++; render(); } }));
-    tools.appendChild(btn("＋ 새 쪽", "", function(){ B.pages.splice(B.p + 1, 0, {bg: B.pages[B.p].bg, strokes: []}); B.p++; render(); }));
-    tools.appendChild(btn("🖼️ 그림 저장", "", savePng));
-    var wrap = h("div", "bwrap"), cbg = h("canvas"), ink = h("canvas"); ink.id = "ink";
-    wrap.appendChild(cbg); wrap.appendChild(ink); m.appendChild(tools); m.appendChild(wrap);
-    var cur = null;
-    function pos(e){ var r = ink.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
-    ink.onpointerdown = function(e){ ink.setPointerCapture(e.pointerId); cur = {c: B.color, s: B.size, e: B.erase, pts: [pos(e)]}; B.pages[B.p].strokes.push(cur); B.cleared = null; draw(true); };
-    ink.onpointermove = function(e){ if(!cur) return; var ev = e.getCoalescedEvents ? e.getCoalescedEvents() : [e]; ev.forEach(function(x){ cur.pts.push(pos(x)); }); draw(true); };
-    ink.onpointerup = ink.onpointercancel = function(){ cur = null; };
-    function size(){ var r = wrap.getBoundingClientRect(), d = window.devicePixelRatio || 1; [cbg, ink].forEach(function(c){ c.width = Math.round(r.width * d); c.height = Math.round(r.height * d); }); draw(); }
-    function draw(lastOnly){
-      var W = ink.width, H = ink.height, d = window.devicePixelRatio || 1, pg = B.pages[B.p];
-      if(!lastOnly) paintBg(cbg.getContext("2d"), W, H, d, pg.bg);
-      var g = ink.getContext("2d");
-      var list = pg.strokes;
-      if(lastOnly && list.length){ list = [list[list.length - 1]]; } else g.clearRect(0, 0, W, H);
-      list.forEach(function(st){
-        g.globalCompositeOperation = st.e ? "destination-out" : "source-over";
-        g.strokeStyle = st.c; g.fillStyle = st.c; g.lineWidth = (st.e ? st.s * 5 : st.s) * d; g.lineCap = g.lineJoin = "round";
-        var p = st.pts;
-        if(p.length === 1){ g.beginPath(); g.arc(p[0][0] * W, p[0][1] * H, g.lineWidth / 2, 0, 7); g.fill(); return; }
-        g.beginPath(); g.moveTo(p[0][0] * W, p[0][1] * H);
-        for(var i = 1; i < p.length; i++) g.lineTo(p[i][0] * W, p[i][1] * H);
-        g.stroke();
-      });
-      g.globalCompositeOperation = "source-over";
-    }
+    bg.value = B.pages[B.p].bg; bg.onchange = function(){ B.pages[B.p].bg = bg.value; saveB(); paint(); INK.redraw(); };
+    var extra = [h("span", "grow"), bg,
+      (function(){ var x = btn(B.dark ? "⬜" : "🟩", "", function(){ B.dark = !B.dark; saveB(); render(); }); x.title = B.dark ? "흰 칠판으로" : "초록 칠판으로"; return x; })(),
+      btn("◀", "", function(){ if(B.p > 0){ B.p--; saveB(); render(); } }), h("span", "pg", (B.p + 1) + " / " + B.pages.length),
+      btn("▶", "", function(){ if(B.p < B.pages.length - 1){ B.p++; saveB(); render(); } }),
+      btn("＋쪽", "", function(){ B.pages.splice(B.p + 1, 0, {bg: B.pages[B.p].bg, objs: []}); B.p++; saveB(); render(); }),
+      (function(){ var x = btn("🖼️", "", savePng); x.title = "그림으로 저장"; return x; })()];
+    if(B.pages.length > 1) extra.splice(extra.length - 1, 0, btn("✕쪽", "", function(){ TT.ui.confirm("이 쪽 빼기", (B.p + 1) + "쪽을 판서와 함께 뺍니다.", "빼기", function(){ B.pages.splice(B.p, 1); B.p = Math.max(0, B.p - 1); saveB(); render(); }); }));
+    INK.renderBar(tools, extra);
+    var wrap = h("div", "bwrap"), cbg = h("canvas");
+    wrap.appendChild(cbg); m.appendChild(tools); m.appendChild(wrap);
+    function paint(){ var d = window.devicePixelRatio || 1; cbg.width = Math.round(BW * d); cbg.height = Math.round(BH * d); paintBg(cbg.getContext("2d"), cbg.width, cbg.height, d, B.pages[B.p].bg); }
+    function size(){ var r = wrap.getBoundingClientRect(); BW = r.width; BH = r.height; if(!BW || !BH) return; paint(); INK.mount(wrap, BW, BH); }
     function savePng(){
-      var o = document.createElement("canvas"); o.width = ink.width; o.height = ink.height;
-      var g = o.getContext("2d"); g.drawImage(cbg, 0, 0); g.drawImage(ink, 0, 0);
+      var c2 = INK.canvas(); if(!c2) return;
+      var o = document.createElement("canvas"); o.width = c2.width; o.height = c2.height;
+      var g = o.getContext("2d"); g.drawImage(cbg, 0, 0, o.width, o.height); g.drawImage(c2, 0, 0);
       o.toBlob(function(b){ var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "board_" + ymd() + "_p" + (B.p + 1) + ".png"; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500); });
     }
+    INK.setPage(B.pages[B.p].objs);
     boardRO = new ResizeObserver(size); boardRO.observe(wrap);
-    info.textContent = "손가락·펜으로 쓰세요 · 그림은 저장되지 않습니다(필요하면 🖼️ 그림 저장)";
+    info.textContent = "판서는 이 기기에 쪽마다 저장돼요 · 📐 수학: 작도·각도기·그래프 · Ctrl+Z 되돌리기";
   }
   function paintBg(g, W, H, d, kind){
     g.fillStyle = B.dark ? "#1f3d33" : "#ffffff"; g.fillRect(0, 0, W, H);

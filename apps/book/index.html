@@ -35,11 +35,13 @@
   .where .p{margin-left:auto;font-variant-numeric:tabular-nums}
   .where small{font-size:.5em;color:var(--sub);font-weight:600}
   .sw{flex:1;min-height:0;position:relative}
-  .stage{position:absolute;inset:0;overflow:auto;background:#f1f3f5;border-radius:12px;touch-action:pan-x pan-y;display:flex;align-items:flex-start;justify-content:center}
+  .stage{position:absolute;inset:0;overflow:auto;background:#f1f3f5;border-radius:12px;touch-action:none;display:flex;align-items:flex-start;justify-content:center}
   .stage .pg{position:relative;margin:auto;flex:none}
   .stage canvas{display:block;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.15)}
   .stage canvas.ink{position:absolute;left:0;top:0;background:transparent;box-shadow:none;pointer-events:none}
-  .stage.pen{touch-action:none;cursor:crosshair}.stage.pen canvas.ink{pointer-events:auto}
+  .stage.pen{touch-action:none}
+  .inkbar{position:absolute;left:8px;right:8px;bottom:8px;z-index:6;display:none;justify-content:center;pointer-events:none}.inkbar.on{display:flex}
+  #inkbarIn{pointer-events:auto;background:#fff;border:2px solid #222;border-radius:16px;padding:5px 7px;box-shadow:0 8px 26px rgba(0,0,0,.22)}
   .stage .msg{margin:auto;text-align:center;color:var(--sub);font-size:18px;line-height:1.8;padding:20px}
   .stage .msg .btn{font-size:18px;padding:10px 20px;margin:4px}
   .ctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -82,21 +84,21 @@
   body.lesson header,body.lesson footer,body.lesson .ctl,body.lesson .where,body.lesson .tt-rail,body.lesson .tt-side,body.lesson nav{display:none!important}
   body.lesson main{position:fixed;inset:0;z-index:50;background:#fff;padding:0!important;gap:0;border-radius:0;margin:0;max-width:none}
   body.lesson .stage{border-radius:0;background:#eef0f2}
-  .ltop{align-items:center;gap:10px;padding:6px 14px;border-bottom:2px solid #222;background:#fff}
-  .ltop .t{font-size:clamp(22px,3vw,44px);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .ltop{align-items:center;gap:6px;padding:3px 10px;border-bottom:1px solid #bbb;background:#fff}
+  .ltop .t{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
   .ltop .t .u{color:#2f6fb5}
   .ltop .sp{flex:1}
-  .ltop button{font:inherit;font-size:clamp(15px,1.4vw,20px);font-weight:800;border:2px solid #222;background:#fff;border-radius:12px;padding:6px 12px;cursor:pointer;color:#111}
+  .ltop button{font:inherit;font-size:14px;font-weight:800;border:1.5px solid #888;background:#fff;border-radius:9px;padding:3px 9px;cursor:pointer;color:#111}
   .ltop button.on{background:#ffe066;border-color:#c99a00}
-  .ltop .tm{font-size:clamp(26px,3.4vw,50px);font-weight:900;font-variant-numeric:tabular-nums;min-width:3.2em;text-align:center;color:#2f6fb5}
+  .ltop .tm{font-size:clamp(20px,2vw,30px);font-weight:900;font-variant-numeric:tabular-nums;min-width:3.2em;text-align:center;color:#2f6fb5}
   .ltop .tm.end{color:#fff;background:#c2432a;border-radius:12px;animation:blink .6s 6}
   @keyframes blink{50%{opacity:.3}}
   .ltop .tmb{display:none}.ltop .tmb.on{display:flex;gap:6px}
-  .lbot{gap:8px;padding:8px 10px;border-top:2px solid #222;background:#fff}
-  .lbot button{flex:1;font:inherit;font-size:clamp(18px,2.1vw,30px);font-weight:900;border:2.5px solid #222;background:#fff;color:#111;border-radius:16px;padding:12px 6px;cursor:pointer;line-height:1.15}
-  .lbot button small{display:block;font-size:.5em;font-weight:700;color:#777}
+  .lbot{gap:5px;padding:3px 8px;border-top:1px solid #bbb;background:#fff;justify-content:center}
+  .lbot button{flex:0 1 auto;font:inherit;font-size:13.5px;font-weight:800;border:1.5px solid #888;background:#fff;color:#111;border-radius:9px;padding:3px 12px;cursor:pointer;line-height:1.2}
+  .lbot button small{display:inline;font-size:11px;font-weight:600;color:#888;margin-left:4px}
   .lbot button.on{background:#222;color:#fff}.lbot button.on small{color:#ccc}
-  .lbot .end{flex:.9;background:#2d8a5b;border-color:#2d8a5b;color:#fff}
+  .lbot .end{flex:0 1 auto;background:#2d8a5b;border-color:#2d8a5b;color:#fff}
   .lpane{position:absolute;inset:0;z-index:5;background:#fff;display:none;flex-direction:column;padding:2.5vh 4vw;overflow:auto}
   .lpane.on{display:flex}
   .lpane h1{margin:0 0 1.2vh;font-size:clamp(30px,4.4vw,64px);color:var(--c,#2f6fb5)}
@@ -147,13 +149,13 @@
     <span class="t" id="lt"></span><span class="sp"></span>
     <span class="tmb" id="tmb"><button data-m="3">3분</button><button data-m="5">5분</button><button data-m="7">7분</button></span>
     <span class="tm" id="tm"></span>
-    <button id="lrec" title="학생 활동 한 줄 기록 (수업 기록장으로)">✍️ 기록</button><button id="lpen" title="형광펜">🖍️</button><button id="lclr" title="형광펜 지우기">🧽</button>
+    <button id="lrec" title="학생 활동 한 줄 기록 (수업 기록장으로)">✍️ 기록</button><button id="lpen" title="판서 (펜·형광펜·작도·각도기)">✏️ 판서</button>
     <button id="lzo" title="작게">－</button><button id="lzi" title="크게">＋</button>
     <button id="lprev">◀</button><button id="lnext">▶</button>
     <button id="lx" title="수업 모드 나가기">✕</button>
   </div>
   <div class="where" id="where"></div>
-  <div class="sw"><div class="stage" id="stage"></div><div class="lpane" id="lpane"></div></div>
+  <div class="sw"><div class="stage" id="stage"></div><div class="lpane" id="lpane"></div><div class="inkbar" id="inkbar"><div id="inkbarIn"></div></div></div>
   <div class="ctl">
     <button id="prev">◀ 앞쪽</button>
     <span class="pg">p.<input id="pin" inputmode="numeric"></span>
@@ -179,6 +181,7 @@
 </footer>
 <div class="ov" id="ov"><div class="dlg" id="dlg"></div></div>
 <script src="../../shared/tt.js"></script>
+<script src="../../shared/ink.js"></script>
 <script src="../../shared/exam-data.js"></script>
 <script src="../../shared/challenge.js"></script>
 <script src="../../shared/concepts.js"></script>
@@ -331,7 +334,7 @@
   }
 
   /* ── 교과서 그리기 (확대 · 형광펜) ── */
-  var renderTask = null, ink = {};          // ink[pdfPage] = 그린 획 (이 화면에서만, 저장 안 함)
+  var renderTask = null;
   function emptyMsg(g){
     $("stage").innerHTML = '<div class="msg">' + g + '학년 교과서 PDF가 이 기기에 없습니다.<br>처음 한 번만 불러오면 다음부터 자동으로 열립니다.<br><br>'
       + '<button class="btn" id="bAll">📂 수업 자료 폴더 불러오기 (lesson_files)</button><br><button class="btn" id="bLoad">📘 ' + g + '학년 교과서 PDF만 불러오기</button></div>';
@@ -359,44 +362,83 @@
         renderTask.promise.then(function(){
           if(my !== st.busy) return;
           var wrap = document.createElement("div"); wrap.className = "pg"; wrap.style.width = w + "px"; wrap.style.height = h + "px";
-          var ic = document.createElement("canvas"); ic.className = "ink"; ic.width = w; ic.height = h; ic.style.width = w + "px"; ic.style.height = h + "px";
-          wrap.appendChild(cv); wrap.appendChild(ic); box.innerHTML = ""; box.appendChild(wrap);
+          wrap.appendChild(cv); box.innerHTML = ""; box.appendChild(wrap);
           if(st.zoom === 1) box.scrollTop = 0;
-          penSetup(ic); redrawInk(ic);
+          inkMount(wrap, w, h);
+          if(st.anchor){ var A = st.anchor, R = wrap.getBoundingClientRect(); box.scrollLeft += R.left + A.fx * R.width - A.cx; box.scrollTop += R.top + A.fy * R.height - A.cy; st.anchor = null; }
         }).catch(function(){});
       });
     });
   }
   function turn(d){ if(!st.c) return; var n = st.pdfPage + d; if(n < 1 || (st.n && n > st.n)) return; st.pdfPage = n; show(); }
   function zoom(f){ st.zoom = Math.max(1, Math.min(4, Math.round(st.zoom * f * 100) / 100)); show(); }
-  /* 형광펜: 페이지 크기 비율(0~1)로 저장해서 확대해도 같은 자리 */
-  function redrawInk(ic){
-    var x = ic.getContext("2d"), L = ink[st.pdfPage] || [];
-    x.clearRect(0, 0, ic.width, ic.height); x.lineCap = "round"; x.lineJoin = "round"; x.strokeStyle = "rgba(255,214,0,.45)"; x.lineWidth = Math.max(14, ic.width / 45);
-    L.forEach(function(s){ x.beginPath(); s.forEach(function(p, i){ var X = p[0] * ic.width, Y = p[1] * ic.height; if(i) x.lineTo(X, Y); else x.moveTo(X, Y); }); x.stroke(); });
+  /* 판서 (v1.11 · 공통 엔진 shared/ink.js): 펜·곧은 형광펜·지우개·레이저·가림막·글상자·작도·각도기
+     교과서 쪽마다 이 기기에 저장(tt_bookink_v1 · "학년-PDF쪽") → 다른 반 수업 때도 그대로, 🗑 로 지우기 */
+  var IK = "tt_bookink_v1", IKS = TT.store.get(IK, null) || {}, inkKey = "", inkT = null;
+  function saveInk(){ clearTimeout(inkT); inkT = setTimeout(function(){ Object.keys(IKS).forEach(function(k){ if(!IKS[k].length) delete IKS[k]; }); if(!TT.store.set(IK, IKS)) toast("판서를 저장하지 못했어요(저장 공간)"); }, 500); }
+  var INK = TTInk.create({onChange: saveInk});
+  (function(){
+    var sv = document.createElement("button"); sv.type = "button"; sv.textContent = "🖼️"; sv.title = "이 쪽을 판서와 함께 그림으로 저장";
+    sv.onclick = function(){
+      var pg = document.querySelector(".stage .pg canvas"), ic = INK.canvas(); if(!pg) return;
+      var o = document.createElement("canvas"); o.width = pg.width; o.height = pg.height; var g = o.getContext("2d"); g.drawImage(pg, 0, 0); if(ic) g.drawImage(ic, 0, 0, o.width, o.height);
+      o.toBlob(function(b){ var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "book_" + gOf(st.c) + "_p" + bookP() + "_" + today() + ".png"; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500); });
+    };
+    var cl = document.createElement("button"); cl.type = "button"; cl.textContent = "✕"; cl.title = "판서 닫기"; cl.onclick = function(){ setPen(false); };
+    INK.renderBar($("inkbarIn"), [sv, cl]);
+  })();
+  function inkMount(wrap, w, h){
+    INK.mount(wrap, w, h);
+    var k = gOf(st.c) + "-" + st.pdfPage;
+    if(k !== inkKey){ inkKey = k; IKS[k] = IKS[k] || []; INK.setPage(IKS[k]); }
   }
-  function penSetup(ic){
-    var cur = null;
-    ic.onpointerdown = function(e){ if(!st.pen) return; e.preventDefault(); ic.setPointerCapture(e.pointerId); cur = [[e.offsetX / ic.width, e.offsetY / ic.height]]; (ink[st.pdfPage] = ink[st.pdfPage] || []).push(cur); };
-    ic.onpointermove = function(e){ if(!cur) return; cur.push([e.offsetX / ic.width, e.offsetY / ic.height]); redrawInk(ic); };
-    ic.onpointerup = ic.onpointercancel = function(){ cur = null; };
-  }
-  function setPen(on){ st.pen = on; $("stage").classList.toggle("pen", on); $("lpen").classList.toggle("on", on); }
-  (function(){   // 옆으로 밀어 쪽 넘기기 · 두 손가락으로 확대
-    var P = {}, x0 = null, d0 = 0;
-    function dist(){ var k = Object.keys(P); if(k.length < 2) return 0; var a = P[k[0]], b = P[k[1]]; return Math.hypot(a.x - b.x, a.y - b.y); }
+  function setPen(on){ st.pen = on; $("stage").classList.toggle("pen", on); $("lpen").classList.toggle("on", on); $("inkbar").classList.toggle("on", on); INK.setActive(on); if(!on) INK.hideOverlays(); }
+  (function(){   // v1.11: 휠·두 손가락으로 확대·축소(누른 곳 기준, 움직이는 동안 바로 보임) · 확대 중에는 끌어서 옮기기 · 원래 크기에서는 옆으로 밀어 쪽 넘기기
+    var P = {}, x0 = null, y0 = null, d0 = 0, mid = null, sl = 0, stp = 0, live = 1, wt = null;
     var box = $("stage");
-    box.addEventListener("pointerdown", function(e){ if(st.pen) return; P[e.pointerId] = {x: e.clientX, y: e.clientY}; var n = Object.keys(P).length; if(n === 1) x0 = e.clientX; if(n === 2){ x0 = null; d0 = dist(); } });
-    box.addEventListener("pointermove", function(e){ if(P[e.pointerId]){ P[e.pointerId] = {x: e.clientX, y: e.clientY}; } });
+    function pts(){ return Object.keys(P).map(function(k){ return P[k]; }); }
+    function dist(){ var L = pts(); return L.length < 2 ? 0 : Math.hypot(L[0].x - L[1].x, L[0].y - L[1].y); }
+    function pgEl(){ return box.querySelector(".pg"); }
+    function preview(k, cx, cy){                                         // 다시 그리기 전에 CSS로 바로 크게/작게
+      var pg = pgEl(); if(!pg) return; var r = pg.getBoundingClientRect();
+      if(!pg.dataset.ox){ pg.dataset.ox = (cx - r.left) / r.width; pg.dataset.oy = (cy - r.top) / r.height; }
+      pg.style.transformOrigin = (pg.dataset.ox * 100) + "% " + (pg.dataset.oy * 100) + "%"; pg.style.transform = "scale(" + k + ")";
+    }
+    function commit(k, cx, cy){
+      var pg = pgEl(), nz = Math.max(1, Math.min(4, Math.round(st.zoom * k * 100) / 100));
+      if(pg && pg.dataset.ox) st.anchor = {fx: +pg.dataset.ox, fy: +pg.dataset.oy, cx: cx, cy: cy};
+      if(nz === st.zoom){ if(pg){ pg.style.transform = ""; delete pg.dataset.ox; } st.anchor = null; return; }
+      st.zoom = nz; show();
+    }
+    box.addEventListener("pointerdown", function(e){
+      if(st.pen) return;
+      P[e.pointerId] = {x: e.clientX, y: e.clientY}; var n = pts().length;
+      if(n === 1){ x0 = e.clientX; y0 = e.clientY; sl = box.scrollLeft; stp = box.scrollTop; if(st.zoom > 1){ try{ box.setPointerCapture(e.pointerId); }catch(er){} box.style.cursor = "grabbing"; } }
+      if(n === 2){ x0 = null; d0 = dist(); var L = pts(); mid = [(L[0].x + L[1].x) / 2, (L[0].y + L[1].y) / 2]; live = 1; }
+    });
+    box.addEventListener("pointermove", function(e){
+      if(!P[e.pointerId]) return; P[e.pointerId] = {x: e.clientX, y: e.clientY};
+      var n = pts().length;
+      if(n === 2 && d0){ live = Math.max(1 / st.zoom, Math.min(4 / st.zoom, dist() / d0)); preview(live, mid[0], mid[1]); }
+      else if(n === 1 && x0 != null && st.zoom > 1){ box.scrollLeft = sl - (e.clientX - x0); box.scrollTop = stp - (e.clientY - y0); }
+    });
     function up(e){
       if(!P[e.pointerId]) return;
-      var n = Object.keys(P).length;
-      if(n === 2 && d0){ var r = dist() / d0; d0 = 0; if(r > 1.15 || r < .87) zoom(r); }
-      else if(n === 1 && x0 != null && st.zoom === 1){ var dx = e.clientX - x0; if(Math.abs(dx) > 70) turn(dx < 0 ? 1 : -1); }
-      delete P[e.pointerId]; if(!Object.keys(P).length) x0 = null;
+      var n = pts().length; box.style.cursor = "";
+      if(n === 2 && d0){ d0 = 0; commit(live, mid[0], mid[1]); x0 = null; }
+      else if(n === 1 && x0 != null && st.zoom === 1){ var dx = e.clientX - x0; if(Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(e.clientY - y0)) turn(dx < 0 ? 1 : -1); }
+      delete P[e.pointerId]; if(!pts().length){ x0 = null; }
     }
     box.addEventListener("pointerup", up); box.addEventListener("pointercancel", up);
-    box.addEventListener("wheel", function(e){ if(e.ctrlKey){ e.preventDefault(); zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15); } }, {passive: false});
+    /* 휠: 수업 모드에서는 그냥 굴리면 확대·축소, 보통 화면에서는 Ctrl+휠 */
+    var wk = 1, wc = null;
+    box.addEventListener("wheel", function(e){
+      if(!(st.lesson || e.ctrlKey)) return;
+      e.preventDefault();
+      wk *= Math.pow(1.0018, -e.deltaY); wk = Math.max(1 / st.zoom, Math.min(4 / st.zoom, wk)); wc = [e.clientX, e.clientY];
+      preview(wk, wc[0], wc[1]);
+      clearTimeout(wt); wt = setTimeout(function(){ var k = wk; wk = 1; commit(k, wc[0], wc[1]); }, 220);
+    }, {passive: false});
   })();
   function loadBook(g){
     var inp = document.createElement("input"); inp.type = "file"; inp.accept = "application/pdf,.pdf";
@@ -633,7 +675,6 @@
   $("lend").onclick = endLesson;
   $("lrec").onclick = function(){ RQ = {nos: [], tags: []}; recPane(); };
   $("lpen").onclick = function(){ if(st.mode === 2 || st.mode === 4) setMode(1); setPen(!st.pen); };
-  $("lclr").onclick = function(){ delete ink[st.pdfPage]; var ic = document.querySelector(".stage canvas.ink"); if(ic) redrawInk(ic); };
   $("lzi").onclick = function(){ zoom(1.25); }; $("lzo").onclick = function(){ zoom(1 / 1.25); };
   [].forEach.call($("tmb").querySelectorAll("button"), function(b){ b.onclick = function(){ timer(+b.dataset.m); }; });
   [].forEach.call($("lbot").querySelectorAll("button[data-m]"), function(b){ b.onclick = function(){ setMode(+b.dataset.m); }; });
