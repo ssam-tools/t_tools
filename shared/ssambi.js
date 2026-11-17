@@ -8,6 +8,7 @@
    ② 🔎 찾기 — 기존 찾기 창(shared/today.js TT_FIND)을 엽니다.
    ③ ☀️ 오늘 브리핑 — 오늘 수업 · 챙길 일 · 종례 바구니 · 내 할 일 · 우리 반 출결. 🔊 읽어 주기는 숫자만 읽음(학생 이름 X).
    ④ ⚡ 바로 실행 — 자주 하는 일 단추.
+   (v1.2) 음성 인식은 공통 엔진 shared/voice.js(TTVoice)로 옮겼습니다.
    🔒 자료는 이 기기 안에서만 읽고 씁니다. 단, 음성 인식은 브라우저 회사(구글 등) 서버를 거칠 수 있어
       학생 이름 대신 번호로 말하기를 권합니다(창 아래 안내). 교실 기기(전자칠판) 모드에서는 쌤비를 숨깁니다. */
 (function(){
@@ -21,7 +22,7 @@
   function tool(id){ return typeof ttTool === "function" ? ttTool(id) : null; }
   function tname(id, fb){ var t = tool(id); return t ? t.name : fb; }
   function go(href){ if(href) location.href = href; }
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var VO = window.TTVoice, SR = !!(VO && VO.supported);           // 말→글은 공통 엔진(shared/voice.js)을 씁니다
 
   /* ── 부엉이 그림 (직접 그린 SVG, 외부 파일 없음) ── */
   var OWL = '<svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="38" fill="#E1F5EE"/>'
@@ -96,7 +97,7 @@
     a = a || {};
     var noSR = !SR;
     return head("🎤 말로 입력", true)
-      + '<div class="say' + (a.text ? "" : " ph") + '" id="sbSay">' + (noSR ? '<span class="er">이 브라우저는 음성 인식을 지원하지 않아요. 크롬·엣지·삼성 인터넷에서 써 주세요. 아래 칸에 글로 적어도 됩니다.</span>' : a.text ? esc(a.text) : "듣고 있어요… 말씀해 주세요") + "</div>"
+      + '<div class="say' + (a.text ? "" : " ph") + '" id="sbSay">' + (noSR ? (VO ? VO.fallbackHTML() : '<span class="er">이 브라우저는 음성 인식을 지원하지 않아요. 아래 칸에 글로 적어 주세요.</span>') : a.text ? esc(a.text) : "듣고 있어요… 말씀해 주세요") + "</div>"
       + '<div class="row" style="margin-top:0"><input id="sbTxt" type="text" placeholder="또는 글로: 12번 지각" style="flex:1;min-width:0;height:40px;border:1px solid var(--line,#dde3ea);border-radius:10px;padding:0 10px;font:inherit;background:var(--card,#fff);color:inherit" autocomplete="off">'
       + '<button type="button" class="bt p" data-a="typed" style="flex:none;min-height:40px">확인</button></div>'
       + '<div class="row">' + (noSR ? "" : '<button type="button" class="bt" data-a="relisten">🎤 다시 듣기</button>') + "</div>"
@@ -155,24 +156,17 @@
   };
 
   /* ── 음성 인식 ── */
-  var rec = null, listening = false;
-  function stopListen(){ if(rec){ try{ rec.abort(); }catch(e){} } rec = null; listening = false; btn.classList.remove("lis"); }
+  var vo = null, listening = false;
+  function stopListen(){ if(vo) vo.abort(); vo = null; listening = false; btn.classList.remove("lis"); }
   function startListen(){
     if(!SR){ var t = box.querySelector("#sbTxt"); if(t) t.focus(); return; }
     stopListen();
-    rec = new SR(); rec.lang = "ko-KR"; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
-    var fin = "";
-    rec.onresult = function(e){
-      var s = ""; for(var i = e.resultIndex; i < e.results.length; i++){ s += e.results[i][0].transcript; if(e.results[i].isFinal) fin = s; }
-      var say = box.querySelector("#sbSay"); if(say){ say.classList.remove("ph"); say.textContent = s; }
-    };
-    rec.onerror = function(e){
-      var say = box.querySelector("#sbSay"); if(!say) return;
-      say.classList.remove("ph");
-      say.innerHTML = '<span class="er">' + (e.error === "not-allowed" || e.error === "service-not-allowed" ? "마이크 사용을 허용해 주세요 (주소창 옆 🔒 → 마이크 허용)." : e.error === "no-speech" ? "말소리가 들리지 않았어요. 다시 듣기를 눌러 주세요." : e.error === "network" ? "인터넷이 연결되어야 음성 인식이 돼요. 아래 칸에 글로 적어 주세요." : "잘 못 들었어요. 다시 듣기를 눌러 주세요.") + "</span>";
-    };
-    rec.onend = function(){ listening = false; btn.classList.remove("lis"); rec = null; if(fin.trim()) handle(fin.trim()); };
-    try{ rec.start(); listening = true; btn.classList.add("lis"); }catch(e){}
+    vo = VO.create({ continuous: false, wakeLock: false,          // 한 마디만 듣기 · 임시 저장 안 함
+      onText: function(full, interim){ var say = box.querySelector("#sbSay"); if(say){ say.classList.remove("ph"); say.textContent = full + (interim ? " " + interim : ""); } },
+      onError: function(code, m){ var say = box.querySelector("#sbSay"); if(!say) return; say.classList.remove("ph"); say.innerHTML = '<span class="er">' + esc(m) + "</span>"; },
+      onEnd: function(full){ listening = false; btn.classList.remove("lis"); vo = null; if(full.trim()) handle(full.trim()); }
+    });
+    if(vo.start()){ listening = true; btn.classList.add("lis"); }
   }
 
   /* ── 말 알아듣기 ── */

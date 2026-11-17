@@ -7,7 +7,7 @@ importScripts('shared/tools.js');
 TT_PACKS.forEach(p => { try { importScripts(p.file); } catch (e) {} });   // 교과 팩 도구도 오프라인 저장
 const CACHE = 'tt-files-v43';
 const CORE = ['./', 'manifest.webmanifest', 'assets/icon-192.png', 'assets/icon-512.png',
-              'shared/look.css', 'shared/tt.css', 'shared/tt.js', 'shared/tools.js', ...TT_PACKS.map(p => p.file), 'shared/board.js', 'shared/mytodo.js', 'shared/today.js', 'shared/vaultui.js', 'shared/vault.js', 'shared/notes.js', 'shared/guidelogic.js', 'shared/theme.css', 'shared/calendar.js', 'shared/mathgen.js', 'shared/comci.js', 'shared/auto.js', 'shared/fonts.css', 'shared/fill.js', 'shared/libd.js', 'shared/ssambi.js', 'shared/follow.js', 'shared/exam-data.js', 'shared/challenge.js', 'shared/concepts.js', 'shared/sync.html', 'apps/tardy/absence-form.hwpx'];
+              'shared/look.css', 'shared/tt.css', 'shared/tt.js', 'shared/tools.js', ...TT_PACKS.map(p => p.file), 'shared/board.js', 'shared/mytodo.js', 'shared/today.js', 'shared/vaultui.js', 'shared/vault.js', 'shared/notes.js', 'shared/guidelogic.js', 'shared/theme.css', 'shared/calendar.js', 'shared/mathgen.js', 'shared/comci.js', 'shared/auto.js', 'shared/fonts.css', 'shared/fill.js', 'shared/libd.js', 'shared/voice.js', 'shared/ssambi.js', 'shared/follow.js', 'shared/exam-data.js', 'shared/challenge.js', 'shared/concepts.js', 'shared/sync.html', 'apps/tardy/absence-form.hwpx'];
 // 글꼴 파일(shared/fonts/)은 미리 받지 않고, 그 글꼴을 골라 처음 쓸 때 저장해 둡니다(아래 fetch).
 const FILES = CORE.concat(TT_TOOLS.filter(t => t.ready && t.href).map(t => t.href));   // 내려받는 PC 프로그램은 저장해 두지 않음
 
