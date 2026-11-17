@@ -1,5 +1,5 @@
-/* 쌤 노트 · 마스코트 챗봇 "쌤비" (쌤의 비서, 안경 쓴 부엉이) — v1.1 (v1.2.2: PC는 왼쪽 메뉴 막대 '학교' 아래, Alt+S)
-   휴대폰은 오른쪽 아래, 넓은 화면은 왼쪽 메뉴 막대 부엉이를 누르면(또는 Alt+S) 창이 열립니다. 한 화면(스크롤 없이)에 네 가지:
+/* 쌤 노트 · 마스코트 챗봇 "쌤비" (쌤의 비서, 안경 쓴 부엉이) — v1.1 (v1.2.2: PC는 왼쪽 메뉴 막대 '학교' 아래, Alt+B)
+   휴대폰은 오른쪽 아래, 넓은 화면은 왼쪽 메뉴 막대 부엉이를 누르면(또는 Alt+B) 창이 열립니다. 한 화면(스크롤 없이)에 네 가지:
    ① 🎤 말로 입력 — 브라우저 음성 인식(크롬·엣지·삼성 인터넷). 알아들은 말을 이렇게 나눕니다.
         "12번 지각" / "홍길동 결석" → 우리 반 오늘 출결에 기록 (확인 단추를 눌러야 저장)
         "종례 내일 체육복" → 종례 바구니 · "할 일 금요일 공문 회신" → 내 할 일
@@ -69,13 +69,16 @@
     + ".mnav .sbRail.open{background:#E1F5EE}.mnav .sbRail .sbEye{animation:sbBlink 3.2s infinite;transform-origin:40px 39px}"
     + ".mnav .sbRail.lis svg{animation:sbPulse 1s infinite}.mnav .sbRail small{font-size:10px;font-weight:700;color:var(--sub,#5b6775)}"
     + ".mnav .sbRail.hop svg{animation:sbHop .9s ease 2}@keyframes sbHop{0%,100%{transform:none}30%{transform:translateY(-8px) rotate(-8deg)}60%{transform:translateY(0) rotate(5deg)}}"
+    + ".sbHd{display:inline-flex;align-items:center;gap:4px;background:#E1F5EE!important;color:#04342C!important}.sbHd:hover{background:#1D9E75!important;color:#fff!important}"
+    + ".sbHd svg{width:22px;height:22px;flex:none;margin:-3px 0}.sbHd small{opacity:.6;font-weight:700}.sbHd.lis{animation:sbPulse 1s infinite}"
+    + "@media (max-width:760px){.sbHd{display:none!important}}"
     + "@media (min-width:761px){body.sbSide #sbBtn{display:none}}"
     + "@media (max-width:760px){.mnav .sbRail{display:none!important}}"
-    + "@media print{#sbBtn,#sbBox,#sbTip,.sbRail{display:none!important}}";
+    + "@media print{#sbBtn,#sbBox,#sbTip,.sbRail,.sbHd{display:none!important}}";
   document.head.appendChild(st);
 
   var btn = document.createElement("button");
-  btn.id = "sbBtn"; btn.type = "button"; btn.className = "on"; btn.title = "쌤비 — 말로 입력 · 찾기 · 오늘 브리핑 · 바로 실행 (Alt+S)"; btn.setAttribute("aria-label", "쌤비 열기");
+  btn.id = "sbBtn"; btn.type = "button"; btn.className = "on"; btn.title = "쌤비 — 말로 입력 · 찾기 · 오늘 브리핑 · 바로 실행 (Alt+B)"; btn.setAttribute("aria-label", "쌤비 열기");
   btn.innerHTML = OWL; document.body.appendChild(btn);
   var box = document.createElement("div"); box.id = "sbBox"; box.hidden = true; box.setAttribute("role", "dialog"); box.setAttribute("aria-label", "쌤비");
   document.body.appendChild(box);
@@ -83,8 +86,8 @@
   /* PC: 첫 화면 왼쪽 메뉴 막대(#mnav) '학교' 아래에 큰 부엉이. 메뉴 막대는 화면을 옮길 때마다 새로 그려지므로 그때마다 다시 넣습니다. */
   var nav = document.getElementById("mnav"), hb = null;
   if(nav){
-    hb = document.createElement("button"); hb.type = "button"; hb.className = "sbRail"; hb.title = "쌤비 — 말로 입력 · 찾기 · 오늘 브리핑 · 말로 기록 (Alt+S)"; hb.setAttribute("aria-label", "쌤비 열기 (Alt+S)");
-    hb.innerHTML = OWL + "<span>쌤비</span><small>Alt+S</small>";
+    hb = document.createElement("button"); hb.type = "button"; hb.className = "sbRail"; hb.title = "쌤비 — 말로 입력 · 찾기 · 오늘 브리핑 · 말로 기록 (Alt+B)"; hb.setAttribute("aria-label", "쌤비 열기 (Alt+B)");
+    hb.innerHTML = OWL + "<span>쌤비</span><small>Alt+B</small>";
     var seat = function(){
       if(hb.parentNode === nav && hb.previousElementSibling && hb.previousElementSibling.getAttribute("data-menu") === "school") return;
       var sc = nav.querySelector('[data-menu="school"]'), sp = nav.querySelector(".sp");
@@ -94,18 +97,34 @@
     document.body.classList.add("sbSide");
     setTimeout(function(){ hb.classList.add("hop"); setTimeout(function(){ hb.classList.remove("hop"); }, 2000); }, 1200);   // 처음 열 때 한 번 폴짝
   }
+  /* PC: 위쪽 머리글 🔎 찾기 앞에도 쌤비 단추 (v1.2.3 — 두 곳 모두) */
+  var bar = document.querySelector("header .bar"), hd = null;
+  if(bar){
+    hd = document.createElement("button"); hd.type = "button"; hd.className = "qrec sbHd"; hd.title = "쌤비 — 말로 입력 · 찾기 · 오늘 브리핑 · 말로 기록 (Alt+B)"; hd.setAttribute("aria-label", "쌤비 열기 (Alt+B)");
+    hd.innerHTML = OWL + '<span class="ql"> 쌤비 <small>Alt+B</small></span>';
+    bar.insertBefore(hd, bar.firstChild);
+  }
+  var from = null;                                                      // 마지막으로 누른 단추(창을 그 옆에)
   function isSide(){ return hb && hb.offsetParent !== null; }            // 지금 메뉴 막대의 부엉이가 보이는가(넓은 화면)
-  function place(){                                                     // 창·말풍선 자리: 부엉이 오른쪽 / 오른쪽 아래
+  function seen(el){ return el && el.offsetParent !== null; }
+  function place(){                                                     // 창·말풍선 자리: 누른 단추 옆 / 휴대폰은 오른쪽 아래
     [box, tip].forEach(function(el){ el.style.top = el.style.bottom = el.style.left = el.style.right = el.style.borderRadius = el.style.maxHeight = ""; });
-    if(!isSide()) return;
-    var r = hb.getBoundingClientRect(), x = Math.round(r.right + 12) + "px", h = window.innerHeight;
+    var h = window.innerHeight, w = window.innerWidth;
+    if(from === hd && seen(hd)){                                        // 위쪽 단추 → 바로 아래
+      var q = hd.getBoundingClientRect(), rt = Math.max(12, w - q.right) + "px", yy = Math.round(q.bottom + 8);
+      box.style.top = yy + "px"; box.style.bottom = "auto"; box.style.right = rt; box.style.maxHeight = (h - yy - 16) + "px";
+      tip.style.top = yy + "px"; tip.style.bottom = "auto"; tip.style.right = rt; tip.style.borderRadius = "14px 4px 14px 14px";
+      return;
+    }
+    if(!isSide()) return;                                               // 메뉴 막대 부엉이 → 오른쪽
+    var r = hb.getBoundingClientRect(), x = Math.round(r.right + 12) + "px";
     var y = Math.max(12, Math.min(r.top - 20, h - 560));
     box.style.left = x; box.style.right = "auto"; box.style.top = y + "px"; box.style.bottom = "auto"; box.style.maxHeight = (h - y - 16) + "px";
     tip.style.left = x; tip.style.right = "auto"; tip.style.top = Math.round(r.top + 14) + "px"; tip.style.bottom = "auto"; tip.style.borderRadius = "4px 14px 14px 14px";
   }
-  function lis(on){ btn.classList.toggle("lis", on); if(hb) hb.classList.toggle("lis", on); }
-  function mark(){ if(hb) hb.classList.toggle("open", !box.hidden); }
-  function toggle(){ if(box.hidden) open("menu"); else close(); }
+  function lis(on){ btn.classList.toggle("lis", on); if(hb) hb.classList.toggle("lis", on); if(hd) hd.classList.toggle("lis", on); }
+  function mark(){ if(hb) hb.classList.toggle("open", !box.hidden && from !== hd); }
+  function toggle(src){ if(box.hidden){ from = src || null; open("menu"); } else if(src && src !== from && seen(src)){ from = src; place(); mark(); } else close(); }
 
   function head(title, back){
     return '<div class="hd">' + (back ? '<button type="button" class="bk" data-a="menu" aria-label="처음으로">←</button>' : '<span class="av">' + OWL + "</span>")
@@ -127,7 +146,7 @@
       + '<button type="button" class="bt" data-a="run"><i>⚡</i><span>바로 실행<small>자주 하는 일</small></span></button>'
       + "</div>"
       + ('<button type="button" class="bt" data-a="voice" style="width:100%;margin-top:6px"><i>🎙️</i><span>말로 기록<small>상담 · 학부모 상담 · 회의 · 수업 관찰 · 할 일</small></span></button>')
-      + '<p class="nt">🔒 기록은 이 기기 안에만 저장돼요. 단축키: <b>Alt+S</b> 쌤비 · <b>Ctrl+K</b> 찾기</p>';
+      + '<p class="nt">🔒 기록은 이 기기 안에만 저장돼요. 단축키: <b>Alt+B</b> 쌤비 · <b>Ctrl+K</b> 찾기</p>';
   };
   V.listen = function(a){
     a = a || {};
@@ -266,11 +285,12 @@
   var pend = null;
 
   /* ── 누르기 ── */
-  btn.addEventListener("click", toggle);
-  if(hb) hb.addEventListener("click", toggle);
-  /* Alt+S: 키 자리(KeyS)로 알아들어 한/영 상태와 상관없이 열고 닫기. 오른쪽 Alt가 한/영 키인 노트북은 왼쪽 Alt로 */
+  btn.addEventListener("click", function(){ toggle(btn); });
+  if(hb) hb.addEventListener("click", function(){ toggle(hb); });
+  if(hd) hd.addEventListener("click", function(){ toggle(hd); });
+  /* Alt+B(쌤비의 B): 키 자리(KeyB)로 알아들어 한/영 상태와 상관없이 열고 닫기. 오른쪽 Alt가 한/영 키인 노트북은 왼쪽 Alt로 */
   document.addEventListener("keydown", function(e){
-    if(e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.code === "KeyS"){ e.preventDefault(); toggle(); }
+    if(e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.code === "KeyB"){ e.preventDefault(); toggle(seen(hb) ? hb : null); }
   });
   window.addEventListener("resize", function(){ if(!box.hidden || !tip.hidden) place(); });
   tip.addEventListener("click", function(){ open("brief"); });
@@ -293,7 +313,7 @@
     if(e.key === "Enter" && !e.isComposing && e.target.id === "sbTxt"){ e.preventDefault(); if(e.target.value.trim()){ stopListen(); handle(e.target.value); } }
   });
   document.addEventListener("keydown", function(e){ if(e.key === "Escape" && !box.hidden) close(); });
-  document.addEventListener("click", function(e){ var P = e.composedPath ? e.composedPath() : []; if(!box.hidden && P.indexOf(box) < 0 && P.indexOf(btn) < 0 && (!hb || P.indexOf(hb) < 0) && P.indexOf(tip) < 0 && !(e.target.closest && e.target.closest("dialog"))) close(); });
+  document.addEventListener("click", function(e){ var P = e.composedPath ? e.composedPath() : []; if(!box.hidden && P.indexOf(box) < 0 && P.indexOf(btn) < 0 && (!hb || P.indexOf(hb) < 0) && (!hd || P.indexOf(hd) < 0) && P.indexOf(tip) < 0 && !(e.target.closest && e.target.closest("dialog"))) close(); });
 
   /* ── 읽어 주기 (숫자만) ── */
   function speak(){
