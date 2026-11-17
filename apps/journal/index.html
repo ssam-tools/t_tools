@@ -172,7 +172,7 @@ body.has-dock main{padding-bottom:calc(var(--tab-h) + 128px)}
 .rec-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .paper{background-color:var(--surface);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:20px 20px;border:1px solid var(--line);border-radius:12px;padding:14px 12px 16px}
 .board{background:var(--board);color:var(--board-fg);border-radius:5px;text-align:center;font-size:12px;letter-spacing:.5em;padding:6px 0 6px .5em;margin:0 8% 16px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.10),0 3px 0 rgba(0,0,0,.14)}
-.seats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 6px}
+.seats{display:grid;grid-template-columns:repeat(var(--cols,5),minmax(0,1fr));gap:8px 6px}
 .seat{position:relative;min-height:58px;border:1px solid var(--line);background:var(--surface);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:5px 2px;text-align:center}
 .seat .no{font:500 10.5px var(--f-mono);color:var(--fg-2)}
 .seat .nm{font-weight:600;font-size:13.5px;line-height:1.2;overflow-wrap:anywhere}
@@ -331,7 +331,13 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const TT0={};   // 시간표는 설정(톱니바퀴)에서 직접 넣습니다.
 /* 명단은 프로그램에 넣어 두지 않고 학급 명렬표에서 가져옵니다. */
 const R0={};ROSTER.forEach(c=>{R0[c.grade*100+c.cls]=c.students.map(s=>({no:s.no,name:s.name}))});
-function buildSeats(nos){const n=nos.length;const rows=Math.max(1,Math.ceil(n/COLS));const a=[];for(let i=0;i<rows*COLS;i++)a.push(i<n?nos[i]:0);return a;}
+function buildSeats(nos,cols){cols=cols||COLS;const n=nos.length;const rows=Math.max(1,Math.ceil(n/cols));const a=[];for(let i=0;i<rows*cols;i++)a.push(i<n?nos[i]:0);return a;}
+const colsOf=c=>(S&&S.cols&&S.cols[c])||COLS;
+/* 보완 5단계: 자리 배치 도구(snseat_v1, 이 기기)의 자리표 → {cols, seats} */
+function seatFromTool(c){
+  try{const R=ROSTER.find(x=>x.grade*100+x.cls===c);if(!R)return null;const o=JSON.parse(localStorage.getItem('snseat_v1')||'null'),z=o&&o.c&&o.c[R.id];
+    if(!z||!Array.isArray(z.seats)||!z.c)return null;const seats=z.seats.map(v=>+v||0);if(!seats.some(Boolean))return null;return {cols:+z.c,seats:seats,at:z.at||0};}catch(e){return null;}
+}
 function mkRoster(str){return str.split(/\s+/).map((nm,i)=>nm==='-'?null:{no:i+1,name:nm}).filter(Boolean);}
 function seed(){
   const prog={},students={},seats={};
@@ -490,9 +496,9 @@ function vRecord(){
   if(!ro.length)return h+emptyRoster(c);
   const todayK=dkey(new Date()),cnt={};let total=0;
   S.records.forEach(r=>{if(r.cls===c&&r.date===todayK){cnt[r.no]=(cnt[r.no]||0)+1;total++;}});
-  h+='<div class="rec-bar"><span class="meta">오늘 기록 '+total+'건</span><button class="btn sm '+(ui.swap?'primary':'')+'" data-act="swapToggle" aria-pressed="'+ui.swap+'">'+(ui.swap?'자리 바꾸기 끝내기':'자리 바꾸기')+'</button></div>';
+  h+='<div class="rec-bar"><span class="meta">오늘 기록 '+total+'건</span><span>'+(seatFromTool(c)?'<button class="btn sm ghost" data-act="seatFromTool" title="자리 배치 도구에서 정한 자리표 쓰기">🪑 자리표 가져오기</button> ':'')+'<button class="btn sm '+(ui.swap?'primary':'')+'" data-act="swapToggle" aria-pressed="'+ui.swap+'">'+(ui.swap?'자리 바꾸기 끝내기':'자리 바꾸기')+'</button></span></div>';
   const seats=S.seats[c]||[];
-  h+='<div class="paper"><div class="board" aria-hidden="true">칠판</div><div class="seats">'+seats.map((no,i)=>{
+  h+='<div class="paper"><div class="board" aria-hidden="true">칠판</div><div class="seats" style="--cols:'+colsOf(c)+'">'+seats.map((no,i)=>{
     const st=ro.find(x=>x.no===no);
     if(!no||!st)return '<button class="seat blank '+(ui.swapSel===i?'sel':'')+'" data-act="seat" data-i="'+i+'" aria-label="빈자리"></button>';
     return '<button class="seat '+(ui.swapSel===i?'sel':'')+'" data-act="seat" data-i="'+i+'"><span class="no">'+no+'</span><span class="nm">'+(S.hideNames?'':esc(st.name))+'</span>'+(cnt[no]?'<span class="cnt" aria-label="오늘 '+cnt[no]+'건">'+cnt[no]+'</span>':'')+'</button>';
@@ -592,8 +598,10 @@ function sClass(){
   b+='</div><p class="hint">차시를 누르면 거기까지 마친 것으로 바뀌어요.</p>';
   return shell(cn(c)+' 진도','',b,true);
 }
+function packUnits(g){try{const id=(TT.school.load().pack)||'math',P=(window.TT_PACKS||[]).find(p=>p.id===id)||(window.TT_PACKS||[])[0];return P&&P.units&&P.units[g]?P.units[g]:[];}catch(e){return [];}}
 function sCur(){
-  const b='<div class="field"><label for="cur">차시 목록</label><textarea class="tall" id="cur" data-draft="cur" rows="12" spellcheck="false">'+esc(ui.draft.cur)+'</textarea></div><p class="hint">한 줄에 한 차시를 적어요. #으로 시작하는 줄은 단원 이름이에요. 예시 목록이므로 사용하는 교과서에 맞게 바꿔 주세요.</p><div class="foot"><button class="btn" data-act="closeSheet">취소</button><button class="btn primary" data-act="saveCur">저장</button></div>';
+  const pu=packUnits(ui.sheet.g);
+  const b=(pu.length?'<div class="tool"><button class="btn sm" data-act="curFromPack">📚 교과 팩 단원으로 뼈대 채우기 ('+pu.length+'단원)</button></div>':'')+'<div class="field"><label for="cur">차시 목록</label><textarea class="tall" id="cur" data-draft="cur" rows="12" spellcheck="false">'+esc(ui.draft.cur)+'</textarea></div><p class="hint">한 줄에 한 차시를 적어요. #으로 시작하는 줄은 단원 이름이에요. 예시 목록이므로 사용하는 교과서에 맞게 바꿔 주세요.</p><div class="foot"><button class="btn" data-act="closeSheet">취소</button><button class="btn primary" data-act="saveCur">저장</button></div>';
   return shell(ui.sheet.g+'학년 차시 목록','같은 학년의 반이 같은 목록을 써요',b,true);
 }
 function sMemo(){
@@ -720,6 +728,10 @@ function act(a,t){
     case 'adjN':{const c=ui.sheet.c,N=lessons(gradeOf(c)).length;S.prog[c].n=Math.max(0,Math.min(N,progN(c)+(+d.d)));save();renderSheet();render();break;}
     case 'setN':{const c=ui.sheet.c,i=+d.i;S.prog[c].n=(progN(c)===i+1)?i:i+1;save();renderSheet();render();break;}
     case 'editCur':{const g=+d.g;ui.draft={cur:(S.cur||{})[g]||''};openSheet({type:'cur',g:g});break;}
+    case 'curFromPack':{const pu=packUnits(ui.sheet.g),ta=document.getElementById('cur');const cur=ta?ta.value.trim():'';
+      if(cur&&!confirm('지금 목록을 지우고 단원 뼈대로 바꿀까요?'))break;
+      ui.draft.cur=pu.map(u=>'# '+u+'\n'+u+' 1차시\n'+u+' 2차시').join('\n');renderSheet();toast('단원마다 2차시씩 넣었어요. 차시 이름을 고쳐 주세요');break;}
+    case 'seatFromTool':{const c=ui.cls,T=seatFromTool(c);if(!T){toast('자리 배치 도구에 이 반 자리표가 없어요');break;}S.cols=S.cols||{};S.cols[c]=T.cols;S.seats[c]=T.seats;S.seatAt=S.seatAt||{};S.seatAt[c]=T.at;save();render();toast('자리 배치 도구의 자리표로 바꿨어요');break;}
     case 'saveCur':{const g=ui.sheet.g;S.cur[g]=(ui.draft.cur||'').trim();const N=lessons(g).length;CLS.forEach(c=>{if(gradeOf(c)===g&&S.prog[c].n>N)S.prog[c].n=N;});save();closeSheet();render();toast(g+'학년 차시 목록을 저장했어요');break;}
     case 'cls':ui.cls=+d.c;S.lastCls=ui.cls;save();ui.swapSel=null;ui.fTag='';render();break;
     case 'tag':ui.tag=(ui.tag===d.t)?null:d.t;render();break;
@@ -821,14 +833,26 @@ S=load();try{const C0=TT.store.get("tt_class_v1",null);if(C0&&typeof C0.mask==="
     if(!S.prog[c]){S.prog[c]={n:0,memo:''};ch=true}
     if(!S.students[c]||!S.students[c].length){
       S.students[c]=R0[c]?R0[c].map(s=>({no:s.no,name:s.name})):[];
-      S.seats[c]=buildSeats(S.students[c].map(s=>s.no));ch=true;
+      S.seats[c]=buildSeats(S.students[c].map(s=>s.no),colsOf(c));ch=true;
     }
-    if(!S.seats[c]){S.seats[c]=buildSeats(S.students[c].map(s=>s.no));ch=true}
+    if(!S.seats[c]){S.seats[c]=buildSeats(S.students[c].map(s=>s.no),colsOf(c));ch=true}
   });
   if(CLS.indexOf(S.lastCls)<0){S.lastCls=CLS[0];ch=true}
+  /* 보완 5단계: 학급 명렬표가 바뀌면 이름 고침·전입생 자동 반영 (기록은 번호로 남아 있으므로 그대로) */
+  CLS.forEach(c=>{
+    const R=R0[c];if(!R||!R.length)return;const cur=S.students[c]||[];
+    R.forEach(r=>{const x=cur.find(y=>y.no===r.no);if(x){if(x.name!==r.name){x.name=r.name;ch=true;}}else{cur.push({no:r.no,name:r.name});const se=S.seats[c]||[],b=se.indexOf(0);if(b>=0)se[b]=r.no;else{se.push(r.no);const cc=colsOf(c);while(se.length%cc)se.push(0);}S.seats[c]=se;ch=true;}});
+    const gone=cur.filter(y=>!R.some(r=>r.no===y.no));
+    if(gone.length){S.students[c]=cur.filter(y=>R.some(r=>r.no===y.no));S.seats[c]=(S.seats[c]||[]).map(n=>gone.some(g=>g.no===n)?0:n);ch=true;}
+    else S.students[c]=cur;
+    S.students[c].sort((a,b)=>a.no-b.no);
+    /* 자리 배치 도구에서 새로 바꾼 자리표가 있으면 따라감 */
+    const T=seatFromTool(c);if(T&&T.at>((S.seatAt||{})[c]||0)){S.cols=S.cols||{};S.cols[c]=T.cols;S.seats[c]=T.seats;S.seatAt=S.seatAt||{};S.seatAt[c]=T.at;ch=true;}
+  });
   if(ch)save();
 })();
 ui.cls=defaultClass();ui.date=startDate();
+(function(){try{const q=new URLSearchParams(location.search),tb=q.get('tab'),c=+q.get('c');if(TABS.some(t=>t[0]===tb))ui.tab=tb;if(CLS.indexOf(c)>=0)ui.cls=c;}catch(e){}})();   // 보완 5단계: ?tab=record&c=303
 document.getElementById('gear').innerHTML=IC.gear;
 document.getElementById('tabsin').innerHTML=TABS.map(t=>'<button class="tab" data-act="tab" data-tab="'+t[0]+'">'+IC[t[0]]+'<span>'+t[1]+'</span></button>').join('');
 render();

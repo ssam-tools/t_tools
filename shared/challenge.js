@@ -104,8 +104,10 @@
     + ".chv .ct .sp{flex:1}"
     + ".chv .ca{font-size:clamp(22px,3vw,44px);font-weight:900;color:#c2432a;min-width:2em;text-align:right}"
     + ".chv .cs{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:auto;cursor:pointer;padding:8px}"
-    + ".chv .cs img{width:100%;height:100%;object-fit:contain}"   // 전자칠판에서 크게: 화면에 맞춰 늘림
-    + ".chv .cs.sol{align-items:flex-start}.chv .cs.sol img{height:auto;width:min(100%,1100px)}"
+    + ".chv .cs img{display:block;max-width:none;flex:none;margin:auto;image-rendering:auto}"   // 보완 4단계: 크기는 fit()이 정함(선명한 큰 그림을 줄여서만 보여 줌)
+    + ".chv .cs.zm{cursor:grab;align-items:flex-start;justify-content:flex-start}.chv .cs.drag{cursor:grabbing}"
+    + ".chv .zm3{display:flex;gap:4px}.chv .zm3 button{font:inherit;font-size:clamp(15px,1.4vw,20px);font-weight:800;border:2px solid #222;background:#fff;border-radius:10px;padding:2px 10px;cursor:pointer;min-width:2.2em}"
+    + ".chv .zm3 span{align-self:center;font-size:13px;color:#666;min-width:3.2em;text-align:center}"
     + ".chv .cm{font-size:22px;color:#666;text-align:center;line-height:1.7}"
     + ".chv .cb{display:flex;gap:10px;padding:10px 16px;border-top:1px solid #ddd}"
     + ".chv .cb button{flex:1;font:inherit;font-size:clamp(17px,1.8vw,26px);font-weight:800;padding:12px 6px;border-radius:14px;border:2px solid #222;background:#fff;color:#111;cursor:pointer}"
@@ -114,13 +116,31 @@
     + ".chv select{font:inherit;font-size:13px;border:1px solid #bbb;border-radius:8px;padding:4px}";
   var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
   var V = document.createElement("div"); V.className = "chv";
-  V.innerHTML = '<div class="ct"><span id="chvT"></span><span class="sp"></span><select id="chvU" title="단원이 틀렸으면 고치기"></select><span class="ca" id="chvA"></span></div>'
+  V.innerHTML = '<div class="ct"><span id="chvT"></span><span class="sp"></span><span class="zm3"><button id="chvZo" title="작게 (−)">－</button><span id="chvZ">맞춤</span><button id="chvZi" title="크게 (+)">＋</button><button id="chvZf" title="화면에 맞춤 (0)">맞춤</button></span><select id="chvU" title="단원이 틀렸으면 고치기"></select><span class="ca" id="chvA"></span></div>'
     + '<div class="cs" id="chvS"></div>'
     + '<div class="cb"><button id="chvP">◀ 이전</button><button id="chvQ">문제</button><button id="chvAn">정답</button><button id="chvSo">해설</button><button id="chvN">다음 ▶</button><button class="x" id="chvX">✕ 닫기</button></div>';
   document.body.appendChild(V);
   var $ = function(id){ return document.getElementById(id); };
   E.units.forEach(function(u){ var o = document.createElement("option"); o.value = u.c; o.textContent = "단원: " + u.g + "학년 " + u.name; $("chvU").appendChild(o); });
-  var cur = { list: [], i: 0, stage: 0 }, onClose = null, onShow = null;   // stage 0 문제 · 1 정답 · 2 해설
+  var cur = { list: [], i: 0, stage: 0, z: 1 }, onClose = null, onShow = null;   // stage 0 문제 · 1 정답 · 2 해설, z 확대 배율(1 = 맞춤)
+  /* 보완 4단계: 그림 크기 — 맞춤(문제: 화면 안에 다 보이게, 해설: 가로 1100까지)×배율. 원본보다 크게 늘리지 않으면 흐려지지 않음 */
+  function fit(){
+    var box = $("chvS"), im = box.querySelector("img"); if(!im || !im.naturalWidth) return;
+    var bw = box.clientWidth - 16, bh = box.clientHeight - 16, nw = im.naturalWidth, nh = im.naturalHeight, w;
+    if(cur.stage === 2) w = Math.min(bw, 1100);
+    else w = Math.min(bw, nw * bh / nh);
+    w = Math.max(80, w * cur.z);
+    im.style.width = Math.round(w) + "px"; im.style.height = "auto";
+    box.classList.toggle("zm", cur.z > 1);
+    $("chvZ").textContent = cur.z === 1 ? "맞춤" : Math.round(cur.z * 100) + "%";
+  }
+  function zoom(f, keep){
+    var box = $("chvS"), cx = box.scrollLeft + box.clientWidth / 2, cy = box.scrollTop + box.clientHeight / 2, old = cur.z;
+    cur.z = f === 0 ? 1 : Math.min(4, Math.max(1, Math.round(cur.z * f * 100) / 100)); fit();
+    if(keep !== false && cur.z !== old){ var k = cur.z / old; box.scrollLeft = cx * k - box.clientWidth / 2; box.scrollTop = cy * k - box.clientHeight / 2; }
+    if(cur.z === 1){ box.scrollLeft = 0; box.scrollTop = 0; }
+  }
+  window.addEventListener("resize", function(){ if(V.classList.contains("on")) fit(); });
   function show(){
     var it = cur.list[cur.i]; if(!it) return;
     $("chvT").innerHTML = "🔥 " + label(it) + " <small>" + it.pt + "점 · " + (cur.i + 1) + "/" + cur.list.length + "</small>";
@@ -132,17 +152,24 @@
     box.dataset.k = key;
     src(want, function(u){
       if(box.dataset.k !== key) return;
-      if(u){ box.innerHTML = '<img alt="' + label(it) + '" src="' + u + '">'; box.scrollTop = 0; }
+      if(u){ box.innerHTML = '<img alt="' + label(it) + '" src="' + u + '">'; box.scrollTop = 0; var im = box.querySelector("img"); im.onload = fit; if(im.complete) fit(); }
       else box.innerHTML = '<div class="cm">문제 그림이 이 기기에 없습니다.<br>쌤 노트 폴더의 <b>exam</b> 폴더를 한 번만 불러오면 다음부터 바로 보입니다.<br><br><button id="chvL" style="font:inherit;font-size:22px;padding:12px 24px;border-radius:14px;border:2px solid #222;background:#fff;cursor:pointer">📂 기출 그림 불러오기</button></div>';
       var l = $("chvL"); if(l) l.onclick = function(e){ e.stopPropagation(); pickFolder(function(n){ alert("기출 그림 " + n + "장을 이 기기에 저장했습니다."); show(); }); };
     });
     if(!S.seen[it.id]){ S.seen[it.id] = today(); save(); }
     if(onShow) try{ onShow(it); }catch(e){}
   }
-  function go(d){ var n = cur.i + d; if(n < 0 || n >= cur.list.length) return; cur.i = n; cur.stage = 0; show(); }
-  function stage(s){ cur.stage = s; show(); }
+  function go(d){ var n = cur.i + d; if(n < 0 || n >= cur.list.length) return; cur.i = n; cur.stage = 0; cur.z = 1; show(); }
+  function stage(s){ cur.stage = s; cur.z = 1; show(); }
   function close(){ V.classList.remove("on"); onShow = null; if(onClose){ var f = onClose; onClose = null; f(); } }
-  $("chvS").onclick = function(){ stage((cur.stage + 1) % 3); };   // 누를 때마다 문제 → 정답 → 해설
+  var drag = null, moved = false;
+  $("chvS").addEventListener("pointerdown", function(e){ if(cur.z <= 1) return; drag = {x: e.clientX, y: e.clientY, l: this.scrollLeft, t: this.scrollTop}; moved = false; this.classList.add("drag"); });
+  window.addEventListener("pointermove", function(e){ if(!drag) return; var b = $("chvS"), dx = e.clientX - drag.x, dy = e.clientY - drag.y; if(Math.abs(dx) + Math.abs(dy) > 5) moved = true; b.scrollLeft = drag.l - dx; b.scrollTop = drag.t - dy; });
+  window.addEventListener("pointerup", function(){ if(drag){ drag = null; $("chvS").classList.remove("drag"); } });
+  $("chvS").addEventListener("wheel", function(e){ if(!e.ctrlKey) return; e.preventDefault(); zoom(e.deltaY < 0 ? 1.25 : 0.8); }, {passive: false});
+  $("chvS").ondblclick = function(e){ e.preventDefault(); };
+  $("chvS").onclick = function(){ if(moved){ moved = false; return; } if(cur.z > 1) return; stage((cur.stage + 1) % 3); };   // 누를 때마다 문제 → 정답 → 해설 (확대 중에는 끌어서 보기)
+  $("chvZi").onclick = function(e){ e.stopPropagation(); zoom(1.5); }; $("chvZo").onclick = function(e){ e.stopPropagation(); zoom(1 / 1.5); }; $("chvZf").onclick = function(e){ e.stopPropagation(); zoom(0); };
   $("chvP").onclick = function(){ go(-1); }; $("chvN").onclick = function(){ go(1); };
   $("chvQ").onclick = function(){ stage(0); }; $("chvAn").onclick = function(){ stage(1); }; $("chvSo").onclick = function(){ stage(2); };
   $("chvX").onclick = close;
@@ -153,8 +180,9 @@
     else if(e.key === "Escape") close();
     else if(e.key === " " || e.key === "Enter"){ e.preventDefault(); stage((cur.stage + 1) % 3); }
     else if(e.key === "1") stage(0); else if(e.key === "2") stage(1); else if(e.key === "3") stage(2);
+    else if(e.key === "+" || e.key === "=") zoom(1.5); else if(e.key === "-") zoom(1 / 1.5); else if(e.key === "0") zoom(0);
   });
-  function open(l, i, after, shown){ if(!l || !l.length) return; cur.list = l; cur.i = i || 0; cur.stage = 0; onClose = after || null; onShow = shown || null; V.classList.add("on"); show(); }
+  function open(l, i, after, shown){ if(!l || !l.length) return; cur.list = l; cur.i = i || 0; cur.stage = 0; cur.z = 1; onClose = after || null; onShow = shown || null; V.classList.add("on"); show(); }
 
   window.TTChallenge = { data: E, units: E.units, unit: function(c){ return U[c]; }, unitOf: unitOf, list: list, count: count, label: label,
     open: open, pickFolder: pickFolder, importFix: importFix, storeImages: storeImages, importFixObj: importFixObj, isImg: isImg, isOpen: function(){ return V.classList.contains("on"); }, stored: stored, seen: function(id){ return S.seen[id] || ""; }, fixCount: function(){ return Object.keys(S.fix).length; } };
