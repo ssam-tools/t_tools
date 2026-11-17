@@ -372,6 +372,15 @@
   .tun,.tla{font-size:clamp(13.5px,1.95vh,16.5px);line-height:1.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tun>span:first-child{font-weight:700;color:var(--sub)}.ls{color:var(--sub)}.tla.ok{color:var(--ok);font-weight:800}
   .tbtns{display:flex;gap:8px;margin:clamp(3px,.8vh,8px) 0}
+  /* 지금 카드: 카드가 넓으면 왼쪽 수업 정보 · 오른쪽 [수업 기록]·[자료 열기]를 세로로 크게 (좁으면 지금처럼 아래 한 줄) */
+  .tdy{container-type:inline-size}
+  .tgrid{display:block}.tinfo{min-width:0}
+  @container (min-width:640px){
+    .tgrid{display:grid;grid-template-columns:minmax(0,1fr) clamp(220px,28cqw,340px);gap:clamp(12px,2.4cqw,28px);align-items:stretch;margin-bottom:clamp(4px,.8vh,8px)}
+    .tdy .tgrid .tbtns{flex-direction:column-reverse;justify-content:center;margin:0;max-width:none}
+    .tdy .tgrid .tbtn{flex:1 1 0;padding:8px 12px;max-height:64px;font-size:clamp(15px,2.1vh,18px)}
+    .tgrid .tbtns:only-child{display:none}
+  }
   .tbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:800;font-size:clamp(14px,1.95vh,16.5px);border:1px solid var(--line);border-radius:12px;padding:clamp(6px,1.1vh,10px) 10px;text-decoration:none;color:var(--ink);background:var(--card);white-space:nowrap}
   .tbtn:hover{border-color:var(--now)}.tbtn small{font-weight:600;opacity:.85}
   .tbtn.p{background:var(--now);color:var(--now-ink,#fff);border-color:var(--now)}.tbtn.p:hover{filter:brightness(1.08)}

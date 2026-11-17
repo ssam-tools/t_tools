@@ -155,6 +155,7 @@
     function chg(s){ return s.chg ? ' <small title="수업 교체로 이번 주에만 바뀐 수업" class="chg">🔁 바뀜</small>' : ""; }   // 14단계
     if(focus){
       var left = cur ? "끝까지 " + (cur.end - m) + "분" : (nx.start - m <= 180 ? (nx.start - m) + "분 뒤" : nx.t);
+      h += '<div class="tgrid"><div class="tinfo">';   // 넓은 카드: 왼쪽 수업 정보 · 오른쪽 단추 세로(index.html .tgrid)
       h += '<div class="tnow"><span class="k' + (cur ? " on" : "") + '">' + (cur ? "● 지금" : "▶ 다음") + '</span><b class="cl">' + esc(clsName(focus)) + "</b>"
         + '<span class="pd">' + focus.n + "교시" + (focus.subj ? " · " + esc(focus.subj) : "") + chg(focus) + '</span><span class="lf">' + left + "</span></div>";
       var P = J ? progOf(J, focus, td) : null, B = TT.store.get("tt_book_v1", null), bl = B && B.last && B.last[+focus.cls];
@@ -166,8 +167,8 @@
       else if(P && P.nL) h += '<div class="tla"><span class="ls">지난 기록</span> ' + (P.last ? esc(P.last) : "처음") + ' <span class="ls">→ 이번</span> <b>' + esc(P.now) + "</b></div>" + (P.memo ? '<div class="tla tmemo"><span class="ls">📝 ' + esc(P.memo.replace(/\s+/g, " ")) + "</span></div>" : "");
       else h += '<div class="tla"><span class="ls">' + (J ? "수업 기록에 차시 목록을 넣으면 지난 기록이 나옵니다." : "수업 기록을 쓰면 지난 진도와 메모가 나옵니다.") + "</span></div>";
       var c0 = +focus.cls > 100 ? +focus.cls : 0;
-      h += '<div class="tbtns"><a class="tbtn" href="apps/journal/">✏️ ' + TN("journal", "", "수업 기록") + "</a>"
-        + (c0 && !TT.classroom ? '<a class="tbtn p" href="apps/book/?lesson=1&c=' + c0 + '" title="교과서 · 개념 정리 · 교과서 문제 · 도전 문제">📖 자료 열기' + (bl ? " <small>p." + bl.p + "부터</small>" : "") + "</a>" : "") + "</div>";
+      h += '</div><div class="tbtns"><a class="tbtn" href="apps/journal/">✏️ ' + TN("journal", "", "수업 기록") + "</a>"
+        + (c0 && !TT.classroom ? '<a class="tbtn p" href="apps/book/?lesson=1&c=' + c0 + '" title="교과서 · 개념 정리 · 교과서 문제 · 도전 문제">📖 자료 열기' + (bl ? " <small>p." + bl.p + "부터</small>" : "") + "</a>" : "") + "</div></div>";
     }else{
       h += '<div class="tnone"><p>' + (weekday ? (today.length ? (miss.length ? "오늘 수업이 끝났어요. 기록을 확인해 주세요." : "✔ 오늘 수업 끝" + (J ? " · 기록 완료" : "")) : "오늘은 수업이 없습니다.") : "주말입니다. 아래는 월요일 수업이에요.") + "</p></div>";
     }
