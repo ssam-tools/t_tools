@@ -71,6 +71,7 @@
   var tipT = null;
   function tipsOn(){ tag(); css(); document.documentElement.classList.add("ttk-tips"); }
   function tipsOff(){ clearTimeout(tipT); tipT = null; document.documentElement.classList.remove("ttk-tips"); }
+  function hit(){ try{ if(window.TT && TT.joy) TT.joy.count("keys"); }catch(e){} }
   document.addEventListener("keydown", function(e){
     if(e.key === "Alt" && !e.repeat){ clearTimeout(tipT); tipT = setTimeout(tipsOn, 450); return; }
     if(e.key !== "Alt") tipsOff();
@@ -78,13 +79,13 @@
     var alt = e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey;
     if(alt){
       var m = MENUS.filter(function(x){ return x[0] === e.code; })[0];
-      if(m){ e.preventDefault(); goMenu(m[1]); return; }
-      if(e.code === "KeyN"){ e.preventDefault(); if(window.TT && TT.notes && TT.notes.quick) TT.notes.quick({}); return; }
+      if(m){ e.preventDefault(); hit(); goMenu(m[1]); return; }
+      if(e.code === "KeyN"){ e.preventDefault(); hit(); if(window.TT && TT.notes && TT.notes.quick) TT.notes.quick({}); return; }
       if(e.code === "KeyT"){ e.preventDefault(); var c = document.getElementById("hClock"); if(c) c.click(); else if(!HOME) location.href = BASE + "?clock=1"; return; }
       if(e.code === "ArrowLeft" && !HOME){ e.preventDefault(); history.back(); return; }
       return;
     }
-    if((e.ctrlKey || e.metaKey) && !e.altKey && e.code === "KeyK" && !HOME && !window.TT_FIND){ e.preventDefault(); location.href = BASE + "?sb=find"; return; }
+    if((e.ctrlKey || e.metaKey) && !e.altKey && e.code === "KeyK" && !HOME && !window.TT_FIND){ e.preventDefault(); hit(); location.href = BASE + "?sb=find"; return; }
     if(!e.ctrlKey && !e.metaKey && !e.altKey && (e.key === "?" || (e.shiftKey && e.code === "Slash")) && !typing(e.target)){ e.preventDefault(); help(); }
   }, true);
   document.addEventListener("keyup", function(e){ if(e.key === "Alt") tipsOff(); });

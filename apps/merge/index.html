@@ -280,12 +280,10 @@
           else { var used = []; sheets = FILES.map(function(x){ var n = sheetName(base(x.file.name), used); used.push(n); return {name: n, rows: x.rows || [], head: opt.head}; }); }
           TT.util.download("합친파일_" + stamp() + ".xlsx", xlsx(sheets), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
           TT.ui.toast("합쳤습니다 — " + FILES.length + "개 파일 → 엑셀 하나");
-          if(TT.joy) TT.joy.saved("merge");
         })
       : hwpx().then(function(r){
           TT.util.download("합친문서_" + stamp() + ".hwpx", r.blob, "application/hwp+zip");
           TT.ui.toast("합쳤습니다 — " + FILES.length + "개 파일 → 한글 하나" + (r.pics ? " (2번부터의 그림 " + r.pics + "곳은 빠졌어요)" : ""));
-          if(TT.joy) TT.joy.saved("merge");
         });
     job.then(done, function(e){ TT.ui.toast("합치지 못했습니다: " + (e && e.message || e)); done(); });
   };

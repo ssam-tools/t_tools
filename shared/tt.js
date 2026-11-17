@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "1.23.0";
+  var VERSION = "1.24.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -481,7 +481,7 @@ var TT = (function(){
   };
 
   /* ================= 단축키 (PLAN_통일 3단계, shared/keys.js) ================= */
-  (function(){ var s = document.createElement("script"); s.src = BASE + "shared/keys.js?v=" + VERSION; (document.head || document.documentElement).appendChild(s); })();
+  (function(){ ["keys", "joy"].forEach(function(n){ var s = document.createElement("script"); s.src = BASE + "shared/" + n + ".js?v=" + VERSION; (document.head || document.documentElement).appendChild(s); }); })();   // joy = 재미 요소(PLAN_통일 6단계)
 
   /* ================= 설치·오프라인 ================= */
   if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
