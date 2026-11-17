@@ -156,7 +156,7 @@
       + '<div class="row" style="margin-top:0"><input id="sbTxt" type="text" placeholder="또는 글로: 12번 지각" style="flex:1;min-width:0;height:40px;border:1px solid var(--line,#dde3ea);border-radius:10px;padding:0 10px;font:inherit;background:var(--card,#fff);color:inherit" autocomplete="off">'
       + '<button type="button" class="bt p" data-a="typed" style="flex:none;min-height:40px">확인</button></div>'
       + '<div class="row">' + (noSR ? "" : '<button type="button" class="bt" data-a="relisten">🎤 다시 듣기</button>') + "</div>"
-      + '<div class="ex" style="margin-top:8px">이렇게 말해 보세요<br><b>12번 지각</b> · <b>5번 결석</b> · <b>3번 휴대폰 지도</b> · <b>3반 5번 칠판 풀이</b> · <b>종례 내일 체육복</b> · <b>할 일 금요일 공문 회신</b> · <b>결석신고서 열어</b> · <b>찾아 줘 교복</b> · <b>브리핑</b></div>'
+      + '<div class="ex" style="margin-top:8px">이렇게 말해 보세요<br><b>12번 지각</b> · <b>5번 결석</b> · <b>3번 휴대폰 지도</b> · <b>3반 5번 칠판 풀이</b> · <b>12번 진학</b> · <b>종례 내일 체육복</b> · <b>할 일 금요일 공문 회신</b> · <b>결석신고서 열어</b> · <b>찾아 줘 교복</b> · <b>브리핑</b></div>'
       + '<p class="nt">🔒 음성 인식은 브라우저 회사 서버를 거칠 수 있어요. 학생은 <b>이름 대신 번호</b>로 말해 주세요.</p>';
   };
   V.confirm = function(c){
@@ -338,6 +338,8 @@
         yes: a.kn + " 기록", note: a.k === "A" ? "결석은 우선 '질병'으로 저장돼요. 인정결·미인정은 " + esc(tname("tardy", "출결")) + "에서 바꿔 주세요." : "무단지각으로 저장돼요. 인정지각이면 " + esc(tname("tardy", "출결")) + "에서 바꿔 주세요."});
       return;
     }
+    var jm = t.match(/(\d{1,2}|[일이삼사오육칠팔구]?십[일이삼사오육칠팔구]?|[일이삼사오육칠팔구])\s*번\s*(진학|고입|고교\s*추천)/);   // 보완 13단계: "12번 진학 자료 보여줘"
+    if(jm){ close(); go("apps/advisor/?no=" + korNum(jm[1])); return; }
     var href = toolCmd(t); if(href){ close(); go(href); return; }
     var q = t.replace(/^종례\s*(바구니에?)?\s*/, function(s){ return s ? "종례: " : s; }).replace(/^할\s*일\s*[:：]?\s*/, "할 일: ");
     find(q);

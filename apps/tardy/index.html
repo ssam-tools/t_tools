@@ -1125,6 +1125,8 @@ document.addEventListener('keydown', e => {
 window.addEventListener('storage', e => { if (e.key === 'tt_roster_v1') { loadHome(); render(); } });
 window.addEventListener('afterprint', () => { $('#printArea').innerHTML = ''; });
 render();
+/* 보완 13단계: 다른 도구에서 상담일지 바로 쓰기 (?tab=counsel&new=번호&trig=계기) */
+try { const q = new URLSearchParams(location.search), nw = q.get('new'); if (nw && stu(nw)) { counselModal(nw); const tr = $('#c-trigger'); if (tr && q.get('trig')) tr.value = q.get('trig').slice(0, 120); history.replaceState(null, '', location.pathname + '?tab=' + view.tab); } } catch (e) {}
 })();
 </script>
 </body>

@@ -100,6 +100,11 @@
     document.title = st.name + " · 학생 카드 · 쌤 노트";
     var N = TT.notes, k = N.key(cls, st), memo = N.memo(k), home = TT.roster.home(), isHome = home && home.id === cls.id;
     $("who").innerHTML = '<span class="nm">' + esc(st.name) + '</span><span class="meta">' + esc(cls.name) + " · " + esc(st.no) + "번" + (isHome ? " · ★ 우리 반" : "") + "</span>" + (memo ? '<span class="memo">📝 ' + esc(memo) + "</span>" : "");
+    try{   /* 보완 8단계: 진학 추천 — 희망 진로·확정(또는 추천) 1지망 */
+      var AV = TT.store.get("tt_advisor_v1", null), as = AV && (AV.students || []).filter(function(x){ return +x.cls === +cls.cls && +x.no === +st.no; })[0];
+      if(as){ var sn = function(id){ var o = (AV.schools || []).filter(function(x){ return x.id === id; })[0]; return o ? o.name : ""; }, F = (as.final || []).filter(Boolean);
+        $("who").insertAdjacentHTML("beforeend", '<a class="memo" style="text-decoration:none" href="../advisor/?no=' + encodeURIComponent(st.no) + '">🎓 ' + esc([as.job, (as.traits || []).join("·")].filter(Boolean).join(" / ") || "진학") + (F.length ? " · 1지망 " + esc(sn(F[0])) + " (확정)" : "") + " →</a>"); }
+    }catch(e){}
     /* ① 학생 기록 (TT.notes) */
     var D = N.load(), R = D.recs.filter(function(r){ return r.k === k; }).sort(function(a, b){ return (b.date || "") < (a.date || "") ? -1 : 1; });
     var by = {}; R.forEach(function(r){ by[r.area] = (by[r.area] || 0) + 1; });
