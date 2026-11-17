@@ -3,6 +3,7 @@
    - 자료는 학교 업무판(앱스 스크립트)이 학교 구글 드라이브의 '쌤노트_학교자료' 폴더에서 읽어 줍니다(공용 비밀번호 필요).
      스크립트 쪽 코드와 설정 안내: 바탕화면 board/드라이브자료실.gs · 자료실_설정안내.md (공개 저장소에는 올리지 않음)
    - 내선번호는 찾기(Ctrl+K)에서도 쓰도록 이 기기에만 잠깐 기억합니다("tt_ext_cache_v1", 하루). 학생 자료는 보내지 않습니다.
+     업무판 시트가 없으면 학기초 세팅의 교직원 명렬(tt_staff_v1: 내선 tel · 대표번호 main)을 대신 보여 줍니다(v1.3).
    - 한글 파일은 같은 이름의 PDF와 묶어 [바로 보기]=PDF, [내려받기]=원본. */
 (function(){
   "use strict";
@@ -35,7 +36,14 @@
     if(c && !fresh && Date.now() - c.at < 864e5) return Promise.resolve(c.list);
     return post({action: "ext"}).then(function(j){ TT.store.set(EXTK, {at: Date.now(), list: j.list || []}); return j.list || []; });
   }
-  function extCached(){ var c = TT.store.get(EXTK, null); return c && Array.isArray(c.list) ? c.list : []; }
+  function extCached(){ var c = TT.store.get(EXTK, null), L = c && Array.isArray(c.list) ? c.list : []; return L.length ? L : extLocal(); }
+  /* v1.3: 업무판 '내선번호' 시트가 없으면 학기초 세팅에서 넣은 교직원 명렬(tt_staff_v1)의 내선·대표번호를 씀 — 이 기기 안에서만 */
+  function extLocal(){
+    var o = TT.store.get("tt_staff_v1", null) || {}, out = [];
+    (Array.isArray(o.main) ? o.main : []).forEach(function(x){ if(x && x.number) out.push({t: String(x.number), n: String(x.label || ""), d: "대표번호", m: ""}); });
+    (Array.isArray(o.list) ? o.list : []).forEach(function(x){ if(x && x.tel) out.push({t: String(x.tel), n: String(x.name || ""), d: String(x.dept || ""), m: [x.pos, x.subj].filter(Boolean).join(" ")}); });
+    return out;
+  }
   /* 파일 받기: 바로 보기(새 창에 PDF) · 내려받기(원본 이름 그대로) */
   function fetchFile(id){ return post({action: "drget", id: id}).then(function(j){ var b = atob(j.data), u = new Uint8Array(b.length); for(var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return {name: j.name, blob: new Blob([u], {type: j.mime || "application/octet-stream"})}; }); }
   function view(id){
@@ -91,7 +99,7 @@
   }
   function extRows(q){
     var L = extCached(); q = String(q || "").trim();
-    if(!L.length) return '<span class="ldmsg">' + (busy ? "불러오는 중…" : "내선번호가 없습니다 (업무판 시트 '내선번호').") + "</span>";
+    if(!L.length) return '<span class="ldmsg">' + (busy ? "불러오는 중…" : "내선번호가 없습니다. 학기초 세팅에서 내선번호 한글 파일을 넣거나, 업무판 '내선번호' 시트를 쓰세요.") + "</span>";
     return L.filter(function(x){ return !q || (x.n + " " + x.d + " " + x.m).indexOf(q) >= 0; }).slice(0, 200)
       .map(function(x){ return "<div><b>" + esc(x.t) + "</b><span>" + esc(x.n) + ' <small>' + esc(x.d) + "</small></span></div>"; }).join("") || '<span class="ldmsg">맞는 번호가 없습니다</span>';
   }

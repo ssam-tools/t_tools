@@ -13,6 +13,8 @@
 <!--
   14단계 학기초 기본 세팅 꾸러미.
   · 담당자: 학교 정보 · 학생 명렬 · 교직원 명렬 · 학사일정 · 전체 교사 시간표(컴시간 엑셀)를 "학교 세팅 파일" 하나로 내보냄.
+    v1.3: 학교 원본 파일(학생 명렬 엑셀 · 한글 .hwpx 교직원 명렬 · 내선번호/좌석배치도 · 주간시간표 · 학사일정)을 한꺼번에 끌어다 놓으면
+          shared/hwpx.js(TTSchoolFiles)가 기기 안에서 읽어 아래 칸들을 채움. 내선번호는 교직원 명렬의 tel, 대표번호는 tt_staff_v1.main.
     파일은 언제나 비밀 문구로 잠급니다(PBKDF2 31만 번 → AES-GCM 256). 비밀 문구는 파일에 들어가지 않습니다.
   · 다른 선생님: 그 파일을 불러와 비밀 문구를 넣고, 내 이름 · 내 교과 · 담임 반만 고르면 끝.
     명렬은 기본으로 "내 수업 반 + 우리 반"만 이 기기에 넣습니다(필요한 만큼만).
@@ -22,6 +24,10 @@
 <style>
   main.panel{flex-direction:column;gap:10px;min-height:0}
   .view{flex:1;min-height:0;display:flex;gap:12px}
+  .mk{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;min-height:0}
+  .wdrop{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 14px}
+  .wdrop .ic{font-size:28px}.wdrop b{display:inline;font-size:15px;margin:0}.wdrop small{display:block;color:var(--sub);font-size:12.5px;margin-top:2px}
+  .wdrop .msg{margin-left:auto;text-align:right;max-width:46%;font-size:12.5px;line-height:1.45}
   .tiles{flex:1;min-width:0;display:grid;grid-template-columns:1.1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;min-height:0}
   .tile{border:1px solid var(--line);border-radius:14px;background:#fbfcfd;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-height:0;overflow:hidden}
   .tile.on{border-color:#9cc3ea;background:#fff}
@@ -112,6 +118,8 @@
 
   <!-- ───── 담당자: 만들기 ───── -->
   <section class="view" id="vMake" hidden>
+    <div class="mk">
+    <div class="drop wdrop" id="mDrop" tabindex="0" role="button"><span class="ic">📂</span><span><b>학교 원본 파일 한꺼번에 넣기</b><small>학생 명렬(엑셀) · 교직원 명렬 · 내선번호·좌석배치도 · 주간시간표 · 학사일정(한글 .hwpx) — 여기에 끌어다 놓거나 누르세요</small></span><span class="msg" id="mDropMsg"></span></div>
     <div class="tiles">
       <div class="tile on sch">
         <h2>🏷️ 학교 정보</h2>
@@ -143,6 +151,7 @@
         <div class="row"><button type="button" class="btn" id="allFile">📂 컴시간 엑셀 올리기</button></div>
       </div>
     </div>
+    </div>
     <div class="side">
       <h2>🔒 잠그고 내보내기</h2>
       <p>학생·교직원 이름이 들어 있어 <b>비밀 문구로 잠가서</b> 내보냅니다. 파일과 비밀 문구는 <b>따로</b> 전하세요(예: 파일은 쿨메신저, 비밀 문구는 회의 때 말로).</p>
@@ -162,6 +171,8 @@
 
 <script src="../../shared/tt.js"></script>
 <script src="../../shared/comci.js"></script>
+<script src="../../shared/calendar.js"></script>
+<script src="../../shared/hwpx.js"></script>
 <script>
 (function(){
   "use strict";
@@ -207,13 +218,14 @@
   function drawMake(){
     var r = rosterInfo(), st = TT.staff.load(), c = calInfo();
     $("stRos").innerHTML = r.n ? '<span class="ok">✔</span> 이 기기 명렬표: <b>' + r.n + "개 반 · " + r.s + "명</b><br>" + esc(r.cl.slice(0, 6).map(function(x){ return x.name; }).join(", ") + (r.n > 6 ? " …" : ""))
-      : '<span class="no">아직 없음</span> · 명렬표에 나이스 학생 명단 파일(엑셀)을 올리면 여기에 잡힙니다. 여러 반 파일을 한꺼번에 올릴 수 있어요.';
-    $("stStaff").innerHTML = st.length ? '<span class="ok">✔</span> <b>' + st.length + "명</b> · " + esc(st.slice(0, 5).map(function(x){ return x.name; }).join(", ") + (st.length > 5 ? " …" : ""))
-      : '<span class="no">아직 없음</span> · 교직원 명렬(엑셀·한글 표)에서 이름 · 부서 · 직위 · 교과 줄을 복사해 붙여 넣거나 파일을 올리세요.';
+      : '<span class="no">아직 없음</span> · 위 칸에 전체 학생 명렬 엑셀을 넣거나, 명렬표에 나이스 학생 명단 파일을 올리세요.';
+    var nTel = st.filter(function(x){ return x.tel; }).length, nHome = st.filter(function(x){ return /\d-\d{1,2}\s*담임/.test(x.pos || ""); }).length, nMain = staffMain().length;
+    $("stStaff").innerHTML = st.length ? '<span class="ok">✔</span> <b>' + st.length + "명</b> · 📞 내선 " + nTel + "명" + (nMain ? " · 대표번호 " + nMain + "개" : "") + (nHome ? " · 담임 " + nHome + "명" : "") + "<br>" + esc(st.slice(0, 5).map(function(x){ return x.name; }).join(", ") + (st.length > 5 ? " …" : ""))
+      : '<span class="no">아직 없음</span> · 위 칸에 교직원 명렬·내선번호 한글 파일을 넣거나, 표를 복사해 붙여 넣으세요.';
     $("stCal").innerHTML = c.n ? '<span class="ok">✔</span> 일정 <b>' + c.n + "개</b>" + (c.y ? " (" + c.y + "학년도)" : "") + " · 휴업 " + c.ev.filter(function(e){ return e.k === "off"; }).length + "일 · 시험 " + c.ev.filter(function(e){ return e.k === "exam"; }).length + "일"
-      : '<span class="no">아직 없음</span> · 연간 업무에서 학사일정 표를 붙여 넣으면 여기에 잡힙니다.';
+      : '<span class="no">아직 없음</span> · 위 칸에 학사일정 한글 파일을 넣거나, 연간 업무에서 표를 붙여 넣으세요.';
     $("stAll").innerHTML = ALL && ALL.teachers && ALL.teachers.length ? '<span class="ok">✔</span> 선생님 <b>' + ALL.teachers.length + "명</b> · " + esc(ALL.teachers.slice(0, 4).map(function(t){ return t.name; }).join(", ")) + " …"
-      : '<span class="no">아직 없음</span> · 컴시간에서 받은 <b>교사별 시간표 엑셀</b>을 올리세요. (옛 .xls는 엑셀에서 xlsx로 저장)';
+      : '<span class="no">아직 없음</span> · 위 칸에 주간시간표 한글 파일을 넣거나, 컴시간 <b>교사별 시간표 엑셀</b>을 올리세요.';
     ["Ros", "Staff", "Cal", "All"].forEach(function(k){ $("t" + k).classList.toggle("on", $("i" + k).checked); });
   }
   (function initMake(){
@@ -278,8 +290,70 @@
   }
   function takeStaff(list){
     if(!list.length){ TT.ui.toast("교직원 이름을 찾지 못했어요. 첫 줄에 '성명(이름)' 제목이 있는 표를 넣어 주세요."); return; }
-    TT.staff.save(list); drawMake(); TT.ui.toast("교직원 " + list.length + "명을 넣었습니다.");
+    saveStaff(list, staffMain()); drawMake(); TT.ui.toast("교직원 " + list.length + "명을 넣었습니다.");
   }
+
+  /* ================= v1.3 학교 원본 파일 한꺼번에 넣기 (한글 .hwpx · 엑셀) ================= */
+  function staffMain(){ var o = TT.store.get(TT.staff.KEY, null); return o && Array.isArray(o.main) ? o.main : []; }
+  function saveStaff(list, main){ TT.store.set(TT.staff.KEY, {v: 1, list: list, main: (main || []).slice(0, 20), at: Date.now()}); }
+  function mdMsg(html, cls){ var m = $("mDropMsg"); m.className = "msg" + (cls ? " " + cls : ""); m.innerHTML = html; }
+  function takeFiles(files){
+    files = Array.prototype.slice.call(files || []); if(!files.length) return;
+    if(!TTSchoolFiles.supported){ mdMsg("이 브라우저로는 파일을 풀 수 없어요. 최신 크롬·엣지를 써 주세요.", "err"); return; }
+    mdMsg("읽는 중…");
+    var P = {}, got = [], bad = [];
+    files.reduce(function(pr, f){
+      return pr.then(function(){ return TTSchoolFiles.read(f); }).then(function(r){
+        var f2 = r.found.filter(function(x){ return x !== "seats"; });
+        if(!f2.length) bad.push(f.name + " — 알아볼 수 있는 표가 없음");
+        Object.keys(r.data).forEach(function(k){ P[k] = r.data[k]; }); got = got.concat(r.found);
+      }, function(e){ bad.push(f.name + " — " + (e && e.message || "읽지 못함")); });
+    }, Promise.resolve()).then(function(){
+      var done = [];
+      /* 학생 명렬 → 명렬표 (같은 학년·반은 명단만 새로) */
+      if(P.students && P.students.length){
+        var C = TTSchoolFiles.rosterClasses(P.students), R = TT.roster.load(), n = 0;
+        R.classes = R.classes.filter(function(c){ return c.students.length || c.grade != null; });
+        C.forEach(function(w){
+          var ex = R.classes.filter(function(c){ return c.grade === w.grade && c.cls === w.cls; })[0];
+          if(ex){ ex.students = w.students; ex.name = w.name; } else R.classes.push({id: "g" + w.grade + "c" + w.cls, name: w.name, grade: w.grade, cls: w.cls, students: w.students});
+          n += w.students.length;
+        });
+        TT.roster.save(TT.roster.clean(R)); done.push("학생 " + C.length + "개 반 " + n + "명");
+      }
+      /* 교직원 · 내선번호 · 좌석배치도(담임) · 시간표 교과 → 교직원 명렬 하나로 */
+      var old = TT.staff.load();
+      if(P.staff || P.phones || P.seats || (P.timetable && old.length)){
+        var list = TTSchoolFiles.staffList(P, old), main = P.mainPhones && P.mainPhones.length ? P.mainPhones : staffMain();
+        saveStaff(list, main);
+        done.push("교직원 " + list.length + "명 (내선 " + list.filter(function(x){ return x.tel; }).length + ")");
+        var gyo = main.filter(function(x){ return x.label === "교무실"; })[0];
+        if(gyo && !$("mTel").value.trim()) $("mTel").value = gyo.number.replace(/~\d+$/, "");
+      }
+      /* 전체 교사 시간표 */
+      if(P.timetable){
+        var A = TTSchoolFiles.allTT(P.timetable), tm = times(); while(tm.length < A.maxP) tm.push("");
+        ALL = {v: 1, periods: tm.slice(0, Math.max(A.maxP, 7)).map(function(t, i){ return {n: i + 1, t: t || "00:00"}; }), teachers: A.teachers, at: Date.now(), from: "hwpx"};
+        TT.store.set("tt_alltt_v1", ALL); done.push("시간표 선생님 " + A.teachers.length + "명");
+      }
+      /* 학사일정 (그 학년도 일정만 새것으로) */
+      if(P.calendar && P.calendar.events.length){
+        var L = TTSchoolFiles.calList(P.calendar, TTCal.kind), o = TTCal.replaceYear(P.calendar.year, L);
+        done.push(P.calendar.year + "학년도 일정 " + L.length + "개 (휴업 " + o.events.filter(function(e){ return e.k === "off" && e.d >= P.calendar.year + "-03-01"; }).length + "일)");
+      }
+      drawMake();
+      mdMsg((done.length ? '<span style="color:var(--ok)">✔ ' + esc(done.join(" · ")) + "</span>" : "") + (bad.length ? (done.length ? "<br>" : "") + '<span style="color:var(--danger)">' + bad.map(esc).join("<br>") + "</span>" : ""), done.length ? "" : "err");
+      if(done.length) TT.ui.toast("✔ " + done.join(" · "));
+    });
+  }
+  $("mDrop").onclick = function(){
+    var inp = document.createElement("input"); inp.type = "file"; inp.multiple = true; inp.accept = ".hwpx,.xlsx,.hwp,.xls"; inp.hidden = true; document.body.appendChild(inp);
+    inp.onchange = function(){ var fs = inp.files; inp.remove(); takeFiles(fs); }; inp.click();
+  };
+  $("mDrop").onkeydown = function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); this.click(); } };
+  $("mDrop").ondragover = function(e){ e.preventDefault(); this.style.background = "#dcebf8"; };
+  $("mDrop").ondragleave = function(){ this.style.background = ""; };
+  $("mDrop").ondrop = function(e){ e.preventDefault(); this.style.background = ""; takeFiles(e.dataTransfer.files); };
   $("staffFile").onclick = function(){ pick(".xlsx,.csv,.htm,.html,.txt", function(f){ TT.file.toRows(f).then(function(rows){ takeStaff(staffFrom(rows)); }).catch(function(e){ TT.ui.toast(e.userMsg || "파일을 읽지 못했습니다."); }); }); };
   $("staffPaste").onclick = function(){
     var d = document.createElement("dialog"); d.innerHTML = '<form><h2>🧑‍🏫 교직원 명렬 붙여 넣기</h2><p>엑셀·한글의 교직원 명렬 표를 제목 줄(성명 · 부서 · 직위 · 교과)까지 골라 복사한 뒤 붙여 넣으세요.</p><textarea rows="8" placeholder="여기에 붙여 넣기 (Ctrl+V)"></textarea><div class="acts"><span></span><div class="r"><button type="button" class="btn">취소</button><button type="submit" class="btn primary">넣기</button></div></div></form>';
@@ -307,7 +381,7 @@
     TT.school.save(sc);                                                   // 담당자 기기에도 저장
     var body = {v: 1, made: new Date().toISOString(), school: sc}, has = ["school"];
     var r = rosterInfo(); if($("iRos").checked && r.n){ body.roster = r.cl.map(function(c){ return {name: c.name, grade: c.grade, cls: c.cls, students: c.students.map(function(s){ return {no: s.no, name: s.name}; })}; }); has.push("roster"); }
-    var st = TT.staff.load(); if($("iStaff").checked && st.length){ body.staff = st; has.push("staff"); }
+    var st = TT.staff.load(); if($("iStaff").checked && st.length){ body.staff = st; body.staffMain = staffMain(); has.push("staff"); }
     var c = calInfo(); if($("iCal").checked && c.n){ body.calendar = {y: c.y || null, events: c.ev}; has.push("calendar"); }
     if($("iAll").checked && ALL && ALL.teachers && ALL.teachers.length){
       var tm = times(); ALL.periods.forEach(function(p, i){ if(tm[i]) p.t = tm[i]; });
@@ -374,7 +448,7 @@
     var h = TT.roster.home(); if(h) $("lHome").value = h.grade + "-" + h.cls;
     var W = [];
     if(D.calendar) W.push(["cal", "학사일정"]);
-    if(D.staff) W.push(["staff", "교직원 명렬"]);
+    if(D.staff) W.push(["staff", "교직원 명렬·내선번호"]);
     if(tt.length) W.push(["tt", "내 시간표"]);
     W.push(["school", "학교 정보"]);
     $("lWhat").innerHTML = W.map(function(w){ return '<label><input type="checkbox" value="' + w[0] + '" checked> ' + w[1] + "</label>"; }).join("");
@@ -415,7 +489,7 @@
       TT.roster.save(R); done.push("학생 " + want.length + "개 반 " + n + "명");
     }
     if(what.cal && D.calendar){ TT.store.set("tt_calendar_v1", {v: 1, y: D.calendar.y, events: D.calendar.events, at: Date.now()}); done.push("학사일정 " + D.calendar.events.length + "개"); }
-    if(what.staff && D.staff){ TT.staff.save(D.staff); done.push("교직원 " + D.staff.length + "명"); }
+    if(what.staff && D.staff){ saveStaff(D.staff, D.staffMain || []); done.push("교직원 " + D.staff.length + "명" + (D.staff.some(function(x){ return x.tel; }) ? "(내선번호 포함)" : "")); }
     if(D.alltt){
       TT.store.set("tt_alltt_v1", {v: 1, periods: D.alltt.periods, teachers: D.alltt.teachers, at: Date.now()});
       var t = teacherOf(me);

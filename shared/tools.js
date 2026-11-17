@@ -95,7 +95,7 @@ var TT_TOOLS = [
   {id:"train",  icon:"📜", cat:"work", menu:"school", group:"work",  short:"의무연수", name:"의무연수 취합", desc:"꾸러미 이수증·이수번호를 한 번 내면 연수 담당자들이 한 번에 모아 갑니다.", href:"apps/train/", ready:true},
   {id:"merge",  icon:"📎", cat:"work", menu:"school", group:"work",  short:"파일 합치기", name:"파일 합치기", desc:"한글·엑셀 파일 여러 개를 하나로 합치는 윈도우 프로그램을 내려받습니다.", file:"downloads/FileMerge.exe", ready:true},
   /* ── 설정 ── */
-  {id:"setup",  icon:"🧳", cat:"work", menu:"settings", group:"set",  short:"학기초 세팅", name:"학기초 세팅", desc:"담당자가 명렬·교직원·학사일정·전체 시간표·학교 정보를 잠근 파일 하나로 → 선생님은 불러와 내 이름만 고르면 끝.", href:"apps/setup/", ready:true, months:[2,3], season:["start"]}
+  {id:"setup",  icon:"🧳", cat:"work", menu:"settings", group:"set",  short:"학기초 세팅", name:"학기초 세팅", desc:"담당자가 학교 원본 파일(학생 명렬 엑셀 · 한글 교직원 명렬·내선번호·시간표·학사일정)을 한꺼번에 넣고 잠근 파일 하나로 → 선생님은 불러와 내 이름만 고르면 끝.", href:"apps/setup/", ready:true, months:[2,3], season:["start"]}
 ];
 
 /* ── 도구 정보 꺼내 쓰기 (모든 화면 공통) ── 목록이 없거나 id 가 틀리면 fallback(지금 적힌 글자)을 그대로 씁니다. */
