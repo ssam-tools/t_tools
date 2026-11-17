@@ -916,6 +916,8 @@ ui.cls=defaultClass();ui.date=startDate();
 (function(){try{const q=new URLSearchParams(location.search),tb=q.get('tab'),c=+q.get('c');if(TABS.some(t=>t[0]===tb))ui.tab=tb;if(CLS.indexOf(c)>=0)ui.cls=c;}catch(e){}})();   // 보완 5단계: ?tab=record&c=303
 document.getElementById('gear').innerHTML=IC.gear;
 document.getElementById('tabsin').innerHTML=TABS.map(t=>'<button class="tab" data-act="tab" data-tab="'+t[0]+'">'+IC[t[0]]+'<span>'+t[1]+'</span></button>').join('');
+/* PLAN_통일 1단계: 넓은 화면에서는 탭 막대를 제목 줄(설정 단추 앞)로 올림, 좁은 화면은 아래 그대로 */
+(function(){var nav=document.querySelector('nav.tabs'),hin=document.querySelector('.hdr-in'),gear=document.getElementById('gear'),mq=matchMedia('(min-width:900px) and (min-height:460px)');function place(){if(!nav||!hin)return;if(mq.matches){if(nav.parentNode!==hin)hin.insertBefore(nav,gear);}else if(nav.parentNode===hin){document.body.insertBefore(nav,document.querySelector('.toast'));}}place();(mq.addEventListener?mq.addEventListener('change',place):mq.addListener(place));})();
 render();
 })();
 </script>

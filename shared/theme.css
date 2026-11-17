@@ -55,3 +55,44 @@ html[data-app="tardy"] a.btn{text-decoration:none;display:inline-flex;align-item
 html[data-app="group"] #clsSel,html[data-app="group"] #clsName,html[data-app="group"] .brand ~ * .btn.sm,html[data-app="group"] #clsDel{height:38px!important;min-height:0!important;box-sizing:border-box;padding-top:0;padding-bottom:0}
 html[data-app="tardy"] #maskBtn{height:38px;padding:0 13px;font-size:14px;font-weight:700;border-radius:10px}
 html[data-app="journal"] #gear{width:38px;height:38px}
+
+/* ================= PLAN_통일 1단계: 모든 도구 같은 모양 (v1.19.0) =================
+   ① 탭: 모든 도구가 '알약 묶음' 한 가지 모양(공통 .seg 와 같음) — 고른 탭은 흰 바탕 + 강조색 글자
+   ② 화면 너비: 가운데 좁은 칸 대신 다른 도구처럼 넓게
+   ③ 수업 기록장: 넓은 화면에서는 아래 탭 막대를 제목 줄로 올림(휴대폰은 그대로 아래) */
+html[data-app]{--u-seg:color-mix(in srgb,var(--t-line,#dde3ea) 75%,var(--t-bg,#f3f6f9))}
+
+/* 모둠 편성 */
+html[data-app="group"] .app{max-width:none;padding:0 clamp(12px,3vw,28px) 90px}
+html[data-app="group"] .top{padding:clamp(10px,2vh,20px) 0 6px}
+html[data-app="group"] .tabs{display:inline-flex;gap:0;border:0;background:var(--u-seg);border-radius:12px;padding:3px;margin:4px 0 12px;position:sticky;top:6px;width:auto;box-shadow:0 0 0 6px var(--bg)}
+html[data-app="group"] .tab{border:0!important;border-radius:9px;padding:7px 16px;font-weight:700;color:var(--muted);background:transparent;margin:0}
+html[data-app="group"] .tab[aria-selected="true"]{background:var(--surface);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* 출결·상담 */
+html[data-app="tardy"] .hdr{padding:clamp(10px,2vh,18px) 16px 4px}
+html[data-app="tardy"] .tabs{display:flex;flex-wrap:wrap;gap:0;align-self:flex-start;background:var(--u-seg);border:0;border-radius:12px;padding:3px;margin:2px 16px 6px}
+html[data-app="tardy"] .tab{border:0!important;border-radius:9px;padding:6px 13px;font-weight:700;color:var(--muted);background:transparent;margin:0}
+html[data-app="tardy"] .tab[aria-selected="true"]{background:var(--t-card,#fff);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+html[data-app="tardy"] a.tab{margin-left:6px!important;color:var(--t-rec,#7a4fb5)}
+
+/* 진학 추천 */
+html[data-app="advisor"] #nav{display:inline-flex;flex-wrap:wrap;align-self:flex-start;gap:0;background:var(--u-seg);border-radius:12px;padding:3px;margin:6px clamp(12px,3vw,28px) 6px}
+html[data-app="advisor"] #nav button{border-radius:9px;padding:6px 14px}
+html[data-app="advisor"] #nav button.on{background:var(--t-card,#fff);color:var(--pri)}
+html[data-app="advisor"] header a[href="../bonus/"]{background:var(--t-accent-soft,#e6f0fa)!important;color:var(--t-accent,#2f6fb5)!important}
+
+/* 수업 기록장 */
+html[data-app="journal"] .hdr{background:var(--bg)}
+html[data-app="journal"] .hdr-in{padding-block:clamp(10px,2vh,18px) 6px}
+@media (min-width:900px) and (min-height:460px){
+  html[data-app="journal"] .wrap{max-width:1180px}
+  html[data-app="journal"] .hdr-in{flex-wrap:nowrap}
+  html[data-app="journal"] .hdr .tabs{position:static;inset:auto;border:0;background:none;padding:0;margin-left:auto}
+  html[data-app="journal"] .hdr .tabs-in{display:inline-flex;gap:0;padding:3px;max-width:none;margin:0;background:var(--u-seg);border-radius:12px}
+  html[data-app="journal"] .hdr .tab{height:auto;flex-direction:row;font-size:14px;gap:6px;padding:7px 16px;border-radius:9px;font-weight:700;color:var(--fg-2);min-height:0}
+  html[data-app="journal"] .hdr .tab svg{width:17px;height:17px}
+  html[data-app="journal"] .hdr .tab[aria-current="page"]{background:var(--surface);color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  html[data-app="journal"] main{padding-bottom:28px}html[data-app="journal"] body.has-dock main{padding-bottom:128px}
+  html[data-app="journal"] .dock{bottom:0!important}
+}
