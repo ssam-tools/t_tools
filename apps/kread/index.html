@@ -31,6 +31,19 @@
   nav button{border:0;background:none;font:inherit;font-size:12px;font-weight:700;color:var(--sub);padding:8px 0 9px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
   nav button b{font-size:21px;line-height:1}
   nav button[aria-current=true]{color:var(--ac)}
+  .ib.cls{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}.ib.cls[hidden]{display:none}
+  /* 넓은 화면(PC·교실): 휴대폰 모양 대신 왼쪽 메뉴 + 넓은 본문 */
+  @media (min-width:900px) and (min-height:500px){
+    #app{max-width:1280px;grid-template-columns:220px minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:clamp(18px,2.4vw,32px);padding:0 clamp(16px,2.4vw,32px)}
+    header{grid-column:1/-1;padding:clamp(12px,2vh,20px) 2px clamp(8px,1.4vh,14px)}
+    header h1{font-size:clamp(21px,3vh,26px)}header h1 small{font-size:14px}
+    .ib{min-width:42px;height:40px;font-size:15px}
+    nav{grid-row:2;grid-column:1;display:flex;flex-direction:column;gap:8px;background:none;border:0;padding:2px 0 0;align-self:start}
+    nav button{flex-direction:row;justify-content:flex-start;gap:12px;font-size:17px;padding:14px 16px;border-radius:14px;background:#fff;border:1px solid var(--line)}
+    nav button b{font-size:24px}
+    nav button[aria-current=true]{background:var(--ac2);border-color:var(--ac);color:var(--ac)}
+    main{grid-row:2;grid-column:2;padding:0 0 clamp(12px,2vh,20px);max-width:980px;width:100%}
+  }
   .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px}
   .sc{overflow:auto;min-height:0;-webkit-overflow-scrolling:touch}
   .grow{flex:1;min-height:0}
@@ -180,6 +193,7 @@
     <button class="ib" onclick="fontSize(-1)" aria-label="글자 작게">가−</button>
     <button class="ib" onclick="fontSize(1)" aria-label="글자 크게">가+</button>
     <button class="ib" onclick="about()" aria-label="안내">ⓘ</button>
+    <a class="ib cls" id="ttClose" href="../../#class" hidden title="쌤 노트로 돌아가기" aria-label="닫고 쌤 노트로">✕</a>
   </header>
   <main id="view"></main>
   <nav id="nav">
@@ -860,6 +874,13 @@ document.documentElement.style.setProperty("--fs", (S.fs || 17) + "px");
 if(levels().indexOf(S.lv) < 0) S.lv = levels()[0];
 go(/[?&]tab=(read|vocab|grow)/.test(location.search) ? RegExp.$1 : "today");
 if("serviceWorker" in navigator) navigator.serviceWorker.register("../../sw.js").catch(function(){});
+</script>
+<script>
+/* 쌤 노트에서 연 경우(선생님)에만 ✕ 닫기 — 학생이 QR로 연 화면에는 나오지 않음 */
+(function(){ var k = "kr_from_tt", from = /[?&]from=tt\b/.test(location.search);
+  try{ if(!from && document.referrer){ var r = new URL(document.referrer); from = r.origin === location.origin && r.pathname.indexOf("/apps/kread/") < 0; } if(from) sessionStorage.setItem(k, "1"); from = from || sessionStorage.getItem(k) === "1"; }catch(e){}
+  var b = document.getElementById("ttClose"); if(b && from) b.hidden = false;
+})();
 </script>
 </body>
 </html>
