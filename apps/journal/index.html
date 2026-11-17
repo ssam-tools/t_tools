@@ -384,6 +384,8 @@ function addRecord(c,no,tags,text,star){
   S.records.push({id:id,date:dkey(new Date()),period:periodFor(c),cls:c,no:no,tags:tags,text:text,star:!!star,ts:Date.now(),les:(TT.notes&&TT.notes.lessonNow)?TT.notes.lessonNow(c):''});
   save();return id;
 }
+/* 보완 6단계: '다음 수업 메모'는 그 메모를 쓴 날 뒤의 수업을 마치면 '지난 메모'로 넘어가 비워짐 */
+function useMemo(c,k){const P=S.prog[c];if(!P||!P.memo)return;const at=P.memoAt||'';if(at&&at>=k)return;P.lastMemo=P.memo;P.memo='';P.memoAt='';}
 function delRecord(id){S.records=S.records.filter(r=>r.id!==id);save();}
 function statsFor(c){
   const m={};(S.students[c]||[]).forEach(s=>{m[s.no]={n:0,star:0,last:'',tags:{}};});
@@ -429,6 +431,7 @@ function slotCard(k,p,c){
     const ls=L[tg.lesson];
     badge='<span class="pill ok">진행 완료</span>';
     line='<p class="lesson"><span class="lbl">진행</span>'+(ls?lessonLine(ls):'—')+'</p>';
+    if(S.prog[c]&&S.prog[c].lastMemo&&!S.prog[c].memo)line+='<p class="lesson" style="opacity:.7"><span class="lbl">지난 메모</span>'+esc(S.prog[c].lastMemo)+'</p>';
     if(tg.book)line+='<p class="lesson"><span class="lbl">수업 모드</span>📖 p.'+esc(tg.book.p)+(tg.book.u?' '+esc(tg.book.u):'')+(tg.book.ch&&tg.book.ch.length?' · 🔥 도전 '+tg.book.ch.map(id=>esc(String(id).replace('-','년 ').replace(/년 0/,'년 '))+'번').join(', '):'')+'</p>';   // 수업 6단계
     acts='<button class="btn sm ghost" data-act="slotUndo" '+ref+'>되돌리기</button>';
   }else{
@@ -441,7 +444,7 @@ function slotCard(k,p,c){
     }
   }
   const memo=S.prog[c]&&S.prog[c].memo?'<p class="memo">'+esc(S.prog[c].memo)+'</p>':'';
-  acts+='<button class="btn sm ghost" data-act="goRecord" data-c="'+c+'">학생 기록</button><button class="btn sm ghost" data-act="editMemo" data-c="'+c+'">메모</button>';
+  acts+='<button class="btn sm ghost" data-act="goRecord" data-c="'+c+'">학생 기록</button><button class="btn sm '+(tg&&tg.kind==='done'&&!(S.prog[c]&&S.prog[c].memo)?'':'ghost')+'" data-act="editMemo" data-c="'+c+'">'+(tg&&tg.kind==='done'?'⏭ 다음 시간 할 일':'메모')+'</button>';
   return '<article class="card slot '+(now?'now':'')+'"><div class="slot-time"><b>'+p.n+'</b><span>교시</span><i>'+p.t+'</i></div><div class="slot-main"><div class="slot-top"><h3>'+cn(c)+'</h3>'+badge+'</div>'+line+memo+'<div class="slot-acts">'+acts+'</div></div></article>';
 }
 function vToday(){
@@ -607,7 +610,7 @@ function sCur(){
 function sMemo(){
   const c=ui.sheet.c;
   const b='<div class="field"><label for="memo2">다음 수업 메모</label><textarea id="memo2" data-draft="memo" rows="4" placeholder="예: 지난 시간 숙제 3번 다시 설명, 준비물 확인">'+esc(ui.draft.memo)+'</textarea></div><div class="foot"><button class="btn" data-act="closeSheet">취소</button><button class="btn primary" data-act="saveMemo">저장</button></div>';
-  return shell(cn(c)+' 메모','수업 시작 때 이 반 카드에 보여요',b,false);
+  return shell(cn(c)+' · 다음 수업 메모','다음 수업 카드와 첫 화면에 보이고, 다음 수업을 마치면 지난 메모로 넘어가요',b,false);
 }
 function sSkip(){
   const s=ui.sheet;
@@ -708,7 +711,7 @@ function act(a,t){
     case 'slotDone':{
       const c=+d.c,key=d.k+'|'+d.p,L=lessons(gradeOf(c)),i=progN(c);
       if(S.taught[key]||i>=L.length)break;
-      S.taught[key]={kind:'done',lesson:i};S.prog[c].n=i+1;save();render();
+      S.taught[key]={kind:'done',lesson:i};S.prog[c].n=i+1;useMemo(c,d.k);save();render();
       toast(cs(c)+' · '+L[i].title+' 진행 완료');break;
     }
     case 'slotSkip':openSheet({type:'skip',k:d.k,p:+d.p,c:+d.c});break;
@@ -720,7 +723,7 @@ function act(a,t){
     }
     case 'goRecord':ui.cls=+d.c;S.lastCls=ui.cls;save();ui.tab='record';window.scrollTo(0,0);render();break;
     case 'editMemo':ui.draft={memo:(S.prog[+d.c]||{}).memo||''};openSheet({type:'memo',c:+d.c,focus:true});break;
-    case 'saveMemo':{const c=ui.sheet.c;S.prog[c].memo=(ui.draft.memo||'').trim();save();closeSheet();render();toast('메모를 저장했어요');break;}
+    case 'saveMemo':{const c=ui.sheet.c;S.prog[c].memo=(ui.draft.memo||'').trim();S.prog[c].memoAt=dkey(new Date());save();closeSheet();render();toast('메모를 저장했어요 · 다음 수업 카드와 첫 화면에 보여요');break;}
     case 'openTT':openSheet({type:'tt',sel:null});break;
     case 'pickTT':ui.sheet.sel=d.k;renderSheet();break;
     case 'setTT':{const k=ui.sheet.sel,c=+d.c;if(c)S.tt[k]=c;else delete S.tt[k];save();ui.sheet.sel=null;renderSheet();render();break;}

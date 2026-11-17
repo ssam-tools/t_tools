@@ -453,6 +453,7 @@
     var i = Math.min(+Jo.prog[c].n || 0, L.length);
     if(i >= L.length){ Jo.taught[key] = {kind: "done", lesson: L.length - 1, book: book}; TT.store.set("tt_journal_v1", Jo); return {ok: 1, msg: "모든 차시를 마친 반이라 쪽·도전 문제만 남겼습니다"}; }
     Jo.taught[key] = {kind: "done", lesson: i, book: book}; Jo.prog[c].n = i + 1;
+    var Pm = Jo.prog[c]; if(Pm.memo && (!Pm.memoAt || Pm.memoAt < today())){ Pm.lastMemo = Pm.memo; Pm.memo = ""; Pm.memoAt = ""; }   // 보완 6단계: 다음 수업 메모는 쓴 날 뒤 수업을 마치면 '지난 메모'로
     TT.store.set("tt_journal_v1", Jo);
     return {ok: 1, msg: per + "교시 진행 완료 · " + L[i]};
   }

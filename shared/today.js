@@ -284,6 +284,18 @@
       var ym = Yr && Array.isArray(Yr.items) ? Yr.items.filter(function(it){ return it.m === cm && !(Yr.done || {})[ay + "|" + it.id]; }).length : 0;
       if(ym) out.push({ic: "📆", t: TN("year", "", "연간 업무") + " 남음", n: ym + "건", href: "apps/year/", lv: "mid", tip: TN("year", "", "연간 업무") + ": 이번 달에 남은 일"});
     }catch(err){}
+    try{   /* 보완 6단계: 같은 학년 반끼리 진도 차이 2차시 이상 */
+      var JG = TT.store.get("tt_journal_v1", null);
+      if(JG && JG.prog && JG.cur){
+        var byG = {};
+        Object.keys(JG.prog).forEach(function(c){ var g = Math.floor(+c / 100); var raw = JG.cur[g]; raw = Array.isArray(raw) ? raw.join("\n") : String(raw || "");
+          var N = raw.split("\n").filter(function(l){ l = l.trim(); return l && l[0] !== "#"; }).length; if(!N) return;
+          (byG[g] = byG[g] || []).push({c: +c, n: Math.min(+JG.prog[c].n || 0, N)}); });
+        Object.keys(byG).forEach(function(g){ var L = byG[g]; if(L.length < 2) return;
+          var mx = Math.max.apply(null, L.map(function(x){ return x.n; })), mn = Math.min.apply(null, L.map(function(x){ return x.n; }));
+          if(mx - mn >= 2) out.push({ic: "⏳", t: g + "학년 진도 차이 (늦은 반 " + L.filter(function(x){ return x.n === mn; }).map(function(x){ return g + "-" + (x.c % 100); }).join("·") + ")", n: (mx - mn) + "차시", href: "apps/journal/?tab=progress", lv: "mid", tip: "같은 학년 반끼리 진도가 2차시 이상 벌어졌어요"}); });
+      }
+    }catch(err){}
 
     /* 이번 주 신경 쓸 학생: 지각·결석 / 미제출 / 상담 후속 중 두 가지 이상 겹친 학생 */
     var names = {}; if(home) (home.students || []).forEach(function(s){ names[String(s.no)] = s.name; });
