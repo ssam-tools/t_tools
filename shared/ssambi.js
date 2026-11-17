@@ -91,6 +91,7 @@
       + '<button type="button" class="bt" data-a="brief"><i>☀️</i><span>오늘 브리핑<small>수업·챙길 일</small></span></button>'
       + '<button type="button" class="bt" data-a="run"><i>⚡</i><span>바로 실행<small>자주 하는 일</small></span></button>'
       + "</div>"
+      + ('<button type="button" class="bt" data-a="voice" style="width:100%;margin-top:6px"><i>🎙️</i><span>말로 기록<small>상담 · 학부모 상담 · 회의 · 수업 관찰 · 할 일</small></span></button>')
       + '<p class="nt">🔒 기록은 이 기기 안에만 저장돼요. 단축키: <b>Ctrl+K</b> 찾기</p>';
   };
   V.listen = function(a){
@@ -197,6 +198,7 @@
     return true;
   }
   var TOOLWORD = [
+    [/회의\s*록|회의\s*기록/, "apps/voice/?k=mtg"], [/학부모\s*상담/, "apps/voice/?k=par"], [/상담\s*기록|말로\s*기록|기록\s*하기|녹음/, "apps/voice/"], [/관찰\s*기록|수업\s*관찰/, "apps/voice/?k=obs"],
     [/결석\s*신고서|결석계/, "apps/tardy/?tab=report"], [/상담\s*일지/, "apps/tardy/?tab=counsel"], [/출결/, "apps/tardy/"]
   ];
   function toolCmd(t){
@@ -239,6 +241,7 @@
     else if(a === "menu"){ stopListen(); show("menu"); }
     else if(a === "listen" || a === "relisten"){ show("listen"); startListen(); }
     else if(a === "typed"){ var v = box.querySelector("#sbTxt"); if(v && v.value.trim()) { stopListen(); handle(v.value); } }
+    else if(a === "voice"){ close(); go("apps/voice/"); }
     else if(a === "find") find("");
     else if(a === "brief") show("brief");
     else if(a === "run") show("run");
@@ -280,5 +283,6 @@
     }catch(e){}
   }, 1500);
 
+  if(location.hash === "#ssambi"){ history.replaceState(null, "", location.pathname + location.search); setTimeout(function(){ open("menu"); }, 300); }   // 말로 기록 화면의 🦉 쌤비에게
   window.TT_SSAMBI = {open: open, close: close, handle: handle};
 })();

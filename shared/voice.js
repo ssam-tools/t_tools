@@ -27,7 +27,7 @@
   "use strict";
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var ANDROID = /Android/i.test(navigator.userAgent || "");
-  var DKEY = "tt_voice_draft_", DRAFT_DAYS = 3;
+  var DKEY = "ttvoice_draft_", DRAFT_DAYS = 3;
 
   var MSG = {
     "not-allowed": "마이크 사용을 허용해 주세요 (주소창 옆 🔒 → 마이크 허용).",

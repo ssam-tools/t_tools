@@ -119,6 +119,7 @@
 </footer>
 <script src="../../shared/tt.js"></script>
 <script src="../../shared/fill.js"></script>
+<script src="../../shared/mask.js"></script>
 <script>
 (function(){
   "use strict";
@@ -159,22 +160,11 @@
   var mode = "ai", F = {t: null, vals: {}, cls: null, stu: null, dateOn: true, hits: []};   // 17단계 자동 채움
 
   /* ---------- 개인정보 가리기: 명렬표의 모든 학생 이름 + 연락처 꼴 + 더 가릴 말 ---------- */
-  function mask(t){
-    map = {}; var n = 0, cnt = {name: 0, phone: 0, etc: 0};
-    var names = [];
-    TT.roster.classes().forEach(function(c){ c.students.forEach(function(s){ if(s.name && s.name.length >= 2 && names.indexOf(s.name) < 0) names.push(s.name); }); });
-    $("extra").value.split(",").map(function(x){ return x.trim(); }).filter(function(x){ return x.length >= 2; }).forEach(function(x){ if(names.indexOf(x) < 0) names.push(x); });
-    names.sort(function(a, b){ return b.length - a.length; }).forEach(function(nm){
-      if(t.indexOf(nm) < 0) return; n++; var tag = "[학생" + n + "]"; map[tag] = nm; t = t.split(nm).join(tag); cnt.name++;
-    });
-    t = t.replace(/01[016789][-.\s]?\d{3,4}[-.\s]?\d{4}/g, function(){ cnt.phone++; return "[전화번호]"; })
-         .replace(/\b\d{2,3}-\d{3,4}-\d{4}\b/g, function(){ cnt.phone++; return "[전화번호]"; })
-         .replace(/\b\d{6}-?[1-4]\d{6}\b/g, function(){ cnt.etc++; return "[주민번호]"; })
-         .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, function(){ cnt.etc++; return "[이메일]"; });
-    var tot = cnt.name + cnt.phone + cnt.etc, mi = $("maskInfo");
-    mi.textContent = tot ? "🔒 가림: 이름 " + cnt.name + " · 연락처 " + cnt.phone + (cnt.etc ? " · 기타 " + cnt.etc : "") : "🔒 가릴 개인정보 없음";
-    mi.className = "mask" + (tot ? " warn" : "");
-    return t;
+  function mask(t){                                                  // 녹음 4단계: 가리는 규칙은 shared/mask.js(TTMask) 한 곳에서
+    var r = TTMask.mask(t, $("extra").value); map = r.map;
+    var mi = $("maskInfo"), tot = r.cnt.name + r.cnt.phone + r.cnt.etc;
+    mi.textContent = TTMask.info(r.cnt); mi.className = "mask" + (tot ? " warn" : "");
+    return r.text;
   }
   function build(){ $("prompt").value = mask(PRE + cur.b(vals)); }
 
@@ -228,7 +218,7 @@
   };
   function copy(t, msg){ if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(function(){ TT.ui.toast(msg); }, function(){ TT.ui.toast("복사하지 못했습니다. 직접 골라 복사해 주세요."); }); else { TT.ui.toast("직접 골라 복사해 주세요."); } }
   $("copyQ").onclick = function(){ copy($("prompt").value, "요청문을 복사했습니다. 학교가 허용한 AI에 붙여 넣고, 받은 답을 오른쪽에 붙여 넣으세요."); };
-  $("unmask").onclick = function(){ var t = $("result").value; Object.keys(map).forEach(function(k){ t = t.split(k).join(map[k]); }); $("result").value = t; TT.ui.toast("가린 이름을 되돌렸습니다. 밖으로 보내지 마세요."); };
+  $("unmask").onclick = function(){ $("result").value = TTMask.unmask($("result").value, map); TT.ui.toast("가린 이름을 되돌렸습니다. 밖으로 보내지 마세요."); };
 
   /* 채점 기준 → 수행평가: "항목: 이름 | 배점: 10" + "- 상(10): 기준" 줄을 읽음 */
   function toAssess(r){

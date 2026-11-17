@@ -83,6 +83,7 @@ var TT_TOOLS = [
   {id:"seat",   icon:"🪑", cat:"life", menu:"homeroom", group:"room",  short:"자리 배치", name:"자리 배치", desc:"명렬표로 자리표 만들기 · 무작위 · 바꾸기 · 고정 · 학생 쪽에서 보기 · 인쇄 (이 기기에만).", href:"apps/seat/", ready:true, room:true, season:["start"]},
   /* ── 학생 ── */
   {id:"stucard",icon:"📇", cat:"care", menu:"student", group:"stu",  short:"학생 카드", name:"학생 카드", desc:"학생 한 명의 기록 · 출결 · 상담 · 제출물을 한 화면에 (읽기 전용).", href:"apps/stucard/", ready:true},
+  {id:"voice",  icon:"🎙️", cat:"care", menu:"student", group:"stu",  short:"말로 기록", name:"말로 기록", old:"녹음", desc:"상담·학부모 상담·회의·수업 관찰·할 일을 말로 남기고, 이름을 가린 뒤 AI로 정리해 제자리에 저장(소리는 저장 안 함).", href:"apps/voice/", ready:true},
   {id:"counsel",icon:"🗣️", cat:"care", menu:"student", group:"stu",  short:"상담 일지", name:"상담 일지", old:"상담", desc:"상담일지 · 후속 확인 · 행동특성 참고.", href:"apps/tardy/?tab=counsel", ready:true, home:true},
   {id:"record", icon:"📑", cat:"care", menu:"student", group:"stu",  short:"생기부", name:"생기부 도우미", desc:"모인 학생 기록을 영역별로 보며 초안 쓰기 · 나이스 글자 수 · 유의 낱말 점검.", href:"apps/record/", ready:true, months:[7,12], season:["end"]},
   {id:"advisor",icon:"🎓", cat:"care", menu:"student", group:"stu",  short:"진학 추천", name:"진학 추천", old:"진학", desc:"성적 분석 · 지원 가능 고교 살펴보기 · 가산점 자동 입력.", href:"apps/advisor/", ready:true, home:true, months:[10,11], season:["end"]},
