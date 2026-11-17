@@ -250,6 +250,10 @@
         fl.forEach(function(c){ if(c.sid != null) mark(String(c.sid), "follow"); });
         if(need) out.push({ic: "🗣️", t: "상담 필요", n: need + "명", href: "apps/tardy/", lv: "hi", tip: "무단지각 기준에 걸렸는데 상담일지가 없는 학생"});
         if(fl.length) out.push({ic: "🔁", t: "상담 후속 확인", n: fl.length + "건", href: "apps/tardy/", lv: "mid", tip: "상담 후속 확인일이 된 학생"});
+        var since30 = new Date(Date.now() - 30 * 86400000), s30 = ymd(since30), gc = {}, gw = {};   // 보완 2단계: 30일 안 같은 지도 3번 이상
+        (G.gd || []).forEach(function(g){ if(g.date >= s30 && String(g.kind).indexOf("칭찬") < 0){ var k = g.sid + "|" + g.kind; gc[k] = (gc[k] || 0) + 1; if(gc[k] >= 3) gw[g.sid] = 1; } });
+        var gn = Object.keys(gw).length;
+        if(gn) out.push({ic: "⚡", t: "반복 지도 · 상담 권장", n: gn + "명", href: "apps/tardy/?tab=guide", lv: "mid", tip: "30일 안에 같은 지도를 3번 이상 받은 학생"});
         if(reps) out.push({ic: "📄", t: "결석신고서", n: reps + "건", href: "apps/tardy/", lv: "mid", tip: "아직 만들지 않은 결석신고서"});
       }
       /* 제출물: 마감이 지났는데 미제출이 남은 것 (담임 반 학생은 따로 표시) */
@@ -304,7 +308,7 @@
     return '<span class="' + cls + '"' + tip + " style=\"cursor:default\">" + inner + "</span>";
   }
   /* 개편 5단계: 오늘 챙길 것 = 챙길 일 + 종례 바구니 + 내 할 일 — 한 목록, 메뉴 색 꼬리표, 적는 칸 하나 */
-  var MOF = {"🗣️": "student", "🔁": "student", "📄": "homeroom", "📦": "homeroom", "👀": "homeroom", "🧭": "homeroom", "📝": "class", "⏳": "class", "✏️": "class", "🏖️": "school", "📆": "school", "📅": "school"};
+  var MOF = {"⚡": "homeroom", "🗣️": "student", "🔁": "student", "📄": "homeroom", "📦": "homeroom", "👀": "homeroom", "🧭": "homeroom", "📝": "class", "⏳": "class", "✏️": "class", "🏖️": "school", "📆": "school", "📅": "school"};
   var TAGN = {"class": "수업", homeroom: "우리 반", student: "학생", school: "학교", close: "종례", me: "할 일"};
   function tag(k){ var mn = k === "close" ? "homeroom" : k === "me" ? "" : k; return '<span class="tg' + (k === "me" ? " me" : "") + '"' + (mn ? ' data-menu="' + mn + '"' : "") + ">" + TAGN[k] + "</span>"; }
   function myTodos(){ var M = TT.store.get("tt_mytodo_v1", null); return M && Array.isArray(M.items) ? M.items.filter(function(x){ return !x.done; }) : []; }

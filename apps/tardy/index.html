@@ -85,6 +85,11 @@ main{flex:1;min-height:0;overflow:hidden}
 .chip2 .cname{font-weight:700;font-size:14.5px;white-space:nowrap;line-height:1.2}
 .chip2 .cst{font-size:11px;min-height:14px;line-height:14px;font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px}
 .chip2.has{background:var(--c);border-color:var(--c);color:var(--on)}
+.gview .gkinds{flex-wrap:wrap}.gview .gkinds .seg{flex:1 1 70px;min-height:38px}
+.gchip{--c:var(--accent);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.gchip.gsel{outline:3px solid var(--accent);outline-offset:-3px;background:var(--accent-soft)}
+#gundo{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;display:flex;gap:12px;align-items:center;background:#1f2a36;color:#fff;border-radius:999px;padding:8px 10px 8px 16px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+#gundo[hidden]{display:none}#gundo button{border:0;border-radius:999px;padding:5px 12px;font-weight:800;background:#ffd166;color:#1f2a36;cursor:pointer}
 .chip2.has .cn{color:inherit;opacity:.8}
 .chip2.has.appr{background:transparent;color:var(--c);border-width:2px}
 .chip2.f-alert::after,.chip2.f-caution::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px}
@@ -237,6 +242,7 @@ table.plain{width:100%;border-collapse:collapse;font-size:13.5px}
     <button class="tab" role="tab" data-act="tab" data-tab="week">주간</button>
     <button class="tab" role="tab" data-act="tab" data-tab="student">학생</button>
     <button class="tab" role="tab" data-act="tab" data-tab="stats">통계</button>
+    <button class="tab" role="tab" data-act="tab" data-tab="guide">⚡ 지도</button>
     <button class="tab" role="tab" data-act="tab" data-tab="counsel">상담</button>
     <button class="tab" role="tab" data-act="tab" data-tab="report" id="tabReport">결석신고서</button>
     <button class="tab" role="tab" data-act="tab" data-tab="settings">설정</button>
@@ -265,6 +271,10 @@ const REASONS = ['늦잠', '교통·이동', '건강 문제', '가정 사정', '
 const ACTIONS = ['구두 지도', '학부모 연락', '약속 정하기', '상담교사 연계', 'Wee클래스 연계', '지속 관찰'];
 const PARENT = { none: '연락 안 함', phone: '전화', text: '문자', visit: '방문·면담' };
 const CONFIRM = ['가정방문', '학부모와의 통화', '기타 증빙서류'];
+/* 보완 2단계 (v1.5.0): 빠른 지도 — 지도 종류를 고르고 학생을 누르면 바로 기록 (S.gd) */
+const GKINDS = ['생활', '학습', '복장', '휴대폰', '교우관계', '진로', '칭찬👍', '기타'];
+const GHOW = ['개별', '집단', '전화', '학부모'];
+const gkinds = () => (Array.isArray(S.settings.gkinds) && S.settings.gkinds.length ? S.settings.gkinds : GKINDS);
 const DEFAULT_HOL = {
   '2026-01-01':'신정','2026-02-16':'설날 연휴','2026-02-17':'설날','2026-02-18':'설날 연휴',
   '2026-03-02':'삼일절 대체공휴일','2026-05-05':'어린이날','2026-05-25':'석가탄신일 대체공휴일',
@@ -292,12 +302,13 @@ const students = () => HOME ? HOME.students.map(s => ({ id: String(s.no), no: +s
 /* ---------- 자료 ---------- */
 function blank() {
   return { v: 1, att: {}, meta: {}, holidays: Object.assign({}, DEFAULT_HOL), counsel: [], reports: {}, guardians: {},
-    settings: { weekN: 3, runN: 2, mask: false, countApproved: false, school: '', teacher: '', confirm: '학부모와의 통화' } };
+    gd: [], settings: { weekN: 3, runN: 2, mask: false, countApproved: false, school: '', teacher: '', confirm: '학부모와의 통화' } };
 }
 function normalize(o) {
   const b = blank(); if (!o || typeof o !== 'object') return b;
   ['att', 'meta', 'holidays', 'reports', 'guardians'].forEach(k => { if (o[k] && typeof o[k] === 'object') b[k] = o[k]; });
   b.counsel = Array.isArray(o.counsel) ? o.counsel : [];
+  b.gd = Array.isArray(o.gd) ? o.gd : [];
   b.settings = Object.assign(b.settings, o.settings || {});
   b.settings.countApproved = false;   // 표시 기준은 무단 지각만
   return b;
@@ -329,7 +340,7 @@ if (!lsGet(KEY)) persist();
 { const sc = TT.school.load(); if (sc.name) S.settings.school = sc.name; if (sc.teacher) S.settings.teacher = sc.teacher; }   // 학교 이름·담임 이름은 공통 설정(첫 화면 ⋯ → 학교·선생님 설정)과 같은 값
 
 const startDate = () => { const t = today(); return L.isSchoolDay(t, S.holidays) ? t : L.prevSchoolDay(t, S.holidays); };
-let view = { tab: (['entry','week','student','stats','counsel','report','settings'].indexOf(new URLSearchParams(location.search).get('tab')) >= 0 ? new URLSearchParams(location.search).get('tab') : 'entry'), date: startDate(), monday: L.weekStart(today()), filter: 'all', range: 'all', logStudent: '', sel: '', mode: 'L', rk: 'ok', ok: false, rmonth: 'all' };
+let view = { tab: (['entry','week','student','stats','guide','counsel','report','settings'].indexOf(new URLSearchParams(location.search).get('tab')) >= 0 ? new URLSearchParams(location.search).get('tab') : 'entry'), date: startDate(), monday: L.weekStart(today()), filter: 'all', range: 'all', logStudent: '', sel: '', mode: 'L', rk: 'ok', ok: false, rmonth: 'all', gk: '', gh: '개별', gmulti: false, gsel: [], gdate: today() };
 const opt = () => ({ weekN: +S.settings.weekN || 3, runN: +S.settings.runN || 2 });
 const stu = id => students().find(x => x.id === String(id));
 function nm(st) { if (!st) return '(명단에 없는 학생)'; const n = st.name; return S.settings.mask && n ? n[0] + '○'.repeat(Math.max(1, n.length - 1)) : n; }
@@ -360,7 +371,7 @@ function render() {
   $('#classname').textContent = HOME ? (HOME.name || '') + ' · ' + students().length + '명' : '';
   const mb = $('#maskBtn'); mb.setAttribute('aria-pressed', String(!!S.settings.mask)); mb.textContent = S.settings.mask ? '이름 보이기' : '이름 가리기';
   if (!HOME && view.tab !== 'settings') { $('#main').innerHTML = '<div class="view"><div class="empty" id="needR"></div></div>'; TT.ui.needRoster($('#needR')); return; }
-  const f = { entry: renderEntry, week: renderWeek, student: renderStudent, stats: renderStats, counsel: renderCounsel, report: renderReports, settings: renderSettings }[view.tab];
+  const f = { entry: renderEntry, week: renderWeek, student: renderStudent, stats: renderStats, guide: renderGuide, counsel: renderCounsel, report: renderReports, settings: renderSettings }[view.tab];
   $('#main').innerHTML = f();
 }
 function dayInfo(d) {
@@ -543,6 +554,74 @@ function renderCounsel() {
     }).join('') : '<div class="card muted">아직 상담일지가 없습니다. 주간 화면에서 표시된 학생을 눌러 상담일지를 시작하세요.</div>'}</div></div>`;
 }
 
+/* ---------- 보완 2단계: 빠른 지도 ---------- */
+const gOf = (sid, d) => S.gd.filter(g => g.sid === String(sid) && g.date === d);
+const gMonth = sid => { const m = today().slice(0, 7); return S.gd.filter(g => g.sid === String(sid) && g.date.slice(0, 7) === m).length; };
+/* 최근 30일 같은 학생·같은 종류 3번 이상 (칭찬 제외) */
+function gRepeat() {
+  const since = L.addDays(today(), -30), cnt = {};
+  S.gd.forEach(g => { if (g.date >= since && g.kind.indexOf('칭찬') < 0) { const k = g.sid + '|' + g.kind; cnt[k] = (cnt[k] || 0) + 1; } });
+  return Object.keys(cnt).filter(k => cnt[k] >= 3).map(k => ({ sid: k.split('|')[0], kind: k.split('|')[1], n: cnt[k] }));
+}
+function renderGuide() {
+  const d = view.gdate, list = students(), K = gkinds(), n = list.length, cols = n <= 16 ? 4 : n <= 40 ? 5 : 6;
+  if (!view.gk || K.indexOf(view.gk) < 0) view.gk = K[0];
+  const dayG = S.gd.filter(g => g.date === d), rp = gRepeat();
+  const body = `<div class="chips2" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${list.map(st => {
+    const gs = gOf(st.id, d), sel = view.gmulti && view.gsel.indexOf(st.id) >= 0, mo = gMonth(st.id), warn = rp.some(r => r.sid === st.id);
+    const kc = {}; gs.forEach(g => { const k = g.kind.replace('👍', ''); kc[k] = (kc[k] || 0) + 1; });
+    const lab = gs.length ? Object.keys(kc).map(k => k + (kc[k] > 1 ? '×' + kc[k] : '')).join('·') + (gs.some(g => g.memo) ? ' ✎' : '') : (mo ? '이번 달 ' + mo : '');
+    return `<button class="chip2 gchip${gs.length ? ' has' : ''}${sel ? ' gsel' : ''}${warn ? ' f-caution' : ''}" data-act="gmark" data-sid="${st.id}" aria-label="${esc(nm(st))} ${st.no}번 ${esc(lab)}"><span class="cn">${st.no}</span><span class="cname">${esc(nm(st))}</span><span class="cst">${esc(lab)}</span></button>`;
+  }).join('')}</div>`;
+  return `<div class="view gview">
+    <div class="daybar"><button class="btn" data-act="gstep" data-s="-1" aria-label="전날">◀</button>
+      <input type="date" data-chg="gpick" value="${d}" max="${today()}" aria-label="날짜 선택">
+      <button class="btn" data-act="gstep" data-s="1" aria-label="다음날">▶</button><button class="btn" data-act="gtoday">오늘</button></div>
+    <div class="modebar gkinds">${K.map(k => `<button class="seg" style="--c:var(--accent)" data-act="gkind" data-k="${esc(k)}" aria-pressed="${view.gk === k}">${esc(k)}</button>`).join('')}</div>
+    <div class="row spread" style="flex:none"><div class="chips">${GHOW.map(h => `<button class="chip" data-act="ghow" data-h="${h}" aria-pressed="${view.gh === h}">${h}</button>`).join('')}</div>
+      <div class="row"><button class="btn btn-sm" data-act="gmulti" aria-pressed="${view.gmulti}">여러 명 묶기</button>${view.gmulti ? `<button class="btn btn-sm btn-primary" data-act="gsave" ${view.gsel.length ? '' : 'disabled'}>묶어서 저장 (${view.gsel.length}명)</button>` : ''}</div></div>
+    ${body}
+    <div class="foot2"><div class="counts"><span>이날 지도 <b>${dayG.length}</b></span>${rp.length ? `<span class="small" style="color:var(--alert)">⚠ 30일 안 같은 지도 3번 이상 ${rp.length}명</span>` : ''}<span class="small">${view.gmulti ? '학생을 골라 [묶어서 저장]' : '누르면 바로 기록 · 길게 누르면 한 줄 메모'}</span></div>
+      <span class="row"><button class="btn" data-act="glist">기록 보기</button><button class="btn" data-act="gcsv">표(CSV)</button></span></div>
+  </div>`;
+}
+function gAdd(sids, how) {
+  const now = new Date(), tm = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'), grp = sids.length > 1 ? uid() : '';
+  const made = sids.map(sid => ({ id: uid(), sid: String(sid), date: view.gdate, time: view.gdate === today() ? tm : '', kind: view.gk, how: how, memo: '', grp: grp, created: Date.now() }));
+  S.gd.push.apply(S.gd, made); persist(); render();
+  gUndo(made.map(g => g.id), (sids.length > 1 ? sids.length + '명 ' : (nm(stu(sids[0])) + ' ')) + view.gk + ' 지도 기록');
+  const rp = gRepeat().filter(r => sids.indexOf(r.sid) >= 0 && r.kind === view.gk);
+  if (rp.length) setTimeout(() => toast('⚠ ' + rp.map(r => nm(stu(r.sid))).join(', ') + ': 30일 안 ' + view.gk + ' 지도 ' + rp[0].n + '번 — 상담을 권해요'), 2700);
+}
+let gUndoT = null;
+function gUndo(ids, msg) {
+  let bar = $('#gundo'); if (!bar) { bar = document.createElement('div'); bar.id = 'gundo'; document.body.appendChild(bar); }
+  bar.innerHTML = `<span>✔ ${esc(msg)}</span><button type="button">되돌리기</button>`; bar.hidden = false;
+  bar.querySelector('button').onclick = () => { S.gd = S.gd.filter(g => ids.indexOf(g.id) < 0); persist(); render(); bar.hidden = true; };
+  clearTimeout(gUndoT); gUndoT = setTimeout(() => { bar.hidden = true; }, 5000);
+}
+function gMemoModal(sid) {
+  const st = stu(sid), gs = gOf(sid, view.gdate), g = gs[gs.length - 1];
+  openModal(`<div class="head"><h2 style="margin:0">✎ ${esc(nm(st))} · ${esc(mdk(view.gdate))}</h2><button class="btn btn-sm" data-act="close">닫기</button></div>
+    <p class="small muted">${g ? '이날 마지막 지도(' + esc(g.kind) + ')에 메모를 붙입니다.' : '지금 고른 [' + esc(view.gk) + '] 지도로 새로 기록하고 메모를 붙입니다.'}</p>
+    <input type="hidden" id="g-sid" value="${esc(sid)}"><input type="hidden" id="g-id" value="${esc(g ? g.id : '')}">
+    <input type="text" id="g-memo" maxlength="120" value="${esc(g ? g.memo : '')}" placeholder="예: 수업 중 휴대폰 사용, 보관함에 맡김">
+    <div class="row spread" style="margin-top:12px"><button class="btn" data-act="g-counsel" data-id="${esc(g ? g.id : '')}" ${g ? '' : 'disabled'}>상담일지로 자세히 쓰기</button>
+      <span class="row"><button class="btn" data-act="close">취소</button><button class="btn btn-primary" data-act="g-memo-save">저장</button></span></div>`);
+  setTimeout(() => { const i = $('#g-memo'); if (i) i.focus(); }, 30);
+}
+function gListModal() {
+  const d = view.gdate, mon = today().slice(0, 7);
+  const rows = S.gd.filter(g => g.date === d).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  const cnt = {}; S.gd.filter(g => g.date.slice(0, 7) === mon).forEach(g => { cnt[g.kind] = (cnt[g.kind] || 0) + 1; });
+  const rp = gRepeat();
+  openModal(`<div class="head"><h2 style="margin:0">⚡ 지도 기록 · ${esc(mdk(d))}</h2><button class="btn btn-sm" data-act="close">닫기</button></div>
+    <p class="small muted">이번 달: ${Object.keys(cnt).map(k => esc(k) + ' ' + cnt[k]).join(' · ') || '없음'}</p>
+    ${rp.length ? `<div class="card" style="border-color:var(--alert)"><b>⚠ 상담 권장</b> <span class="small">(30일 안 같은 지도 3번 이상)</span><br>${rp.map(r => `${esc(nm(stu(r.sid)))} · ${esc(r.kind)} ${r.n}번 <button class="btn btn-sm" data-act="counsel-new" data-sid="${esc(r.sid)}">상담일지</button>`).join('<br>')}</div>` : ''}
+    <div class="stack" style="gap:6px;max-height:50vh;overflow:auto">${rows.length ? rows.map(g => `<div class="row spread log" style="padding:6px 10px"><span><b>${esc(nm(stu(g.sid)))}</b> <span class="pill">${esc(g.kind)}</span> <span class="small muted">${esc(g.how)}${g.time ? ' · ' + g.time : ''}${g.grp ? ' · 묶음' : ''}</span>${g.memo ? '<br><span class="small">' + esc(g.memo) + '</span>' : ''}</span>
+      <span class="row"><button class="btn btn-sm" data-act="g-counsel" data-id="${g.id}">상담일지로</button><button class="btn btn-sm btn-danger" data-act="g-del" data-id="${g.id}">지우기</button></span></div>`).join('') : '<p class="muted">이날 지도 기록이 없습니다.</p>'}</div>`, true);
+}
+
 /* ---------- 결석신고서: 이어진 결석을 한 건으로 묶기 ---------- */
 function episodes() {
   const out = [];
@@ -585,6 +664,8 @@ function renderSettings() {
     <section class="card"><h2>표시 기준 (무단 지각)</h2><div class="grid2">
       <div><label class="f" for="runN">연속 지각 (수업일)</label><input type="number" id="runN" min="2" max="5" value="${opt().runN}" data-chg="runN"></div>
       <div><label class="f" for="weekN">한 주 지각 (회)</label><input type="number" id="weekN" min="2" max="5" value="${opt().weekN}" data-chg="weekN"></div></div></section>
+    <section class="card"><h2>⚡ 빠른 지도 종류</h2><label class="f" for="gkinds">쉼표로 나눠 적기 (최대 10개) · 순서대로 버튼이 놓입니다</label>
+      <input type="text" id="gkinds" data-chg="gkinds" value="${esc(gkinds().join(', '))}" maxlength="150"></section>
     <section class="card"><h2>결석신고서에 들어갈 정보</h2><div class="grid2">
       <div><label class="f" for="sSchool">학교 이름</label><input type="text" id="sSchool" data-chg="school" value="${esc(S.settings.school)}" placeholder="예: ○○중학교" maxlength="20"></div>
       <div><label class="f" for="sTeacher">담임 이름</label><input type="text" id="sTeacher" data-chg="teacher" value="${esc(S.settings.teacher)}" maxlength="10"></div></div>
@@ -916,6 +997,37 @@ const A = {
   'rec-areason': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; setRec(no, d, Object.assign({}, cur, { r: t.dataset.r })); render(); recModal(no, d); },
   'rec-ev': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; const n = Object.assign({}, cur); n.ev = n.ev === t.dataset.r ? '' : t.dataset.r; setRec(no, d, n); recModal(no, d); },
   'todo-open': () => todoModal(),
+  gstep: t => { const nd = L.addDays(view.gdate, +t.dataset.s); if (nd <= today()) { view.gdate = nd; view.gsel = []; render(); } },
+  gtoday: () => { view.gdate = today(); view.gsel = []; render(); },
+  gkind: t => { view.gk = t.dataset.k; render(); },
+  ghow: t => { view.gh = t.dataset.h; render(); },
+  gmulti: () => { view.gmulti = !view.gmulti; view.gsel = []; if (view.gmulti && view.gh === '개별') view.gh = '집단'; if (!view.gmulti && view.gh === '집단') view.gh = '개별'; render(); },
+  gmark: t => {
+    if (gLong) { gLong = false; return; }
+    const sid = t.dataset.sid;
+    if (view.gmulti) { const i = view.gsel.indexOf(sid); if (i >= 0) view.gsel.splice(i, 1); else view.gsel.push(sid); render(); return; }
+    gAdd([sid], view.gh);
+  },
+  gsave: () => { if (!view.gsel.length) return; const s2 = view.gsel.slice(); view.gsel = []; gAdd(s2, view.gh); },
+  glist: () => gListModal(),
+  'g-del': t => { S.gd = S.gd.filter(g => g.id !== t.dataset.id); persist(); render(); gListModal(); },
+  'g-memo-save': () => {
+    const sid = $('#g-sid').value, id = $('#g-id').value, memo = $('#g-memo').value.trim().slice(0, 120);
+    let g = id ? S.gd.find(x => x.id === id) : null;
+    if (!g) { gAdd([sid], view.gh); g = S.gd[S.gd.length - 1]; }
+    g.memo = memo; persist(); closeModal(); render(); toast('메모를 붙였습니다');
+  },
+  'g-counsel': t => {
+    const g = S.gd.find(x => x.id === t.dataset.id); if (!g) return;
+    closeModal(); counselModal(g.sid);
+    const tr = $('#c-trigger'); if (tr) tr.value = `${g.kind} 지도(${g.how}, ${mdShort(g.date)})` + (g.memo ? ' — ' + g.memo : '');
+    const dt = $('#c-date'); if (dt) dt.value = g.date;
+  },
+  gcsv: () => {
+    if (!S.gd.length) { toast('저장할 지도 기록이 없습니다'); return; }
+    const rows = S.gd.slice().sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || ''))).map(g => { const st = stu(g.sid) || {}; return [g.date, g.time || '', st.no, st.name, g.kind, g.how, g.memo || '']; });
+    saveBlob('지도기록_' + today() + '.csv', csvBlob(['날짜', '시각', '번호', '이름', '지도 종류', '방법', '메모'], rows));
+  },
   'counsel-new': t => counselModal(t.dataset.sid || ''),
   'counsel-edit': t => counselModal('', t.dataset.id),
   'counsel-save': () => {
@@ -968,6 +1080,8 @@ const A = {
   yes: () => { const f = pendingYes; pendingYes = null; if (f) f(); }
 };
 const C = {
+  gkinds: t => { const k = t.value.split(/[,，]/).map(x => x.trim().slice(0, 8)).filter(Boolean).slice(0, 10); S.settings.gkinds = k.length ? k : GKINDS.slice(); persist(); render(); toast('지도 종류를 바꿨습니다'); },
+  gpick: t => { if (t.value && t.value <= today()) { view.gdate = t.value; view.gsel = []; render(); } },
   dpick: t => { if (t.value && t.value <= today()) { view.date = t.value; view.monday = L.weekStart(t.value); render(); } },
   stuSel: t => { view.sel = t.value; render(); },
   logStu: t => { view.logStudent = t.value; render(); },
@@ -983,6 +1097,11 @@ const C = {
   'rec-r': t => { const { no, d } = recCtx, cur = rec(no, d); if (!cur) return; setRec(no, d, Object.assign({}, cur, { r: t.value.trim().slice(0, 40) })); },
   'c-sid': t => { if (!t.value) return; const tr = $('#c-trigger'); if (!tr.value.trim()) tr.value = triggerFor(t.value); }
 };
+/* 빠른 지도: 길게 누르면 한 줄 메모 */
+let gLong = false, gPress = null;
+document.addEventListener('pointerdown', e => { const b = e.target.closest('[data-act="gmark"]'); if (!b || view.gmulti) return; gLong = false; clearTimeout(gPress); gPress = setTimeout(() => { gLong = true; gMemoModal(b.dataset.sid); }, 550); });
+['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => document.addEventListener(ev, () => clearTimeout(gPress)));
+document.addEventListener('contextmenu', e => { const b = e.target.closest('[data-act="gmark"]'); if (b) { e.preventDefault(); if (!gLong) { gLong = true; gMemoModal(b.dataset.sid); } } });
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-act]');
   if (t && A[t.dataset.act]) { e.preventDefault(); A[t.dataset.act](t); return; }

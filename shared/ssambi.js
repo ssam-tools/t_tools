@@ -156,7 +156,7 @@
       + '<div class="row" style="margin-top:0"><input id="sbTxt" type="text" placeholder="또는 글로: 12번 지각" style="flex:1;min-width:0;height:40px;border:1px solid var(--line,#dde3ea);border-radius:10px;padding:0 10px;font:inherit;background:var(--card,#fff);color:inherit" autocomplete="off">'
       + '<button type="button" class="bt p" data-a="typed" style="flex:none;min-height:40px">확인</button></div>'
       + '<div class="row">' + (noSR ? "" : '<button type="button" class="bt" data-a="relisten">🎤 다시 듣기</button>') + "</div>"
-      + '<div class="ex" style="margin-top:8px">이렇게 말해 보세요<br><b>12번 지각</b> · <b>5번 결석</b> · <b>종례 내일 체육복</b> · <b>할 일 금요일 공문 회신</b> · <b>결석신고서 열어</b> · <b>찾아 줘 교복</b> · <b>브리핑</b></div>'
+      + '<div class="ex" style="margin-top:8px">이렇게 말해 보세요<br><b>12번 지각</b> · <b>5번 결석</b> · <b>3번 휴대폰 지도</b> · <b>종례 내일 체육복</b> · <b>할 일 금요일 공문 회신</b> · <b>결석신고서 열어</b> · <b>찾아 줘 교복</b> · <b>브리핑</b></div>'
       + '<p class="nt">🔒 음성 인식은 브라우저 회사 서버를 거칠 수 있어요. 학생은 <b>이름 대신 번호</b>로 말해 주세요.</p>';
   };
   V.confirm = function(c){
@@ -242,6 +242,25 @@
     var k = km[1] === "결석" ? "A" : "L";
     return {who: who, home: home, k: k, kn: km[1] === "결석" ? "결석" : "지각"};
   }
+  /* 보완 2단계: "3번 휴대폰 지도" / "홍길동 복장 지도" → 빠른 지도 기록 */
+  var GK0 = ["생활", "학습", "복장", "휴대폰", "교우관계", "진로", "칭찬👍", "기타"];
+  function gdCmd(t){
+    if(!/지도|칭찬/.test(t)) return null;
+    var home = TT.roster.home(); if(!home) return null;
+    var G = TT.store.get(KEYG, null) || {}, K = (G.settings && Array.isArray(G.settings.gkinds) && G.settings.gkinds.length) ? G.settings.gkinds : GK0;
+    var kind = K.filter(function(k){ var w = k.replace(/👍/g, ""); return w && t.indexOf(w) >= 0; })[0] || (/폰|핸드폰/.test(t) ? K.filter(function(k){ return k.indexOf("휴대폰") >= 0; })[0] : null);
+    if(!kind) return null;
+    var S = home.students || [], who = null, m = t.match(/(\d{1,2}|[일이삼사오육칠팔구]?십[일이삼사오육칠팔구]?|[일이삼사오육칠팔구])\s*번/);
+    if(m){ var no = korNum(m[1]); who = S.filter(function(s){ return +s.no === no; })[0]; if(!who) return {err: no + "번 학생이 " + esc(home.name) + "에 없어요."}; }
+    else who = S.filter(function(s){ return s.name && t.indexOf(s.name) >= 0; })[0];
+    return who ? {who: who, home: home, kind: kind} : null;
+  }
+  function saveGd(c){
+    var G = TT.store.get(KEYG, null); if(!G || typeof G !== "object") return null;
+    G.gd = Array.isArray(G.gd) ? G.gd : []; var d = new Date();
+    G.gd.push({id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), sid: String(c.who.no), date: ymd(d), time: ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2), kind: c.kind, how: "개별", memo: "", grp: "", created: Date.now(), src: "ssambi"});
+    return TT.store.set(KEYG, G);
+  }
   function saveAtt(c){
     var G = TT.store.get(KEYG, null); if(!G || typeof G !== "object") return null;   // 출결을 한 번도 열지 않았으면(예전 자료 옮기기 전) 쓰지 않음
     G.att = G.att || {}; var td = ymd(new Date()), no = String(c.who.no);
@@ -253,7 +272,7 @@
   }
   var TOOLWORD = [
     [/회의\s*록|회의\s*기록/, "apps/voice/?k=mtg"], [/학부모\s*상담/, "apps/voice/?k=par"], [/상담\s*기록|말로\s*기록|기록\s*하기|녹음/, "apps/voice/"], [/관찰\s*기록|수업\s*관찰/, "apps/voice/?k=obs"],
-    [/결석\s*신고서|결석계/, "apps/tardy/?tab=report"], [/상담\s*일지/, "apps/tardy/?tab=counsel"], [/출결/, "apps/tardy/"]
+    [/결석\s*신고서|결석계/, "apps/tardy/?tab=report"], [/빠른\s*지도|지도\s*기록/, "apps/tardy/?tab=guide"], [/상담\s*일지/, "apps/tardy/?tab=counsel"], [/출결/, "apps/tardy/"]
   ];
   function toolCmd(t){
     for(var i = 0; i < TOOLWORD.length; i++) if(TOOLWORD[i][0].test(t)) return TOOLWORD[i][1];
@@ -270,6 +289,13 @@
     if(/^(오늘\s*)?브리핑|^오늘\s*(일정|할\s*일\s*알려|뭐\s*있)/.test(t)){ show("brief"); return; }
     var fm = t.match(/^(.+?)\s*(찾아\s*줘|찾아|검색해\s*줘|검색)$/) || t.match(/^(?:찾아\s*줘|찾아|검색)\s+(.+)$/);
     if(fm){ find(fm[1]); return; }
+    var gd = gdCmd(t);
+    if(gd && gd.err){ if(say) say.innerHTML = '<span class="er">' + gd.err + "</span>"; return; }
+    if(gd){
+      pend = function(){ var ok = saveGd(gd); if(ok === null){ close(); TT.ui.toast("🦉 출결을 처음 한 번 열어 준비해 주세요. 지금 열게요."); setTimeout(function(){ go("apps/tardy/?tab=guide"); }, 900); return; } close(); TT.ui.toast(ok ? "🦉 " + gd.who.no + "번 " + gd.kind + " 지도로 기록했어요" : "저장하지 못했어요."); };
+      show("confirm", {html: "<b>" + esc(gd.home.name) + " " + esc(gd.who.no) + "번 " + esc(gd.who.name) + "</b><br>오늘 <span class=\"ok\">" + esc(gd.kind) + " 지도</span>로 기록할까요?", yes: "지도 기록", note: "메모는 상담 › ⚡ 지도에서 길게 눌러 붙일 수 있어요."});
+      return;
+    }
     var a = attCmd(t);
     if(a && a.err){ if(say) say.innerHTML = '<span class="er">' + a.err + "</span>"; return; }
     if(a){

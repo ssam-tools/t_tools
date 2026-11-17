@@ -115,7 +115,10 @@
         + '<div class="sum">' + (att.length ? Object.keys(AK).filter(function(x){ return cnt[x]; }).map(function(x){ return '<span class="' + (x === "Lu" || x === "sick" ? "bad" : "") + '">' + AK[x] + " " + cnt[x] + "</span>"; }).join("") : '<span class="ok">기록된 결석·지각 없음</span>') + "</div>"
         + '<div class="ls">' + att.slice(0, 60).map(function(a){ return '<div class="r"><span class="d">' + md(a.d) + '</span><span class="a">' + AK[a.k] + '</span><span class="t">' + esc(a.r) + "</span></div>"; }).join("") + "</div>";
       var C = (G.counsel || []).filter(function(c){ return String(c.sid) === no; }).sort(function(a, b){ return a.date < b.date ? 1 : -1; }), t0 = TT.util.today().replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3");
+      var GM = t0.slice(0, 7), GD = (G.gd || []).filter(function(g){ return String(g.sid) === no && String(g.date).slice(0, 7) === GM; }), GC = {};   // 보완 2단계: 이번 달 빠른 지도
+      GD.forEach(function(g){ GC[g.kind] = (GC[g.kind] || 0) + 1; });
       $("bCns").innerHTML = '<h2>🗣️ 상담 <span class="n">' + C.length + '</span><a href="../tardy/?tab=counsel">' + TN("counsel", "상담 일지") + " →</a></h2>"
+        + (GD.length ? '<div class="sum"><span>⚡ 이번 달 지도 ' + GD.length + "회 (" + Object.keys(GC).map(function(k){ return esc(k) + " " + GC[k]; }).join(", ") + ")</span></div>" : "")
         + '<div class="ls">' + (C.length ? C.map(function(c){ var nx = c.next && !c.done ? ' <b class="' + (c.next <= t0 ? "no" : "") + '">→ 후속 ' + md(c.next) + "</b>" : c.done ? ' <span class="y">✔ 끝남</span>' : "";
           return '<div class="r"><span class="d">' + md(c.date) + '</span><span class="t">' + esc((c.content || c.trigger || "상담").replace(/\s+/g, " ").slice(0, 140)) + nx + "</span></div>"; }).join("") : '<div class="none">상담 기록이 없습니다.</div>') + "</div>";
     }else{
