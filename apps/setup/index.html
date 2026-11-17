@@ -378,6 +378,7 @@
     if(p1.length < 8) return err("비밀 문구는 8자 이상으로 해 주세요.");
     if(p1 !== p2) return err("두 비밀 문구가 서로 다릅니다.");
     var sc = {name: name, principal: $("mPrin").value.trim(), addr: $("mAddr").value.trim(), tel: $("mTel").value.trim(), comci: $("mComci").value.trim()};
+    var sc0 = TT.school.load(); ["neisA", "neisS", "neisKey"].forEach(function(k){ if(sc0[k]) sc[k] = sc0[k]; });   // 보완 3단계: 급식 연결도 함께
     TT.school.save(sc);                                                   // 담당자 기기에도 저장
     var body = {v: 1, made: new Date().toISOString(), school: sc}, has = ["school"];
     var r = rosterInfo(); if($("iRos").checked && r.n){ body.roster = r.cl.map(function(c){ return {name: c.name, grade: c.grade, cls: c.cls, students: c.students.map(function(s){ return {no: s.no, name: s.name}; })}; }); has.push("roster"); }
@@ -471,7 +472,7 @@
     var scope = document.querySelector("input[name=scope]:checked").value, home = $("lHome").value, done = [];
     /* 학교 정보 · 내 이름 · 내 교과 */
     var sc = {teacher: me, subject: $("lSubj").value.trim()};
-    if(what.school){ sc.name = D.school.name; sc.principal = D.school.principal; sc.addr = D.school.addr; sc.tel = D.school.tel; sc.comci = D.school.comci; }
+    if(what.school){ sc.name = D.school.name; sc.principal = D.school.principal; sc.addr = D.school.addr; sc.tel = D.school.tel; sc.comci = D.school.comci; ["neisA", "neisS", "neisKey"].forEach(function(k){ if(D.school[k]) sc[k] = D.school[k]; }); }
     TT.school.save(sc);
     /* 학생 명렬: 같은 학년·반은 명단만 새로, 나머지 반은 그대로 (학생 기록·메모는 학년-반-번호로 이어짐) */
     if(D.roster && D.roster.length){

@@ -185,6 +185,7 @@
     var att = B.att;
     h += '<div class="sec">🌱 우리 반 · 종례 · 할 일</div><ul>'
       + (att ? '<li><a href="apps/tardy/"><span>🧭</span><span class="t">오늘 출결 (' + esc(att.name || "우리 반") + ")</span><span class=\"n\">" + (att.abs || att.late ? "결석 " + att.abs + " · 지각 " + att.late : "모두 출석") + "</span></a></li>" : "")
+      + (window.TTMeal && TTMeal.todayText() ? '<li><a href="#" onclick="TTMeal.open();return false"><span>🍚</span><span class="t">' + esc(TTMeal.todayText()) + "</span></a></li>" : "")
       + '<li><span>📣</span><span class="t">' + (B.bag.length ? esc(B.bag.slice(0, 2).join(" · ")) : "종례 바구니가 비어 있어요") + '</span>' + (B.bag.length ? '<span class="n">' + B.bag.length + "건</span>" : "") + "</li>"
       + '<li><span>📝</span><span class="t">' + (B.todoDue.length ? "오늘까지: " + esc(B.todoDue.slice(0, 2).join(" · ")) : "오늘까지 할 일 없음") + '</span><span class="n' + (B.todoDue.length ? " hi" : "") + '">' + B.todo + "건</span></li></ul>";
     return head("☀️ 오늘 브리핑", true) + h
@@ -352,6 +353,7 @@
     }
     s.push(B.items.length ? "챙길 일이 " + B.items.length + "가지 있습니다. " + B.items.slice(0, 3).map(function(x){ return x.t + " " + x.n; }).join(", ") + "." : "급한 일은 없습니다.");
     if(B.att) s.push(B.att.abs || B.att.late ? "우리 반 오늘 결석 " + B.att.abs + "명, 지각 " + B.att.late + "명입니다." : "우리 반은 모두 출석입니다.");
+    if(window.TTMeal && TTMeal.todayText()) s.push(TTMeal.todayText().replace(":", "은") + "입니다.");
     if(B.bag.length) s.push("종례에 전할 말이 " + B.bag.length + "건 있습니다.");
     if(B.todoDue.length) s.push("오늘까지 할 일이 " + B.todoDue.length + "건 있습니다.");
     try{ speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(s.join(" ").replace(/D-(\d+)/g, "디데이 $1일")); u.lang = "ko-KR"; u.rate = 1.05; speechSynthesis.speak(u); }catch(e){}

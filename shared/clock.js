@@ -25,7 +25,7 @@
     return null;
   }
   var CSS = ""
-    + ".hclock{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:2px;border:0;background:none;cursor:pointer;padding:2px 8px;margin-left:auto;margin-right:clamp(6px,1.2vw,16px);border-radius:14px;font-family:var(--font);color:var(--ink);line-height:1;-webkit-tap-highlight-color:transparent}"
+    + ".hclock{flex:none;white-space:nowrap;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:2px;border:0;background:none;cursor:pointer;padding:2px 8px;margin-left:auto;margin-right:clamp(6px,1.2vw,16px);border-radius:14px;font-family:var(--font);color:var(--ink);line-height:1;-webkit-tap-highlight-color:transparent}"
     + ".hclock:hover{background:var(--accent-soft)}"
     + ".hclock .hc1{display:flex;align-items:baseline;gap:6px}"
     + ".hclock .ap{font-size:clamp(14px,2.2vh,19px);font-weight:800;color:var(--sub)}"
@@ -37,6 +37,7 @@
     + ".hclock .hbar i{display:block;height:100%;background:var(--t-now,#2f6fb5);border-radius:9px}"
     + "@media (max-width:760px){.hclock{order:2;margin:0 4px 0 auto;padding:0 4px}.hclock .tm{font-size:30px}.hclock .ap{font-size:13px}.hclock .hbar,.hclock .sc{display:none}.hclock .hc2{font-size:12px}}"
     + "#tdLesson .tdh .tck{display:none}"
+    + "@media (min-width:761px){header{flex-wrap:nowrap!important}header .hl{flex:1 1 auto;min-width:0}header .lead{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}header .bar{flex:none}}"
     + ".fclk{position:fixed;inset:0;z-index:200;background:var(--bg,#f4f6f9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;font-family:var(--font);color:var(--ink)}"
     + ".fclk[hidden]{display:none}"
     + ".fclk .ft{display:flex;align-items:baseline;gap:1.5vw;line-height:1}"

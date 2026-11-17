@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용).
      예외: 첫 화면의 "이번 주 업무"가 학교 업무판(구글 앱스 스크립트)을 읽어 오는 주소 두 곳. 학생 자료는 보내지 않습니다. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://open.neis.go.kr; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2f6fb5">
 <title>쌤 노트</title>
@@ -606,6 +606,7 @@
 <script src="shared/fill.js"></script>
 <script src="shared/today.js"></script>
 <script src="shared/clock.js"></script>
+<script src="shared/meal.js"></script>
 <script src="shared/libd.js"></script>
 <script src="shared/voice.js"></script>
 <script src="shared/ssambi.js"></script>
