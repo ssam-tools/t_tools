@@ -481,14 +481,16 @@ function recoHtml(st){
 }
 
 /* =============== 렌더링 =============== */
-const TABS=[['room','🏫 우리 반 한눈에'],['stu','🧑‍🎓 학생 한 명'],['cmp','⚖️ 학교 비교'],['set','⚙ 자료·설정']];
-const SUBTABS=[['input','📥 성적 입력'],['schools','🏫 학교 정보·선택과목'],['class','📋 학급 표'],['analysis','📈 자세한 분석'],['reco','🎯 추천 표'],['settings','⚙ 설정·백업']];
-const isSub=t=>SUBTABS.some(x=>x[0]===t);
-function renderNav(){const cur=isSub(S.tab)?'set':S.tab;$('#nav').innerHTML=TABS.map(([k,l])=>`<button class="${cur===k?'on':''}" data-tab="${k}">${l}</button>`).join('');$('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab==='set'?(S.lastSub||'input'):b.dataset.tab;save();render()});
-  const sb=$('#sub');if(sb){sb.innerHTML=isSub(S.tab)?'<div class="subnav">'+SUBTABS.map(([k,l])=>`<button class="${S.tab===k?'on':''}" data-st="${k}">${l}</button>`).join('')+'</div>':'';sb.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{S.tab=b.dataset.st;S.lastSub=S.tab;save();render()});}}
+/* PLAN_다듬기 3단계: 탭 한 줄. 학급 표·자세한 분석·추천 표는 '우리 반 한눈에' 안의 보기 바꾸기 */
+const TABS=[['room','🏫 우리 반 한눈에'],['stu','🧑‍🎓 학생 한 명'],['cmp','⚖️ 학교 비교'],['input','📥 성적 넣기'],['schools','🏫 학교 정보'],['settings','⚙ 설정·백업']];
+const VIEWS=[['room','🗂 카드'],['class','📋 학급 표'],['analysis','📈 자세한 분석'],['reco','🎯 추천 표']];
+const isView=t=>VIEWS.some(x=>x[0]===t);
+const isSub=t=>['input','schools','settings','class','analysis','reco'].includes(t);
+function renderNav(){const cur=isView(S.tab)?'room':S.tab;$('#nav').innerHTML=TABS.map(([k,l])=>`<button class="${cur===k?'on':''}" data-tab="${k}">${l}</button>`).join('');$('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab==='room'?(S.lastView||'room'):b.dataset.tab;save();render()});
+  const sb=$('#sub');if(sb){sb.innerHTML=isView(S.tab)?'<div class="subnav vsw"><span class="vl">보기</span>'+VIEWS.map(([k,l])=>`<button class="${S.tab===k?'on':''}" data-st="${k}">${l}</button>`).join('')+'</div>':'';sb.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{S.tab=b.dataset.st;S.lastView=S.tab;save();render()});}}
 function curStudent(){return S.students.find(s=>s.id===S.selected)||null}
 function studentPicker(){
-  if(!S.students.length)return '<div class="card"><p>학생이 없습니다. ① 입력 탭에서 NEIS 일람표를 불러오거나 학생을 추가해 주세요.</p></div>';
+  if(!S.students.length)return '<div class="card"><p>학생이 없습니다. 📥 성적 넣기 탭에서 NEIS 일람표를 불러오거나 학생을 추가해 주세요.</p></div>';
   return `<div class="card row"><label>학생 선택<select id="pick">${S.students.slice().sort((a,b)=>a.cls-b.cls||a.no-b.no).map(s=>`<option value="${s.id}" ${s.id===S.selected?'selected':''}>${esc(dispName(s))}</option>`).join('')}</select></label></div>`;
 }
 function bindPicker(){const p=$('#pick');if(p)p.onchange=()=>{S.selected=p.value;save();render()}}
@@ -501,7 +503,7 @@ function render(){
   if(S.tab==='schools'){$('#app').insertAdjacentHTML('afterbegin',bulkCard());bindBulk();}
   if(S.tab==='settings'){$('#app').insertAdjacentHTML('beforeend',extraSettings());bindExtra();}
 }
-function privacyBar(){return `<div class="priv">🔒 학생 정보는 <b>이 브라우저(이 기기)</b>에만 저장되며 외부로 전송되지 않습니다. 정확한 집 주소는 입력하지 않고 거주 동·읍·면만 선택합니다. 명렬표에 있는 학생은 이름을 따로 저장하지 않고 명렬표 이름을 보여 줍니다(없으면 가린 이름 저장). 공용 PC에서는 사용 후 ⑥에서 전체 삭제를 권장합니다.</div>`}
+function privacyBar(){return `<div class="priv">🔒 학생 정보는 <b>이 브라우저(이 기기)</b>에만 저장되며 외부로 전송되지 않습니다. 정확한 집 주소는 입력하지 않고 거주 동·읍·면만 선택합니다. 명렬표에 있는 학생은 이름을 따로 저장하지 않고 명렬표 이름을 보여 줍니다(없으면 가린 이름 저장). 공용 PC에서는 사용 후 ⚙ 설정·백업에서 전체 삭제를 권장합니다.</div>`}
 
 /* ---- ① 입력 ---- */
 let importState=null;
@@ -511,7 +513,7 @@ function viewInput(){
   h+=quickCard();
   h+=`<div class="card"><h2>NEIS 일람표 불러오기 (시험별 누적)</h2>
   <p class="muted">NEIS → 성적 → 학급별일람표조회(전체교과목)에서 엑셀로 저장한 파일을 올리거나, 표를 복사해 붙여넣기 하세요. 같은 시험을 다시 불러오면 해당 시험 점수가 갱신됩니다.</p>
-  <div class="row"><label>반<input type="number" id="impCls" value="${st?st.cls:(S.qCls||1)}" min="1" max="30"></label>
+  <div class="row"><label>반${clsField("impCls",st?st.cls:(S.qCls||1))}</label>
   <label>시험<select id="impExam">${EXAM_PRESETS.map(e=>`<option>${e}</option>`).join('')}<option value="__c">직접 입력…</option></select></label>
   <label>직접 입력 시험명<input type="text" id="impCustom" placeholder="예: 3학년 1학기 수행평가"></label>
   <label>파일(xlsx·csv)<input type="file" id="impFile" accept=".xlsx,.xls,.csv,.tsv,.txt,.html,.htm"></label></div>
@@ -622,14 +624,18 @@ function loadDemo(){
 
 /* ---- 빠른 입력 ---- */
 function quickExamList(){const set=[...EXAM_PRESETS];S.exams.forEach(e=>{if(!set.includes(e))set.push(e)});if(!set.includes(S.qExam))set.push(S.qExam);return set}
+/* 명렬표의 우리 반 학년 반 목록 [{cls, n}] — 반 고르기·줄 수에 씀 */
+function rosterClasses(){try{const d=TT.roster.load(),h=TT.roster.home(d),g=h&&h.grade!=null?h.grade:3;return d.classes.filter(c=>c.grade===g&&c.cls!=null&&c.students.length).map(c=>({cls:c.cls,n:c.students.length})).sort((a,b)=>a.cls-b.cls)}catch(e){return []}}
+function clsField(id,v){const L=rosterClasses();if(!L.length)return `<input type="number" id="${id}" min="1" max="30" value="${v}">`;if(!L.some(c=>+c.cls===+v))L.push({cls:+v,n:0});return `<select id="${id}">${L.map(c=>`<option value="${c.cls}" ${+c.cls===+v?'selected':''}>${c.cls}반${c.n?' ('+c.n+'명)':''}</option>`).join('')}</select>`}
 function quickCard(){
   const maxNo=Math.max(0,...S.students.filter(s=>String(s.cls)===String(S.qCls)).map(s=>s.no));
-  const rows=Math.max(S.qRows||30,maxNo);
+  const RC=rosterClasses(),rcN=(RC.find(c=>+c.cls===+S.qCls)||{}).n||0;   // PLAN_다듬기 3단계: 명렬표 반·인원을 그대로
+  const rows=Math.max(rcN||S.qRows||30,maxNo,rcN&&S.qRows&&S.qRows>30?S.qRows:0);
   const subs=S.qSubjects;
   const rm=rankMap(S.qExam);
   let h=`<div class="card"><h2>빠른 입력: 번호·성명·성적</h2>
   <p class="muted">번호는 1번부터 자동으로 매겨집니다. 성명 칸부터 입력하고 Enter를 누르면 아래 칸으로 내려갑니다. 엑셀·NEIS에서 성명이나 점수 열을 복사해 칸에 붙여넣으면 아래로 채워집니다. 희망 직업·거주 구역 같은 상세 정보는 나중에 필요할 때만 입력하세요.</p>
-  <div class="row"><label>반<input type="number" id="qCls" min="1" max="30" value="${S.qCls}"></label>
+  <div class="row"><label>반${clsField("qCls",S.qCls)}</label>
   <label>시험<select id="qExam">${quickExamList().map(e=>`<option ${e===S.qExam?'selected':''}>${esc(e)}</option>`).join('')}</select></label>
   <label>시험명 직접 추가<input type="text" id="qNewExam" placeholder="예: 3학년 2학기 기말"></label><button class="btn sec sm" id="qAddExam">시험 추가</button>
   <label>교과 추가<input type="text" id="qNewSub" placeholder="예: 도덕"></label><button class="btn sec sm" id="qAddSub">교과 추가</button></div>
@@ -638,7 +644,7 @@ function quickCard(){
     const st=S.students.find(x=>String(x.cls)===String(S.qCls)&&x.no===r);
     const sc=(st&&st.scores[S.qExam])||{};
     const o=st&&rm[st.id];
-    h+=`<tr><td>${r}</td><td><input type="text" data-q="name" data-r="${r}" value="${esc(st?st.name:'')}"></td>${subs.map(s=>`<td><input type="number" min="0" max="100" step="0.1" data-q="s" data-r="${r}" data-s="${esc(s)}" value="${sc[s]??''}"></td>`).join('')}<td data-rk="avg" data-r="${r}">${o?f1(o.v):''}</td><td data-rk="c" data-r="${r}">${o?o.cr+'/'+o.cn:''}</td><td data-rk="a" data-r="${r}">${o?o.ar+'/'+o.an:''}</td></tr>`;
+    h+=`<tr><td>${r}</td><td><input type="text" data-q="name" data-r="${r}" value="${esc(st?st.name:'')}" placeholder="${esc(st?'':rosterName(S.qCls,r))}"></td>${subs.map(s=>`<td><input type="number" min="0" max="100" step="0.1" data-q="s" data-r="${r}" data-s="${esc(s)}" value="${sc[s]??''}"></td>`).join('')}<td data-rk="avg" data-r="${r}">${o?f1(o.v):''}</td><td data-rk="c" data-r="${r}">${o?o.cr+'/'+o.cn:''}</td><td data-rk="a" data-r="${r}">${o?o.ar+'/'+o.an:''}</td></tr>`;
   }
   h+=`</table></div><p style="margin-top:8px"><button class="btn sec sm" id="qMore">+ 5줄 더 보기</button> <span class="muted">칸을 벗어나면 자동 저장됩니다. 순위는 선택한 시험의 주요교과 평균 기준이며, 전체 순위는 입력된 모든 반 학생 중 순위입니다. 성명은 저장 시 가운데 글자가 가려집니다.</span></p></div>`;
   return h;
@@ -959,7 +965,7 @@ const CSS2=`
 .scard h4{margin:0 0 4px;font-size:16px;display:flex;justify-content:space-between;gap:6px}
 .scard .k{color:var(--sub)}.scard.sel{border:2px solid var(--pri)}
 .cmode main{font-size:17px}.cmode .rcard h4{font-size:21px}.cmode .chip2{font-size:15px}.cmode .hide-c{display:none!important}
-.subnav{display:flex;gap:4px;flex-wrap:wrap;margin:0 0 8px}.subnav button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font:inherit;font-size:13px;cursor:pointer}.subnav button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.subnav{display:flex;gap:4px;flex-wrap:wrap;margin:0 0 8px;align-items:center}.subnav .vl{font-size:12.5px;font-weight:800;color:var(--sub);margin-right:2px}.subnav button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font:inherit;font-size:13px;cursor:pointer}.subnav button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
 .drop{border:2px dashed var(--pri);border-radius:14px;padding:18px;text-align:center;background:#f4f8fe;cursor:pointer}
 .drop.over{background:#e2ecfb}
 .modal2{position:fixed;inset:0;background:rgba(10,20,30,.45);z-index:50;display:flex;align-items:center;justify-content:center;padding:12px}
