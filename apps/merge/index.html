@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>파일 합치기 · 쌤 노트</title>
+<!--
+  📎 파일 합치기 (PLAN_통일 5단계) — 같은 양식의 엑셀·한글 파일 여러 개를 이 기기 안에서 하나로 합칩니다. 파일은 어디로도 보내지 않습니다.
+  · 엑셀(.xlsx·.xls 표·.csv): ① 한 시트로 이어 붙이기(첫 줄 제목은 한 번만, 맨 앞에 '파일' 칸) ② 파일마다 시트 하나. 값만 합칩니다(서식·수식 결과값).
+  · 한글(.hwpx): 첫 파일을 바탕으로 다른 파일의 본문을 새 쪽부터 이어 붙입니다. 같은 양식(같은 틀에서 만든 파일)일 때 모양이 그대로입니다. 그림은 첫 파일 것만 남습니다.
+  · 서식까지 그대로 합쳐야 하면 ⋯ → 윈도우 프로그램(FileMerge.exe)을 내려받아 씁니다.
+-->
+<style>
+  main.panel{flex:1;min-height:0;display:grid;grid-template-columns:minmax(280px,380px) minmax(0,1fr);gap:clamp(10px,2vw,18px)}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:0}
+  .box h2{font-size:15px;font-weight:800}
+  .drop{border:2px dashed #b9c9dc;border-radius:14px;padding:18px 12px;text-align:center;color:var(--sub);font-size:14px;cursor:pointer;line-height:1.6}
+  .drop.on{border-color:var(--accent);background:var(--accent-soft)}
+  .drop b{color:var(--ink);font-size:15px}
+  #list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:4px;counter-reset:f}
+  .it{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:5px 6px 5px 10px;font-size:13.5px;background:var(--t-field,#fbfcfd)}
+  .it::before{counter-increment:f;content:counter(f);font-weight:800;color:var(--sub);min-width:18px}
+  .it span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .it small{color:var(--sub)}
+  .it button{border:0;background:transparent;font:inherit;font-size:14px;cursor:pointer;padding:3px 6px;border-radius:6px;color:var(--sub)}
+  .it button:hover{background:var(--accent-soft);color:var(--accent)}
+  .opt{display:flex;flex-direction:column;gap:6px;font-size:14px}
+  .opt label{display:flex;gap:8px;align-items:flex-start;cursor:pointer;line-height:1.4}
+  .opt small{color:var(--sub)}
+  .go{display:flex;gap:8px;flex-wrap:wrap}
+  #prev{flex:1;min-height:0;overflow:auto;border:1px solid var(--line);border-radius:10px}
+  #prev table{border-collapse:collapse;font-size:12.5px;min-width:100%}
+  #prev td,#prev th{border:1px solid var(--line);padding:3px 6px;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+  #prev th{background:var(--bg);position:sticky;top:0}
+  .msg{font-size:13.5px;line-height:1.6;color:var(--sub)}
+  .msg b{color:var(--ink)}
+  .warn{color:var(--danger);font-weight:700}
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;color:var(--sub);font-size:14.5px;line-height:1.7}
+  .empty .big{font-size:44px}
+  @media (max-width:760px){ main.panel{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)} #list{max-height:24vh} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>📎 파일 합치기</h1>
+  </div>
+  <div class="bar">
+    <div class="seg" id="kind" role="group" aria-label="파일 종류">
+      <button type="button" data-k="x" aria-pressed="true">📊 엑셀</button>
+      <button type="button" data-k="h" aria-pressed="false">📝 한글(hwpx)</button>
+    </div>
+    <details class="more">
+      <summary aria-label="더 보기">⋯</summary>
+      <div class="menu">
+        <a href="../../downloads/FileMerge.exe" download>💾 윈도우 프로그램 내려받기 (서식까지 그대로)</a>
+        <button type="button" id="clr" class="danger">목록 비우기</button>
+      </div>
+    </details>
+  </div>
+</header>
+<main class="panel">
+  <section class="box">
+    <label class="drop" id="drop"><input type="file" id="f" multiple hidden>
+      <b>📂 합칠 파일들을 끌어다 놓기</b><br><span id="dropSub">엑셀 .xlsx · .csv · 나이스 .xls(표)</span><br>또는 눌러서 고르기 (Ctrl·Shift로 여러 개)</label>
+    <div id="list" aria-label="합칠 파일 순서"></div>
+    <div class="opt" id="opt"></div>
+    <div class="go"><button type="button" class="btn primary" id="run" disabled>📎 합쳐서 내려받기</button><span class="msg" id="cnt"></span></div>
+  </section>
+  <section class="box" id="right">
+    <div class="empty" id="empty"><div class="big">📎</div><div><b>같은 양식 파일 여러 개를 하나로</b><br>반별로 받은 명단·조사표, 선생님들이 보낸 한글 서식을 한 번에 합칩니다.<br>파일은 이 기기 안에서만 다루고 어디로도 보내지 않습니다.</div></div>
+    <h2 id="pvT" hidden>미리 보기</h2>
+    <div id="prev" hidden></div>
+    <div class="msg" id="note"></div>
+  </section>
+</main>
+<script src="../../shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+  var KIND = "x", FILES = [];   // {file, rows?}
+  var OPTK = "tt_merge_v1", opt = TT.store.get(OPTK, {mode: "one", head: true, name: true});
+
+  /* ---------- 종류 고르기 ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll("#kind button"), function(b){
+    b.onclick = function(){ if(KIND === b.dataset.k) return; KIND = b.dataset.k; FILES = []; draw(); };
+  });
+  $("clr").onclick = function(){ this.closest("details").open = false; FILES = []; draw(); };
+  var drop = $("drop");
+  drop.addEventListener("change", function(e){ if(e.target.id === "f"){ add(e.target.files); e.target.value = ""; } });
+  drop.addEventListener("dragover", function(e){ e.preventDefault(); drop.classList.add("on"); });
+  drop.addEventListener("dragleave", function(){ drop.classList.remove("on"); });
+  drop.addEventListener("drop", function(e){ e.preventDefault(); drop.classList.remove("on"); add(e.dataTransfer.files); });
+  function okFile(f){ return KIND === "x" ? /\.(xlsx|xls|csv|txt)$/i.test(f.name) : /\.hwpx$/i.test(f.name); }
+  function add(list){
+    var bad = 0, hwp = 0;
+    Array.prototype.forEach.call(list || [], function(f){
+      if(!okFile(f)){ bad++; if(/\.hwp$/i.test(f.name)) hwp++; return; }
+      if(FILES.some(function(x){ return x.file.name === f.name && x.file.size === f.size; })) return;
+      FILES.push({file: f});
+    });
+    FILES.sort(function(a, b){ return a.file.name.localeCompare(b.file.name, "ko", {numeric: true}); });
+    if(hwp) TT.ui.toast("예전 .hwp 파일은 한글에서 '다른 이름으로 저장 → HWPX'로 바꾼 뒤 넣어 주세요.");
+    else if(bad) TT.ui.toast(bad + "개는 " + (KIND === "x" ? "엑셀" : "한글(hwpx)") + " 파일이 아니라서 뺐어요. 위에서 종류를 바꿔 보세요.");
+    draw();
+  }
+  function draw(){
+    Array.prototype.forEach.call(document.querySelectorAll("#kind button"), function(b){ b.setAttribute("aria-pressed", String(b.dataset.k === KIND)); });
+    $("dropSub").textContent = KIND === "x" ? "엑셀 .xlsx · .csv · 나이스 .xls(표)" : "한글 .hwpx (예전 .hwp는 HWPX로 저장해서)";
+    $("f").accept = KIND === "x" ? ".xlsx,.xls,.csv,.txt" : ".hwpx";
+    $("list").innerHTML = FILES.map(function(x, i){
+      return '<div class="it"><span title="' + esc(x.file.name) + '">' + esc(x.file.name) + '</span><small>' + Math.max(1, Math.round(x.file.size / 1024)) + 'KB</small>'
+        + '<button type="button" data-up="' + i + '" title="위로" aria-label="위로">↑</button><button type="button" data-dn="' + i + '" title="아래로" aria-label="아래로">↓</button><button type="button" data-rm="' + i + '" title="빼기" aria-label="빼기">✕</button></div>';
+    }).join("");
+    $("opt").innerHTML = KIND === "x"
+      ? '<label><input type="radio" name="md" value="one"' + (opt.mode === "one" ? " checked" : "") + '><span><b>한 시트로 이어 붙이기</b><br><small>반별 명단·조사표를 한 표로</small></span></label>'
+        + '<label><input type="radio" name="md" value="each"' + (opt.mode === "each" ? " checked" : "") + '><span><b>파일마다 시트 하나</b><br><small>시트 이름 = 파일 이름</small></span></label>'
+        + '<label><input type="checkbox" id="oh"' + (opt.head ? " checked" : "") + '><span>첫 줄은 제목 줄 (두 번째 파일부터 빼기)</span></label>'
+        + '<label><input type="checkbox" id="on"' + (opt.name ? " checked" : "") + '><span>맨 앞에 \'파일\' 칸 넣기</span></label>'
+      : '<div class="msg">첫 파일(1번)의 모양을 바탕으로, 2번부터는 <b>새 쪽에서</b> 본문을 이어 붙입니다. 같은 틀에서 만든 파일이면 모양이 그대로입니다.</div>';
+    $("cnt").textContent = FILES.length ? FILES.length + "개" : "";
+    $("run").disabled = FILES.length < 2;
+    preview();
+  }
+  $("list").addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    var i;
+    if(b.dataset.up != null){ i = +b.dataset.up; if(i > 0) FILES.splice(i - 1, 0, FILES.splice(i, 1)[0]); }
+    else if(b.dataset.dn != null){ i = +b.dataset.dn; if(i < FILES.length - 1) FILES.splice(i + 1, 0, FILES.splice(i, 1)[0]); }
+    else if(b.dataset.rm != null){ FILES.splice(+b.dataset.rm, 1); }
+    draw();
+  });
+  $("opt").addEventListener("change", function(){
+    var r = document.querySelector('input[name=md]:checked'); if(r) opt.mode = r.value;
+    if($("oh")) opt.head = $("oh").checked; if($("on")) opt.name = $("on").checked;
+    TT.store.set(OPTK, opt); preview();
+  });
+
+  /* ---------- 엑셀 ---------- */
+  function rowsOf(x){ if(x.rows) return Promise.resolve(x.rows); return TT.file.toRows(x.file, {firstSheet: true}).then(function(r){ x.rows = (r || []).filter(function(row){ return row.some(function(v){ return String(v).trim() !== ""; }); }); return x.rows; }); }
+  function base(n){ return n.replace(/\.[^.]+$/, ""); }
+  function sameHead(a, b){ return a && b && a.map(function(v){ return String(v).trim(); }).join("\t") === b.map(function(v){ return String(v).trim(); }).join("\t"); }
+  function mergedOne(){
+    var out = [], head = null, diff = 0;
+    FILES.forEach(function(x, i){
+      var R = x.rows || [];
+      R.forEach(function(row, k){
+        if(opt.head && k === 0){
+          if(i === 0){ head = row; out.push((opt.name ? ["파일"] : []).concat(row)); }
+          else if(!sameHead(head, row)) diff++;
+          return;
+        }
+        out.push((opt.name ? [base(x.file.name)] : []).concat(row));
+      });
+    });
+    return {rows: out, diff: diff};
+  }
+  var pvT = 0;
+  function preview(){
+    var my = ++pvT, has = FILES.length > 0;
+    $("empty").hidden = has; $("pvT").hidden = !has; $("prev").hidden = !has; $("note").innerHTML = "";
+    if(!has) return;
+    if(KIND === "h"){ $("pvT").textContent = "합칠 순서"; $("prev").innerHTML = '<div class="msg" style="padding:10px">' + FILES.map(function(x, i){ return (i + 1) + ". " + esc(x.file.name) + (i ? " — 새 쪽부터" : " — 바탕(쪽 모양·글자 모양)"); }).join("<br>") + "</div>"; return; }
+    $("prev").innerHTML = '<div class="msg" style="padding:10px">읽는 중…</div>';
+    Promise.all(FILES.map(rowsOf)).then(function(){
+      if(my !== pvT) return;
+      var total = 0; FILES.forEach(function(x){ total += Math.max(0, (x.rows || []).length - (opt.head ? 1 : 0)); });
+      if(opt.mode === "one"){
+        var m = mergedOne(), R = m.rows, show = R.slice(0, 60);
+        $("pvT").textContent = "미리 보기 · 한 시트 " + Math.max(0, R.length - (opt.head ? 1 : 0)) + "줄";
+        $("prev").innerHTML = "<table>" + show.map(function(r, k){ var t = k === 0 && opt.head ? "th" : "td"; return "<tr>" + r.map(function(v){ return "<" + t + ">" + esc(v) + "</" + t + ">"; }).join("") + "</tr>"; }).join("") + "</table>";
+        $("note").innerHTML = (R.length > 60 ? "앞의 60줄만 보여 줍니다. " : "") + (m.diff ? '<span class="warn">⚠️ ' + m.diff + "개 파일은 첫 줄(제목)이 1번 파일과 달라요. 같은 양식인지 확인해 주세요.</span>" : "");
+      } else {
+        $("pvT").textContent = "미리 보기 · 시트 " + FILES.length + "개";
+        $("prev").innerHTML = '<table><tr><th>시트(파일)</th><th>줄 수</th><th>첫 줄</th></tr>' + FILES.map(function(x){ var r = x.rows || []; return "<tr><td>" + esc(sheetName(base(x.file.name), [])) + "</td><td>" + r.length + "</td><td>" + esc((r[0] || []).slice(0, 6).join(" · ")) + "</td></tr>"; }).join("") + "</table>";
+      }
+      $("note").innerHTML += (total ? "" : " 읽을 내용이 없어요.") + ' <span>값만 합칩니다(수식은 결과값). 서식까지 그대로 필요하면 ⋯ → 윈도우 프로그램.</span>';
+    }).catch(function(e){ if(my === pvT) $("prev").innerHTML = '<div class="msg warn" style="padding:10px">' + esc(e && e.message || e) + "</div>"; });
+  }
+
+  /* xlsx 쓰기 (값만, 글자/숫자) */
+  function sheetName(n, used){ var s = String(n).replace(/[\\\/\?\*\[\]:]/g, " ").slice(0, 31).trim() || "시트"; var k = s, i = 2; while(used.indexOf(k) >= 0){ k = s.slice(0, 28) + "(" + i++ + ")"; } return k; }
+  function xe(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ""); }
+  function col(n){ var s = ""; n++; while(n > 0){ var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
+  function sheetXml(rows, boldFirst){
+    var x = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
+    if(boldFirst) x += '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>';
+    x += "<sheetData>";
+    rows.forEach(function(r, i){
+      x += '<row r="' + (i + 1) + '">';
+      r.forEach(function(v, j){
+        v = v == null ? "" : String(v); if(v === "") return;
+        var ref = col(j) + (i + 1), st = boldFirst && i === 0 ? ' s="1"' : "";
+        if(/^-?(0|[1-9]\d{0,14})(\.\d+)?$/.test(v)) x += '<c r="' + ref + '"' + st + "><v>" + v + "</v></c>";
+        else x += '<c r="' + ref + '"' + st + ' t="inlineStr"><is><t xml:space="preserve">' + xe(v) + "</t></is></c>";
+      });
+      x += "</row>";
+    });
+    return x + "</sheetData></worksheet>";
+  }
+  function xlsx(sheets){   // [{name, rows, head}]
+    var enc = new TextEncoder(), F = [];
+    function put(n, s){ F.push({name: n, data: enc.encode(s)}); }
+    put("[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+      + sheets.map(function(s, i){ return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'; }).join("") + "</Types>");
+    put("_rels/.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+    put("xl/workbook.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'
+      + sheets.map(function(s, i){ return '<sheet name="' + xe(s.name) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join("") + "</sheets></workbook>");
+    put("xl/_rels/workbook.xml.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+      + sheets.map(function(s, i){ return '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>'; }).join("")
+      + '<Relationship Id="rId' + (sheets.length + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
+    put("xl/styles.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="맑은 고딕"/></font><font><b/><sz val="11"/><name val="맑은 고딕"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>');
+    sheets.forEach(function(s, i){ put("xl/worksheets/sheet" + (i + 1) + ".xml", sheetXml(s.rows, s.head)); });
+    return TT.file.zip(F);
+  }
+
+  /* ---------- 한글 hwpx ---------- */
+  async function inflate(u8){ var st = new Blob([u8]).stream().pipeThrough(new DecompressionStream("deflate-raw")); return new Uint8Array(await new Response(st).arrayBuffer()); }
+  async function unzip(file){
+    var buf = await file.arrayBuffer(), u8 = new Uint8Array(buf), dv = new DataView(buf), i = u8.length - 22, stop = Math.max(0, u8.length - 65557);
+    while(i >= stop && dv.getUint32(i, true) !== 0x06054b50) i--;
+    if(i < stop) throw new Error(file.name + ": 한글(hwpx) 파일이 아니거나 손상된 파일입니다.");
+    var cnt = dv.getUint16(i + 10, true), p = dv.getUint32(i + 16, true), out = [];
+    for(var k = 0; k < cnt; k++){
+      if(dv.getUint32(p, true) !== 0x02014b50) break;
+      var method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true), lho = dv.getUint32(p + 42, true);
+      var name = new TextDecoder("utf-8").decode(u8.subarray(p + 46, p + 46 + nlen));
+      var start = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true), raw = u8.subarray(start, start + csize);
+      out.push({name: name, data: method === 0 ? raw.slice() : await inflate(raw)});
+      p += 46 + nlen + elen + clen;
+    }
+    return out;
+  }
+  function body(xml){   // <hs:sec ...> 안쪽 문단들
+    var a = xml.indexOf(">", xml.search(/<hs:sec[\s>]/)) + 1, b = xml.lastIndexOf("</hs:sec>");
+    if(a <= 0 || b < 0) throw new Error("한글 본문을 찾지 못했습니다.");
+    return {head: xml.slice(0, a), inner: xml.slice(a, b), tail: xml.slice(b)};
+  }
+  function strip(inner){   // 덧붙이는 파일: 구역 설정(용지·머리말 등)은 빼고, 첫 문단을 새 쪽으로
+    inner = inner.replace(/<hp:secPr[\s\S]*?<\/hp:secPr>/g, "").replace(/<hp:ctrl>\s*<hp:colPr[^>]*\/>\s*<\/hp:ctrl>/g, "");
+    return inner.replace(/<hp:p\b([^>]*)>/, function(m, at){ return "<hp:p" + (/pageBreak="/.test(at) ? at.replace(/pageBreak="[^"]*"/, 'pageBreak="1"') : at + ' pageBreak="1"') + ">"; });
+  }
+  async function hwpx(){
+    var dec = new TextDecoder("utf-8"), enc = new TextEncoder(), first = await unzip(FILES[0].file), pics = 0;
+    var sec = first.filter(function(e){ return /^Contents\/section\d+\.xml$/i.test(e.name); }).sort(function(a, b){ return a.name.localeCompare(b.name, "en", {numeric: true}); });
+    if(!sec.length) throw new Error(FILES[0].file.name + ": 한글 본문(section)을 찾지 못했습니다.");
+    var last = sec[sec.length - 1], B = body(dec.decode(last.data)), add = "";
+    for(var i = 1; i < FILES.length; i++){
+      var z = await unzip(FILES[i].file);
+      z.filter(function(e){ return /^Contents\/section\d+\.xml$/i.test(e.name); }).sort(function(a, b){ return a.name.localeCompare(b.name, "en", {numeric: true}); }).forEach(function(e, k){
+        var inner = body(dec.decode(e.data)).inner;
+        if(/<hp:pic\b|binaryItemIDRef=/.test(inner)){ pics++; inner = inner.replace(/<hp:pic\b[\s\S]*?<\/hp:pic>/g, ""); }
+        add += k === 0 ? strip(inner) : strip(inner);
+      });
+    }
+    last.data = enc.encode(B.head + B.inner + add + B.tail);
+    first.forEach(function(e){ if(e.name === "Preview/PrvText.txt") e.data = enc.encode(""); });
+    return {blob: TT.file.zip(first), pics: pics};
+  }
+
+  /* ---------- 합치기 ---------- */
+  function stamp(){ var d = new Date(); return d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0"); }
+  $("run").onclick = function(){
+    var btn = this; if(FILES.length < 2) return;
+    btn.disabled = true; btn.textContent = "합치는 중…";
+    var done = function(){ btn.disabled = FILES.length < 2; btn.textContent = "📎 합쳐서 내려받기"; };
+    var job = KIND === "x"
+      ? Promise.all(FILES.map(rowsOf)).then(function(){
+          var sheets;
+          if(opt.mode === "one") sheets = [{name: "합친 표", rows: mergedOne().rows, head: opt.head}];
+          else { var used = []; sheets = FILES.map(function(x){ var n = sheetName(base(x.file.name), used); used.push(n); return {name: n, rows: x.rows || [], head: opt.head}; }); }
+          TT.util.download("합친파일_" + stamp() + ".xlsx", xlsx(sheets), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+          TT.ui.toast("합쳤습니다 — " + FILES.length + "개 파일 → 엑셀 하나");
+          if(TT.joy) TT.joy.saved("merge");
+        })
+      : hwpx().then(function(r){
+          TT.util.download("합친문서_" + stamp() + ".hwpx", r.blob, "application/hwp+zip");
+          TT.ui.toast("합쳤습니다 — " + FILES.length + "개 파일 → 한글 하나" + (r.pics ? " (2번부터의 그림 " + r.pics + "곳은 빠졌어요)" : ""));
+          if(TT.joy) TT.joy.saved("merge");
+        });
+    job.then(done, function(e){ TT.ui.toast("합치지 못했습니다: " + (e && e.message || e)); done(); });
+  };
+  draw();
+})();
+</script>
+</body>
+</html>
