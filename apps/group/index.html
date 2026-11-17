@@ -541,7 +541,7 @@ function defaultSet(){return {sizeMode:'size',sizeVal:4,mode:'mix',gender:true,a
 function defaultSeat(){return {cols:5,rows:6,cells:[],fixed:{},mode:'group',gmix:false,flip:false,confirmed:false}}
 function newClass(name){return {id:nid(),name:name,sample:false,rows:[],sep:[],tog:[],history:[],res:null,set:defaultSet(),seat:defaultSeat(),seatHist:[]}}
 function fixClass(x){const c=newClass(x&&x.name||'우리 반');if(!x)return c;
-  c.sample=!!x.sample;c.rows=(x.rows||[]).map(r=>({id:r.id||nid(),no:r.no,name:String(r.name||''),gender:r.gender==='남'||r.gender==='여'?r.gender:'',score:r.score==null||r.score===''||isNaN(r.score)?null:Number(r.score),absent:!!r.absent}));
+  c.sample=!!x.sample;if(x.from)c.from=String(x.from);c.rows=(x.rows||[]).map(r=>({id:r.id||nid(),no:r.no,name:String(r.name||''),gender:r.gender==='남'||r.gender==='여'?r.gender:'',score:r.score==null||r.score===''||isNaN(r.score)?null:Number(r.score),absent:!!r.absent}));
   c.sep=x.sep||[];c.tog=x.tog||[];c.history=x.history||[];c.res=x.res||null;c.set=Object.assign(defaultSet(),x.set||{});
   if(!Array.isArray(c.set.roles))c.set.roles=defaultSet().roles;
   c.seat=Object.assign(defaultSeat(),x.seat||{});c.seat.fixed=c.seat.fixed||{};if(!Array.isArray(c.seat.cells))c.seat.cells=[];c.seatHist=x.seatHist||[];return c}
@@ -1242,6 +1242,17 @@ function boot(){
       else app.persist=true;
     }
   }catch(e){}
+  /* PLAN_통일 2단계: 학급 명렬표가 있으면 연습용 예시 대신 처음부터 명렬표 반을 씀, 명렬표의 이름 고침·전입생은 저절로 반영 */
+  let RD=null;try{RD=TT.roster.load()}catch(e){}
+  const RC=RD?RD.classes.filter(x=>x.students&&x.students.length):[];
+  function fromRoster(rc){const c=newClass(rc.name);c.from=rc.id;c.rows=rc.students.map(st=>({id:nid(),no:st.no,name:st.name,gender:'',score:null,absent:false}));return c}
+  if(!loaded&&RC.length){app.classes=RC.map(fromRoster);const h=RC.findIndex(x=>x.id===RD.home);app.cur=h<0?0:h;loaded=true}
+  else if(loaded&&RC.length){
+    app.classes.forEach(c=>{const rc=c.from&&RC.find(x=>x.id===c.from);if(!rc)return;
+      rc.students.forEach(st=>{const r=c.rows.find(r=>+r.no===+st.no);if(r){if(st.name&&r.name!==st.name)r.name=st.name}else c.rows.push({id:nid(),no:st.no,name:st.name,gender:'',score:null,absent:false})});
+      c.rows.sort((a,b)=>(+a.no||0)-(+b.no||0))});
+    if(app.classes.length===1&&app.classes[0].sample){app.classes=RC.map(fromRoster);const h=RC.findIndex(x=>x.id===RD.home);app.cur=h<0?0:h}
+  }
   if(!loaded){const s=makeSample();app.classes=[s];app.cur=0}
   const c=cur();
   if(c.sample&&!c.res){
@@ -1266,7 +1277,7 @@ function boot(){
     $('#ttLoad').onclick=()=>{
       const rc=pick.current();
       if(!rc){toast('명렬표에 명단이 없어요. 먼저 학급 명렬표에 나이스 파일을 올려 주세요.');return}
-      if(applyRoster(rc.students.map(s=>s.no+'\t'+s.name).join('\n'))){const c=cur();c.name=rc.name;commit();renderAll()}
+      if(applyRoster(rc.students.map(s=>s.no+'\t'+s.name).join('\n'))){const c=cur();c.name=rc.name;c.from=rc.id;commit();renderAll()}
     };
   }catch(e){}
 }
