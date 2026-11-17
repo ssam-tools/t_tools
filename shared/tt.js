@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "1.29.0";
+  var VERSION = "1.30.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -588,7 +588,7 @@ var TT = (function(){
     function items(all){
       var hereId = here === "tardy" && /[?&]tab=counsel/.test(location.search) ? "counsel" : here;
       var me = TT_TOOLS.filter(function(t){ return t.id === hereId; })[0], curMenu = me ? me.menu : null;
-      function ok(t){ return t.ready && t.href && !(classroom && !t.room) && (!t.subject || t.id === hereId || typeof ttPackId !== "function" || t.subject === ttPackId()); }   // 내려받는 프로그램은 첫 화면에서, 교실 기기는 수업용만, 교과 팩은 고른 교과만
+      function ok(t){ return t.ready && t.href && !(classroom && !t.room) && (!t.subject || t.id === hereId || typeof ttPackId !== "function" || (typeof ttPackOnly === "function" && !ttPackOnly()) || t.subject === ttPackId()); }   // 내려받는 프로그램은 첫 화면에서, 교실 기기는 수업용만, 교과 팩은 고른 교과만
       function shown(mid){ return mid === curMenu || typeof ttMenuShown !== "function" || ttMenuShown(mid); }
       function link(t, cls, label){
         var on = t.id === hereId;
@@ -618,7 +618,7 @@ var TT = (function(){
     function railItems(){
       var hereId = here === "tardy" && /[?&]tab=counsel/.test(location.search) ? "counsel" : here;
       var me = TT_TOOLS.filter(function(t){ return t.id === hereId; })[0], curMenu = me ? me.menu : null;
-      function ok(t){ return t.ready && t.href && !(classroom && !t.room) && (!t.subject || t.id === hereId || typeof ttPackId !== "function" || t.subject === ttPackId()); }
+      function ok(t){ return t.ready && t.href && !(classroom && !t.room) && (!t.subject || t.id === hereId || typeof ttPackId !== "function" || (typeof ttPackOnly === "function" && !ttPackOnly()) || t.subject === ttPackId()); }
       function shown(mid){ return mid === curMenu || typeof ttMenuShown !== "function" || ttMenuShown(mid); }
       function tools(mid){ return TT_TOOLS.filter(function(t){ return t.menu === mid && ok(t); }); }
       function M(id){ return typeof ttMenu === "function" ? ttMenu(id) : null; }
@@ -769,6 +769,7 @@ var TT = (function(){
       if(o.teacher != null) c.teacher = String(o.teacher).trim().slice(0, 10);
       if(o.logo != null) c.logo = /^data:image\/(png|jpeg|webp);base64,/.test(o.logo) && o.logo.length < 200000 ? o.logo : "";   // 학교 로고(선택, 작게 줄인 그림)
       Object.keys(SCH_TXT).forEach(function(k){ if(o[k] != null) c[k] = String(o[k]).trim().slice(0, SCH_TXT[k]); });
+      if(o.packOnly != null) c.packOnly = !!o.packOnly;   // PLAN_다듬기 5단계: 교과 칸에 내 교과만
       c.updatedAt = Date.now(); store.set("tt_school_v1", c);
     },
     short: function(){ return school.load().name.replace(/\s+/g, "").replace(/학교$/, ""); },   // 마산서중학교 → 마산서중

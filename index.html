@@ -541,6 +541,7 @@
       <label><input type="radio" name="sRole" value="homeroom"> 담임</label>
       <label><input type="radio" name="sRole" value="subject"> 교과만 <small>(🌱 우리 반 메뉴 숨김)</small></label></div>
     <label class="f" id="sPackL">교과 칸 <small>(수업 메뉴의 교과 전용 도구 · 팩이 없는 교과는 '교과 자료 연결'만)</small><select id="sPack"></select></label>
+    <label class="f" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="sPackOnly"> 교과 칸에 내 교과만 보기 <small>(끄면 수학·국어 등 모든 교과 도구를 교과마다 묶어 보여 줌)</small></label>
     <label class="f">학교 로고 <small>(선택 · 제목 옆에 보여요. 흰 바탕은 자동으로 투명하게)</small></label>
     <div class="logo"><img id="sLogoImg" alt="" hidden><span class="none" id="sLogoNone">없음</span><input type="file" id="sLogo" accept="image/png,image/jpeg,image/webp" hidden><button type="button" class="btn" id="sLogoPick">🖼️ 그림 고르기</button><button type="button" class="btn" id="sLogoDel" hidden>지우기</button></div>
     <p class="muted" id="sPrev"></p>
@@ -652,15 +653,15 @@
       grid.textContent = ""; N = 0; grid.classList.add("mv"); grid.classList.remove("fav"); var span = 0;
       TT_MENUS.forEach(function(m){
         if(m.id === "home" || !menuShown(m.id) || (only && m.id !== only)) return;
-        var groups = (m.groups || []).map(function(g){
-          var rows = TT_TOOLS.filter(function(t){ return t.menu === m.id && t.group === g.id && t.ready && !t.in && (!TT.classroom || t.room) && (!t.subject || typeof ttToolShown !== "function" || ttToolShown(t)); }).map(toolRow);
+        var groups = expandGroups(m).map(function(g){
+          var rows = TT_TOOLS.filter(function(t){ return t.menu === m.id && inGroup(t, g) && t.ready && !t.in && (!TT.classroom || t.room) && (!t.subject || typeof ttToolShown !== "function" || ttToolShown(t)); }).map(toolRow);
           if(m.id === "school" && g.id === "board" && !TT.classroom){            // 주간·월간 업무판 (연결했을 때)
             var B0 = TT.store.get("tt_board_v1", null) || {};
             if(B0.url && /^https:\/\/script\.google\.com\//.test(B0.url)) rows.push(plainRow("📅", "주간·월간 업무판", "학교 업무판 (새 창)", null, B0.url));
           }
           if(m.id === "class" && g.id === "subject"){                            // 교과 칸: 고른 교과 팩의 도구 + 교과 자료 연결 (개편 3단계)
             var pk = typeof ttPack === "function" ? ttPack() : null;
-            g = {id: g.id, name: pk ? g.name + " · " + pk.name : g.name};
+            g = {id: g.id, name: g.pack ? g.name : pk ? g.name + " · " + pk.name : g.name};
             rows.push(plainRow("🔗", "교과 자료 연결", "교과 공개 자료 · 내 링크 모음", openLinks));
           }
           if(m.id === "settings" && !TT.classroom){                             // 설정: ⋯ 메뉴의 항목을 함께
@@ -750,10 +751,14 @@
     var s = season(), cm = new Date().getMonth() + 1;
     return (t.season || []).indexOf(s) >= 0 || (t.months || []).indexOf(cm) >= 0 || (t.exam && recMissing([]).indexOf(t) >= 0);
   }
+  function expandGroups(m){                                                 // PLAN_다듬기 5단계: 교과 칸을 교과마다 하나씩(내 교과 먼저)
+    var out = []; (m.groups || []).forEach(function(g){ if(m.id === "class" && g.id === "subject" && typeof ttPackGroups === "function"){ var P = ttPackGroups(); if(P.length){ out.push.apply(out, P); return; } } out.push(g); }); return out;
+  }
+  function inGroup(t, g){ return g.pack ? t.group === "subject" && t.subject === g.pack : t.group === g.id; }
   function menuGroups(m){
     var pk = typeof ttPack === "function" ? ttPack() : null;
-    return (m.groups || []).map(function(g){
-      var L = TT_TOOLS.filter(function(t){ return t.menu === m.id && t.group === g.id && okTool(t); });
+    return expandGroups(m).map(function(g){
+      var L = TT_TOOLS.filter(function(t){ return t.menu === m.id && inGroup(t, g) && okTool(t); });
       L = L.filter(hot).concat(L.filter(function(t){ return !hot(t); }));          // 시기에 맞는 도구를 앞으로
       var items = L.map(function(t){ return {t: t, hot: hot(t)}; });
       if(m.id === "school" && g.id === "board" && !TT.classroom){
@@ -770,7 +775,7 @@
         ).forEach(function(a){ var el = $(a[0]); if(el && !el.hidden) items.push({x: {icon: a[1], name: a[2], st: a[3], fn: clickMenu(a[0])}}); });
       }
       if(m.id === "class" && g.id === "subject") items.push({x: {icon: "🔗", name: "교과 자료 연결", st: (pk ? pk.name + " 공개 자료 · " : "") + "내 링크 " + (((TT.store.get("tt_subject_links_v1", null) || {}).list || []).length) + "개", fn: openLinks}});
-      return {g: {id: g.id, name: g.id === "subject" && pk ? g.name + " · " + pk.name : g.name}, items: items};
+      return {g: {id: g.id, name: g.pack ? g.name : g.id === "subject" && pk ? g.name + " · " + pk.name : g.name}, items: items};
     }).filter(function(x){ return x.items.length; });
   }
   function tile(it){
@@ -939,6 +944,7 @@
     var sc = TT.school.load(); $("sName").value = sc.name; $("sTeacher").value = sc.teacher;
     Array.prototype.forEach.call(document.getElementsByName("sRole"), function(r){ r.checked = r.value === (sc.role === "subject" ? "subject" : "homeroom"); });
     var sp = $("sPack"), P = typeof TT_PACKS !== "undefined" ? TT_PACKS : [];
+    var po = $("sPackOnly"); if(po) po.checked = typeof ttPackOnly === "function" && ttPackOnly();
     sp.innerHTML = P.map(function(x){ return '<option value="' + x.id + '">' + x.icon + " " + x.name + "</option>"; }).join("") + '<option value="none">없음 · 교과 자료 연결만</option>';
     sp.value = typeof ttPackId === "function" ? ttPackId() : "none"; newLogo = sc.logo; showLogo(); prevSchool(); $("dlgSchool").showModal(); $("sName").focus();
   }
@@ -974,7 +980,8 @@
   $("sCancel").onclick = function(){ $("dlgSchool").close(); };
   $("fSchool").onsubmit = function(e){ e.preventDefault(); var rl = document.querySelector('input[name="sRole"]:checked');
     var pk0 = typeof ttPackId === "function" ? ttPackId() : "", pk1 = $("sPack").value || "none";
-    TT.school.save({name: $("sName").value, teacher: $("sTeacher").value, logo: newLogo, role: rl ? rl.value : "homeroom", pack: pk1}); $("dlgSchool").close();
+    TT.school.save({name: $("sName").value, teacher: $("sTeacher").value, logo: newLogo, role: rl ? rl.value : "homeroom", pack: pk1, packOnly: !!($("sPackOnly") && $("sPackOnly").checked)}); $("dlgSchool").close();
+    if(typeof TT_PACKS !== "undefined" && TT_PACKS.some(function(p){ return !TT_PACK_DATA[p.id]; }) && !ttPackOnly()){ location.reload(); return; }
     if(pk1 !== pk0 && pk1 !== "none" && typeof TT_PACK_DATA !== "undefined" && !TT_PACK_DATA[pk1]){ location.reload(); return; }   // 새 교과 팩은 다시 열며 불러옴
     showTitle(); showHome(); drawTools(); TT.ui.toast("학교·선생님 설정을 저장했습니다."); };
 

@@ -118,7 +118,14 @@ function ttLabel(id, fallback){ var t = ttTool(id); return t ? t.icon + " " + t.
 function ttIsSubjectOnly(){ try{ var o = JSON.parse(localStorage.getItem("tt_school_v1") || "null"); return !!(o && o.role === "subject"); }catch(e){ return false; } }
 function ttMenuShown(id){ var m = ttMenu(id); return !m || m.who !== "homeroom" || !ttIsSubjectOnly(); }
 /* 도구를 보여 줄지 (메뉴가 숨겨졌으면 그 도구도) */
-function ttToolShown(t){ if(typeof t === "string") t = ttTool(t); return !!t && ttMenuShown(t.menu) && (!t.subject || t.subject === ttPackId()); }
+function ttToolShown(t){ if(typeof t === "string") t = ttTool(t); return !!t && ttMenuShown(t.menu) && (!t.subject || !ttPackOnly() || t.subject === ttPackId()); }
+/* PLAN_다듬기 5단계: 교과 칸에 모든 교과 팩 도구를 보일지. 학교·선생님 설정의 '내 교과만 보기'(tt_school_v1.packOnly)를 켜면 고른 교과만 */
+function ttPackOnly(){ return !!ttSchoolObj().packOnly; }
+/* 교과 칸 묶음 목록: 내 교과 먼저 [{id:"subject"(내 교과)|"subject_<팩>", pack, name}] */
+function ttPackGroups(){
+  var my = ttPackId(), L = TT_PACKS.filter(function(p){ return !ttPackOnly() || p.id === my; }).slice().sort(function(a, b){ return (b.id === my) - (a.id === my); });
+  return L.map(function(p){ return {id: p.id === my ? "subject" : "subject_" + p.id, pack: p.id, name: "교과 칸 · " + p.name}; });
+}
 
 /* ── 교과 팩 (개편 3단계) ── */
 function ttSchoolObj(){ try{ return JSON.parse(localStorage.getItem("tt_school_v1") || "null") || {}; }catch(e){ return {}; } }
@@ -145,9 +152,9 @@ function ttAddPack(p){
 }
 /* 첫 화면처럼 HTML 을 읽는 중에 바로 부를 때: 고른 팩 파일을 그 자리에 끼워 넣음(다음 스크립트보다 먼저 실행됨) */
 function ttPackWrite(base){
-  var info = ttPackInfo(ttPackId());
-  if(!info || TT_PACK_DATA[info.id] || typeof document === "undefined" || document.readyState !== "loading") return;
-  document.write('<script src="' + (base || "") + info.file + '"><\/script>');
+  if(typeof document === "undefined" || document.readyState !== "loading") return;
+  var my = ttPackInfo(ttPackId()), L = ttPackOnly() ? (my ? [my] : []) : TT_PACKS.slice().sort(function(a, b){ return (my && b.id === my.id) - (my && a.id === my.id); });   // 내 교과 팩을 먼저(ttPack 은 내 교과)
+  L.forEach(function(info){ if(!TT_PACK_DATA[info.id]) document.write('<script src="' + (base || "") + info.file + '"><\/script>'); });
 }
 /* 화면이 다 열린 뒤에 부를 때: 고른 팩(all 이면 모든 팩)을 불러오고 cb() */
 function ttPackLoad(base, cb, all){
