@@ -101,3 +101,17 @@ html[data-app="journal"] .hdr-in{padding-block:clamp(10px,2vh,18px) 6px}
   html[data-app="group"] .tab{flex:1;white-space:nowrap;padding:7px 4px;font-size:14px;justify-content:center}
   html[data-app="group"] .tab .stepn{margin-right:3px}
 }
+
+/* ================= PLAN_다듬기 1단계: 화면 틀 하나 (v1.26.0) =================
+   모든 도구는 왼쪽 메뉴 바로 옆부터 넓게 씁니다(가운데 좁은 칸 없음). 넓은 화면은 2단으로 채웁니다. */
+html[data-app="tardy"] .app{max-width:none;margin:0}
+html[data-app="advisor"] main,html[data-app="advisor"] #app{max-width:none!important;margin:0!important}
+html[data-app="group"] .cta .in-cta{max-width:none;margin:0;padding:0 clamp(12px,3vw,28px)}
+@media (min-width:900px) and (min-height:460px){
+  html[data-app="journal"] .wrap{max-width:none;margin:0;padding-left:clamp(16px,2.4vw,32px);padding-right:clamp(16px,2.4vw,32px)}
+  html[data-app="journal"] .stack{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:12px;align-items:start}
+  html[data-app="journal"] .stack>*{margin:0!important}
+  html[data-app="journal"] .daybar{max-width:900px}
+  html[data-app="journal"] .row-end{justify-content:flex-start}
+  html[data-app="journal"] .sheet{max-width:720px}
+}
