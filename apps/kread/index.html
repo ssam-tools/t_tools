@@ -89,6 +89,21 @@
   .glist{list-style:none;display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:10px 12px;flex:none;font-size:14.5px;line-height:1.45;word-break:keep-all}
   .qa{display:flex;flex-direction:column;gap:10px}
   .glist b{color:var(--ac);margin-right:4px}
+  .mwrap{display:flex;flex-direction:column;gap:4px}
+  .mb{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:15px;line-height:1.75;word-break:keep-all}
+  .mb .ml{flex:none;min-width:58px;font-size:12px;font-weight:900;color:var(--ac);background:var(--ac2);border-radius:7px;padding:2px 6px;text-align:center;line-height:1.6;margin-top:3px}
+  .mar{text-align:center;color:var(--sub);font-size:12px;line-height:1}
+  .mtb{width:100%;border-collapse:separate;border-spacing:4px;font-size:14px;line-height:1.7;word-break:keep-all}
+  .mtb th{font-size:13px;color:var(--ac);background:var(--ac2);border-radius:8px;padding:4px}
+  .mtb td{background:#fff;border:1px solid var(--line);border-radius:9px;padding:6px 7px;vertical-align:top}
+  .mtb td:first-child{font-size:12px;font-weight:900;color:var(--sub);background:none;border:0;padding:6px 0;width:52px}
+  .slot{display:inline-block;min-width:58px;border:0;border-bottom:2px solid var(--ac);background:#eef2fb;border-radius:6px 6px 0 0;font:inherit;font-weight:800;color:var(--ac);padding:0 6px;margin:0 2px;line-height:1.5;cursor:pointer;vertical-align:baseline}
+  .slot.sel{background:#fff1c2;border-color:#d99a00}
+  .slot.ok{background:var(--okb);border-color:var(--ok);color:var(--ok)}.slot.ng{background:var(--ngb);border-color:var(--ng);color:var(--ng)}
+  .slot small{font-size:11px;color:var(--ok);margin-left:4px}
+  .bank{display:flex;flex-wrap:wrap;gap:6px;flex:none;max-height:22dvh;overflow:auto}
+  .bank button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+  .bank button:disabled{opacity:.25}
   .dlv{font-size:40px;font-weight:900;color:var(--ac);line-height:1.1}
   .ch{display:flex;flex-direction:column;gap:8px}
   .ch button{border:1.5px solid var(--line);background:#fff;border-radius:13px;padding:12px 13px;font:inherit;font-size:15.5px;text-align:left;line-height:1.45;cursor:pointer;word-break:keep-all;display:flex;gap:8px}
@@ -447,7 +462,7 @@ function readResult(){
     '<div class="card cmp sc grow" style="display:flex;flex-direction:column;gap:8px">' +
       (R.sum ? "<div><b>내 요약</b><br>" + esc(R.sum) + "</div>" : "") + "<div><b>모범 요약</b><br>" + esc(p.sum) + "</div>" +
       '<div class="muted">이 지문의 어휘 ' + p.words.map(function(w){ return "<b>" + w + "</b>"; }).join(" · ") + " → 어휘 훈련에 먼저 나와요.</div></div>" +
-    '<div class="row"><button class="btn sub" onclick="review()">요지로 다시 보기</button>' +
+    '<div class="row"><button class="btn sub" onclick="review()">요지로 다시 보기</button>' + (D.maps && D.maps[p.id] ? '<button class="btn sub" onclick="mapRun()">🗺️ 구조도 채우기</button></div><div class="row">' : "") +
     '<button class="btn" onclick="' + (R.today ? "go(\'today\')" : "go(\'read\')") + '">' + (R.today ? "오늘 훈련 마치기" : "목록으로") + "</button></div>"
   );
 }
@@ -455,9 +470,70 @@ function review(){
   var p = R.p;
   view('<div class="rtop"><b>' + esc(p.title) + '</b><span class="muted" style="margin-left:auto">파란 글 = 문단 요지</span></div>' +
     '<div class="text sc grow">' + p.paras.map(function(par, i){ return "<p>" + esc(par) + '</p><span class="gist">' + (i + 1) + "문단 · " + esc(p.gist[i] || "") + "</span>"; }).join("") + "</div>" +
-    '<div class="row"><button class="btn gray" onclick="readResultAgain()">결과로</button><button class="btn" onclick="' + (R.today ? "go(\'today\')" : "go(\'read\')") + '">' + (R.today ? "오늘 훈련 마치기" : "목록으로") + "</button></div>");
+    '<div class="row"><button class="btn gray" onclick="readResultAgain()">결과로</button>' + (D.maps && D.maps[p.id] ? '<button class="btn sub" onclick="mapRun()">🗺️ 구조도</button>' : "") + '<button class="btn" onclick="' + (R.today ? "go(\'today\')" : "go(\'read\')") + '">' + (R.today ? "오늘 훈련 마치기" : "목록으로") + "</button></div>");
 }
 function readResultAgain(){ var d = R.done; S.reads.pop(); day().r--; readResult(); }
+
+/* ════════ 🗺️ 구조도 채우기 ════════ */
+var MH = {"과정": "단계가 차례로 이어지는 글", "원인-결과": "원인이 결과를 낳는 글", "정의-예시": "개념을 정의하고 예로 보여 주는 글", "비교·대조": "두 대상을 같은 기준으로 견주는 글",
+  "문제-해결": "문제를 제기하고 해결을 찾는 글", "개념-비판": "개념을 설명하고 한계를 따지는 글", "원리": "어떤 것이 작동하는 이치를 밝히는 글"};
+var MP = null;
+function mapRun(){
+  var p = R.p, m = D.maps[p.id], ans = [];
+  var cell = function(t){ return esc(t).replace(/\[([^\]]+)\]/g, function(_, w){ ans.push(w); return '<button class="slot" data-i="' + (ans.length - 1) + '"></button>'; }); };
+  var body = m.h
+    ? '<table class="mtb"><tr>' + m.h.map(function(h){ return "<th>" + esc(h) + "</th>"; }).join("") + "</tr>" + m.b.map(function(r){ return "<tr>" + r.map(function(c, i){ return "<td>" + (i ? cell(c) : esc(c)) + "</td>"; }).join("") + "</tr>"; }).join("") + "</table>" +
+      (m.t ? '<div class="mb"><span class="ml">정리</span><div>' + cell(m.t) + "</div></div>" : "")
+    : '<div class="mwrap">' + m.b.map(function(r, i){ return (i ? '<div class="mar">▼</div>' : "") + '<div class="mb"><span class="ml">' + esc(r[0]) + "</span><div>" + cell(r[1]) + "</div></div>"; }).join("") + "</div>";
+  MP = {ans: ans, fill: ans.map(function(){ return null; }), sel: 0, bank: shuffle(ans.concat(m.x || [])), done: false};
+  view('<div class="rtop"><b>🗺️ 구조도 · ' + esc(p.type) + '</b><span class="muted" style="margin-left:auto;font-size:12px">' + esc(MH[p.type] || "") + "</span></div>" +
+    '<div class="muted">빈칸을 누르고 아래 낱말을 골라 채우세요. 채운 칸을 다시 누르면 비워져요.</div>' +
+    '<div class="sc grow" id="mapv">' + body + "</div>" +
+    '<div class="bank" id="bank"></div><div id="mfb"></div>' +
+    '<div class="row" id="mbt"><button class="btn gray" onclick="' + (R.done ? "readResultAgain()" : "go(\'read\')") + '">닫기</button><button class="btn" style="flex:2" onclick="mapCheck()">채점하기</button></div>');
+  Array.prototype.forEach.call(document.querySelectorAll(".slot"), function(b){ b.onclick = function(){ mapSlot(+b.dataset.i); }; });
+  mapDraw();
+}
+function mapDraw(){
+  var used = {}; MP.fill.forEach(function(f){ if(f != null) used[f] = 1; });
+  if(!MP.done) Array.prototype.forEach.call(document.querySelectorAll(".slot"), function(b){
+    var i = +b.dataset.i, f = MP.fill[i];
+    b.textContent = f == null ? "　　" : MP.bank[f]; b.classList.toggle("sel", !MP.done && i === MP.sel);
+  });
+  $("bank").innerHTML = MP.bank.map(function(w, j){ return '<button onclick="mapPick(' + j + ')"' + (used[j] || MP.done ? " disabled" : "") + ">" + esc(w) + "</button>"; }).join("");
+}
+function mapSlot(i){
+  if(MP.done) return;
+  if(MP.fill[i] != null) MP.fill[i] = null;
+  MP.sel = i; mapDraw();
+}
+function mapPick(j){
+  if(MP.done) return;
+  var i = MP.sel; if(i == null || MP.fill[i] != null) i = MP.fill.indexOf(null); if(i < 0) return;
+  MP.fill[i] = j;
+  var nx = -1; for(var k = 1; k <= MP.fill.length; k++){ var t = (i + k) % MP.fill.length; if(MP.fill[t] == null){ nx = t; break; } }
+  MP.sel = nx < 0 ? null : nx; mapDraw();
+  if(nx >= 0){ var el = document.querySelector('.slot[data-i="' + nx + '"]'); if(el) try{ el.scrollIntoView({block: "nearest", behavior: "smooth"}); }catch(e){} }
+}
+function mapCheck(){
+  var left = MP.fill.filter(function(f){ return f == null; }).length;
+  if(left && !MP.warn){ MP.warn = 1; $("mfb").innerHTML = '<div class="fb ng"><b>빈칸이 ' + left + "개 남았어요</b>그래도 채점하려면 [채점하기]를 한 번 더 누르세요.</div>"; return; }
+  $("mfb").innerHTML = "";
+  MP.done = true; var ok = 0;
+  Array.prototype.forEach.call(document.querySelectorAll(".slot"), function(b){
+    var i = +b.dataset.i, f = MP.fill[i], right = f != null && MP.bank[f] === MP.ans[i];
+    if(right) ok++;
+    b.classList.remove("sel"); b.classList.add(right ? "ok" : "ng");
+    b.innerHTML = right ? esc(MP.ans[i]) : (f == null ? "　" : "<s>" + esc(MP.bank[f]) + "</s>") + "<small>" + esc(MP.ans[i]) + "</small>";
+  });
+  var n = MP.ans.length, sc = Math.round(ok / n * 100) / 100;
+  S.maps = S.maps || {}; S.maps[R.p.id] = Math.max(S.maps[R.p.id] || 0, sc); save();
+  mapDraw();
+  $("bank").style.display = "none";
+  $("mfb").innerHTML = '<div class="fb ' + (ok === n ? "ok" : "ng") + '"><b>' + ok + " / " + n + (ok === n ? " 완벽해요! 🗺️" : " · 초록 글씨가 정답이에요") + '</b>구조도가 머릿속에 그려지면 긴 글도 빨리 읽혀요. 다음 글에서는 읽으면서 "' + esc(R.p.type) + '" 틀을 떠올려 보세요.</div>';
+  $("mbt").innerHTML = '<button class="btn gray" onclick="mapRun()">다시 하기</button><button class="btn sub" onclick="review()">요지 보기</button>' +
+    '<button class="btn" onclick="' + (R.today ? "go(\'today\')" : "go(\'read\')") + '">' + (R.today ? "마치기" : "목록으로") + "</button>";
+}
 
 /* ════════ 🧭 진단 읽기 ════════ */
 function diagStart(){
@@ -611,7 +687,7 @@ function showGrow(){
   var acc = S.reads.length ? Math.round(avg(S.reads.slice(-10), function(r){ return r.a; }) * 100) : 0;
   var days = []; for(var i = 13; i >= 0; i--){ var k = addDays(-i), x = S.days[k]; days.push('<i class="' + (x && x.r > 0 && x.tv ? "f" : active(k) ? "r" : "") + (i === 0 ? " t" : "") + '" title="' + k + '"></i>'); }
   var B = [["🌱 첫 지문", S.reads.length >= 1], ["🔥 3일 연속", (S.best || 0) >= 3], ["🔥 7일 연속", (S.best || 0) >= 7], ["📚 지문 5편", Object.keys(uniq).length >= 5],
-           ["🎯 만점", S.reads.some(function(r){ return r.a === 1; })], ["🧠 단어 20개 익힘", mastered() >= 20], ["🚀 2단계 도전", S.reads.some(function(r){ return (P[r.p] || {}).lv >= 2; })], ["⚡ 유효 속도 600", S.reads.some(function(r){ return r.e >= 600; })]];
+           ["🎯 만점", S.reads.some(function(r){ return r.a === 1; })], ["🧠 단어 20개 익힘", mastered() >= 20], ["🚀 2단계 도전", S.reads.some(function(r){ return (P[r.p] || {}).lv >= 2; })], ["⚡ 유효 속도 600", S.reads.some(function(r){ return r.e >= 600; })], ["🗺️ 구조도 5편", Object.keys(S.maps || {}).length >= 5]];
   view(
     '<div class="stats"><div class="stat"><b>' + st + '</b><span>연속 일수 (최고 ' + (S.best || 0) + ')</span></div><div class="stat"><b>' + acc + '%</b><span>최근 정답률</span></div><div class="stat"><b>' + mastered() + '</b><span>익힌 단어</span></div></div>' +
     '<div class="chart">' + chartSVG(rs) + "</div>" +
