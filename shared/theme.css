@@ -96,3 +96,8 @@ html[data-app="journal"] .hdr-in{padding-block:clamp(10px,2vh,18px) 6px}
   html[data-app="journal"] main{padding-bottom:28px}html[data-app="journal"] body.has-dock main{padding-bottom:128px}
   html[data-app="journal"] .dock{bottom:0!important}
 }
+@media (max-width:760px){
+  html[data-app="group"] .tabs{display:flex;width:100%}
+  html[data-app="group"] .tab{flex:1;white-space:nowrap;padding:7px 4px;font-size:14px;justify-content:center}
+  html[data-app="group"] .tab .stepn{margin-right:3px}
+}
