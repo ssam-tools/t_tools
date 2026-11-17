@@ -40,6 +40,9 @@
   .stage canvas{display:block;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.15)}
   .stage canvas.ink{position:absolute;left:0;top:0;background:transparent;box-shadow:none;pointer-events:none}
   .stage.pen{touch-action:none}
+  .sarr{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:clamp(44px,4vw,64px);height:clamp(90px,16vh,150px);align-items:center;justify-content:center;border:0;border-radius:16px;background:rgba(30,40,55,.30);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35);font:inherit;font-size:clamp(40px,4.5vw,70px);font-weight:300;line-height:1;cursor:pointer;opacity:.7;transition:opacity .15s,background .15s;padding:0 0 6px}
+  .sarr:hover{opacity:1;background:rgba(30,40,55,.45)}.sarr:active{background:rgba(47,111,181,.7)}.sarr:disabled{opacity:.12;cursor:default}
+  .sarr.l{left:8px}.sarr.r{right:8px}
   .inkbar{position:absolute;left:8px;right:8px;bottom:8px;z-index:6;display:none;justify-content:center;pointer-events:none}.inkbar.on{display:flex}
   #inkbarIn{pointer-events:auto;background:#fff;border:2px solid #222;border-radius:16px;padding:5px 7px;box-shadow:0 8px 26px rgba(0,0,0,.22)}
   .stage .msg{margin:auto;text-align:center;color:var(--sub);font-size:18px;line-height:1.8;padding:20px}
@@ -84,21 +87,21 @@
   body.lesson header,body.lesson footer,body.lesson .ctl,body.lesson .where,body.lesson .tt-rail,body.lesson .tt-side,body.lesson nav{display:none!important}
   body.lesson main{position:fixed;inset:0;z-index:50;background:#fff;padding:0!important;gap:0;border-radius:0;margin:0;max-width:none}
   body.lesson .stage{border-radius:0;background:#eef0f2}
-  .ltop{align-items:center;gap:6px;padding:3px 10px;border-bottom:1px solid #bbb;background:#fff}
-  .ltop .t{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .ltop{align-items:center;gap:10px;padding:6px 14px;border-bottom:2px solid #222;background:#fff}
+  .ltop .t{font-size:clamp(22px,3vw,44px);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
   .ltop .t .u{color:#2f6fb5}
   .ltop .sp{flex:1}
-  .ltop button{font:inherit;font-size:14px;font-weight:800;border:1.5px solid #888;background:#fff;border-radius:9px;padding:3px 9px;cursor:pointer;color:#111}
+  .ltop button{font:inherit;font-size:clamp(15px,1.4vw,20px);font-weight:800;border:2px solid #222;background:#fff;border-radius:12px;padding:6px 12px;cursor:pointer;color:#111}
   .ltop button.on{background:#ffe066;border-color:#c99a00}
-  .ltop .tm{font-size:clamp(20px,2vw,30px);font-weight:900;font-variant-numeric:tabular-nums;min-width:3.2em;text-align:center;color:#2f6fb5}
+  .ltop .tm{font-size:clamp(26px,3.4vw,50px);font-weight:900;font-variant-numeric:tabular-nums;min-width:3.2em;text-align:center;color:#2f6fb5}
   .ltop .tm.end{color:#fff;background:#c2432a;border-radius:12px;animation:blink .6s 6}
   @keyframes blink{50%{opacity:.3}}
   .ltop .tmb{display:none}.ltop .tmb.on{display:flex;gap:6px}
-  .lbot{gap:5px;padding:3px 8px;border-top:1px solid #bbb;background:#fff;justify-content:center}
-  .lbot button{flex:0 1 auto;font:inherit;font-size:13.5px;font-weight:800;border:1.5px solid #888;background:#fff;color:#111;border-radius:9px;padding:3px 12px;cursor:pointer;line-height:1.2}
-  .lbot button small{display:inline;font-size:11px;font-weight:600;color:#888;margin-left:4px}
+  .lbot{gap:5px;padding:5px 7px;border-top:2px solid #222;background:#fff}
+  .lbot button{flex:1;font:inherit;font-size:clamp(12px,1.4vw,20px);font-weight:900;border:2px solid #222;background:#fff;color:#111;border-radius:11px;padding:8px 4px;cursor:pointer;line-height:1.15}
+  .lbot button small{display:block;font-size:.55em;font-weight:700;color:#777}
   .lbot button.on{background:#222;color:#fff}.lbot button.on small{color:#ccc}
-  .lbot .end{flex:0 1 auto;background:#2d8a5b;border-color:#2d8a5b;color:#fff}
+  .lbot .end{flex:.9;background:#2d8a5b;border-color:#2d8a5b;color:#fff}
   .lpane{position:absolute;inset:0;z-index:5;background:#fff;display:none;flex-direction:column;padding:2.5vh 4vw;overflow:auto}
   .lpane.on{display:flex}
   .lpane h1{margin:0 0 1.2vh;font-size:clamp(30px,4.4vw,64px);color:var(--c,#2f6fb5)}
@@ -155,7 +158,7 @@
     <button id="lx" title="수업 모드 나가기">✕</button>
   </div>
   <div class="where" id="where"></div>
-  <div class="sw"><div class="stage" id="stage"></div><div class="lpane" id="lpane"></div><div class="inkbar" id="inkbar"><div id="inkbarIn"></div></div></div>
+  <div class="sw"><div class="stage" id="stage"></div><div class="lpane" id="lpane"></div><button class="lx sarr l" id="sPrev" title="앞쪽 (←)">‹</button><button class="lx sarr r" id="sNext" title="뒤쪽 (→)">›</button><div class="inkbar" id="inkbar"><div id="inkbarIn"></div></div></div>
   <div class="ctl">
     <button id="prev">◀ 앞쪽</button>
     <span class="pg">p.<input id="pin" inputmode="numeric"></span>
@@ -349,7 +352,7 @@
       if(!d){ emptyMsg(g); return; }
       st.n = d.numPages; st.pdfPage = Math.max(1, Math.min(st.n, st.pdfPage));
       S.at[st.c] = bookP(); save(); where();
-      $("prev").disabled = st.pdfPage <= 1; $("next").disabled = st.pdfPage >= st.n;
+      $("prev").disabled = $("sPrev").disabled = st.pdfPage <= 1; $("next").disabled = $("sNext").disabled = st.pdfPage >= st.n;
       d.getPage(st.pdfPage).then(function(pg){
         if(my !== st.busy) return;
         var box = $("stage"), v1 = pg.getViewport({scale: 1});
@@ -664,7 +667,7 @@
   }
 
   /* ── 단추·키 ── */
-  $("prev").onclick = $("lprev").onclick = function(){ turn(-1); }; $("next").onclick = $("lnext").onclick = function(){ turn(1); };
+  $("prev").onclick = $("lprev").onclick = $("sPrev").onclick = function(){ turn(-1); }; $("next").onclick = $("lnext").onclick = $("sNext").onclick = function(){ turn(1); };
   $("pin").onchange = function(){ var v = parseInt(this.value, 10); if(!isNaN(v) && st.c){ st.pdfPage = toPdf(gOf(st.c), v); show(); } };
   $("fit").onclick = function(){ st.wide = !st.wide; this.textContent = st.wide ? "↔ 맞춤" : "↕ 맞춤"; show(); };
   $("bDone").onclick = function(){ var r = done(); if(!r) return; var js = journalSync(r); toast(cname(st.c) + " 진도 p." + r.p + " 저장 · " + js.msg); };
