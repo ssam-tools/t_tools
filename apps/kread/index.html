@@ -54,7 +54,7 @@
   .step.done .n{background:var(--ok);color:#fff}
   .step .tx{flex:1;min-width:0}.step .tx b{display:block;font-size:16px}.step .tx span{font-size:13px;color:var(--sub)}
   .tip{background:#fff7e6;border:1px solid #f4dca8;color:#7a4b00;border-radius:12px;padding:10px 12px;font-size:14px;display:flex;gap:8px;align-items:center}
-  .tip button{margin-left:auto;border:0;background:#b26a00;color:#fff;border-radius:9px;padding:6px 10px;font:inherit;font-size:13px;font-weight:800}
+  .tip button{margin-left:auto;white-space:nowrap;flex:none;border:0;background:#b26a00;color:#fff;border-radius:9px;padding:6px 10px;font:inherit;font-size:13px;font-weight:800}
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
   .stat b{display:block;font-size:21px;font-weight:900;color:var(--ac)}.stat span{font-size:12px;color:var(--sub)}
@@ -86,6 +86,10 @@
   .qbar{display:flex;gap:4px}.qbar i{flex:1;height:6px;border-radius:3px;background:#dfe4ec}.qbar i.ok{background:var(--ok)}.qbar i.ng{background:var(--ng)}.qbar i.cur{background:var(--ac)}
   .qk{font-size:12.5px;font-weight:800;color:var(--ac)}
   .q{font-size:17.5px;font-weight:800;line-height:1.5;word-break:keep-all}
+  .glist{list-style:none;display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:10px 12px;flex:none;font-size:14.5px;line-height:1.45;word-break:keep-all}
+  .qa{display:flex;flex-direction:column;gap:10px}
+  .glist b{color:var(--ac);margin-right:4px}
+  .dlv{font-size:40px;font-weight:900;color:var(--ac);line-height:1.1}
   .ch{display:flex;flex-direction:column;gap:8px}
   .ch button{border:1.5px solid var(--line);background:#fff;border-radius:13px;padding:12px 13px;font:inherit;font-size:15.5px;text-align:left;line-height:1.45;cursor:pointer;word-break:keep-all;display:flex;gap:8px}
   .ch button em{font-style:normal;font-weight:900;color:var(--ac)}
@@ -167,6 +171,7 @@ var D = KR_DATA, KEY = "kr_read_v1";
 var W = {}; D.words.forEach(function(w){ W[w.w] = w; });
 var HJ = {}; D.hanja.forEach(function(x){ HJ[x.h] = x; });
 var P = {}; D.passages.forEach(function(p){ P[p.id] = p; p.chars = p.paras.join("").replace(/\s/g, "").length; });
+if(D.diag) D.diag.chars = D.diag.paras.join("").replace(/\s/g, "").length;
 var GAP = [0, 1, 3, 7, 16, 30];          // 상자(b)별 다음 복습까지 날 수. b ≥ 4 = 익힘
 
 /* ── 저장 (이 기기에만) ── */
@@ -257,7 +262,7 @@ function showToday(){
   view(
     '<div class="hero"><div class="fire"><b>🔥 ' + st + '</b>일 연속</div><div class="t">' + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + dows[d.getDay()] + '요일 · 하루 10분</div>' +
     '<div class="big">' + (all ? "오늘 훈련 완료! 👏" : "오늘의 훈련") + '</div></div>' +
-    levelUpTip() +
+    (!S.diag && !S.reads.length ? '<div class="tip">🧭 처음이에요? 3분 진단으로 나에게 맞는 단계를 찾아요.<button onclick="diagStart()">진단하기</button></div>' : levelUpTip()) +
     '<div class="card step' + (vDone ? " done" : "") + '"><div class="n">' + (vDone ? "✓" : "1") + '</div><div class="tx"><b>어휘 5개</b><span>복습 ' + Math.min(3, dueWords().length) + "개 + 새 단어 · 약 3분</span></div></div>" +
     '<div class="card step' + (rDone ? " done" : "") + '"><div class="n">' + (rDone ? "✓" : "2") + '</div><div class="tx"><b>지문 1편 · ' + esc(rp.title) + '</b><span>' + rp.lv + "단계 · " + rp.area + " · " + rp.chars + "자 · 약 5분</span></div></div>" +
     '<div class="stats"><div class="stat"><b>' + (last ? last.e : "–") + '</b><span>최근 유효 속도</span></div><div class="stat"><b>' + mastered() + '</b><span>익힌 단어</span></div><div class="stat"><b>' + S.reads.length + '</b><span>읽은 지문</span></div></div>' +
@@ -294,7 +299,7 @@ function showList(){
   );
 }
 function readSetup(pid, fromToday){
-  var p = P[pid], last = S.reads.slice(-3), base = last.length ? Math.round(avg(last, function(r){ return r.cpm; }) * 1.1 / 10) * 10 : 450;
+  var p = P[pid], last = S.reads.slice(-3), base = last.length ? Math.round(avg(last, function(r){ return r.cpm; }) * 1.1 / 10) * 10 : S.diag ? Math.round(S.diag.cpm * 1.1 / 10) * 10 : 450;
   R = {p: p, today: !!fromToday, mode: (S.mode || "normal"), pre: !!S.pre, cpm: Math.max(200, Math.min(1500, S.pace || base))};
   var M = [["normal", "📖", "보통 읽기", "내 속도로 읽고 다 읽으면 버튼을 눌러요."], ["pacer", "🟨", "페이서", "문장이 정한 속도로 밝아져요. 조금 빠르게 따라가는 연습."], ["chunk", "✂️", "끊어 읽기", "의미 덩어리(3어절)씩 밝아져요. 덩어리로 읽는 연습."]];
   view(
@@ -306,7 +311,35 @@ function readSetup(pid, fromToday){
   );
 }
 function setMode(m){ R.mode = m; Array.prototype.forEach.call(document.querySelectorAll(".mode"), function(b, i){ b.setAttribute("aria-pressed", ["normal", "pacer", "chunk"][i] === m); }); $("paceRow").style.display = m === "normal" ? "none" : ""; }
-function buildQs(p){
+var GL = "가나다라마바사아";
+function gistQ(p){                     // 문단 요지 고르기 — 문단 하나를 골라 그 요지를 맞힘
+  var n = p.gist.length, i = Math.floor(Math.random() * n), others = pick(p.gist.filter(function(_, j){ return j !== i; }), 3, []);
+  var c = shuffle([p.gist[i]].concat(others));
+  return {k: "gist", q: (i + 1) + "문단의 요지로 가장 알맞은 것은?", c: c, a: c.indexOf(p.gist[i]), e: (i + 1) + "문단 요지: " + p.gist[i]};
+}
+function orderQ(p){                    // 문단 순서 배열 — 섞인 요지를 원래 순서로
+  var n = p.gist.length, sh = shuffle(p.gist.map(function(_, i){ return i; }));
+  if(sh.every(function(x, i){ return x === i; })) sh.reverse();
+  var lab = function(ord){ return ord.map(function(pi){ return "(" + GL[sh.indexOf(pi)] + ")"; }).join(" - "); };
+  var right = p.gist.map(function(_, i){ return i; }), seen = {}, c = [lab(right)]; seen[c[0]] = 1;
+  for(var t = 0; c.length < 4 && t < 60; t++){
+    var o = right.slice(), k = 1 + (t % 2);
+    for(var j = 0; j < k; j++){ var x = Math.floor(Math.random() * (n - 1)); var y = t > 30 ? Math.floor(Math.random() * n) : x + 1; var z = o[x]; o[x] = o[y]; o[y] = z; }
+    var L = lab(o); if(!seen[L]){ seen[L] = 1; c.push(L); }
+  }
+  c = shuffle(c);
+  return {k: "order", q: "아래는 윗글 각 문단의 요지를 섞어 놓은 것이다. 글의 순서대로 바르게 늘어놓은 것은?", list: sh.map(function(pi, j){ return "(" + GL[j] + ") " + p.gist[pi]; }), c: c, a: c.indexOf(lab(right)),
+    e: "정답 순서: " + lab(right) + ". '그러나·따라서·또' 같은 이어 주는 말과, 개념 소개 → 설명 → 정리의 흐름이 순서의 단서예요."};
+}
+function buildQs(p, noExtra){
+  var qs = buildBase(p);
+  if(!noExtra && p.gist && p.gist.length >= 3){
+    var x = (p.gist.length >= 4 && Math.random() < 0.5) ? orderQ(p) : gistQ(p), vi = qs.length && qs[qs.length - 1].k === "vocab" ? qs.length - 1 : qs.length;
+    qs.splice(vi, 0, x);
+  }
+  return qs;
+}
+function buildBase(p){
   return p.qs.map(function(q){
     if(q.k === "vocab"){
       var w = W[q.w], wr = pick(D.words.map(function(x){ return x.m; }), 3, [w.m]), c = shuffle([w.m].concat(wr));
@@ -317,10 +350,10 @@ function buildQs(p){
     return {k: q.k, q: q.q, c: idx.map(function(i){ return q.c[i]; }), a: idx.indexOf(q.a), e: q.e};
   });
 }
-var KN = {main: "중심 내용", struct: "글의 구조", ox: "내용 일치 O·X", apply: "적용·추론", vocab: "어휘"};
+var KN = {main: "중심 내용", struct: "글의 구조", ox: "내용 일치 O·X", apply: "적용·추론", vocab: "어휘", gist: "문단 요지", order: "문단 순서", dv: "어휘 확인"};
 function readGo(){
-  S.mode = R.mode; S.pre = R.pre; if(R.mode !== "normal") S.pace = R.cpm; save();
-  R.qs = buildQs(R.p); R.ans = []; R.qi = 0;
+  if(!R.diag){ S.mode = R.mode; S.pre = R.pre; if(R.mode !== "normal") S.pace = R.cpm; save(); }
+  R.qs = R.diag ? diagQs() : buildQs(R.p); R.ans = []; R.qi = 0;
   if(R.pre){
     view('<h2>🔎 문제 먼저 훑기</h2><div class="muted">무엇을 찾으며 읽을지 정해 두세요. (보기는 나중에 나와요)</div>' +
       '<div class="card sc grow"><ol style="padding-left:20px;display:flex;flex-direction:column;gap:9px;font-size:15px;line-height:1.5">' + R.qs.map(function(q){ return "<li>" + esc(q.k === "ox" ? "O·X: " + q.q : q.q) + "</li>"; }).join("") + "</ol></div>" +
@@ -368,6 +401,7 @@ function pausePace(){
 function readDone(){
   if(!R || R.sec) return;
   R.sec = Math.max(5, elapsed()); stopTimers();
+  if(R.diag) return qShow();
   view(
     '<div class="qk">지문은 가렸어요 🙈</div><h2>내 말로 한 줄 요약</h2>' +
     '<div class="muted">무엇에 대한 글이고, 핵심이 무엇인지 한 문장으로 써 보세요. 나중에 모범 요약과 비교해요. (시간에 포함되지 않아요)</div>' +
@@ -380,7 +414,9 @@ function qShow(){
   var body = q.k === "ox"
     ? '<div class="ox"><button onclick="qAns(true,this)">O</button><button onclick="qAns(false,this)">X</button></div>'
     : '<div class="ch">' + q.c.map(function(c, i){ return '<button onclick="qAns(' + i + ',this)"><em>' + "①②③④⑤"[i] + "</em><span>" + esc(c) + "</span></button>"; }).join("") + "</div>";
-  view('<div class="qbar">' + bar + '</div><div class="qk">' + (R.qi + 1) + " / " + R.qs.length + " · " + KN[q.k] + '</div><div class="q">' + esc(q.q) + "</div>" + body + '<div id="fb"></div><div class="grow"></div><div id="nx"></div>');
+  view('<div class="qbar">' + bar + '</div><div class="qk">' + (R.qi + 1) + " / " + R.qs.length + " · " + KN[q.k] + '</div><div class="qa sc grow"><div class="q">' + esc(q.q) + "</div>" +
+    (q.list ? '<ul class="glist">' + q.list.map(function(t){ return "<li><b>" + esc(t.slice(0, 3)) + "</b>" + esc(t.slice(4)) + "</li>"; }).join("") + "</ul>" : "") +
+    (q.ex ? '<div class="exs">' + exHTML(q.ex) + "</div>" : "") + body + '<div id="fb"></div></div><div id="nx"></div>');
 }
 function qAns(v, el){
   var q = R.qs[R.qi], ok = v === q.a; R.ans[R.qi] = ok;
@@ -389,8 +425,10 @@ function qAns(v, el){
   if(q.k === "vocab") gradeWord(q.w, ok, true);
   $("fb").innerHTML = '<div class="fb ' + (ok ? "ok" : "ng") + '"><b>' + (ok ? "맞았어요 👍" : "아쉬워요. 정답: " + (q.k === "ox" ? (q.a ? "O" : "X") : "①②③④⑤"[q.a])) + "</b>" + esc(q.e) + "</div>";
   $("nx").innerHTML = '<button class="btn" onclick="' + (R.qi + 1 < R.qs.length ? "R.qi++;qShow()" : "readResult()") + '">' + (R.qi + 1 < R.qs.length ? "다음 →" : "결과 보기") + "</button>";
+  try{ $("fb").scrollIntoView({block: "nearest", behavior: "smooth"}); }catch(e){}
 }
 function readResult(){
+  if(R.diag) return diagResult();
   var p = R.p, ok = R.ans.filter(Boolean).length, a = ok / R.qs.length, cpm = Math.round(p.chars / (R.sec / 60)), e = Math.round(cpm * a);
   var prev = S.reads.slice(-5), pe = prev.length ? Math.round(avg(prev, function(r){ return r.e; })) : null;
   S.reads.push({p: p.id, d: ymd(), s: Math.round(R.sec), cpm: cpm, a: Math.round(a * 100) / 100, e: e, m: R.mode});
@@ -420,6 +458,47 @@ function review(){
     '<div class="row"><button class="btn gray" onclick="readResultAgain()">결과로</button><button class="btn" onclick="' + (R.today ? "go(\'today\')" : "go(\'read\')") + '">' + (R.today ? "오늘 훈련 마치기" : "목록으로") + "</button></div>");
 }
 function readResultAgain(){ var d = R.done; S.reads.pop(); day().r--; readResult(); }
+
+/* ════════ 🧭 진단 읽기 ════════ */
+function diagStart(){
+  if(!D.diag) return;
+  R = {p: D.diag, diag: true, mode: "normal", pre: false, cpm: 450};
+  view('<div><div class="qk">🧭 진단 읽기 · 약 3분</div><h2>나에게 맞는 단계 찾기</h2></div>' +
+    '<div class="card cmp">① 짧은 글 1편을 <b>평소 속도로</b> 읽어요. (시간을 재요)<br>② 다 읽으면 글이 가려지고 <b>내용 문제 5개</b>를 풀어요.<br>③ 이어서 <b>어휘 6개</b>를 확인해요.<br><br>' +
+    '결과(읽기 속도 · 정답률 · 어휘)로 <b>시작 단계</b>를 추천해요. 서두르지 말고 평소처럼 읽어야 정확해요.</div>' +
+    '<div class="grow"></div><div class="row"><button class="btn gray" onclick="go(TAB)">나중에</button><button class="btn" style="flex:2" onclick="readGo()">읽기 시작 ▶</button></div>');
+}
+function diagQs(){
+  var qs = buildQs(D.diag, true);
+  (D.diag.check || []).forEach(function(w){
+    var x = W[w]; if(!x) return;
+    var c = shuffle([x.m].concat(pick(D.words.map(function(y){ return y.m; }), 3, [x.m])));
+    qs.push({k: "dv", q: "노란색 낱말 '" + w + "'의 뜻으로 알맞은 것은?", ex: x.ex, c: c, a: c.indexOf(x.m), e: w + " (" + x.h + ") : " + x.m});
+  });
+  return qs;
+}
+function diagResult(){
+  var n = R.qs.filter(function(q){ return q.k !== "dv"; }).length, ok = 0, v = 0, vn = 0;
+  R.qs.forEach(function(q, i){ if(q.k === "dv"){ vn++; if(R.ans[i]) v++; } else if(R.ans[i]) ok++; });
+  var a = ok / n, cpm = Math.round(R.p.chars / (R.sec / 60)), fast = cpm > 1300, lv = 1;
+  if(a >= 0.8 && (fast || cpm >= 450) && v >= 4) lv = 2;
+  if(!fast && a === 1 && cpm >= 700 && v >= 5) lv = 3;
+  if(levels().indexOf(lv) < 0) lv = levels()[0];
+  var why = lv === 3 ? "빠르고 정확하게 읽고 어휘도 탄탄해요. 수능 길이의 긴 글로 바로 도전해 보세요."
+          : lv === 2 ? "내용을 잘 파악하고 있어요. 고1 모의고사 길이의 글로 속도와 정확도를 함께 키워요."
+          : a < 0.6 ? "먼저 짧은 글에서 문단마다 핵심 문장을 잡는 연습부터 해요. 정확하게 읽는 것이 먼저예요."
+          : v < 4 ? "이해는 좋아요. 어휘를 늘리면 금방 다음 단계로 갈 수 있어요. 어휘 훈련을 함께 해요."
+          : "짧은 글로 읽기 리듬을 만든 뒤, 정답률이 오르면 다음 단계로 올라가요.";
+  R.dg = {d: ymd(), cpm: cpm, a: Math.round(a * 100) / 100, v: v, lv: lv};
+  view('<div><div class="qk">🧭 진단 결과 · ' + mmss(R.sec) + ' 걸림</div><h2>추천 시작 단계</h2></div>' +
+    '<div class="res"><div><b>' + cpm + '</b><span>읽기 속도 (자/분)</span></div><div><b>' + ok + "/" + n + '</b><span>내용 이해</span></div><div><b>' + v + "/" + vn + '</b><span>어휘</span></div></div>' +
+    '<div class="card" style="text-align:center"><div class="dlv">' + lv + '단계</div><div class="muted">' + esc((D.levels.filter(function(l){ return l.lv === lv; })[0] || {}).desc || "") + '</div><p class="cmp" style="margin-top:8px">' + why + "</p>" +
+    (fast ? '<p class="muted">⚠️ 읽기 속도가 너무 빨라요. 끝까지 읽지 않았다면 속도는 빼고 추천했어요.</p>' : "") + "</div>" +
+    '<div class="muted" style="text-align:center">다른 단계로 시작하고 싶으면 고르세요</div>' +
+    '<div class="seg">' + D.levels.map(function(l){ return '<button aria-pressed="' + (l.lv === lv) + '"' + (levels().indexOf(l.lv) >= 0 ? "" : " disabled") + ' onclick="diagSave(' + l.lv + ')">' + l.name + "</button>"; }).join("") + "</div>" +
+    '<div class="grow"></div><button class="btn" onclick="diagSave(' + lv + ')">' + lv + "단계로 시작하기</button>");
+}
+function diagSave(lv){ var g = R.dg; g.pick = lv; S.diag = g; S.lv = lv; save(); go("today"); }
 
 /* ════════ 🔤 어휘 ════════ */
 var V = null;
@@ -538,7 +617,7 @@ function showGrow(){
     '<div class="chart">' + chartSVG(rs) + "</div>" +
     '<div><div class="muted" style="margin-bottom:5px">최근 14일 <span style="color:var(--ac)">■</span> 오늘 훈련 완료 <span style="color:#9fb4ea">■</span> 조금 함</div><div class="days">' + days.join("") + "</div></div>" +
     '<div class="badges">' + B.map(function(b){ return '<span class="' + (b[1] ? "" : "off") + '">' + b[0] + "</span>"; }).join("") + "</div>" +
-    '<div class="grow"></div><div style="text-align:center"><button class="link" onclick="resetAsk()">이 휴대폰의 기록 모두 지우기</button></div>'
+    '<div class="grow"></div><div style="text-align:center;display:flex;justify-content:center;gap:18px"><button class="link" onclick="diagStart()">🧭 진단 다시 하기' + (S.diag ? " (" + S.diag.lv + "단계 추천받음)" : "") + '</button><button class="link" onclick="resetAsk()">기록 모두 지우기</button></div>'
   );
 }
 function resetAsk(){
