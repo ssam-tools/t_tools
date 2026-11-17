@@ -702,8 +702,29 @@ function showGrow(){
     '<div class="chart">' + chartSVG(rs) + "</div>" +
     '<div><div class="muted" style="margin-bottom:5px">최근 14일 <span style="color:var(--ac)">■</span> 오늘 훈련 완료 <span style="color:#9fb4ea">■</span> 조금 함</div><div class="days">' + days.join("") + "</div></div>" +
     '<div class="badges">' + B.map(function(b){ return '<span class="' + (b[1] ? "" : "off") + '">' + b[0] + "</span>"; }).join("") + "</div>" +
-    '<div class="grow"></div><div style="text-align:center;display:flex;justify-content:center;gap:18px"><button class="link" onclick="diagStart()">🧭 진단 다시 하기' + (S.diag ? " (" + S.diag.lv + "단계 추천받음)" : "") + '</button><button class="link" onclick="resetAsk()">기록 모두 지우기</button></div>'
+    '<div class="grow"></div><div style="text-align:center;display:flex;justify-content:center;gap:18px"><button class="link" onclick="codeAsk()">📤 선생님께 결과 코드</button><button class="link" onclick="diagStart()">🧭 진단 다시 하기' + (S.diag ? " (" + S.diag.lv + "단계 추천받음)" : "") + '</button><button class="link" onclick="resetAsk()">기록 모두 지우기</button></div>'
   );
+}
+/* ── 📤 선생님께 결과 코드 (번호와 점수만, 이름 없음) — 교사용 화면(teach.html)에서 모아 봄 ── */
+function codeChk(body){ var s = 0; for(var i = 0; i < body.length; i++) s += (i + 1) * body.charCodeAt(i); return ("0" + s % 97).slice(-2); }
+function resultCode(no){
+  var sp = readsSpeed(), rec = S.reads.slice(-10), d14 = 0;
+  for(var i = 0; i < 14; i++) if(active(addDays(-i))) d14++;
+  var f = [Math.max(0, Math.min(99999, +no || 0)), ymd().replace(/-/g, ""), S.lv === 9 ? 9 : Math.max(1, Math.min(3, S.lv || 1)), Math.min(9999, S.reads.length),
+    rec.length ? Math.round(avg(rec, function(r){ return r.a; }) * 100) : 0, sp.length ? Math.round(avg(sp.slice(-3), function(r){ return r.e; })) : 0,
+    Math.min(9999, mastered()), d14, Math.min(999, Object.keys(S.maps || {}).length)];
+  var body = "KR1-" + f.join("-");
+  return body + "-" + codeChk(body);
+}
+function codeAsk(){
+  var o = modal('<h2>📤 선생님께 결과 코드</h2><p class="cmp">번호만 넣으면 <b>번호와 점수</b>만 담긴 코드가 만들어져요. <b>이름은 넣지 마세요.</b> 코드를 복사해 선생님이 알려 준 곳(쿨메신저·과제방 등)에 붙여 보내요.</p>' +
+    '<div class="row" style="align-items:center"><span style="flex:none;font-weight:800">번호</span><input id="cno" type="number" inputmode="numeric" min="1" max="99999" placeholder="예) 12 또는 30512" value="' + (S.no || "") + '" style="font:inherit;font-size:18px;padding:9px 11px;border:1.5px solid var(--line);border-radius:11px;min-width:0"></div>' +
+    '<div class="addr" id="ccode" style="font-size:16px;font-weight:800;text-align:center;letter-spacing:.3px">번호를 넣으세요</div>' +
+    '<div class="muted">들어가는 것: 번호 · 날짜 · 단계 · 읽은 글 수 · 최근 정답률 · 유효 속도 · 익힌 단어 수 · 최근 14일 훈련일 · 구조도 수</div>' +
+    '<div class="row"><button class="btn gray" data-close>닫기</button><button class="btn" id="ccopy" disabled>코드 복사</button></div>');
+  var upd = function(){ var n = +$("cno").value; if(n > 0){ S.no = n; save(); $("ccode").textContent = resultCode(n); $("ccopy").disabled = false; } else { $("ccode").textContent = "번호를 넣으세요"; $("ccopy").disabled = true; } };
+  $("cno").oninput = upd; upd();
+  $("ccopy").onclick = function(){ var c = $("ccode").textContent, b = this; (navigator.clipboard ? navigator.clipboard.writeText(c) : Promise.reject()).then(function(){ b.textContent = "복사했어요 ✓"; }, function(){ b.textContent = "코드를 길게 눌러 복사"; }); };
 }
 function resetAsk(){
   modal('<h2>기록을 모두 지울까요?</h2><p class="cmp">읽기 기록, 단어 공부 기록, 연속 일수가 모두 지워지고 되돌릴 수 없어요.</p>' +
