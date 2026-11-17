@@ -9,7 +9,7 @@
 <link rel="manifest" href="../../manifest.webmanifest">
 <link rel="icon" href="../../assets/icon-192.png">
 <link rel="stylesheet" href="../../shared/tt.css">
-<title>파일 합치기 · 쌤 노트</title>
+<title>파일 합치기·나누기 · 쌤 노트</title>
 <!--
   📎 파일 합치기 (PLAN_통일 5단계) — 같은 양식의 엑셀·한글 파일 여러 개를 이 기기 안에서 하나로 합칩니다. 파일은 어디로도 보내지 않습니다.
   · 엑셀(.xlsx·.xls 표·.csv): ① 한 시트로 이어 붙이기(첫 줄 제목은 한 번만, 맨 앞에 '파일' 칸) ② 파일마다 시트 하나. 값만 합칩니다(서식·수식 결과값).
@@ -43,6 +43,15 @@
   .warn{color:var(--danger);font-weight:700}
   .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;color:var(--sub);font-size:14.5px;line-height:1.7}
   .empty .big{font-size:44px}
+  .pgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:10px}
+  .pg{border:2px solid var(--line);border-radius:12px;background:var(--card);display:flex;flex-direction:column;overflow:hidden;cursor:grab}
+  .pg.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .pg .th{height:170px;display:flex;align-items:center;justify-content:center;background:#eef2f6;cursor:pointer;position:relative}
+  .pg.on .th::after{content:"✔";position:absolute;top:6px;left:6px;background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;display:grid;place-items:center;font-size:13px;font-weight:800}
+  .pg canvas{max-width:100%;max-height:100%;box-shadow:0 1px 4px rgba(0,0,0,.18);background:#fff}
+  .pb{display:flex;align-items:center;gap:2px;padding:3px 4px;font-size:12.5px;font-weight:800}.pb span{flex:1;text-align:center}
+  .pb button{border:0;background:transparent;font:inherit;font-size:13px;cursor:pointer;padding:3px 5px;border-radius:6px;color:var(--sub)}.pb button:hover{background:var(--accent-soft);color:var(--accent)}
+  .opt .go .btn{flex:1;min-width:0;white-space:normal}
   @media (max-width:760px){ main.panel{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)} #list{max-height:24vh} }
 </style>
 </head>
@@ -50,12 +59,13 @@
 <header>
   <div>
     <a class="back" href="../../">← 쌤 노트</a>
-    <h1>📎 파일 합치기</h1>
+    <h1>📎 파일 합치기·나누기</h1>
   </div>
   <div class="bar">
     <div class="seg" id="kind" role="group" aria-label="파일 종류">
       <button type="button" data-k="x" aria-pressed="true">📊 엑셀</button>
       <button type="button" data-k="h" aria-pressed="false">📝 한글(hwpx)</button>
+      <button type="button" data-k="p" aria-pressed="false">📄 PDF</button>
     </div>
     <details class="more">
       <summary aria-label="더 보기">⋯</summary>
@@ -100,7 +110,7 @@
   drop.addEventListener("dragover", function(e){ e.preventDefault(); drop.classList.add("on"); });
   drop.addEventListener("dragleave", function(){ drop.classList.remove("on"); });
   drop.addEventListener("drop", function(e){ e.preventDefault(); drop.classList.remove("on"); add(e.dataTransfer.files); });
-  function okFile(f){ return KIND === "x" ? /\.(xlsx|xls|csv|txt)$/i.test(f.name) : /\.hwpx$/i.test(f.name); }
+  function okFile(f){ return KIND === "x" ? /\.(xlsx|xls|csv|txt)$/i.test(f.name) : KIND === "p" ? /\.pdf$/i.test(f.name) : /\.hwpx$/i.test(f.name); }
   function add(list){
     var bad = 0, hwp = 0;
     Array.prototype.forEach.call(list || [], function(f){
@@ -110,17 +120,19 @@
     });
     FILES.sort(function(a, b){ return a.file.name.localeCompare(b.file.name, "ko", {numeric: true}); });
     if(hwp) TT.ui.toast("예전 .hwp 파일은 한글에서 '다른 이름으로 저장 → HWPX'로 바꾼 뒤 넣어 주세요.");
-    else if(bad) TT.ui.toast(bad + "개는 " + (KIND === "x" ? "엑셀" : "한글(hwpx)") + " 파일이 아니라서 뺐어요. 위에서 종류를 바꿔 보세요.");
+    else if(bad) TT.ui.toast(bad + "개는 " + (KIND === "x" ? "엑셀" : KIND === "p" ? "PDF" : "한글(hwpx)") + " 파일이 아니라서 뺐어요. 위에서 종류를 바꿔 보세요.");
     draw();
   }
   function draw(){
     Array.prototype.forEach.call(document.querySelectorAll("#kind button"), function(b){ b.setAttribute("aria-pressed", String(b.dataset.k === KIND)); });
-    $("dropSub").textContent = KIND === "x" ? "엑셀 .xlsx · .csv · 나이스 .xls(표)" : "한글 .hwpx (예전 .hwp는 HWPX로 저장해서)";
-    $("f").accept = KIND === "x" ? ".xlsx,.xls,.csv,.txt" : ".hwpx";
+    $("dropSub").textContent = KIND === "x" ? "엑셀 .xlsx · .csv · 나이스 .xls(표)" : KIND === "p" ? "PDF 파일 (한 개도 됨 — 쪽 정리·나누기·뽑기)" : "한글 .hwpx (예전 .hwp는 HWPX로 저장해서)";
+    $("f").accept = KIND === "x" ? ".xlsx,.xls,.csv,.txt" : KIND === "p" ? ".pdf" : ".hwpx";
     $("list").innerHTML = FILES.map(function(x, i){
       return '<div class="it"><span title="' + esc(x.file.name) + '">' + esc(x.file.name) + '</span><small>' + Math.max(1, Math.round(x.file.size / 1024)) + 'KB</small>'
         + '<button type="button" data-up="' + i + '" title="위로" aria-label="위로">↑</button><button type="button" data-dn="' + i + '" title="아래로" aria-label="아래로">↓</button><button type="button" data-rm="' + i + '" title="빼기" aria-label="빼기">✕</button></div>';
     }).join("");
+    if(KIND === "p"){ pdfDraw(); return; }
+    $("run").hidden = false;
     $("opt").innerHTML = KIND === "x"
       ? '<label><input type="radio" name="md" value="one"' + (opt.mode === "one" ? " checked" : "") + '><span><b>한 시트로 이어 붙이기</b><br><small>반별 명단·조사표를 한 표로</small></span></label>'
         + '<label><input type="radio" name="md" value="each"' + (opt.mode === "each" ? " checked" : "") + '><span><b>파일마다 시트 하나</b><br><small>시트 이름 = 파일 이름</small></span></label>'
@@ -166,6 +178,7 @@
   }
   var pvT = 0;
   function preview(){
+    if(KIND === "p") return;
     var my = ++pvT, has = FILES.length > 0;
     $("empty").hidden = has; $("pvT").hidden = !has; $("prev").hidden = !has; $("note").innerHTML = "";
     if(!has) return;
@@ -265,6 +278,119 @@
     last.data = enc.encode(B.head + B.inner + add + B.tail);
     first.forEach(function(e){ if(e.name === "Preview/PrvText.txt") e.data = enc.encode(""); });
     return {blob: TT.file.zip(first), pics: pics};
+  }
+
+  /* ---------- 📄 PDF (PLAN_다듬기 6단계) ----------
+     읽기·미리 보기는 pdf.js(shared/vendor/pdfjs), 새 PDF 만들기는 pdf-lib(shared/vendor/pdflib, MIT). 모두 이 기기 안에서.
+     PAGES: 화면의 쪽 순서 [{f: FILES 의 파일, i: 원래 쪽(0부터), rot: 더 돌린 각도, sel}] */
+  var PJ = null, PAGES = [], PKEY = "";
+  var VB = new URL("../../shared/vendor/", location.href).href;
+  function pdfjs(){ return PJ ? Promise.resolve(PJ) : import(VB + "pdfjs/pdf.min.mjs").then(function(m){ m.GlobalWorkerOptions.workerSrc = VB + "pdfjs/pdf.worker.min.mjs"; PJ = m; return m; }); }
+  function pdflib(){ return window.PDFLib ? Promise.resolve(window.PDFLib) : new Promise(function(ok, no){ var sc = document.createElement("script"); sc.src = VB + "pdflib/pdf-lib.min.js"; sc.onload = function(){ ok(window.PDFLib); }; sc.onerror = function(){ no(new Error("PDF 도구를 불러오지 못했습니다.")); }; document.head.appendChild(sc); }); }
+  function bufOf(x){ return x.buf ? Promise.resolve(x.buf) : x.file.arrayBuffer().then(function(b){ x.buf = b; return b; }); }
+  function jsDoc(x){ if(x.jd) return x.jd; x.jd = Promise.all([pdfjs(), bufOf(x)]).then(function(a){ return a[0].getDocument({data: new Uint8Array(a[1].slice(0)), cMapUrl: VB + "pdfjs/cmaps/", cMapPacked: true, isEvalSupported: false}).promise; }); return x.jd; }
+  function libDoc(x){ if(x.ld) return x.ld; x.ld = Promise.all([pdflib(), bufOf(x)]).then(function(a){ return a[0].PDFDocument.load(a[1], {ignoreEncryption: true}); }); return x.ld; }
+  function selPages(){ var S = PAGES.filter(function(p){ return p.sel; }); return S.length ? S : PAGES; }
+  function pdfDraw(){
+    var key = FILES.map(function(x){ return x.file.name + x.file.size; }).join("|");
+    $("run").hidden = true; $("run").disabled = true;
+    var ns = PAGES.filter(function(p){ return p.sel; }).length;
+    $("opt").innerHTML = FILES.length ? '<div class="msg">쪽을 눌러 고르고(여러 개), ⟳ 돌리기 · ✕ 빼기 · ◀▶ 또는 끌어서 순서 바꾸기. 아래 단추는 <b>고른 쪽</b>(없으면 전체)에 적용돼요.</div>'
+      + '<div class="go"><button type="button" class="btn primary" data-pa="merge">📎 PDF 하나로' + (FILES.length > 1 ? " 합치기" : " 저장") + '</button><button type="button" class="btn" data-pa="pick">✂️ 고른 쪽만 새 PDF</button></div>'
+      + '<div class="go"><button type="button" class="btn" data-pa="split">🔪 나누기</button><button type="button" class="btn" data-pa="text">🔤 글자</button><button type="button" class="btn" data-pa="png">🖼️ 그림</button></div>'
+      + '<div class="msg" id="pst">' + (PAGES.length ? "전체 " + PAGES.length + "쪽" + (ns ? " · 고른 쪽 " + ns : "") : "") + "</div>" : "";
+    if(key !== PKEY){ PKEY = key; buildPages(); } else pdfGrid();
+  }
+  function buildPages(){
+    var my = ++pvT; PAGES = [];
+    $("empty").hidden = FILES.length > 0; $("pvT").hidden = !FILES.length; $("prev").hidden = !FILES.length; $("note").innerHTML = "";
+    if(!FILES.length) return;
+    $("pvT").textContent = "쪽 미리 보기"; $("prev").innerHTML = '<div class="msg" style="padding:10px">PDF를 읽는 중…</div>';
+    Promise.all(FILES.map(jsDoc)).then(function(D){
+      if(my !== pvT) return;
+      FILES.forEach(function(x, k){ x.np = D[k].numPages; for(var i = 0; i < D[k].numPages; i++) PAGES.push({f: x, i: i, rot: 0, sel: false}); });
+      pdfDraw();
+    }).catch(function(e){ if(my === pvT) $("prev").innerHTML = '<div class="msg warn" style="padding:10px">PDF를 열지 못했어요' + (/password/i.test(e && e.name + e.message) ? " (암호가 걸린 PDF)" : "") + ".</div>"; });
+  }
+  function pdfGrid(){
+    var fi = function(x){ return FILES.indexOf(x) + 1; };
+    $("empty").hidden = FILES.length > 0; $("pvT").hidden = !FILES.length; $("prev").hidden = !FILES.length;
+    if(!PAGES.length){ return; }
+    $("pvT").innerHTML = '쪽 미리 보기 <small style="font-weight:600;color:var(--sub)">· 눌러서 고르기</small> <button type="button" class="btn" data-pa="all" style="padding:3px 10px;font-size:12.5px;margin-left:6px">전체 고르기</button> <button type="button" class="btn" data-pa="none" style="padding:3px 10px;font-size:12.5px">풀기</button>';
+    $("prev").innerHTML = '<div class="pgs">' + PAGES.map(function(p, k){
+      return '<div class="pg' + (p.sel ? " on" : "") + '" draggable="true" data-k="' + k + '"><div class="th" data-sel="' + k + '"><canvas data-c="' + k + '"></canvas></div>'
+        + '<div class="pb"><button type="button" data-mv="-1" data-k="' + k + '" title="앞으로">◀</button><span>' + (FILES.length > 1 ? fi(p.f) + "-" : "") + (p.i + 1) + (p.rot ? " ⟳" + p.rot : "") + '</span><button type="button" data-mv="1" data-k="' + k + '" title="뒤로">▶</button><button type="button" data-rot="' + k + '" title="오른쪽으로 돌리기">⟳</button><button type="button" data-del="' + k + '" title="빼기">✕</button></div></div>';
+    }).join("") + "</div>";
+    $("note").innerHTML = "🔒 PDF는 이 기기 안에서만 다룹니다. 스캔한 PDF는 글자를 뽑을 수 없어요.";
+    thumbs();
+  }
+  function thumbs(){
+    var io = "IntersectionObserver" in window ? new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ io.unobserve(e.target); paint(e.target); } }); }, {root: $("prev")}) : null;
+    Array.prototype.forEach.call(document.querySelectorAll("#prev canvas[data-c]"), function(c){ if(io) io.observe(c); else paint(c); });
+  }
+  function paint(c){
+    var p = PAGES[+c.dataset.c]; if(!p) return;
+    jsDoc(p.f).then(function(d){ return d.getPage(p.i + 1); }).then(function(pg){
+      var v0 = pg.getViewport({scale: 1, rotation: (pg.rotate + p.rot) % 360}), sc = 150 / Math.max(v0.width, v0.height), v = pg.getViewport({scale: sc * 1.5, rotation: (pg.rotate + p.rot) % 360});
+      c.width = v.width; c.height = v.height; return pg.render({canvasContext: c.getContext("2d"), viewport: v}).promise;
+    }).catch(function(){});
+  }
+  var dragK = -1;
+  $("prev").addEventListener("dragstart", function(e){ var g = e.target.closest && e.target.closest(".pg"); if(g){ dragK = +g.dataset.k; e.dataTransfer.effectAllowed = "move"; } });
+  $("prev").addEventListener("dragover", function(e){ if(dragK >= 0 && e.target.closest && e.target.closest(".pg")) e.preventDefault(); });
+  $("prev").addEventListener("drop", function(e){ var g = e.target.closest && e.target.closest(".pg"); if(!g || dragK < 0) return; e.preventDefault(); var to = +g.dataset.k; PAGES.splice(to, 0, PAGES.splice(dragK, 1)[0]); dragK = -1; pdfDraw(); });
+  function onPdfClick(e){
+    if(KIND !== "p") return;
+    var b = e.target.closest ? e.target.closest("[data-pa],[data-sel],[data-mv],[data-rot],[data-del]") : null; if(!b) return;
+    var d = b.dataset, k;
+    if(d.sel != null){ k = +d.sel; PAGES[k].sel = !PAGES[k].sel; b.parentNode.classList.toggle("on", PAGES[k].sel); var ns = PAGES.filter(function(p){ return p.sel; }).length, st = $("pst"); if(st) st.textContent = "전체 " + PAGES.length + "쪽" + (ns ? " · 고른 쪽 " + ns : ""); return; }
+    if(d.mv != null){ k = +d.k; var t = k + (+d.mv); if(t >= 0 && t < PAGES.length){ PAGES.splice(t, 0, PAGES.splice(k, 1)[0]); pdfDraw(); } return; }
+    if(d.rot != null){ k = +d.rot; PAGES[k].rot = (PAGES[k].rot + 90) % 360; pdfDraw(); return; }
+    if(d.del != null){ PAGES.splice(+d.del, 1); pdfDraw(); return; }
+    if(d.pa === "all" || d.pa === "none"){ PAGES.forEach(function(p){ p.sel = d.pa === "all"; }); pdfDraw(); return; }
+    if(d.pa) pdfAct(d.pa, b);
+  }
+  document.addEventListener("click", onPdfClick);
+  function base1(){ return FILES.length === 1 ? base(FILES[0].file.name) : "합친PDF"; }
+  function makePdf(list){
+    return pdflib().then(function(L){
+      return L.PDFDocument.create().then(function(out){
+        var chain = Promise.resolve();
+        list.forEach(function(p){ chain = chain.then(function(){ return libDoc(p.f); }).then(function(src){ return out.copyPages(src, [p.i]); }).then(function(cp){ var pg = cp[0]; if(p.rot) pg.setRotation(L.degrees(((pg.getRotation().angle || 0) + p.rot) % 360)); out.addPage(pg); }); });
+        return chain.then(function(){ return out.save(); });
+      });
+    });
+  }
+  function pngOf(p){
+    return jsDoc(p.f).then(function(d){ return d.getPage(p.i + 1); }).then(function(pg){
+      var v = pg.getViewport({scale: 2, rotation: (pg.rotate + p.rot) % 360}), c = document.createElement("canvas"); c.width = v.width; c.height = v.height;
+      var x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
+      return pg.render({canvasContext: x, viewport: v}).promise.then(function(){ return new Promise(function(ok){ c.toBlob(ok, "image/png"); }); }).then(function(b){ return b.arrayBuffer(); }).then(function(a){ return new Uint8Array(a); });
+    });
+  }
+  function n3(i){ return ("00" + i).slice(-3); }
+  function pdfAct(a, btn){
+    if(!PAGES.length) return;
+    var L = a === "merge" ? PAGES : selPages(), lbl = btn.textContent; btn.disabled = true; btn.textContent = "만드는 중…";
+    var done = function(){ btn.disabled = false; btn.textContent = lbl; };
+    var job;
+    if(a === "merge" || a === "pick") job = makePdf(L).then(function(b){ TT.util.download(base1() + (a === "pick" ? "_고른쪽" : "") + "_" + stamp() + ".pdf", new Blob([b], {type: "application/pdf"})); TT.ui.toast("PDF를 만들었어요 — " + L.length + "쪽"); });
+    else if(a === "split"){
+      var out = [], ch = Promise.resolve();
+      L.forEach(function(p, k){ ch = ch.then(function(){ return makePdf([p]); }).then(function(b){ out.push({name: "page_" + n3(k + 1) + ".pdf", data: new Uint8Array(b)}); }); });
+      job = ch.then(function(){ if(out.length === 1) TT.util.download(base1() + "_1쪽.pdf", new Blob([out[0].data], {type: "application/pdf"})); else TT.util.download("split_pages_" + stamp() + ".zip", TT.file.zip(out)); TT.ui.toast(out.length + "개 PDF로 나눴어요" + (out.length > 1 ? " (압축 파일)" : "")); });
+    }
+    else if(a === "text"){
+      var T = [], c2 = Promise.resolve();
+      L.forEach(function(p){ c2 = c2.then(function(){ return jsDoc(p.f).then(function(d){ return d.getPage(p.i + 1); }).then(function(pg){ return pg.getTextContent(); }).then(function(tc){ T.push("──── " + (FILES.length > 1 ? base(p.f.file.name) + " " : "") + (p.i + 1) + "쪽 ────\n" + tc.items.map(function(it){ return (it.str || "") + (it.hasEOL ? "\n" : ""); }).join("").trim()); }); }); });
+      job = c2.then(function(){ var txt = T.join("\n\n"); if(!txt.replace(/─|\d|쪽|\s/g, "")){ TT.ui.toast("뽑을 글자가 없어요. 스캔한(그림) PDF일 수 있어요."); return; } TT.util.download(base1() + "_글자_" + stamp() + ".txt", "﻿" + txt, "text/plain;charset=utf-8"); try{ navigator.clipboard.writeText(txt); }catch(e){} TT.ui.toast("글자를 뽑았어요 — 파일로 내려받고 복사도 했어요"); });
+    }
+    else if(a === "png"){
+      var I = [], c3 = Promise.resolve();
+      L.forEach(function(p, k){ c3 = c3.then(function(){ return pngOf(p); }).then(function(u){ I.push({name: "page_" + n3(k + 1) + ".png", data: u}); }); });
+      job = c3.then(function(){ if(I.length === 1) TT.util.download(base1() + "_" + (L[0].i + 1) + "쪽.png", new Blob([I[0].data], {type: "image/png"})); else TT.util.download("pages_png_" + stamp() + ".zip", TT.file.zip(I)); TT.ui.toast("그림 " + I.length + "장으로 저장했어요"); });
+    }
+    job.then(done, function(e){ TT.ui.toast("만들지 못했어요: " + (e && e.message || e)); done(); });
   }
 
   /* ---------- 합치기 ---------- */

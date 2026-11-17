@@ -95,7 +95,7 @@ var TT_TOOLS = [
   {id:"lib",    icon:"🔎", cat:"work", menu:"school", group:"lib",  short:"자료실", name:"자료실", old:"학교 자료실", desc:"규정집·교육계획서·기재요령·서식을 누구나 올리고 내용까지 찾기 (몇 쪽인지).", href:"apps/lib/", ready:true},
   {id:"ai",     icon:"🤖", cat:"work", menu:"school", group:"work",  short:"문서 도우미", name:"문서 도우미", old:"AI·문서 도우미", desc:"개인정보를 가린 AI 요청문 · 🧾 자동 채움(가정통신문·안내 문자·신청서·명단 표·공문 틀에 학교·날짜·담임·명단을 채움) · 보관함.", href:"apps/ai/", ready:true},
   {id:"train",  icon:"📜", cat:"work", menu:"school", group:"work",  short:"의무연수", name:"의무연수 취합", desc:"꾸러미 이수증·이수번호를 한 번 내면 연수 담당자들이 한 번에 모아 갑니다.", href:"apps/train/", ready:true},
-  {id:"merge",  icon:"📎", cat:"work", menu:"school", group:"work",  short:"파일 합치기", name:"파일 합치기", desc:"같은 양식 엑셀·한글(hwpx) 파일 여러 개를 이 기기 안에서 하나로. 서식까지 그대로는 윈도우 프로그램.", href:"apps/merge/", ready:true},
+  {id:"merge",  icon:"📎", cat:"work", menu:"school", group:"work",  short:"파일 합치기", name:"파일 합치기·나누기", desc:"엑셀·한글(hwpx)·PDF를 이 기기 안에서 합치기 · PDF 쪽 정리·나누기·글자/그림 뽑기. 서식까지 그대로는 윈도우 프로그램.", href:"apps/merge/", ready:true},
   /* ── 설정 ── */
   {id:"setup",  icon:"🧳", cat:"work", menu:"settings", group:"set",  short:"학기초 세팅", name:"학기초 세팅", desc:"담당자가 학교 원본 파일(학생 명렬 엑셀 · 한글 교직원 명렬·내선번호·시간표·학사일정)을 한꺼번에 넣고 잠근 파일 하나로 → 선생님은 불러와 내 이름만 고르면 끝.", href:"apps/setup/", ready:true, months:[2,3], season:["start"]}
 ];
