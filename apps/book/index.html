@@ -38,7 +38,7 @@
   .stage{position:absolute;inset:0;overflow:auto;background:#f1f3f5;border-radius:12px;touch-action:none;display:flex;align-items:flex-start;justify-content:center}
   .stage .pg{position:relative;margin:auto;flex:none}
   .stage canvas{display:block;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.15)}
-  .stage canvas.ink{position:absolute;left:0;top:0;background:transparent;box-shadow:none;pointer-events:none}
+  .stage canvas.tinkc{position:absolute;left:0;top:0;background:transparent!important;box-shadow:none!important}   /* 판서 층은 투명 (v1.11.2: 흰 바탕이 교과서를 덮던 문제) */
   .stage.pen{touch-action:none}
   .sarr{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:clamp(44px,4vw,64px);height:clamp(90px,16vh,150px);align-items:center;justify-content:center;border:0;border-radius:16px;background:rgba(30,40,55,.30);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35);font:inherit;font-size:clamp(40px,4.5vw,70px);font-weight:300;line-height:1;cursor:pointer;opacity:.7;transition:opacity .15s,background .15s;padding:0 0 6px}
   .sarr:hover{opacity:1;background:rgba(30,40,55,.45)}.sarr:active{background:rgba(47,111,181,.7)}.sarr:disabled{opacity:.12;cursor:default}
