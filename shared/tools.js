@@ -58,7 +58,8 @@ var TT_MENUS = [
 ];
 /* 교과 팩 목록: 파일은 subjects/ 폴더. 팩 안의 도구는 불러올 때 TT_TOOLS 에 붙습니다(menu:"class", group:"subject", subject:id) */
 var TT_PACKS = [
-  {id:"math", name:"수학", icon:"🧮", file:"subjects/math.js"}
+  {id:"math", name:"수학", icon:"🧮", file:"subjects/math.js"},
+  {id:"korean", name:"국어", icon:"📖", file:"subjects/korean.js"}
 ];
 var TT_PACK_DATA = {};   // 불러온 팩: {id: {id, name, units, links, tools}}
 var TT_TOOLS = [
