@@ -27,12 +27,12 @@
   header{align-items:center;gap:8px}
   .bar{flex-wrap:wrap;gap:6px;align-items:center}
   .chips{display:flex;gap:5px;flex-wrap:wrap}
-  .chips button{font:inherit;font-size:15px;font-weight:800;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;cursor:pointer}
-  .chips button.on{background:#222;color:#fff;border-color:#222}
+  .chips button{font:inherit;font-size:15px;font-weight:700;border:1.5px solid var(--line);background:var(--card,#fff);color:var(--ink,#1d2733);border-radius:999px;padding:5px 13px;cursor:pointer}
+  .chips button.on{background:var(--accent,#2f6fb5);color:#fff;border-color:var(--accent,#2f6fb5)}
   .chips button.now::after{content:" ●";color:#c2432a;font-size:11px}
   main{display:flex;flex-direction:column;gap:6px;padding:8px!important;min-height:0}
   .where{display:flex;align-items:center;gap:14px;font-size:clamp(18px,2.2vw,30px);font-weight:900;padding:2px 6px}
-  .where .u{color:#2f6fb5}
+  .where .u{color:var(--accent,#2f6fb5)}
   .where .p{margin-left:auto;font-variant-numeric:tabular-nums}
   .where small{font-size:.5em;color:var(--sub);font-weight:600}
   .sw{flex:1;min-height:0;position:relative}
@@ -49,14 +49,16 @@
   .stage .msg{margin:auto;text-align:center;color:var(--sub);font-size:18px;line-height:1.8;padding:20px}
   .stage .msg .btn{font-size:18px;padding:10px 20px;margin:4px}
   .ctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-  .ctl button{font:inherit;font-size:clamp(15px,1.5vw,20px);font-weight:800;border:2px solid #222;background:#fff;color:#111;border-radius:12px;padding:8px 14px;cursor:pointer}
+  .ctl button{font:inherit;font-size:clamp(15px,1.4vw,19px);font-weight:700;border:1.5px solid var(--line,#dde3ea);background:var(--card,#fff);color:var(--ink,#1d2733);border-radius:12px;padding:8px 14px;cursor:pointer}
+  .ctl button:hover:not(:disabled){border-color:var(--accent,#2f6fb5);color:var(--accent,#2f6fb5)}
   .ctl button:disabled{opacity:.35}
   .ctl .pg{display:flex;align-items:center;gap:4px;font-size:18px;font-weight:800}
-  .ctl input{width:64px;font:inherit;font-size:18px;font-weight:800;text-align:center;border:2px solid #222;border-radius:10px;padding:6px}
+  .ctl input{width:64px;font:inherit;font-size:18px;font-weight:800;text-align:center;border:1.5px solid var(--line,#dde3ea);background:var(--card,#fff);color:var(--ink,#1d2733);border-radius:10px;padding:6px}
   .ctl .sp{flex:1}
-  .ctl .fire{border-color:#c2432a;color:#c2432a}
-  .ctl .done{background:#2d8a5b;border-color:#2d8a5b;color:#fff}
-  .ctl .go{background:#2f6fb5;border-color:#2f6fb5;color:#fff}
+  .ctl .fire{color:var(--accent,#c2432a)}
+  .ctl .done{background:var(--accent-soft,#e9f2fc);border-color:var(--accent-soft,#e9f2fc);color:var(--accent,#2f6fb5)}
+  .ctl .done:hover{border-color:var(--accent,#2f6fb5)}
+  .ctl .go,.ctl .go:hover:not(:disabled){background:var(--accent,#2f6fb5);border-color:var(--accent,#2f6fb5);color:#fff}
   /* 대화상자 */
   .ov{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center}
   .ov.on{display:flex}
@@ -80,7 +82,7 @@
   .pt tr{cursor:pointer}.pt tr:hover td{background:#f7f9fb}
   .pt .big{font-weight:900;font-size:1.2em}
   .lead{color:#2d8a5b;font-weight:800}.lag{color:#c2432a;font-weight:800}
-  .pt .gh td{background:#f7f9fb;font-weight:800;text-align:left;cursor:default}
+  .pt .gh td{background:#f7f9fb;font-weight:800;text-align:left;cursor:pointer}.pt .gh td .muted{font-weight:600;margin-left:6px}
 
   /* ── 수업 모드 (5단계) ── */
   .lx{display:none}
@@ -89,7 +91,11 @@
   body.lesson main{position:fixed;inset:0;z-index:50;background:#fff;padding:0!important;gap:0;border-radius:0;margin:0;max-width:none}
   body.lesson .stage{border-radius:0;background:#eef0f2}
   .ltop{align-items:center;gap:10px;padding:6px 14px;border-bottom:2px solid #222;background:#fff}
-  .ltop .t{font-size:clamp(22px,3vw,44px);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .ltop .t{font-size:clamp(22px,3vw,44px);font-weight:900;white-space:nowrap;min-width:0;flex:0 1 auto;display:flex;align-items:baseline;gap:.4em;overflow:hidden}
+  .ltop .t .cp{flex:none}.ltop .t .u{min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:.8em}
+  .ltop>button,.ltop>span:not(.t){flex:none}
+  @media (max-width:1700px){ .ltop button .lb{display:none} }
+  body.tm3 .ltop button .lb{display:none}
   .ltop .t .u{color:#2f6fb5}
   .ltop .sp{flex:1}
   .ltop button{white-space:nowrap;font:inherit;font-size:clamp(15px,1.4vw,20px);font-weight:800;border:2px solid #222;background:#fff;border-radius:12px;padding:6px 12px;cursor:pointer;color:#111}
@@ -152,7 +158,8 @@
   #goalBn.on{display:block}
   .sw{position:relative}
   .ltop .rmc{font-size:20px;opacity:.25;filter:grayscale(1)}.ltop .rmc[data-s="on"]{opacity:1;filter:none}.ltop .rmc[data-s="err"]{opacity:.6}
-  .ltop #lres.has,.ctl #bRes.has{background:#e9f2fc;border-color:#2f6fb5;color:#2f6fb5}
+  .ltop #lres.has{background:#e9f2fc;border-color:#2f6fb5;color:#2f6fb5}
+  .ctl #bRes.has{background:var(--accent-soft,#e9f2fc);border-color:var(--accent,#2f6fb5);color:var(--accent,#2f6fb5)}
   .ltop #lgoal:disabled{opacity:1}
   .where .cmp{font-size:.5em;color:var(--sub);font-weight:700;margin-left:6px}
   .rr{display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #f0f0f0}
@@ -179,10 +186,10 @@
 <main class="panel">
   <div class="lx ltop" id="ltop">
     <span class="t" id="lt"></span><span class="sp"></span>
-    <span class="tmb" id="tmb"><button data-m="3">3분</button><button data-m="5">5분</button><button data-m="7">7분</button></span>
+    <span class="tmb" id="tmb"><button data-m="1">1분</button><button data-m="3">3분</button><button data-m="5">5분</button></span>
     <span class="tm" id="tm"></span>
     <span id="lrm" class="rmc" data-s="off">📱</span>
-    <button id="lgoal" title="오늘 목표를 칠판 위에 크게">🎯 목표</button><button id="lres" title="이 쪽 차시 자료 · QR">📎 자료</button><button id="lsc" title="수업 시작 한 장 다시 보기">🏁</button>
+    <button id="lgoal" title="오늘 목표를 칠판 위에 크게">🎯<span class="lb"> 목표</span></button><button id="lres" title="이 쪽 차시 자료 · QR">📎<span class="lb"> 자료</span></button><button id="lsc" title="수업 시작 한 장 다시 보기">🏁</button>
     <button id="lrec" title="학생 활동 한 줄 기록 (수업 기록장으로)">✍️ 기록</button><button id="lpen" title="판서 (펜·형광펜·작도·각도기)">✏️ 판서</button>
     <button id="lzo" title="작게">－</button><button id="lzi" title="크게">＋</button>
     <button id="lprev">◀</button><button id="lnext">▶</button>
@@ -362,7 +369,7 @@
     var u = curUnit(), l = S.last[st.c];
     $("where").innerHTML = (st.c ? (st.c % 100) + "반" : "") + (u ? ' · <span class="u">' + esc(u.name) + "</span>" : ' · <span class="muted" style="font-size:15px">쪽-단원표를 넣으면 단원이 나옵니다</span>')
       + '<span class="p">p.' + bookP() + (l ? " <small>지난 시간 p." + l.p + " (" + l.d.slice(5).replace("-", "/") + ")</small>" : "") + "</span>";
-    $("lt").innerHTML = (st.c ? (st.c % 100) + "반" : "") + (u ? ' · <span class="u">' + esc(u.name) + "</span>" : "") + " · p." + bookP();
+    $("lt").innerHTML = '<b class="cp">' + (st.c ? (st.c % 100) + "반 · " : "") + "p." + bookP() + "</b>" + (u ? '<span class="u">' + esc(u.name) + "</span>" : "");   // 쪽 번호는 늘 보이게, 단원 이름만 줄임
     $("pin").value = bookP();
     resChip(); if(RM.on) rState();
     var cm = st.c ? cmpText(st.c) : ""; if(cm) $("where").insertAdjacentHTML("beforeend", ' <small class="cmp">' + cm + "</small>");
@@ -602,7 +609,7 @@
   function setMode(m){
     st.mode = m; st.sc = false;
     [].forEach.call($("lbot").querySelectorAll("button[data-m]"), function(b){ b.classList.toggle("on", +b.dataset.m === m); });
-    $("tmb").classList.toggle("on", m === 3);
+    $("tmb").classList.toggle("on", m === 3); document.body.classList.toggle("tm3", m === 3);
     if(m === 2 || m === 4){ setPen(false); drawPane(); $("lpane").classList.add("on"); } else $("lpane").classList.remove("on");
   }
   function recommend(code){
@@ -667,13 +674,16 @@
   $("ov").onclick = function(e){ if(e.target === $("ov")) closeDlg(); };
 
   /* 진도표: 반마다 마지막 쪽 · 단원 · 같은 학년 앞선 반과 차이 */
+  var PO = {};   // 진도표: 학년별 펼침 (처음에는 지금 반의 학년만)
   function progDlg(){
-    dlgOpen = "prog";
+    dlgOpen = "prog"; var myG = st.c ? gOf(st.c) : GRADES[0];
     var h = '<table class="pt"><thead><tr><th>반</th><th>진도(쪽)</th><th style="text-align:left">단원</th><th>날짜</th><th>차이</th><th>낸 도전 문제</th></tr></thead><tbody>';
     GRADES.forEach(function(g){
       var cl = CLS.filter(function(c){ return gOf(c) === g; }), ps = cl.map(function(c){ return S.last[c] ? S.last[c].p : 0; }), mx = Math.max.apply(null, ps.concat([0]));
       if(CLS.length && !cl.length) return;
-      h += '<tr class="gh"><td colspan="6">' + g + "학년</td></tr>";
+      var open = PO[g] != null ? PO[g] : g === myG, done = cl.filter(function(c){ return S.last[c]; }).length;
+      h += '<tr class="gh" data-g="' + g + '"><td colspan="6">' + (open ? "▾ " : "▸ ") + g + '학년 <span class="muted">' + cl.length + "반 · 기록 " + done + "반" + (open ? "" : " · 눌러서 펼치기") + "</span></td></tr>";
+      if(!open) return;
       cl.forEach(function(c){
         var l = S.last[c], gap = l ? mx - l.p : null;
         h += '<tr data-c="' + c + '"><td class="big">' + cname(c) + "</td><td class=\"big\">" + (l ? "p." + l.p : "—") + '</td><td class="l">' + (l ? esc(l.u || "") : '<span class="muted">아직 없음</span>') + "</td><td>" + (l ? l.d.slice(5).replace("-", "/") : "") + "</td><td>"
@@ -683,6 +693,7 @@
     h += '</tbody></table><p class="muted">수업 끝에 [오늘 수업 끝] 또는 [✅ 오늘 여기까지]를 누르면 날짜·쪽·단원이 저장됩니다. 반을 누르면 그 반 교과서로 갑니다.</p>';
     dlg("📊 진도표", h);
     [].forEach.call($("dlg").querySelectorAll("tr[data-c]"), function(tr){ tr.onclick = function(){ $("ov").classList.remove("on"); dlgOpen = ""; pick(+tr.dataset.c); }; });
+    [].forEach.call($("dlg").querySelectorAll("tr.gh[data-g]"), function(tr){ tr.onclick = function(){ var g = +tr.dataset.g, my = st.c ? gOf(st.c) : GRADES[0]; PO[g] = !(PO[g] != null ? PO[g] : g === my); progDlg(); }; });
   }
   /* 설정: 수업 자료 폴더 · 학년마다 교과서 PDF · 쪽 번호 맞추기 · 쪽-단원표 */
   function setDlg(g){
@@ -838,7 +849,7 @@
   /* ── 6·7단계: 차시 자료 바구니 (쪽 범위마다 링크) · 큰 QR ── */
   S.res = S.res || {};
   function resAt(){ if(!st.c) return []; var g = gOf(st.c), p = bookP(); return (S.res[g] || []).filter(function(r){ return p >= r.p0 && p <= r.p1; }); }
-  function resChip(){ var n = resAt().length; ["lres", "bRes"].forEach(function(id){ var b = $(id); if(b){ b.textContent = "📎 자료" + (n ? " " + n : ""); b.classList.toggle("has", !!n); } }); }
+  function resChip(){ var n = resAt().length; ["lres", "bRes"].forEach(function(id){ var b = $(id); if(b){ b.innerHTML = id === "lres" ? '📎<span class="lb"> 자료</span>' + (n ? " " + n : "") : "📎 자료" + (n ? " " + n : ""); b.classList.toggle("has", !!n); } }); }
   function okUrl(u){ return /^https?:\/\/[^\s]+$/i.test(u); }
   function resDlg(){
     if(!st.c) return; var g = gOf(st.c), p = bookP(), L = S.res[g] = S.res[g] || [], here = resAt();
