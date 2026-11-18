@@ -15,7 +15,6 @@
       {n: "에듀넷·티-클리어", u: "https://www.edunet.net"}
     ],
     tools: [
-      {id:"kreadt", icon:"🧑‍🏫", short:"국어 근육 교사용", name:"국어 근육 · 교사용", desc:"학생 주소 QR(인쇄용 16개) · 🖥️ 교실 화면 함께 읽기(큰 글씨·시간 재기·가리고 문제·정답 공개·구조도 하나씩 열기) · 📥 학생 결과 코드(번호+점수만) 모아 보기·CSV.", href:"apps/kread/teach.html", room:true}
     ]
   });
 })();
