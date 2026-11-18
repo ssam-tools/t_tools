@@ -41,7 +41,7 @@
     var urgent = T.filter(function(x){ return x.lv === "hi" && /^(오늘|지남|종례|지금|D-[01])$/.test(String(x.n)); });
     var nxt = N.has && !N.cur && N.n ? N : null, cnt = T.length, deco = J ? season() : "";
     function r(item, line, sub, o){ o = o || {}; return {item: item, deco: deco, open: !!o.open, sleep: !!o.sleep, listen: !!o.listen, line: line, sub: sub || ""}; }
-    if(st.listen) return r("listen", "듣고 있어요.", "", {listen: true});
+    if(st.listen) return r("listen", "듣고 있어요.", "말하면 오른쪽에 적혀요.", {listen: true});
     if(!cnt && wk && d.getHours() >= 12 && J){
       if(J.stamped()) return r("stamp", "오늘 할 일 끝! 수고 많으셨어요.", "이번 달 퇴근 도장 " + J.monthStamps() + "개");
       return r("stamp", "오늘 할 일 끝! 퇴근 도장 찍을까요?", "");

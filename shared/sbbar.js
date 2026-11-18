@@ -94,12 +94,13 @@
     hero.querySelector(".circ").innerHTML = circHTML();
     seatMore(); seatBox();
   }
-  function seatBox(){                                                   // 쌤비 창(#sbBox)은 첫 화면에서는 말풍선 안에
+  function seatBox(){                                                   // 쌤비 창(#sbBox): 넓은 화면은 오른쪽 빈 공간에 고정(말풍선 크기는 그대로), 좁으면 쌤비 아래
     var box = document.getElementById("sbBox"); if(!box) return;
-    var b = hero && hero.querySelector(".bub"), on = R.getAttribute("data-ui") === "ssambi" && document.body.classList.contains("sbOn");
-    if(on && b){ if(box.parentNode !== b) b.appendChild(box); }
+    var on = R.getAttribute("data-ui") === "ssambi" && document.body.classList.contains("sbOn") && window.innerWidth >= 1400;
+    if(on && hero){ if(box.parentNode !== hero) hero.appendChild(box); }
     else if(box.parentNode !== document.body) document.body.appendChild(box);
   }
+  window.addEventListener("resize", function(){ if(HOME && hero) seatBox(); });
   function seatMore(){                                                  // ⋯ (설정·백업 등)은 오른쪽 위에 그대로 — 업무판으로 돌아가면 제자리로
     var more = document.getElementById("more"); if(!more) return;
     if(!moreHome) moreHome = {p: more.parentNode, n: more.nextSibling};

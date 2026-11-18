@@ -130,6 +130,7 @@
     var h = window.innerHeight, w = window.innerWidth;
     if(from && from.nodeType === 1 && from !== hd && from !== hb && from !== btn && seen(from)){   // v2.0: 쌤비 홈의 큰 쌤비 → 바로 아래 가운데
       var a = from.getBoundingClientRect(), bw = Math.min(360, w - 24), lx = Math.round(Math.max(12, Math.min(w - bw - 12, a.left + a.width / 2 - bw / 2))), ty = Math.round(Math.min(a.bottom + 8, h - 220));
+      var rl = from.closest && from.closest("#sbRail"); if(rl){ lx = Math.round(rl.getBoundingClientRect().right + 12); ty = Math.round(Math.max(12, a.top)); }   // 도구 화면: 왼쪽 막대 바로 오른쪽
       box.style.top = ty + "px"; box.style.bottom = "auto"; box.style.left = lx + "px"; box.style.right = "auto"; box.style.maxHeight = (h - ty - 16) + "px";
       tip.style.top = ty + "px"; tip.style.bottom = "auto"; tip.style.left = lx + "px"; tip.style.right = "auto";
       return;
