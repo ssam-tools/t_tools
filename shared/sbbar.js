@@ -98,11 +98,12 @@
     var box = document.getElementById("sbBox"); if(!box) return;
     var on = R.getAttribute("data-ui") === "ssambi" && document.body.classList.contains("sbOn") && hero;
     var mic = on && hero.querySelector(".srow [data-mic]"), bub = on && hero.querySelector(".bub");
-    var side = !!(mic && bub && mic.getBoundingClientRect().right + 14 + 244 <= window.innerWidth - 8);
+    var side = !!(mic && bub && mic.getBoundingClientRect().right + 14 + 244 <= document.documentElement.clientWidth - 8);
     if(side){
       if(box.parentNode !== hero) hero.appendChild(box);
       var hr = hero.getBoundingClientRect(), mr = mic.getBoundingClientRect(), br = bub.getBoundingClientRect();
-      box.style.setProperty("left", Math.round(mr.right - hr.left + 14) + "px", "important");
+      var vw = document.documentElement.clientWidth, bw = 300 * 0.8, gap = Math.max(14, (vw - mr.right - bw) / 2);   // 마이크 끝 ~ 화면 오른쪽 끝의 가운데
+      box.style.setProperty("left", Math.round(mr.right + gap - hr.left) + "px", "important");
       box.style.setProperty("top", Math.round(br.top - hr.top) + "px", "important");
       box.classList.add("sbSide");
     }else{
