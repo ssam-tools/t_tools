@@ -343,7 +343,7 @@
     var w = h("div", "gwrap"), hl = h("div", "hl"), card = h("div", "pcard"), nx = h("div", "pcard back", "?"), side = h("div", "hlside");
     var up = h("button", "bigbtn g", "⬆ 더 크다"), dn = h("button", "bigbtn", "⬇ 더 작다"), st = h("div", "streak"), pr = h("div", "hint"), bank = h("button", "bigbtn y", "🏦 점수로 바꾸기"), us = h("div", "used");
     up.type = dn.type = bank.type = "button"; side.appendChild(up); side.appendChild(st); side.appendChild(dn);
-    hl.appendChild(card); hl.appendChild(side); hl.appendChild(nx); w.appendChild(hl); w.appendChild(pr); w.appendChild(bank); w.appendChild(us); el.appendChild(w);
+    hl.appendChild(card); hl.appendChild(side); hl.appendChild(nx); w.appendChild(hl); w.appendChild(pr); w.appendChild(bank); el.appendChild(w);   /* 나온 카드 목록은 보여 주지 않음(기억력·확률로) */
     var pb = btn("🔢 확률 보기", "", function(){ showP = !showP; pb.classList.toggle("primary", showP); draw(); }); ctl.appendChild(pb); ctl.appendChild(btn("🔄 새로 섞기", "primary", function(){ newDeck(); K.S.whoosh(); }));
     function newDeck(){ deck = K.shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]); used = []; curC = deck.pop(); used.push(curC); streak = 0; draw(); }
     function draw(){
@@ -351,7 +351,6 @@
       st.textContent = "🔥 " + streak + "연속" + (best ? " (최고 " + best + ")" : "");
       var hi = deck.filter(function(x){ return x > curC; }).length, lo = deck.filter(function(x){ return x < curC; }).length;
       pr.textContent = showP ? "남은 카드 " + deck.length + "장 중 더 큰 수 " + hi + "장 (" + hi + "/" + deck.length + "), 더 작은 수 " + lo + "장 (" + lo + "/" + deck.length + ")" : "1~13 카드 한 벌 · 나온 카드는 다시 나오지 않아요";
-      us.innerHTML = ""; for(var i = 1; i <= 13; i++) us.appendChild(h("span", used.indexOf(i) >= 0 ? "out" : "", String(i)));
       bank.disabled = streak < 1;
     }
     function guess(isUp){

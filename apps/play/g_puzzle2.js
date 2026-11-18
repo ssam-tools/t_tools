@@ -81,7 +81,7 @@
   K.game({id: "pick15", icon: "🎯", cat: "puzzle", name: "15 게임", desc: "1~9 중 번갈아 하나씩 가져가요. 내 수 세 개의 합이 15가 되면 승리! 사실 이 게임의 정체는… 🪄 마방진을 열어 보세요.", mount: function(el, ctl){
     var mode = K.pref("p15m") || "cpu", lvl = +(K.pref("p15l") || 2), owner, who, over, sec = false, cpuFirst = false, P;
     ctl.appendChild(K.seg([["cpu", "🤖 반 vs 컴퓨터"], ["team", "👥 두 모둠"]], mode, function(v){ mode = v; K.pref("p15m", v); start(); }));
-    var ls = selOpts([[1, "🤖 쉬움"], [2, "🤖 보통"], [3, "🤖 고수"]], lvl, function(v){ lvl = +v; K.pref("p15l", lvl); });
+    var ls = selOpts([[1, "🤖 기초"], [2, "🤖 보통"], [3, "🤖 심화"]], lvl, function(v){ lvl = +v; K.pref("p15l", lvl); });
     var sb = btn("🪄 비밀 보기", "", function(){ sec = !sec; sb.classList.toggle("primary", sec); draw(); });
     ctl.appendChild(ls); ctl.appendChild(sb); ctl.appendChild(btn("🤖 컴퓨터 먼저", "", function(){ cpuFirst = true; start(); })); ctl.appendChild(btn("🔄 새 판", "primary", function(){ cpuFirst = false; start(); }));
     var w = h("div", "gwrap"), msg = h("div", "msg"), nums = h("div", "nums15"), hands = h("div", "hands15"), lo = h("div", "lo"); w.appendChild(msg); w.appendChild(nums); w.appendChild(hands); w.appendChild(lo); el.appendChild(w);
@@ -121,7 +121,7 @@
       var top = Math.max.apply(null, scored.map(function(s){ return s.v; })), choice;
       var winNow = scored.filter(function(s){ var m = mine(1).concat([s.n]); return has15(m); });
       if(winNow.length) choice = winNow[0].n;
-      else if(lvl === 3 || (lvl === 2 && K.rnd(3))) choice = pick(scored.filter(function(s){ return s.v === top; })).n;
+      else if(lvl === 3 || (lvl === 2 && K.rnd(2))) choice = pick(scored.filter(function(s){ return s.v === top; })).n;
       else choice = pick(free);
       take(choice);
     }
@@ -132,7 +132,7 @@
   K.game({id: "nim", icon: "🥢", cat: "puzzle", name: "님 게임", desc: "한 줄에서만, 원하는 만큼 성냥을 가져가요. 마지막 성냥을 가져가는 쪽이 이겨요(또는 져요). 이기는 비밀은 2진법!", mount: function(el, ctl){
     var mode = K.pref("nimM") || "cpu", misere = !!K.pref("nimX"), lvl = +(K.pref("nimL") || 2), heaps, sel = null, who, P, over, bin = false;
     ctl.appendChild(K.seg([["cpu", "🤖 반 vs 컴퓨터"], ["team", "👥 모둠끼리"]], mode, function(v){ mode = v; K.pref("nimM", v); start(); }));
-    var ls = selOpts([[1, "🤖 쉬움"], [2, "🤖 보통"], [3, "🤖 고수"]], lvl, function(v){ lvl = +v; K.pref("nimL", lvl); });
+    var ls = selOpts([[1, "🤖 기초"], [2, "🤖 보통"], [3, "🤖 심화"]], lvl, function(v){ lvl = +v; K.pref("nimL", lvl); });
     var bb = btn("💡 2진법 보기", "", function(){ bin = !bin; bb.classList.toggle("primary", bin); draw(); });
     ctl.appendChild(ls); ctl.appendChild(chk("마지막을 가져가면 짐", misere, function(v){ misere = v; K.pref("nimX", v); draw(); })); ctl.appendChild(bb); ctl.appendChild(btn("🔄 새 판", "primary", start));
     var w = h("div", "p2"), hp = h("div", "heaps"), side = h("div", "side"), msg = h("div", "msg"), take = h("button", "bigbtn g", "✋ 가져가기"), info = h("div", "hint"); take.type = "button";
@@ -165,7 +165,7 @@
     take.onclick = function(){ if(sel && !over) doTake(sel.i, sel.n); };
     function cpu(){
       if(over) return; var best = null, x = xr(heaps), big = heaps.filter(function(n){ return n > 1; }).length;
-      var smart = lvl === 3 || (lvl === 2 && K.rnd(3));
+      var smart = lvl === 3 || (lvl === 2 && K.rnd(2));
       if(smart){
         if(misere && big <= 1){ /* 끝판: 1짜리 더미 수를 홀수로 남기기 */
           var i = heaps.findIndex(function(n){ return n > 1; }), ones = heaps.filter(function(n){ return n === 1; }).length;
@@ -181,8 +181,8 @@
   /* =============== 🚩 지뢰찾기 =============== */
   K.game({id: "mine", icon: "🚩", cat: "puzzle", name: "지뢰찾기", desc: "숫자는 둘레 8칸에 있는 지뢰의 수! 논리로 안전한 칸을 열어요. 오른쪽 클릭이나 🚩 깃발 모드로 표시해요. 반 전체 도전!", mount: function(el, ctl){
     var lv = K.pref("mnL") || "8", N, M, mines, open, flag, first, over, flagMode = false, pen = !!K.pref("mnP");
-    var SZ = {"6": [6, 5], "8": [8, 10], "10": [10, 16]};
-    ctl.appendChild(selOpts([["6", "6×6 · 지뢰 5"], ["8", "8×8 · 지뢰 10"], ["10", "10×10 · 지뢰 16"]], lv, function(v){ lv = v; K.pref("mnL", v); start(); }));
+    var SZ = {"6": [6, 4], "8": [9, 13], "10": [12, 30]};
+    ctl.appendChild(selOpts([["6", "기초 · 6×6 · 지뢰 4"], ["8", "보통 · 9×9 · 지뢰 13"], ["10", "심화 · 12×12 · 지뢰 30"]], lv, function(v){ lv = v; K.pref("mnL", v); start(); }));
     var fb = btn("🚩 깃발 모드", "", function(){ flagMode = !flagMode; fb.classList.toggle("primary", flagMode); });
     ctl.appendChild(fb); ctl.appendChild(chk("모둠 차례 · 터뜨리면 −2", pen, function(v){ pen = v; K.pref("mnP", v); tr.hidden = !v; })); ctl.appendChild(btn("🔄 새 판", "primary", start));
     var w = h("div", "p2"), grid = h("div", "mines"), side = h("div", "side"), tr = K.turnRow(), msg = h("div", "big2"), info = h("div", "hint"); tr.hidden = !pen;
@@ -318,7 +318,7 @@
   K.game({id: "scale", icon: "⚖️", cat: "puzzle", name: "가짜 동전 저울", desc: "동전 중 딱 하나가 가벼운 가짜! 양팔 저울을 정해진 횟수만 써서 찾아요. 동전을 누르면 왼쪽 → 오른쪽 → 빼기.", mount: function(el, ctl){
     var lv = K.pref("scL") || "9", N, LIM, fake, pos, used, log, accuse = false, done;
     var LV = {"8": [8, 2], "9": [9, 2], "27": [27, 3]};
-    ctl.appendChild(selOpts([["8", "동전 8개 · 2번"], ["9", "동전 9개 · 2번"], ["27", "동전 27개 · 3번"]], lv, function(v){ lv = v; K.pref("scL", v); start(); }));
+    ctl.appendChild(selOpts([["8", "기초 · 동전 8개 · 2번"], ["9", "보통 · 동전 9개 · 2번"], ["27", "심화 · 동전 27개 · 3번"]], lv, function(v){ lv = v; K.pref("scL", v); start(); }));
     ctl.appendChild(btn("🔄 새 문제", "primary", start));
     var w = h("div", "gwrap"), sc = h("div", "scale"), beam = h("div", "beam"), pl = h("div", "pan l"), pr = h("div", "pan r"); sc.appendChild(h("div", "post")); sc.appendChild(beam); beam.appendChild(pl); beam.appendChild(pr);
     var coins = h("div", "coins"), row = h("div", "qrow"), wb = h("button", "bigbtn y", "⚖️ 달기"), ab = h("button", "bigbtn r", "🔍 가짜 고르기"), clr = h("button", "bigbtn k", "↩ 내리기"), msg = h("div", "msg"), lg = h("div", "wlog");

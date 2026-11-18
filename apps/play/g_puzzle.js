@@ -108,7 +108,7 @@
   }
   function makeSudoku(n, lv){
     var b = BOX[n], sol = latin(n, b[0], b[1]), puz = sol.map(function(r){ return r.slice(); });
-    var cells = K.shuffle(Array.from({length: n * n}, function(_, i){ return i; })), keep = {4: [7, 6, 5], 6: [18, 15, 13], 9: [40, 34, 30]}[n][lv - 1], filled = n * n;
+    var cells = K.shuffle(Array.from({length: n * n}, function(_, i){ return i; })), keep = {4: [9, 6, 4], 6: [22, 16, 11], 9: [44, 33, 24]}[n][lv - 1], filled = n * n;
     for(var k = 0; k < cells.length && filled > keep; k++){
       var r = Math.floor(cells[k] / n), c = cells[k] % n, v = puz[r][c]; puz[r][c] = 0;
       if(countSol(puz, n, b[0], b[1], null, 2) !== 1) puz[r][c] = v; else filled--;
@@ -140,7 +140,7 @@
     var st = K.pref("sd") || {n: 4, mode: "plain", lv: 1};
     var ms = seg([["plain", "스도쿠"], ["ken", "계산 스도쿠"]], st.mode, function(v){ st.mode = v; if(v === "ken" && st.n === 9) st.n = 4; save(); fresh(); });
     var ns = h("select"); [[4, "4×4"], [6, "6×6"], [9, "9×9"]].forEach(function(o){ var x = h("option", "", o[1]); x.value = o[0]; ns.appendChild(x); }); ns.value = st.n; ns.onchange = function(){ st.n = +ns.value; if(st.n === 9 && st.mode === "ken"){ st.n = 6; ns.value = 6; } save(); fresh(); };
-    var ls = h("select"); [[1, "쉬움"], [2, "보통"], [3, "어려움"]].forEach(function(o){ var x = h("option", "", o[1]); x.value = o[0]; ls.appendChild(x); }); ls.value = st.lv; ls.onchange = function(){ st.lv = +ls.value; save(); fresh(); };
+    var ls = h("select"); [[1, "기초"], [2, "보통"], [3, "심화"]].forEach(function(o){ var x = h("option", "", o[1]); x.value = o[0]; ls.appendChild(x); }); ls.value = st.lv; ls.onchange = function(){ st.lv = +ls.value; save(); fresh(); };
     ctl.appendChild(ms); ctl.appendChild(ns); ctl.appendChild(ls); ctl.appendChild(btn("🖨 인쇄", "", doPrint)); ctl.appendChild(btn("🔄 새 문제", "primary", fresh));
     function save(){ K.pref("sd", st); }
     var wrap = h("div", "pz"), board = h("div", "sd"), side = h("div", "pzside"), pad = h("div", "pad"), msg = h("div", "hint"); side.appendChild(pad); side.appendChild(msg); wrap.appendChild(board); wrap.appendChild(side); el.appendChild(wrap);
@@ -314,17 +314,17 @@
   var HREC = {};
   K.game({id: "hanoi", icon: "🗼", cat: "puzzle", name: "하노이 탑", desc: "원판을 한 번에 하나씩, 작은 것 위에 큰 것은 못 올려요. 원판 수에 따른 최소 횟수의 규칙을 찾아봐요!", mount: function(el, ctl){
     var n = K.pref("hn") || 3, pegs, held = -1, moves = 0, done = false;
-    var ns = h("select"); for(var i = 3; i <= 7; i++){ var o = h("option", "", "원판 " + i + "개"); o.value = i; ns.appendChild(o); } ns.value = n; ns.onchange = function(){ n = +ns.value; K.pref("hn", n); start(); };
+    var ns = h("select"); for(var i = 3; i <= 10; i++){ var o = h("option", "", "원판 " + i + "개"); o.value = i; ns.appendChild(o); } ns.value = n; ns.onchange = function(){ n = +ns.value; K.pref("hn", n); start(); };
     ctl.appendChild(ns); ctl.appendChild(btn("🔄 처음부터", "primary", start));
     var wrap = h("div", "pz"), han = h("div", "han"), side = h("div", "pzside"), mv = h("div", "score2"), tb = h("div"); side.appendChild(mv); side.appendChild(tb); wrap.appendChild(han); wrap.appendChild(side); el.appendChild(wrap);
-    var DC = ["#ff6b6b", "#ffa94d", "#ffd43b", "#69db7c", "#4dabf7", "#748ffc", "#da77f2"];
+    var DC = ["#ff6b6b", "#ffa94d", "#ffd43b", "#69db7c", "#4dabf7", "#748ffc", "#da77f2", "#f783ac", "#38d9a9", "#a9e34b"];
     function start(){ pegs = [[], [], []]; for(var i = n; i >= 1; i--) pegs[0].push(i); held = -1; moves = 0; done = false; draw(); }
     function draw(){
       han.innerHTML = "";
-      pegs.forEach(function(p, k){ var pg = h("div", "peg"); pg.dataset.k = k; p.forEach(function(s, j){ var d = h("div", "disk" + (held === k && j === p.length - 1 ? " up" : "")); d.style.width = (25 + s / n * 70) + "%"; d.style.background = DC[(s - 1) % 7]; pg.appendChild(d); }); han.appendChild(pg); });
+      pegs.forEach(function(p, k){ var pg = h("div", "peg"); pg.dataset.k = k; p.forEach(function(s, j){ var d = h("div", "disk" + (held === k && j === p.length - 1 ? " up" : "")); d.style.width = (25 + s / n * 70) + "%"; d.style.background = DC[(s - 1) % 10]; if(n > 7) d.style.height = "calc(min(4vh, 34px) * 7 / " + n + " + 6px)"; pg.appendChild(d); }); han.appendChild(pg); });
       mv.textContent = "옮긴 횟수 " + moves;
       var s = '<table class="rec"><tr><th>원판</th><th>최소 횟수</th></tr>';
-      for(var i = 1; i <= 7; i++) s += "<tr><td>" + i + "</td><td>" + (i <= 2 || HREC[i] ? (HREC[i] && HREC[i] > Math.pow(2, i) - 1 ? HREC[i] + " (더 줄일 수 있어요)" : Math.pow(2, i) - 1) : "?") + "</td></tr>";
+      for(var i = 1; i <= Math.max(7, n); i++) s += "<tr><td>" + i + "</td><td>" + (i <= 2 || HREC[i] ? (HREC[i] && HREC[i] > Math.pow(2, i) - 1 ? HREC[i] + " (더 줄일 수 있어요)" : Math.pow(2, i) - 1) : "?") + "</td></tr>";
       tb.innerHTML = s + '</table><p class="hint" style="margin-top:6px">최소로 풀면 "?"가 채워져요.<br>규칙이 보이나요?</p>';
     }
     han.onclick = function(e){
@@ -344,7 +344,7 @@
   K.game({id: "magic", icon: "🪄", cat: "puzzle", name: "마방진", desc: "가로·세로·대각선 세 수의 합이 모두 같도록! 음수 마방진(−4~4)도 있어요.", mount: function(el, ctl){
     var off = K.pref("msOff") || 0, lv = K.pref("msLv") || 2, sol, given, cur, chosen = null;
     var os = h("select"); [[0, "1 ~ 9"], [1, "2 ~ 10"], [-5, "−4 ~ 4"], [9, "10 ~ 18"]].forEach(function(o){ var x = h("option", "", o[1]); x.value = o[0]; os.appendChild(x); }); os.value = off; os.onchange = function(){ off = +os.value; K.pref("msOff", off); start(); };
-    var ls = seg([[1, "쉬움"], [2, "보통"], [3, "어려움"]], lv, function(v){ lv = v; K.pref("msLv", v); start(); });
+    var ls = seg([[1, "기초"], [2, "보통"], [3, "심화"]], lv, function(v){ lv = v; K.pref("msLv", v); start(); });
     ctl.appendChild(os); ctl.appendChild(ls); ctl.appendChild(btn("🔄 새 문제", "primary", start));
     var wrap = h("div", "pz"), grid = h("div", "ms"), side = h("div", "pzside"), tray = h("div", "tray"), info = h("div", "hint"); side.appendChild(tray); side.appendChild(info); wrap.appendChild(grid); wrap.appendChild(side); el.appendChild(wrap);
     function start(){
@@ -365,7 +365,7 @@
       grid.appendChild(h("div", "s" + (S[6] === T ? " ok" : ""), S[6] == null ? "" : "↘" + sg(S[6])));
       tray.innerHTML = ""; var used = {}; cur.forEach(function(r){ r.forEach(function(v){ if(v != null) used[v] = 1; }); });
       for(var k = 1; k <= 9; k++){ var v = k + off, b = btn(sg(v), chosen === v ? "sel" : "", null); b.disabled = !!used[v]; (function(v){ b.onclick = function(){ chosen = v; K.S.click(); draw(); }; })(v); tray.appendChild(b); }
-      info.innerHTML = "수를 고르고 칸을 누르세요. 칸을 다시 누르면 비워요.<br>" + (lv === 1 ? "한 줄의 합은 <b>" + sg(T) + "</b>" : "한 줄의 합은 얼마일까요? (모든 수의 합 ÷ 3)") + "<br>대각선 ↙ " + (S[7] == null ? "" : sg(S[7]));
+      info.innerHTML = "수를 고르고 칸을 누르세요. 칸을 다시 누르면 비워요.<br>" + (lv === 1 ? "한 줄의 합은 <b>" + sg(T) + "</b>" : lv === 2 ? "한 줄의 합은 얼마일까요? (모든 수의 합 ÷ 3)" : "힌트 없이 도전! 🔥") + "<br>대각선 ↙ " + (S[7] == null ? "" : sg(S[7]));
       if(S.every(function(x){ return x === T; })){ K.S.win(); K.fireworks(5); K.big("🪄 완성!", "모든 줄의 합 = " + sg(T), "#2e9d5b", 2500); }
     }
     grid.onclick = function(e){ var d = e.target.closest(".c"); if(!d || d.classList.contains("g")) return; var r = +d.dataset.r, c = +d.dataset.c;

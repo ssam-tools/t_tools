@@ -96,7 +96,7 @@
   K.game({id: "g31", icon: "🍦", cat: "team", name: "31 게임", desc: "번갈아 1~3개의 수를 이어 부르고, 31을 부르면 져요. 컴퓨터를 이기는 비밀은 4의 나머지에! (베스킨라빈스 게임)", mount: function(el, ctl){
     var mode = K.pref("m31") || "cpu", lvl = K.pref("l31") || 2, cur = 0, who = [], players, pi = 0, over = false, keyOn = false, cpuFirst = false;
     ctl.appendChild(K.seg([["cpu", "🤖 반 전체 vs 컴퓨터"], ["team", "👥 모둠끼리"]], mode, function(v){ mode = v; K.pref("m31", v); start(); }));
-    var ls = h("select"); [[1, "🤖 쉬움"], [2, "🤖 보통"], [3, "🤖 고수"]].forEach(function(o){ var x = h("option", "", o[1]); x.value = o[0]; ls.appendChild(x); }); ls.value = lvl; ls.onchange = function(){ lvl = +ls.value; K.pref("l31", lvl); };
+    var ls = h("select"); [[1, "🤖 기초"], [2, "🤖 보통"], [3, "🤖 심화"]].forEach(function(o){ var x = h("option", "", o[1]); x.value = o[0]; ls.appendChild(x); }); ls.value = lvl; ls.onchange = function(){ lvl = +ls.value; K.pref("l31", lvl); };
     var kb = btn("💡 비밀 보기", "", function(){ keyOn = !keyOn; kb.classList.toggle("primary", keyOn); draw(); });
     ctl.appendChild(ls); ctl.appendChild(kb); ctl.appendChild(btn("🤖 컴퓨터 먼저", "", function(){ cpuFirst = true; start(); })); ctl.appendChild(btn("🔄 새 판", "primary", function(){ cpuFirst = false; start(); }));
     var w = h("div", "g31"), whoEl = h("div", "who"), grid = h("div", "grid"), row = h("div", "qrow"), hint = h("div", "hint"); w.appendChild(whoEl); w.appendChild(grid); w.appendChild(row); w.appendChild(hint); el.appendChild(w);

@@ -33,6 +33,7 @@
     ".bj{flex:1;width:100%;display:flex;flex-direction:column;gap:5px;padding:8px 12px;min-height:0}",
     ".bj .ln{flex:1;display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:4px 10px;min-height:0;border:3px solid transparent}",
     ".bj .ln.on{border-color:#ffd23f;background:#fffbea}.bj .ln.out{opacity:.5}",
+    ".bj button.ln{font:inherit;text-align:left;cursor:pointer;color:inherit}.bj .bot .bigbtn{white-space:nowrap}",
     ".bj .nm{width:90px;font-weight:900;font-size:15px}",
     ".bj .cs{flex:1;display:flex;gap:5px;height:100%;align-items:center;min-width:0}",
     ".bj .cd{height:86%;max-height:70px;aspect-ratio:2/3;border-radius:8px;background:#fff;border:2px solid #cfd8e3;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:clamp(16px,3.4vh,28px);animation:dealin .35s}",
@@ -214,53 +215,74 @@
   }});
 
   /* =============== 🂡 블랙잭 21 =============== */
-  K.game({id: "bj", icon: "🂡", cat: "luck", name: "블랙잭 21", desc: "1~10 카드를 한 장씩 받아 합을 21에 가깝게! 넘으면 탈락. 한 장 더 받을까, 멈출까? 넘을 확률도 계산해 봐요.", mount: function(el, ctl){
-    var deck, hands, cur, over, showP = false;
+  K.game({id: "bj", icon: "🂡", cat: "luck", name: "블랙잭 21", desc: "카드를 한 장씩 받아 합을 21에 가깝게! A는 1 또는 11, J·Q·K는 10. 넘으면 탈락. 순서를 정하고 시작해요. 넘을 확률도 계산해 봐요.", mount: function(el, ctl){
+    /* 카드: 1~13 × 4벌. A(1)=1 또는 11(21을 넘지 않으면 11로), J·Q·K=10 */
+    var deck, hands, order = null, pos, cur, over, phase = "order", pickO = [], showP = false;
     var w = h("div", "bj"), list = h("div"), bot = h("div", "bot"); list.style.cssText = "flex:1;display:flex;flex-direction:column;gap:5px;min-height:0"; w.appendChild(list); w.appendChild(bot); el.appendChild(w);
-    var hit = h("button", "bigbtn g", "🃏 한 장 더"), stay = h("button", "bigbtn", "✋ 멈춤"), info = h("div", "hint"); hit.type = stay.type = "button"; bot.appendChild(hit); bot.appendChild(stay); bot.appendChild(info);
-    var pb = btn("🔢 넘을 확률", "", function(){ showP = !showP; pb.classList.toggle("primary", showP); draw(); }); ctl.appendChild(pb); ctl.appendChild(btn("🔄 새 판", "primary", start));
-    function sum(a){ return a.reduce(function(p, q){ return p + q; }, 0); }
+    var hit = h("button", "bigbtn g", "🃏 한 장 더"), stay = h("button", "bigbtn", "✋ 멈춤"), info = h("div", "hint"); hit.type = stay.type = "button";
+    var pb = btn("🔢 넘을 확률", "", function(){ showP = !showP; pb.classList.toggle("primary", showP); draw(); });
+    ctl.appendChild(pb); ctl.appendChild(btn("🔀 순서 정하기", "", function(){ phase = "order"; pickO = []; draw(); })); ctl.appendChild(btn("🔄 새 판", "primary", function(){ if(order) start(); else draw(); }));
+    function lab(r){ return r === 1 ? "A" : r === 11 ? "J" : r === 12 ? "Q" : r === 13 ? "K" : String(r); }
+    function val(r){ return Math.min(r, 10); }
+    function total(c){ var t = 0, a = 0; c.forEach(function(r){ t += val(r); if(r === 1) a++; }); return a && t + 10 <= 21 ? {t: t + 10, soft: true} : {t: t, soft: false}; }
     function start(){
-      deck = []; for(var v = 1; v <= 10; v++) for(var k = 0; k < 4; k++) deck.push(v); deck = K.shuffle(deck);
-      hands = K.teams().map(function(){ return {c: [deck.pop(), deck.pop()], st: "play"}; }); cur = 0; over = false; K.setTurn(0); K.S.whoosh(); draw();
+      deck = []; for(var v = 1; v <= 13; v++) for(var k = 0; k < 4; k++) deck.push(v); deck = K.shuffle(deck);
+      hands = K.teams().map(function(){ return {c: [deck.pop(), deck.pop()], st: "play"}; });
+      phase = "play"; over = false; pos = 0; cur = order[0];
+      hands.forEach(function(H){ if(total(H.c).t === 21) H.st = "stay"; });
+      if(hands[cur].st !== "play") return next();
+      K.setTurn(cur); K.S.whoosh(); draw();
     }
     function draw(){
-      list.innerHTML = "";
-      K.teams().forEach(function(t, i){
-        var H = hands[i]; if(!H) return; var s = sum(H.c), ln = h("div", "ln" + (i === cur && !over ? " on" : "") + (H.st === "bust" ? " out" : ""));
-        var nm = h("div", "nm", t.name); nm.style.color = t.color; ln.appendChild(nm);
-        var cs = h("div", "cs"); H.c.forEach(function(v){ cs.appendChild(h("div", "cd", String(v))); }); ln.appendChild(cs);
-        var sm = h("div", "sm", (H.st === "bust" ? "💥 " : H.st === "stay" ? "✋ " : "") + s); sm.style.color = s === 21 ? "#c2410c" : s > 21 ? "#d64545" : "#2d3a48"; ln.appendChild(sm);
+      list.innerHTML = ""; bot.innerHTML = "";
+      var T = K.teams();
+      if(phase === "order"){
+        T.forEach(function(t){ var k = pickO.indexOf(t.i), ln = h("button", "ln" + (k >= 0 ? " on" : "")); ln.type = "button"; ln.style.cursor = "pointer";
+          var nm = h("div", "nm", t.name); nm.style.color = t.color; ln.appendChild(nm); ln.appendChild(h("div", "cs", k >= 0 ? (k + 1) + "번째" : "누르면 다음 순서"));
+          ln.onclick = function(){ if(pickO.indexOf(t.i) >= 0) return; pickO.push(t.i); K.S.click(); if(pickO.length === T.length){ order = pickO.slice(); start(); } else draw(); };
+          list.appendChild(ln); });
+        var rb = h("button", "bigbtn g", "🎲 무작위 순서"), sb = h("button", "bigbtn", "1모둠부터 차례로"); rb.type = sb.type = "button";
+        rb.onclick = function(){ order = K.shuffle(T.map(function(t){ return t.i; })); K.S.dice(); K.big("🎲 " + order.map(function(i){ return T[i].name; }).join(" → "), null, null, 1800); start(); };
+        sb.onclick = function(){ order = T.map(function(t){ return t.i; }); start(); };
+        bot.appendChild(rb); bot.appendChild(sb); info.textContent = "순서 정하기: 모둠을 차례대로 누르거나 무작위로 정해요" + (pickO.length ? " · " + pickO.length + "모둠 골랐어요" : ""); bot.appendChild(info);
+        return;
+      }
+      bot.appendChild(hit); bot.appendChild(stay); bot.appendChild(info);
+      order.forEach(function(i, k){
+        var t = T[i], H = hands[i]; if(!t || !H) return; var tt = total(H.c), s = tt.t, ln = h("div", "ln" + (i === cur && !over ? " on" : "") + (H.st === "bust" ? " out" : ""));
+        var nm = h("div", "nm", (k + 1) + ". " + t.name); nm.style.color = t.color; ln.appendChild(nm);
+        var cs = h("div", "cs"); H.c.forEach(function(r){ var d = h("div", "cd", lab(r)); if(r === 1 || r > 10) d.title = r === 1 ? "A = 1 또는 11" : lab(r) + " = 10"; cs.appendChild(d); }); ln.appendChild(cs);
+        var sm = h("div", "sm", (H.st === "bust" ? "💥 " : H.st === "stay" ? "✋ " : "") + s + (tt.soft && s < 21 && H.st !== "bust" ? "*" : "")); sm.title = tt.soft ? "A를 11로 셈 (*)" : ""; sm.style.color = s === 21 ? "#c2410c" : s > 21 ? "#d64545" : "#2d3a48"; ln.appendChild(sm);
         list.appendChild(ln);
       });
       hit.disabled = stay.disabled = over;
-      if(over){ info.textContent = "남은 카드 " + deck.length + "장 · 🔄 새 판"; return; }
-      var s = sum(hands[cur].c), bad = deck.filter(function(v){ return s + v > 21; }).length;
-      info.textContent = K.teams()[cur].name + " 차례 · 지금 " + s + (showP ? " · 다음 카드에 21을 넘을 확률 " + bad + "/" + deck.length + " (" + Math.round(bad / deck.length * 100) + "%)" : " · 남은 카드 " + deck.length + "장");
+      if(over){ info.textContent = "남은 카드 " + deck.length + "장 · 🔄 새 판 (같은 순서) · 🔀 순서 정하기"; return; }
+      var c = hands[cur].c, tt2 = total(c), bad = deck.filter(function(r){ return total(c.concat([r])).t > 21; }).length;
+      info.textContent = T[cur].name + " 차례 · 지금 " + tt2.t + (tt2.soft ? " (A=11로 셈)" : "") + (showP ? " · 다음 카드에 21을 넘을 확률 " + bad + "/" + deck.length + " (" + Math.round(bad / deck.length * 100) + "%)" : " · 남은 카드 " + deck.length + "장 · A=1 또는 11, J·Q·K=10");
     }
     function next(){
-      var n = hands.length, k = 0;
-      do{ cur = (cur + 1) % n; k++; } while(hands[cur].st !== "play" && k <= n);
+      var n = order.length, k = 0;
+      do{ pos = (pos + 1) % n; cur = order[pos]; k++; } while(hands[cur].st !== "play" && k <= n);
       if(hands.every(function(x){ return x.st !== "play"; })) return finish();
       K.setTurn(cur); draw();
     }
     function finish(){
-      over = true; var best = -1; hands.forEach(function(x){ var s = sum(x.c); if(s <= 21) best = Math.max(best, s); }); draw();
+      over = true; var best = -1; hands.forEach(function(x){ var s = total(x.c).t; if(s <= 21) best = Math.max(best, s); }); draw();
       if(best < 0){ K.S.sad(); K.big("모두 탈락 😱", "다음 판에서!", "#56606b", 2000); return; }
-      var win = []; hands.forEach(function(x, i){ if(sum(x.c) === best) win.push(i); });
+      var win = []; hands.forEach(function(x, i){ if(total(x.c).t === best) win.push(i); });
       K.S.win(); K.fireworks(3); var p = best === 21 ? 5 : 3; win.forEach(function(i){ K.add(i, p); });
       K.big("🏆 " + win.map(function(i){ return K.teams()[i].name; }).join(", "), best + (best === 21 ? " 딱 21! +5" : " · +3"), K.teams()[win[0]].color, 2800);
     }
     hit.onclick = function(){
-      if(over) return; var H = hands[cur]; if(!deck.length){ K.big("카드가 없어요", null); return; }
-      H.c.push(deck.pop()); K.S.pop(); var s = sum(H.c);
-      if(s > 21){ H.st = "bust"; draw(); K.S.boom(); K.shake(list.children[cur]); K.big("💥 " + s + "! 탈락", K.teams()[cur].name, "#d64545", 1400); setTimeout(next, 900); return; }
+      if(over || phase !== "play") return; var H = hands[cur]; if(!deck.length){ K.big("카드가 없어요", null); return; }
+      H.c.push(deck.pop()); K.S.pop(); var s = total(H.c).t;
+      if(s > 21){ H.st = "bust"; draw(); K.S.boom(); K.shake(list.children[pos]); K.big("💥 " + s + "! 탈락", K.teams()[cur].name, "#d64545", 1400); setTimeout(next, 900); return; }
       if(s === 21){ H.st = "stay"; draw(); K.S.fanfare(); K.big("딱 21! 🎯", K.teams()[cur].name, "#c2410c", 1200); setTimeout(next, 900); return; }
       draw();
     };
-    stay.onclick = function(){ if(over) return; hands[cur].st = "stay"; K.S.click(); next(); };
-    var lis = function(ev){ if(ev.type === "teams") start(); }; K.on(lis);
-    start();
+    stay.onclick = function(){ if(over || phase !== "play") return; hands[cur].st = "stay"; K.S.click(); next(); };
+    var lis = function(ev){ if(ev.type === "teams"){ order = null; phase = "order"; pickO = []; draw(); } }; K.on(lis);
+    draw();
     return function(){ K.off(lis); };
   }});
 

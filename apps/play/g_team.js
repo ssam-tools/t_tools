@@ -168,7 +168,7 @@
   var MK = null;
   K.game({id: "make", icon: "➕", cat: "team", name: "숫자 만들기", desc: "카드 4장을 한 번씩 써서 +, −, ×, ÷와 괄호로 목표 수를 만들어요. (24 게임)", mount: function(el, ctl){
     var lv = K.pref("mkLv") || 1;
-    var sg2 = seg([[1, "기본 · 24"], [2, "응용 · 1~13"], [3, "음수 포함"]], lv, function(v){ lv = v; K.pref("mkLv", v); deal(); });
+    var sg2 = seg([[1, "기초 · 24 만들기"], [2, "보통 · 1~13"], [3, "심화 · 음수 포함"]], lv, function(v){ lv = v; K.pref("mkLv", v); deal(); });
     var aw = awardSel("mkAward"); ctl.appendChild(sg2); ctl.appendChild(aw);
     var w = h("div", "gwrap"), tg = h("div", "target"), mk = h("div", "mk"), sol = h("div", "sols"), tm = h("div", "tmr"), row = h("div", "qrow");
     var sb = h("button", "bigbtn k", "💡 풀이 보기"), ok = h("button", "bigbtn g", "✅ 맞힌 모둠"), nx = h("button", "bigbtn", "🃏 새 카드"); sb.type = ok.type = nx.type = "button";
