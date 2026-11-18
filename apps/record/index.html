@@ -29,6 +29,16 @@
   .sum b{color:var(--ink)}
   /* 학생 목록 */
   .stl{list-style:none;overflow:auto;min-height:0;flex:1;display:flex;flex-direction:column;gap:2px}
+  /* 학생 칸 격자: 한 화면에 반 전체 (번호 왼쪽 위 · 기록 수 오른쪽 위 · 초안 점 오른쪽 아래) */
+  .stl.gridv{display:grid;grid-template-columns:repeat(var(--sc,3),minmax(0,1fr));grid-auto-rows:minmax(34px,1fr);gap:4px;align-content:stretch}
+  .stl.gridv li{min-height:0;display:flex}
+  .stl.gridv button{position:relative;flex-direction:column;justify-content:center;align-items:center;height:100%;border:1px solid var(--line);background:var(--card,#fff);padding:12px 3px 4px}
+  .stl.gridv button.few{background:#fff7f5;border-color:#f0c4be}
+  .stl.gridv .no{position:absolute;top:2px;left:5px;width:auto;text-align:left;font-size:10.5px}
+  .stl.gridv .cnt{position:absolute;top:2px;right:4px;font-size:10.5px;padding:0 5px}
+  .stl.gridv .dot{position:absolute;bottom:4px;right:5px}
+  .stl.gridv .nm{flex:none;max-width:100%;text-align:center;font-weight:700}
+  .stl.gridv button[aria-current=true]{background:var(--accent);border-color:var(--accent);color:#fff}
   .stl button{width:100%;display:flex;align-items:center;gap:6px;font:inherit;font-size:13.5px;border:0;background:transparent;border-radius:8px;padding:4px 6px;cursor:pointer;text-align:left;color:var(--ink)}
   .stl button:hover{background:#f3f6f9}
   .stl button[aria-current=true]{background:var(--accent);color:#fff}
@@ -193,10 +203,11 @@
     var few = list.filter(function(s, i){ return counts[i] < D.few; }).length, done = list.filter(function(s){ return bytes(draftOf(stuKey(s))) >= D.limits[area] * .6; }).length;
     $("sum").innerHTML = "기록 평균 <b>" + avg.toFixed(1) + "</b>건 · 기록 적은 학생 <b>" + few + "</b>명<br>초안 거의 완성 <b>" + done + "</b> / " + list.length + "명";
     var only = $("onlyFew").checked;
+    $("stl").classList.add("gridv"); $("stl").style.setProperty("--sc", list.length > 36 ? 4 : 3);
     $("stl").innerHTML = list.map(function(s, i){
       if(only && counts[i] >= D.few && i !== sel) return "";
       var b = bytes(draftOf(stuKey(s))), dot = b >= D.limits[area] * .6 ? "full" : b ? "mid" : "";
-      return '<li><button type="button" data-i="' + i + '" aria-current="' + (i === sel) + '"><span class="no">' + s.no + '</span><span class="nm">' + esc(s.name || "") + '</span><span class="cnt' + (counts[i] < D.few ? " few" : "") + '" title="' + N.area(area) + ' 기록 수">' + counts[i] + '</span><span class="dot ' + dot + '" title="초안 ' + b + '바이트"></span></button></li>';
+      return '<li><button type="button" class="' + (counts[i] < D.few ? "few" : "") + '" data-i="' + i + '" aria-current="' + (i === sel) + '" title="' + esc(s.no + "번 " + (s.name || "") + " · " + N.area(area) + " 기록 " + counts[i] + "건") + '"><span class="no">' + s.no + '</span><span class="nm">' + esc(s.name || "") + '</span><span class="cnt' + (counts[i] < D.few ? " few" : "") + '" title="' + N.area(area) + ' 기록 수">' + counts[i] + '</span><span class="dot ' + dot + '" title="초안 ' + b + '바이트"></span></button></li>';
     }).join("");
     var cur = $("stl").querySelector("[aria-current=true]"); if(cur) cur.scrollIntoView({block: "nearest"});
   }
