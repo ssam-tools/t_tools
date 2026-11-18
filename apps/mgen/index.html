@@ -32,7 +32,8 @@
   .mix .ps{display:flex;gap:4px}
   .mix .ps button{flex:1;font:inherit;font-size:12px;font-weight:800;border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 0;cursor:pointer;color:var(--ink,#1d2733);white-space:nowrap}
   .mix .ps button:hover{border-color:var(--accent);color:var(--accent)}
-  .ty{padding:2px 4px!important}
+  .ty{padding:1px 4px!important;font-size:13px!important;line-height:1.25}
+  .ty input[type=number]{padding:1px 4px!important}
   .gt{display:flex;gap:4px}
   .gt button{flex:1;font:inherit;font-size:13px;font-weight:800;border:1px solid var(--line);background:#fff;border-radius:9px;padding:5px 0;cursor:pointer;color:var(--sub)}
   .gt button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -43,6 +44,7 @@
   .ty{display:flex;align-items:center;gap:6px;font-size:13.5px;border-radius:8px;padding:3px 4px}
   .ty:hover{background:#f3f6f9}
   .ty b{flex:1;font-weight:700}
+  .ty .fz{font-size:11px;font-weight:800;color:#c2432a;min-width:28px;text-align:right}
   .ty small{color:var(--sub);font-size:11px}
   .ty input[type=number]{width:46px;font:inherit;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:2px 4px;text-align:center}
   .ty.on{background:var(--accent-soft)}
@@ -103,7 +105,7 @@
         <b>중2</b><input type="number" min="0" max="40" id="m2" aria-label="중2 문항 수"><select id="u2" aria-label="중2 범위"></select>
         <b>중3</b><input type="number" min="0" max="40" id="m3" aria-label="중3 문항 수"><select id="u3" aria-label="중3 범위"></select>
       </div>
-      <div class="ps"><button type="button" id="pProg" title="수업 기록장 진도표에서 배운 단원까지로 범위를 맞춥니다">📚 진도까지</button><button type="button" id="pWrong" title="최근 형성평가에서 많이 틀린 영역으로 복습지">📉 오답 복습</button><button type="button" id="pHS" title="고1 3월 모의고사에 이어지는 중학교 핵심 15영역">🎓 고교 준비</button></div>
+      <div class="ps"><button type="button" id="pProg" title="수업 기록장 진도표에서 배운 단원까지로 범위를 맞춥니다">📚 진도까지</button><button type="button" id="pWrong" title="최근 형성평가에서 많이 틀린 영역으로 복습지">📉 오답 복습</button><button type="button" id="pHS" title="고1 3월 기출에 많이 나온 개념(개념지도 🔥) 순서로 15문항">🎓 고교 준비</button></div>
     </div>
     <div class="gt" id="gt" role="group" aria-label="학년"></div>
     <section class="types" id="types" aria-label="문항 유형"></section>
@@ -128,6 +130,7 @@
 <script src="../../shared/tt.js"></script>
 <script src="../../shared/mathgen.js"></script>
 <script src="../../shared/qr.js"></script>
+<script src="../../shared/concepts.js"></script>
 <script>
 (function(){
   "use strict";
@@ -140,6 +143,18 @@
   function spec(){ return S.spec.filter(function(x){ return x.n > 0 && MG.type(x.id); }); }
   function items(who){ return MG.sheet(spec(), S.lv, S.seed, who); }
 
+  /* 개념지도 세부 개념과 연결: 유형 → 개념들 (🔥 = 그 개념이 쓰인 고1 3월 기출 수) */
+  var TC = window.TT_CONCEPTS || {DETAIL: []}, CONOF = {};
+  TC.DETAIL.forEach(function(d){ (d.mg || []).forEach(function(id){ (CONOF[id] = CONOF[id] || []).push(d); }); });
+  /* 고교 준비: 기출에 많이 나온 개념 순서로, 문항 생성기에 있는 유형을 하나씩 (15문항) */
+  function hsSpec(){
+    var out = [], seen = {};
+    TC.DETAIL.slice().sort(function(a, b){ return b.ex.length - a.ex.length; }).forEach(function(d){
+      if(out.length >= 15) return; var id = (d.mg || []).filter(function(x){ return MG.type(x) && !seen[x]; })[0];
+      if(id){ seen[id] = 1; out.push({id: id, n: 1}); }
+    });
+    return out.length ? out : MG.HS;
+  }
   /* 학년 탭: 한 학년씩 보여 스크롤 없이 */
   S.g = S.g || 3; S.mix = S.mix || {1: 0, 2: 0, 3: 0};
   function cntOf(g){ return S.spec.reduce(function(a, x){ var t = MG.type(x.id); return a + (t && t.g === g ? x.n : 0); }, 0); }
@@ -150,7 +165,8 @@
     MG.T.forEach(function(t){
       if(t.g !== S.g) return;
       var cur = S.spec.filter(function(x){ return x.id === t.id; })[0], n = cur ? cur.n : 0;
-      h += '<label class="ty' + (n ? " on" : "") + '" title="' + esc(t.unit) + '"><b>' + esc(t.n) + '</b><input type="number" min="0" max="20" data-id="' + t.id + '" value="' + n + '" aria-label="' + esc(t.n) + ' 개수"></label>';
+      var cs = CONOF[t.id] || [], fz = cs.reduce(function(a, d){ return Math.max(a, d.ex.length); }, 0);
+      h += '<label class="ty' + (n ? " on" : "") + '" title="' + esc(t.unit + (cs.length ? " · 개념: " + cs.map(function(d){ return d.n; }).join(", ") + " · 고1 3월 기출 " + fz + "문항" : "")) + '"><b>' + esc(t.n) + "</b>" + (fz ? '<span class="fz">🔥' + fz + "</span>" : '<span class="fz"></span>') + '<input type="number" min="0" max="20" data-id="' + t.id + '" value="' + n + '" aria-label="' + esc(t.n) + ' 개수"></label>';
     });
     $("types").innerHTML = h; drawTabs();
   }
@@ -198,8 +214,8 @@
   };
   /* 🎓 고교 준비 */
   $("pHS").onclick = function(){
-    S.spec = MG.HS.map(function(x){ return {id: x.id, n: x.n}; }); S.lv = 0; S.seed = Math.random().toString(36).slice(2, 8); S.title = "고교 입학 준비 수학"; $("title").value = S.title; S.g = 3;
-    save(); lvUI(); drawTypes(); draw(); TT.ui.toast("중학교 핵심 15영역 · 단계 섞기로 만들었어요.");
+    S.spec = hsSpec().map(function(x){ return {id: x.id, n: x.n}; }); S.spec.sort(function(a, b){ return MG.T.indexOf(MG.type(a.id)) - MG.T.indexOf(MG.type(b.id)); }); S.lv = 0; S.seed = Math.random().toString(36).slice(2, 8); S.title = "고교 입학 준비 수학"; $("title").value = S.title; S.g = 3;
+    save(); lvUI(); drawTypes(); draw(); TT.ui.toast("고1 3월 기출에 많이 나온 개념 15가지 · 단계 섞기로 만들었어요.");
   };
   $("mixGo").onclick = function(){
     var tot = (S.mix[1] || 0) + (S.mix[2] || 0) + (S.mix[3] || 0); if(!tot){ TT.ui.toast("학년별 문항 수를 넣어 주세요."); return; }
@@ -275,6 +291,12 @@
     location.href = "../mcheck/";
   };
 
+  /* 개념지도에서 [🔢 연습 문제]로 오면 (?c=개념id) 그 개념의 유형으로 바로 */
+  (function(){ var m = location.search.match(/[?&]c=([a-z_]+)/), d = m && TC.get ? TC.get(m[1]) : null; if(!d || !d.mg) return;
+    var ids = d.mg.filter(function(x){ return MG.type(x); }); if(!ids.length) return;
+    S.spec = ids.map(function(id){ return {id: id, n: Math.max(2, Math.round(6 / ids.length))}; }); S.lv = 0; S.seed = Math.random().toString(36).slice(2, 8); S.title = (d.n + " 연습").slice(0, 40); S.g = MG.type(ids[0]).g; $("title").value = S.title; save();
+    history.replaceState(null, "", location.pathname);
+  })();
   drawTypes(); lvUI(); draw();
   TT.ui.classSelect($("clsSel"), "mgen", function(c){ cls = c; });
 })();

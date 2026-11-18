@@ -840,7 +840,7 @@
         case "lib": case "libd": var Bd = g("tt_board_v1") || {}; return Bd.url ? "학교 업무판 연결됨" + (used ? " · " + used : "") : "⚠ 학교 업무판 연결 필요";
         case "setup": var sc = TT.school.load(); return sc.name ? "학교 정보 들어감 · " + sc.name : "세팅 파일 불러오기";
         case "concept": case "play": case "class": case "group": case "photo": case "parent": case "mgen": case "mcheck": case "advisor": case "bonus": case "ai": case "train":
-          return used || ({concept: "개념 카드 25장 · 도전 문제", play: "수학 게임·퍼즐 17가지", "class": "칠판 · 뽑기 · 타이머", group: "조건 맞춰 모둠·좌석", photo: "사진 이름·용량 정리", parent: "상황별 안내 문자", mgen: "숫자만 바꾼 문항·정답지", mcheck: "빠른 채점 · 보충", advisor: "성적 분석 · 고교 살펴보기", bonus: "가산점 양식 채우기", ai: "개인정보 가린 요청문 · 자동 채움", train: "이수증 한 번 내기"}[id]);
+          return used || ({concept: "단원 25장 · 세부 개념 51개 · 도전 문제", play: "수학 게임·퍼즐 41가지", "class": "칠판 · 뽑기 · 타이머", group: "조건 맞춰 모둠·좌석", photo: "사진 이름·용량 정리", parent: "상황별 안내 문자", mgen: "숫자만 바꾼 문항·정답지", mcheck: "빠른 채점 · 보충", advisor: "성적 분석 · 고교 살펴보기", bonus: "가산점 양식 채우기", ai: "개인정보 가린 요청문 · 자동 채움", train: "이수증 한 번 내기"}[id]);
         case "merge": return "윈도우 PC 프로그램";
         case "stucard": var NN = g("tt_notes_v1"); return TT.roster.has() ? "기록 " + (NN && NN.recs ? NN.recs.length : 0) + "개 · 출결 · 상담 · 제출물 모아 보기" : "⚠ 명렬표가 필요해요";
         case "seat": var SE = null; try{ SE = JSON.parse(localStorage.getItem("snseat_v1") || "null"); }catch(e){} var hm2 = TT.roster.home(); return SE && SE.c && hm2 && SE.c[hm2.id] ? hm2.name + " 자리표 있음" : "명렬표로 자리표 만들기";

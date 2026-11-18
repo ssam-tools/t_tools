@@ -94,7 +94,7 @@ shared/comci.js         컴시간 시간표 읽기 (붙여 넣은 표 · 교사�
 shared/hwpx.js          학교 원본 파일 읽기(TTSchoolFiles) — 한글 .hwpx 표·엑셀 → 명렬·교직원·내선·전체 시간표·학사일정
 shared/exam-data.js     고1 3월 모의고사 기출 270문항 목록 (연도·번호·배점·정답·단원) — 그림은 없음
 shared/challenge.js     도전 문제 보기 (문제 → 정답 → 해설), 기출 그림은 각 기기 브라우저에만 저장
-shared/concepts.js      개념 카드 25장 (수학 견본) — 다른 교과는 이 파일과 exam-data.js만 바꾸면 됨
+shared/concepts.js      단원 요약 카드 25장 + 세부 개념 51개 (수학 견본) — 다른 교과는 이 파일과 exam-data.js만 바꾸면 됨
 apps/<도구>/index.html  각 도구 (apps/record 생기부 도우미: ⋯ → 🔍 나이스 기재 점검)
 sw.js, manifest.*       앱 설치, 오프라인 사용
 assets/                 아이콘

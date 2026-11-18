@@ -269,7 +269,7 @@ var MG = (function(){
       var c = ri(R, 2, 9) * m, s3 = simp(m), num = c / m;
       return {q: c + " / " + rt(m) + " 의 분모를 유리화하시오.", a: (num === 1 ? "" : num) + rt(m), t: (num === 1 ? "" : num) + "√" + m};
     }},
-    {id: "fact2", g: 3, unit: "인수분해", n: "인수분해 (공통인수·완전제곱·ac)", f: function(R, lv){
+    {id: "fact2", g: 3, unit: "인수분해", n: "인수분해 (완전제곱·ac형)", f: function(R, lv){
       if(lv === 1){ var k = ri(R, 2, 6), m = nz(R, -7, 7); return {q: poly([k, k * m, 0], "x") + " 을(를) 인수분해하시오.", a: k + "x(" + poly([1, m], "x") + ")", t: k + "x(" + poly([1, m], "x", true) + ")"}; }
       if(lv === 2){ var a = ri(R, 1, 3), p = nz(R, -7, 7); return {q: poly([a * a, 2 * a * p, p * p], "x") + " 을(를) 인수분해하시오.", a: "(" + poly([a, p], "x") + ")<sup>2</sup>", t: "(" + poly([a, p], "x", true) + ")^2"}; }
       var P = ri(R, 2, 3), Q = nz(R, -6, 6), S2 = ri(R, 1, 3), T2 = nz(R, -6, 6), g0 = 0; while(gcd(P, Q) > 1 && g0++ < 20) Q = nz(R, -6, 6);
@@ -315,6 +315,74 @@ var MG = (function(){
       var vals = d.map(function(x){ return m + x; }), V = d.reduce(function(a, b){ return a + b * b; }, 0) / 5;
       if(lv === 2) return {q: "자료 " + vals.join(", ") + " 의 분산을 구하시오.", a: String(V), t: String(V)};
       var s = simp(V); return {q: "자료 " + vals.join(", ") + " 의 표준편차를 구하시오.", a: rtk(s), t: rtkT(s)};
+    }},
+    /* ════ v2.6.1: 고1 3월 기출에 자주 나오는 개념 (개념지도 세부 개념과 연결) ════ */
+    {id: "solid", g: 1, unit: "입체도형", n: "기둥·뿔·구의 부피", f: function(R, lv){
+      function pi(n, d){ var g2 = gcd(n, d); n /= g2; d /= g2; return (d === 1 ? (n === 1 ? "" : n) : n + "/" + d) + "π"; }
+      var r = ri(R, 2, 6), h = ri(R, 3, 10);
+      if(lv === 1) return R() < .5 ? {q: "밑면의 반지름이 " + r + " cm, 높이가 " + h + " cm인 원기둥의 부피를 구하시오.", a: pi(r * r * h, 1) + " cm³", t: pi(r * r * h, 1)}
+        : {q: "가로 " + r + " cm, 세로 " + (r + 1) + " cm, 높이 " + h + " cm인 직육면체의 부피를 구하시오.", a: r * (r + 1) * h + " cm³", t: String(r * (r + 1) * h)};
+      if(lv === 2){ h = 3 * ri(R, 1, 4); return {q: "밑면의 반지름이 " + r + " cm, 높이가 " + h + " cm인 원뿔의 부피를 구하시오.", a: pi(r * r * h, 3) + " cm³", t: pi(r * r * h, 3)}; }
+      var r3 = ri(R, 1, 6); return R() < .5 ? {q: "반지름이 " + r3 + " cm인 구의 부피를 구하시오.", a: pi(4 * r3 * r3 * r3, 3) + " cm³", t: pi(4 * r3 * r3 * r3, 3)}
+        : {q: "겉넓이가 " + 4 * r3 * r3 + "π cm²인 구의 부피를 구하시오.", a: pi(4 * r3 * r3 * r3, 3) + " cm³", t: pi(4 * r3 * r3 * r3, 3)};
+    }},
+    {id: "tcenter", g: 2, unit: "삼각형의 성질", n: "외심·내심·무게중심", f: function(R, lv){
+      if(lv === 1){ var a = 2 * ri(R, 15, 50); return {q: "점 I가 △ABC의 내심이고 ∠A = " + a + "°일 때, ∠BIC의 크기를 구하시오.", a: 90 + a / 2 + "°", t: String(90 + a / 2)}; }
+      if(lv === 2){ var b = ri(R, 25, 85); return R() < .5 ? {q: "점 O가 △ABC의 외심이고 ∠A = " + b + "°일 때, ∠BOC의 크기를 구하시오.", a: 2 * b + "°", t: String(2 * b)}
+        : {q: "점 O가 △ABC의 외심이고 ∠BOC = " + 2 * b + "°일 때, ∠A의 크기를 구하시오.", a: b + "°", t: String(b)}; }
+      var k = ri(R, 2, 9); return R() < .5 ? {q: "점 G가 △ABC의 무게중심이고 중선 AD의 길이가 " + 3 * k + " cm일 때, AG의 길이를 구하시오.", a: 2 * k + " cm", t: String(2 * k)}
+        : {q: "점 G가 △ABC의 무게중심이고 △ABC의 넓이가 " + 6 * k + " cm²일 때, △GBC의 넓이를 구하시오.", a: 2 * k + " cm²", t: String(2 * k)};
+    }},
+    {id: "carea", g: 2, unit: "일차함수", n: "좌표평면 위의 도형의 넓이", f: function(R, lv){
+      function cf(n, d){ var f = frac(n, d); return f === "1" ? "" : f === "−1" ? "−" : (f.indexOf("/") > 0 ? "(" + f + ")" : f); }
+      if(lv === 1){ var p = nz(R, -6, 6), q = nz(R, -8, 8), g0 = 0; while((p * q) % 2 && g0++ < 20) q = nz(R, -8, 8);
+        return {q: "일차함수 y = " + cf(-q, p) + "x " + (q < 0 ? "− " + (-q) : "+ " + q) + " 의 그래프와 x축, y축으로 둘러싸인 도형의 넓이를 구하시오.", a: String(Math.abs(p * q) / 2), t: String(Math.abs(p * q) / 2)}; }
+      var x0 = nz(R, -5, 5), y0, m1, m2, g1 = 0;
+      if(lv === 2){ do{ y0 = ri(R, -6, 6); m1 = nz(R, -3, 3); m2 = nz(R, -3, 3); g1++; } while((m1 === m2 || ((m1 - m2) * x0 * x0) % 2) && g1 < 50);
+        var b1 = y0 - m1 * x0, b2 = y0 - m2 * x0, A = Math.abs(b1 - b2) * Math.abs(x0) / 2;
+        return {q: "두 일차함수 y = " + poly([m1, b1], "x") + ", y = " + poly([m2, b2], "x") + " 의 그래프와 y축으로 둘러싸인 삼각형의 넓이를 구하시오.", a: String(A), t: String(A)}; }
+      y0 = pick(R, [4, 6, 8, 12, -4, -6, -8, -12]); var D = []; for(var d = 1; d <= Math.abs(y0); d++) if(y0 % d === 0){ D.push(d); D.push(-d); }
+      var d1 = pick(R, D), d2 = pick(R, D), g2 = 0; while(d2 === d1 && g2++ < 20) d2 = pick(R, D);
+      var r1 = x0 - d1, r2 = x0 - d2, s1 = y0 / d1, s2 = y0 / d2, A3 = Math.abs(r1 - r2) * Math.abs(y0) / 2;
+      return {q: "두 일차함수 y = " + poly([s1, -s1 * r1], "x") + ", y = " + poly([s2, -s2 * r2], "x") + " 의 그래프와 x축으로 둘러싸인 삼각형의 넓이를 구하시오.", a: String(A3), t: String(A3)};
+    }},
+    {id: "sqrtnat", g: 3, unit: "제곱근과 실수", n: "제곱근이 자연수가 되는 조건", f: function(R, lv){
+      var m = pick(R, [2, 3, 5, 6, 7, 10, 15]), k = ri(R, 2, 6), A = k * k * m;
+      if(lv === 1) return {q: "√(" + A + "n) 이 자연수가 되도록 하는 가장 작은 자연수 n의 값을 구하시오.", a: String(m), t: String(m)};
+      if(lv === 2) return {q: "√(" + A + "/n) 이 자연수가 되도록 하는 가장 작은 자연수 n의 값을 구하시오.", a: String(m), t: String(m)};
+      var c = 0; for(var t = 1; m * t * t < 100; t++) if(m * t * t >= 10) c++;
+      if(!c){ m = 2; A = 2 * k * k; c = 5; }
+      return {q: "두 자리 자연수 n 중에서 √(" + A + "n) 이 자연수가 되는 n의 개수를 구하시오.", a: c + "개", t: String(c)};
+    }},
+    {id: "realpart", g: 3, unit: "제곱근과 실수", n: "무리수의 정수 부분·소수 부분", f: function(R, lv){
+      var k = ri(R, 1, 9), a = ri(R, k * k + 1, (k + 1) * (k + 1) - 1);
+      if(lv === 1) return {q: rt(a) + " 의 정수 부분을 구하시오.", a: String(k), t: String(k)};
+      if(lv === 2) return {q: rt(a) + " 의 소수 부분을 구하시오.", a: rt(a) + " − " + k, t: "√" + a + "−" + k};
+      var c = ri(R, k + 1, k + 6), ip = c - k - 1;
+      return {q: c + " − " + rt(a) + " 의 소수 부분을 구하시오.", a: (k + 1) + " − " + rt(a), t: (k + 1) + "−√" + a};
+    }},
+    {id: "multvar", g: 3, unit: "다항식의 곱셈", n: "곱셈공식의 변형", f: function(R, lv){
+      var a = nz(R, -7, 7), b = nz(R, -9, 9);
+      if(lv === 1) return {q: "x + y = " + sg(a) + ", xy = " + sg(b) + " 일 때, " + sup("x", 2) + " + " + sup("y", 2) + " 의 값을 구하시오.", a: sg(a * a - 2 * b), t: sg(a * a - 2 * b)};
+      if(lv === 2) return R() < .5 ? {q: "x − y = " + sg(a) + ", xy = " + sg(b) + " 일 때, " + sup("x", 2) + " + " + sup("y", 2) + " 의 값을 구하시오.", a: sg(a * a + 2 * b), t: sg(a * a + 2 * b)}
+        : {q: "x + y = " + sg(a) + ", xy = " + sg(b) + " 일 때, " + sup("(x − y)", 2) + " 의 값을 구하시오.", a: sg(a * a - 4 * b), t: sg(a * a - 4 * b)};
+      var c = ri(R, 2, 6); return R() < .5 ? {q: "x + 1/x = " + c + " 일 때, " + sup("x", 2) + " + 1/" + sup("x", 2) + " 의 값을 구하시오.", a: String(c * c - 2), t: String(c * c - 2)}
+        : {q: "x + 1/x = " + c + " 일 때, " + sup("(x − 1/x)", 2) + " 의 값을 구하시오.", a: String(c * c - 4), t: String(c * c - 4)};
+    }},
+    {id: "qarea", g: 3, unit: "이차함수", n: "이차함수와 도형의 넓이", f: function(R, lv){
+      var p = nz(R, -4, 4), d = ri(R, 1, 4), r1 = p - d, r2 = p + d;
+      if(lv === 1) return {q: "이차함수 y = " + poly([1, -(r1 + r2), r1 * r2], "x") + " 의 그래프가 x축과 만나는 두 점 사이의 거리를 구하시오.", a: String(2 * d), t: String(2 * d)};
+      if(lv === 2){ var a = pick(R, [1, -1, 2, -2]); return {q: "이차함수 y = " + poly([a, -a * (r1 + r2), a * r1 * r2], "x") + " 의 그래프가 x축과 만나는 두 점을 A, B, 꼭짓점을 C라 할 때, △ABC의 넓이를 구하시오.", a: String(Math.abs(a) * d * d * d), t: String(Math.abs(a) * d * d * d)}; }
+      var c = r1 * r2, g0 = 0; while((c === 0 || (2 * d * Math.abs(c)) % 2) && g0++ < 20){ p = nz(R, -4, 4); r1 = p - d; r2 = p + d; c = r1 * r2; }
+      if(c === 0){ r1 = -1; r2 = 3; d = 2; c = -3; }
+      return {q: "이차함수 y = " + poly([1, -(r1 + r2), c], "x") + " 의 그래프가 x축과 만나는 두 점을 A, B, y축과 만나는 점을 C라 할 때, △ABC의 넓이를 구하시오.", a: String(d * Math.abs(c)), t: String(d * Math.abs(c))};
+    }},
+    {id: "ctan", g: 3, unit: "원의 성질", n: "원의 접선", f: function(R, lv){
+      var TR = [[3, 4, 5], [5, 12, 13], [8, 15, 17], [6, 8, 10], [9, 12, 15]], t = pick(R, TR);
+      if(lv === 1) return {q: "원 밖의 점 P에서 반지름이 " + t[0] + " cm인 원 O에 그은 접선의 접점을 A라 하자. PO = " + t[2] + " cm일 때, PA의 길이를 구하시오.", a: t[1] + " cm", t: String(t[1])};
+      if(lv === 2){ var x = ri(R, 2, 7), y = ri(R, 2, 7), z = ri(R, 2, 7); return {q: "△ABC의 내접원이 세 변 AB, BC, CA와 접하는 점을 각각 D, E, F라 하자. AB = " + (x + y) + " cm, BC = " + (y + z) + " cm, CA = " + (z + x) + " cm일 때, AD의 길이를 구하시오.", a: x + " cm", t: String(x)}; }
+      var ab = ri(R, 5, 12), bc = ri(R, 5, 12), cd = ri(R, 5, 12), g0 = 0; while(ab + cd - bc < 3 && g0++ < 30){ bc = ri(R, 5, 12); }
+      return {q: "원 O에 외접하는 사각형 ABCD에서 AB = " + ab + " cm, BC = " + bc + " cm, CD = " + cd + " cm일 때, DA의 길이를 구하시오.", a: ab + cd - bc + " cm", t: String(ab + cd - bc)};
     }}
   ];
   /* 단원 순서 (교과서 차례 기준) — 진도까지 섞기·목록 정렬에 씀. kw: 진도표 단원 이름과 맞춰 볼 낱말 */
@@ -325,24 +393,26 @@ var MG = (function(){
     {g: 1, k: "일차방정식", kw: /방정식/, ids: ["lin", "lin2"]},
     {g: 1, k: "좌표·그래프", kw: /좌표|그래프|비례/, ids: ["prop"]},
     {g: 1, k: "평면도형", kw: /기본 ?도형|평면|다각형|작도|합동/, ids: ["polyang"]},
-    {g: 1, k: "원·부채꼴", kw: /원과|부채꼴|입체/, ids: ["sector"]},
+    {g: 1, k: "원·부채꼴", kw: /원과|부채꼴/, ids: ["sector"]},
+    {g: 1, k: "입체도형", kw: /입체|다면체|회전체/, ids: ["solid"]},
     {g: 1, k: "자료", kw: /자료|통계|대푯값|도수/, ids: ["mean"]},
     {g: 2, k: "순환소수", kw: /순환|유리수와|소수/, ids: ["rep"]},
     {g: 2, k: "식의 계산", kw: /식의 계산|지수|단항|다항/, ids: ["expo", "mono", "polyadd"]},
     {g: 2, k: "부등식", kw: /부등식/, ids: ["ineq"]},
     {g: 2, k: "연립방정식", kw: /연립/, ids: ["sys"]},
-    {g: 2, k: "일차함수", kw: /함수/, ids: ["lfint", "slope"]},
-    {g: 2, k: "닮음", kw: /닮음|삼각형의 성질|사각형/, ids: ["simil"]},
+    {g: 2, k: "일차함수", kw: /함수/, ids: ["lfint", "slope", "carea"]},
+    {g: 2, k: "삼각형·사각형", kw: /삼각형의 성질|사각형|외심|내심/, ids: ["tcenter"]},
+    {g: 2, k: "닮음", kw: /닮음/, ids: ["simil"]},
     {g: 2, k: "피타고라스", kw: /피타고라스/, ids: ["pyth"]},
     {g: 2, k: "경우의 수", kw: /경우의 수/, ids: ["case"]},
     {g: 2, k: "확률", kw: /확률/, ids: ["prob"]},
-    {g: 3, k: "제곱근", kw: /제곱근|실수|근호/, ids: ["sqrt", "sqrtmd"]},
-    {g: 3, k: "다항식의 곱셈", kw: /곱셈|전개/, ids: ["expand"]},
+    {g: 3, k: "제곱근", kw: /제곱근|실수|근호/, ids: ["sqrt", "sqrtmd", "realpart", "sqrtnat"]},
+    {g: 3, k: "다항식의 곱셈", kw: /곱셈|전개/, ids: ["expand", "multvar"]},
     {g: 3, k: "인수분해", kw: /인수분해/, ids: ["factor", "fact2"]},
     {g: 3, k: "이차방정식", kw: /이차방정식/, ids: ["quad", "qformula"]},
-    {g: 3, k: "이차함수", kw: /이차함수/, ids: ["vertex", "qmax"]},
+    {g: 3, k: "이차함수", kw: /이차함수/, ids: ["vertex", "qmax", "qarea"]},
     {g: 3, k: "삼각비", kw: /삼각비/, ids: ["trig", "trigsp"]},
-    {g: 3, k: "원의 성질", kw: /원의 성질|원주각|접선/, ids: ["inscr"]},
+    {g: 3, k: "원의 성질", kw: /원의 성질|원주각|접선/, ids: ["inscr", "ctan"]},
     {g: 3, k: "통계", kw: /통계|대푯값|산포|상관/, ids: ["disp"]}
   ];
   var UO = {}; U.forEach(function(u, i){ u.ids.forEach(function(id, j){ UO[id] = i * 10 + j; }); });
