@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icon-192.png">
+<script src="../../shared/early.js"></script>
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>지도·상담 · 쌤 노트</title>
+<!--
+  지도·상담 (모든 반): 교과 시간 등 어느 반에서나 빠른 지도와 상담 일지를 씁니다. 출결·결석계·학부모 문자 같은 담임 내용은 없습니다.
+  · 우리 반(★)을 고르면 출결·결석계의 지도·상담(tt_guide_v1)에 그대로 함께 저장 → 주간·학생·통계·청소 당번과 이어짐
+  · 다른 반: "tt_sguide_v1" {c:{학급id:{gd:[{id,no,date,time,kind,how,memo}], cs:[{id,no,date,topic,content,act,next,done}]}}}
+  · 칭찬 지도와 상담 내용은 학생 기록(TT.notes, 교과 세특 참고)에도 남아 학생 카드·생기부 도우미에 모입니다. 번호로 저장(이름은 이 기기 명렬표에서만).
+  · 주소: ?tab=guide | counsel
+-->
+<style>
+  main.sg{display:flex!important;flex-direction:column;gap:8px;padding:10px!important;min-height:0}
+  .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .tabs2{display:inline-flex;background:var(--t-chip,#eceff3);border-radius:12px;padding:3px}
+  .tabs2 button{font:inherit;font-weight:800;border:0;background:transparent;border-radius:10px;padding:6px 14px;cursor:pointer;color:var(--sub)}
+  .tabs2 button[aria-pressed=true]{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+  .kinds{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+  .kinds button,.hows button{font:inherit;font-weight:800;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:8px 4px;cursor:pointer;color:var(--ink)}
+  .kinds button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+  .hows button{border-radius:999px;padding:4px 12px;font-size:13.5px}.hows button[aria-pressed=true]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft,#eef4ff)}
+  .grid{flex:1;min-height:0;display:grid;gap:6px;grid-auto-rows:minmax(40px,1fr)}
+  .st{position:relative;font:inherit;border:1px solid var(--line);background:var(--card);border-radius:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;color:var(--ink);min-width:0}
+  .st i{position:absolute;top:3px;left:6px;font-style:normal;font-size:10.5px;color:var(--sub)}
+  .st b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .st small{font-size:11px;font-weight:700;color:var(--accent);min-height:14px}
+  .st.has{background:var(--accent);border-color:var(--accent);color:#fff}.st.has i,.st.has small{color:#fff;opacity:.9}
+  .st.sel{outline:3px solid var(--accent);outline-offset:1px}
+  .memo{flex:1;min-width:200px;font:inherit;border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+  .foot2{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--sub)}
+  .list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:6px}
+  .it{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:8px 12px;display:flex;gap:10px;align-items:flex-start}
+  .it .w{flex:none;font-weight:800;min-width:110px}.it .w small{display:block;color:var(--sub);font-weight:600}
+  .it .t{flex:1;min-width:0;font-size:14px;white-space:pre-wrap}
+  .pill{display:inline-block;font-size:12px;font-weight:800;border-radius:999px;padding:1px 8px;background:var(--t-chip,#eceff3);margin-right:4px}
+  .x{border:0;background:none;color:#a0a9b3;cursor:pointer;font-size:15px}
+  dialog{border:0;border-radius:16px;padding:16px 18px;width:min(620px,94vw)}
+  dialog h2{font-size:18px;margin:0 0 8px}dialog label{display:block;font-size:13px;font-weight:700;color:var(--sub);margin:8px 0 3px}
+  dialog input,dialog textarea,dialog select{width:100%;box-sizing:border-box;font:inherit;border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+  dialog textarea{min-height:110px}
+  .note{font-size:12.5px;color:var(--sub)}
+  @media (max-width:760px){ .kinds{grid-template-columns:repeat(4,minmax(0,1fr))} body{height:auto;min-height:100dvh;overflow:auto} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../#student">← 쌤 노트</a>
+    <h1>⚡ 지도·상담</h1>
+  </div>
+  <div class="bar">
+    <span class="tabs2" id="tabs"><button data-t="guide">⚡ 빠른 지도</button><button data-t="counsel">🗣️ 상담 일지</button></span>
+    <select id="clsSel" aria-label="학급"></select>
+    <input type="date" id="day" aria-label="날짜" style="font:inherit;border:1px solid var(--line);border-radius:10px;padding:6px 8px">
+  </div>
+</header>
+<main class="panel sg" id="m"></main>
+<footer><span class="priv">🔒 번호로 이 기기(와 내 보관함)에만 저장 · 교실 화면에는 띄우지 마세요</span><span id="info"></span></footer>
+<dialog id="dlg"></dialog>
+<script src="../../shared/tools.js"></script>
+<script src="../../shared/tt.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function pad(n){ return ("0" + n).slice(-2); }
+  function ymd(d){ d = d || new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function md(s){ var a = String(s).split("-"); return (+a[1]) + "/" + (+a[2]); }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function toast(t){ if(TT.ui && TT.ui.toast) TT.ui.toast(t); }
+  var KEY = "tt_sguide_v1", GKEY = "tt_guide_v1";
+  var KINDS = ["수업 태도", "과제", "준비물", "휴대폰", "생활", "교우관계", "칭찬👍", "기타"], HOWS = ["개별", "집단", "학부모"], TOPICS = ["학습", "생활", "진로", "교우", "기타"];
+  var q = new URLSearchParams(location.search), tab = q.get("tab") === "counsel" ? "counsel" : "guide", cls = null, kind = KINDS[0], how = "개별", multi = false, picked = [];
+  $("day").value = ymd(); $("day").max = ymd();
+  function isHome(){ var h = TT.roster.home(); return !!(h && cls && h.id === cls.id); }
+  /* ── 저장소: 우리 반 = 출결·결석계(tt_guide_v1) 형식, 다른 반 = tt_sguide_v1 ── */
+  function data(){
+    if(isHome()){ var G = TT.store.get(GKEY, null) || {}; G.gd = G.gd || []; G.counsel = G.counsel || []; return {
+      gd: G.gd.map(function(g){ return {id: g.id, no: +g.sid, date: g.date, time: g.time, kind: g.kind, how: g.how, memo: g.memo}; }),
+      cs: G.counsel.map(function(c){ return {id: c.id, no: +c.sid, date: c.date, topic: (c.reasons || [])[0] || "", content: c.content || "", act: c.actionNote || (c.actions || []).join(", "), next: c.next || "", done: !!c.done}; })}; }
+    var S = TT.store.get(KEY, null) || {}; S.c = S.c || {}; var c = S.c[cls.id] || {}; return {gd: c.gd || [], cs: c.cs || []};
+  }
+  function addGd(list){
+    if(isHome()){ var G = TT.store.get(GKEY, null) || {}; G.gd = G.gd || []; list.forEach(function(g){ G.gd.push({id: g.id, sid: String(g.no), date: g.date, time: g.time, kind: g.kind, how: g.how, memo: g.memo || "", grp: g.grp || "", created: Date.now()}); }); TT.store.set(GKEY, G); return; }
+    var S = TT.store.get(KEY, null) || {}; S.v = 1; S.c = S.c || {}; var c = S.c[cls.id] = S.c[cls.id] || {gd: [], cs: []}; c.gd = (c.gd || []).concat(list); TT.store.set(KEY, S);
+  }
+  function delGd(id){
+    if(isHome()){ var G = TT.store.get(GKEY, null) || {}; G.gd = (G.gd || []).filter(function(g){ return g.id !== id; }); TT.store.set(GKEY, G); return; }
+    var S = TT.store.get(KEY, null) || {}, c = ((S.c || {})[cls.id]) || {}; c.gd = (c.gd || []).filter(function(g){ return g.id !== id; }); TT.store.set(KEY, S);
+  }
+  function saveCs(o){
+    if(isHome()){ var G = TT.store.get(GKEY, null) || {}; G.counsel = G.counsel || []; var e = G.counsel.filter(function(c){ return c.id === o.id; })[0];
+      var r = {id: o.id, sid: String(o.no), date: o.date, trigger: "", reasons: o.topic ? [o.topic] : [], content: o.content, actions: [], actionNote: o.act, parent: e ? e.parent : "none", next: o.next, done: !!o.done, created: e ? e.created : Date.now()};
+      if(e) Object.assign(e, r); else G.counsel.push(r); TT.store.set(GKEY, G); return; }
+    var S = TT.store.get(KEY, null) || {}; S.v = 1; S.c = S.c || {}; var c = S.c[cls.id] = S.c[cls.id] || {gd: [], cs: []}; c.cs = c.cs || [];
+    var i = c.cs.findIndex(function(x){ return x.id === o.id; }); if(i >= 0) c.cs[i] = o; else c.cs.push(o); TT.store.set(KEY, S);
+  }
+  function delCs(id){
+    if(isHome()){ var G = TT.store.get(GKEY, null) || {}; G.counsel = (G.counsel || []).filter(function(c){ return c.id !== id; }); TT.store.set(GKEY, G); return; }
+    var S = TT.store.get(KEY, null) || {}, c = ((S.c || {})[cls.id]) || {}; c.cs = (c.cs || []).filter(function(x){ return x.id !== id; }); TT.store.set(KEY, S);
+  }
+  function stuOf(no){ return (cls.students || []).filter(function(s){ return +s.no === +no; })[0] || {no: no, name: ""}; }
+  function note(no, text){ try{ var st = stuOf(no); TT.notes.add({k: TT.notes.key(cls, st), n: st.name, date: $("day").value, area: "subj", src: "지도·상담", text: text}); }catch(e){} }   // 학생 카드·생기부 도우미로
+
+  function draw(){
+    Array.prototype.forEach.call($("tabs").children, function(b){ b.setAttribute("aria-pressed", b.dataset.t === tab); });
+    if(!cls){ TT.ui.needRoster($("m")); return; }
+    $("info").textContent = cls.name + (isHome() ? " · ★ 우리 반 (출결·결석계와 함께 저장)" : " · 교과 반");
+    if(tab === "guide") drawGuide(); else drawCounsel();
+  }
+  function drawGuide(){
+    var d = $("day").value, D = data(), day = D.gd.filter(function(g){ return g.date === d; }), L = cls.students, n = L.length, cols = n <= 16 ? 4 : n <= 40 ? 5 : 6;
+    var by = {}; day.forEach(function(g){ (by[g.no] = by[g.no] || []).push(g); });
+    $("m").innerHTML = '<div class="kinds">' + KINDS.map(function(k){ return '<button data-k="' + esc(k) + '" aria-pressed="' + (k === kind) + '">' + esc(k) + "</button>"; }).join("") + "</div>"
+      + '<div class="row"><span class="row hows">' + HOWS.map(function(h){ return '<button data-h="' + h + '" aria-pressed="' + (h === how) + '">' + h + "</button>"; }).join("") + '</span><input class="memo" id="memo" maxlength="120" placeholder="메모 (선택) — 적어 두면 다음에 누르는 학생 기록에 붙어요"><button class="btn" id="multi" aria-pressed="' + multi + '">여러 명 묶기</button>' + (multi ? '<button class="btn primary" id="msave"' + (picked.length ? "" : " disabled") + ">묶어서 저장 (" + picked.length + "명)</button>" : "") + "</div>"
+      + '<div class="grid" style="grid-template-columns:repeat(' + cols + ',minmax(0,1fr))">' + L.map(function(s){ var gs = by[s.no] || []; return '<button class="st' + (gs.length ? " has" : "") + (multi && picked.indexOf(+s.no) >= 0 ? " sel" : "") + '" data-no="' + s.no + '"><i>' + s.no + "</i><b>" + esc(s.name) + "</b><small>" + esc(gs.map(function(g){ return g.kind.replace("👍", ""); }).join("·")) + "</small></button>"; }).join("") + "</div>"
+      + '<div class="foot2">이날 지도 <b>' + day.length + "</b>건 · 학생을 누르면 바로 기록 <span style=\"flex:1\"></span>" + (day.length ? day.slice(-4).reverse().map(function(g){ return '<span class="pill">' + g.no + "번 " + esc(g.kind) + ' <button class="x" data-del="' + g.id + '" title="지우기">✕</button></span>'; }).join("") : "") + "</div>";
+  }
+  function record(nos){
+    var d = $("day").value, now = new Date(), memo = ($("memo") || {}).value || "", grp = nos.length > 1 ? uid() : "";
+    var list = nos.map(function(no){ return {id: uid(), no: +no, date: d, time: d === ymd() ? pad(now.getHours()) + ":" + pad(now.getMinutes()) : "", kind: kind, how: how, memo: memo.trim(), grp: grp}; });
+    addGd(list);
+    if(kind.indexOf("칭찬") >= 0) nos.forEach(function(no){ note(no, "칭찬" + (memo.trim() ? ": " + memo.trim() : "") ); });
+    toast((nos.length > 1 ? nos.length + "명 " : nos[0] + "번 ") + kind + " 기록"); draw();
+  }
+  function drawCounsel(){
+    var D = data(), L = D.cs.slice().sort(function(a, b){ return a.date < b.date ? 1 : -1; });
+    $("m").innerHTML = '<div class="row"><b>' + esc(cls.name) + " 상담 " + L.length + '건</b><span style="flex:1"></span><button class="btn primary" id="newCs">＋ 상담 쓰기</button></div>'
+      + '<div class="list">' + (L.length ? L.map(function(c){ var s = stuOf(c.no); return '<div class="it"><div class="w">' + c.no + "번 " + esc(s.name) + "<small>" + esc(c.date) + "</small></div><div class=\"t\">" + (c.topic ? '<span class="pill">' + esc(c.topic) + "</span>" : "") + (c.next ? '<span class="pill">' + (c.done ? "✔ 확인함" : "후속 " + md(c.next)) + "</span>" : "") + "\n" + esc(c.content) + (c.act ? "\n→ " + esc(c.act) : "") + '</div><button class="btn" data-ed="' + c.id + '">고치기</button><button class="x" data-csdel="' + c.id + '">✕</button></div>'; }).join("") : '<p class="note">아직 상담 기록이 없어요. [＋ 상담 쓰기]를 누르세요.</p>') + "</div>"
+      + '<p class="note">상담 내용은 학생 기록(교과 세특 참고)에도 남아 학생 카드·생기부 도우미에서 볼 수 있어요.' + (isHome() ? " 우리 반은 출결·결석계의 상담 탭과 같은 기록이에요." : "") + "</p>";
+  }
+  function csDlg(id){
+    var D = data(), c = id ? D.cs.filter(function(x){ return x.id === id; })[0] : null, dl = $("dlg");
+    dl.innerHTML = "<h2>🗣️ " + (c ? "상담 고치기" : "상담 쓰기") + " · " + esc(cls.name) + "</h2>"
+      + '<div class="row"><div style="flex:1"><label>학생</label><select id="cNo">' + cls.students.map(function(s){ return '<option value="' + s.no + '"' + (c && +c.no === +s.no ? " selected" : "") + ">" + s.no + "번 " + esc(s.name) + "</option>"; }).join("") + '</select></div><div style="flex:1"><label>날짜</label><input type="date" id="cDate" value="' + esc(c ? c.date : $("day").value) + '"></div><div style="flex:1"><label>주제</label><select id="cTop">' + TOPICS.map(function(t){ return "<option" + (c && c.topic === t ? " selected" : "") + ">" + t + "</option>"; }).join("") + "</select></div></div>"
+      + '<label>상담 내용</label><textarea id="cTxt" maxlength="1000">' + esc(c ? c.content : "") + "</textarea>"
+      + '<label>지도·약속</label><input id="cAct" maxlength="200" value="' + esc(c ? c.act : "") + '">'
+      + '<div class="row"><div style="flex:1"><label>후속 확인일 (선택)</label><input type="date" id="cNext" value="' + esc(c ? c.next : "") + '"></div>' + (c && c.next ? '<label style="flex:none;margin-top:28px"><input type="checkbox" id="cDone"' + (c.done ? " checked" : "") + ' style="width:auto"> 확인함</label>' : "") + "</div>"
+      + '<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="cX">취소</button><button class="btn primary" id="cOk">저장</button></div>';
+    dl.showModal();
+    $("cX").onclick = function(){ dl.close(); };
+    $("cOk").onclick = function(){
+      var o = {id: c ? c.id : uid(), no: +$("cNo").value, date: $("cDate").value || ymd(), topic: $("cTop").value, content: $("cTxt").value.trim(), act: $("cAct").value.trim(), next: $("cNext").value, done: !!($("cDone") && $("cDone").checked)};
+      if(!o.content){ toast("상담 내용을 적어 주세요"); return; }
+      saveCs(o); if(!c) note(o.no, "상담(" + o.topic + "): " + o.content + (o.act ? " → " + o.act : ""));
+      dl.close(); draw(); toast("상담을 저장했어요");
+    };
+  }
+  $("m").addEventListener("click", function(e){
+    var t = e.target.closest("button"); if(!t) return;
+    if(t.dataset.k){ kind = t.dataset.k; draw(); return; }
+    if(t.dataset.h){ how = t.dataset.h; draw(); return; }
+    if(t.id === "multi"){ multi = !multi; picked = []; draw(); return; }
+    if(t.id === "msave"){ if(picked.length) record(picked); picked = []; multi = false; draw(); return; }
+    if(t.dataset.del){ delGd(t.dataset.del); draw(); return; }
+    if(t.dataset.no){ var no = +t.dataset.no; if(multi){ var i = picked.indexOf(no); if(i >= 0) picked.splice(i, 1); else picked.push(no); draw(); } else record([no]); return; }
+    if(t.id === "newCs"){ csDlg(null); return; }
+    if(t.dataset.ed){ csDlg(t.dataset.ed); return; }
+    if(t.dataset.csdel){ TT.ui.confirm("상담 기록 지우기", "이 상담 기록을 지울까요?", "지우기", function(){ delCs(t.dataset.csdel); draw(); }); }
+  });
+  $("tabs").onclick = function(e){ var b = e.target.closest("[data-t]"); if(!b) return; tab = b.dataset.t; try{ history.replaceState(null, "", "?tab=" + tab); }catch(x){} draw(); };
+  $("day").onchange = draw;
+  var first = true;
+  TT.ui.classSelect($("clsSel"), "sguide", function(c){
+    cls = c;
+    if(first){ first = false;   /* 지금(또는 다음) 수업하는 반이 있으면 그 반으로 */
+      try{ var s = TT.timetable.now() || TT.timetable.next(); if(s && +s.cls > 100){ var m = TT.roster.classes().filter(function(x){ return x.grade * 100 + x.cls === +s.cls; })[0]; if(m && m.students.length){ cls = m; $("clsSel").value = m.id; } } }catch(e){}
+    }
+    picked = []; draw();
+  });
+})();
+</script>
+</body>
+</html>

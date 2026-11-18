@@ -86,8 +86,8 @@ var TT_TOOLS = [
   /* ── 학생 ── */
   {id:"stucard",icon:"📇", cat:"care", menu:"student", group:"stu",  short:"학생 카드", name:"학생 카드", desc:"학생 한 명의 기록 · 출결 · 상담 · 제출물을 한 화면에 (읽기 전용).", href:"apps/stucard/", ready:true},
   {id:"voice",  icon:"🎙️", cat:"care", menu:"student", group:"stu",  short:"말로 기록", name:"말로 기록", old:"녹음", desc:"상담·학부모 상담·회의·수업 관찰·할 일을 말로 남기고, 이름을 가린 뒤 AI로 정리해 제자리에 저장(소리는 저장 안 함).", href:"apps/voice/", ready:true},
-  {id:"gquick", icon:"⚡", cat:"care", menu:"student", group:"stu",  short:"빠른 지도", name:"빠른 지도", desc:"지도 종류를 고르고 학생을 누르면 바로 기록 · 반복 지도 알림.", href:"apps/tardy/?tab=guide", ready:true, home:true},
-  {id:"counsel",icon:"🗣️", cat:"care", menu:"student", group:"stu",  short:"상담 일지", name:"상담 일지", old:"상담", desc:"상담일지 · 후속 확인 · 행동특성 참고.", href:"apps/tardy/?tab=counsel", ready:true, home:true},
+  {id:"gquick", icon:"⚡", cat:"care", menu:"student", group:"stu",  short:"빠른 지도", name:"빠른 지도", desc:"어느 반에서나: 지도 종류를 고르고 학생을 누르면 바로 기록 (우리 반은 출결과 함께).", href:"apps/sguide/?tab=guide", ready:true},
+  {id:"counsel",icon:"🗣️", cat:"care", menu:"student", group:"stu",  short:"상담 일지", name:"상담 일지", old:"상담", desc:"어느 반에서나 상담일지 · 후속 확인 (교과 세특 참고로도 모임).", href:"apps/sguide/?tab=counsel", ready:true},
   {id:"record", icon:"📑", cat:"care", menu:"student", group:"stu",  short:"생기부", name:"생기부 도우미", desc:"모인 학생 기록을 영역별로 보며 초안 쓰기 · 나이스 글자 수 · 유의 낱말 점검.", href:"apps/record/", ready:true, months:[7,12], season:["end"]},
   {id:"advisor",icon:"🎓", cat:"care", menu:"student", group:"stu",  short:"진학 추천", name:"진학 추천", old:"진학", desc:"성적 분석 · 지원 가능 고교 살펴보기 · 가산점 자동 입력.", href:"apps/advisor/", ready:true, home:true, months:[10,11], season:["end"]},
   {id:"bonus",  icon:"🏅", cat:"care", menu:"student", group:"stu",  short:"가산점", in:"advisor", name:"가산점 계산", old:"가산점 자동 입력", desc:"수상경력·창체 파일을 올리면 가산점 양식을 자동으로 채웁니다.", href:"apps/bonus/", ready:true, home:true, months:[10,11], season:["end"]},

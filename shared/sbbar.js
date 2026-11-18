@@ -27,6 +27,7 @@
     if(HOME) return null;
     var m = location.pathname.match(/\/apps\/([^\/]+)\//), id = m ? m[1] : "";
     if(id === "tardy" && /[?&]tab=counsel/.test(location.search)) id = "counsel";
+    if(id === "sguide") id = /[?&]tab=counsel/.test(location.search) ? "counsel" : "gquick";
     return typeof TT_TOOLS !== "undefined" ? TT_TOOLS.filter(function(x){ return x.id === id; })[0] || null : null;
   }
   function curMenu(){
