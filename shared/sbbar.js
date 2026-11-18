@@ -58,7 +58,7 @@
   }
   var owlState = null;
   function P(){ return owlState || basicPick(); }
-  function owlSvg(size){ var p = P(); return ART ? ART.svg({item: p.item, deco: TT.joy && TT.joy.on && !TT.joy.on() ? "" : season(), open: !!p.open, sleep: !!p.sleep, listen: !!p.listen, size: size}) : "🦉"; }
+  function owlSvg(size){ var p = P(); return ART ? ART.svg({acc: TT.joy && TT.joy.acc ? TT.joy.acc() : "", item: p.item, deco: TT.joy && TT.joy.on && !TT.joy.on() ? "" : season(), open: !!p.open, sleep: !!p.sleep, listen: !!p.listen, size: size}) : "🦉"; }
   /* v2.3: 메뉴를 누르면 중메뉴 없이 대표 도구가 바로 (홈·설정은 메인 화면) */
   var REP = {"class": "apps/book/", homeroom: "apps/tardy/", student: "apps/stucard/", school: "apps/school/", lib: "apps/lib/"};
   function href(id){ return id === "home" ? BASE : REP[id] ? BASE + REP[id] : BASE + "#" + id; }
@@ -96,7 +96,7 @@
     var cur = curMenu();
     return MENUS.filter(function(m){ return shown(m[0]); }).map(function(m){
       var on = m[0] === cur;
-      return '<a href="' + esc(href(m[0])) + '" data-m="' + m[0] + '"' + (on ? ' class="on" aria-current="page"' : "") + ' title="' + m[1] + (KEYS[m[0]] ? " (" + KEYS[m[0]] + ")" : "") + '"><span class="ci">' + icon(m[0], 24) + "</span><b>" + m[1] + "</b></a>";
+      return '<a href="' + esc(href(m[0])) + '" data-m="' + m[0] + '"' + (on ? ' class="on" aria-current="page"' : "") + ' title="' + m[1] + (KEYS[m[0]] ? " (" + KEYS[m[0]] + ")" : "") + '"><span class="ci">' + icon(m[0], 24) + (m[0] === "homeroom" ? treeTag() : "") + "</span><b>" + m[1] + "</b></a>";
     }).join("");
   }
   var moreHome = null;
@@ -186,12 +186,17 @@
     var cur = curMenu(), me = hereTool();
     return '<nav class="ml" aria-label="메뉴">' + MENUS.filter(function(m){ return shown(m[0]); }).map(function(m){
           var on = m[0] === cur, L = on ? tools(m[0]) : [];
-          return '<a class="mi' + (on ? " on" : "") + '" href="' + esc(href(m[0])) + '" data-m="' + m[0] + '" title="' + m[1] + (KEYS[m[0]] ? " (" + KEYS[m[0]] + ")" : "") + '">' + icon(m[0], 20) + "<span>" + m[1] + "</span></a>"
+          return '<a class="mi' + (on ? " on" : "") + '" href="' + esc(href(m[0])) + '" data-m="' + m[0] + '" title="' + m[1] + (KEYS[m[0]] ? " (" + KEYS[m[0]] + ")" : "") + '">' + icon(m[0], 20) + "<span>" + m[1] + "</span>" + (m[0] === "homeroom" ? treeTag() : "") + "</a>"
             + (L.length ? '<div class="tl" role="group" aria-label="' + m[1] + ' 도구">' + L.map(function(t){
                 var here = me && me.id === t.id;
                 return '<a class="ti' + (here ? " on" : "") + '" href="' + esc(BASE + t.href) + '" title="' + esc(t.name) + '"' + (here ? ' aria-current="page"' : "") + ">" + (ART ? ART.toolIcon(t.id, t.icon, 16) : "") + "<span>" + esc(t.short || t.name) + "</span></a>";
               }).join("") + "</div>" : "");
         }).join("") + "</nav>";
+  }
+  /* v2.8 우리 반 나무: 메뉴 '우리 반' 옆 작은 나무 (칭찬·청소 당번 완료로 자람) — 누르면 도장판 */
+  function treeTag(){
+    if(!TT.joy || !TT.joy.treeNow || (TT.joy.on && !TT.joy.on())) return "";
+    var t = TT.joy.treeNow(); return '<i class="sbTree" data-tree title="우리 반 ' + esc(t.nm) + " · 칭찬·청소 당번 완료 " + t.n + "번" + (t.next ? " · " + t.nnm + "까지 " + t.next + "번" : "") + '">' + t.ic + "</i>";
   }
   function barTabs(){
     var cur = curMenu();
@@ -234,6 +239,7 @@
       v = String(v || "").trim(); if(v.length < 2 || v.charAt(0) === "+" || /^\d+$/.test(v)) return;
       var o = TT.store.get(RK, null) || {}, k = prov().key || "all", L = (o[k] || []).filter(function(x){ return x !== v; });
       L.unshift(v); o[k] = L.slice(0, 6);
+      try{ if(TT.joy && TT.joy.count) TT.joy.count("find"); }catch(e){}   // 배지 '검색창으로 찾기 50번'
       var ks = Object.keys(o); if(ks.length > 30) delete o[ks[0]];
       TT.store.set(RK, o);
     }
@@ -381,6 +387,7 @@
   }
   document.addEventListener("click", function(e){
     var host = e.target.closest && e.target.closest("#sbHero,#sbRail,#sbBar"); if(!host) return;
+    if(e.target.closest("[data-tree]") && TT.joy){ e.preventDefault(); e.stopPropagation(); TT.joy.open("tree"); return; }   // v2.8 우리 반 나무
     if(e.target.closest(".bub .b0") && window.TT_SBHOME && TT_SBHOME.prepGo && document.querySelector("#prep .pi")){ TT_SBHOME.prepGo(); return; }   // 시작 준비 → 말풍선을 누르면 바로
     var t = e.target.closest("button,a"); if(!t || (t.closest("#more") && !t.dataset.m)) return;
     if(t.id === "sbBarOwl" || t.id === "sbBarOwl2"){ e.stopPropagation(); openSsambi(false); return; }

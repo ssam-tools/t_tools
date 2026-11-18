@@ -29,7 +29,7 @@
 
   /* ── 부엉이 그림 (직접 그린 SVG, 외부 파일 없음) ── */
   var V2 = document.documentElement.getAttribute("data-ui") === "ssambi" && window.TT_SBART;   // v2.0 쌤비 홈: 노트를 든 새 쌤비(shared/sbart.js)
-  var OWL = V2 ? TT_SBART.svg({size: 80, deco: (function(){ var lk = document.documentElement.getAttribute("data-look"), m = new Date().getMonth() + 1; return /^(spring|summer|autumn|winter)$/.test(lk || "") ? lk : m >= 3 && m <= 5 ? "spring" : m >= 6 && m <= 8 ? "summer" : m >= 9 && m <= 11 ? "autumn" : "winter"; })()}) : '<svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="38" fill="#E1F5EE"/>'
+  var OWL = V2 ? TT_SBART.svg({acc: TT.joy && TT.joy.acc ? TT.joy.acc() : "", size: 80, deco: (function(){ var lk = document.documentElement.getAttribute("data-look"), m = new Date().getMonth() + 1; return /^(spring|summer|autumn|winter)$/.test(lk || "") ? lk : m >= 3 && m <= 5 ? "spring" : m >= 6 && m <= 8 ? "summer" : m >= 9 && m <= 11 ? "autumn" : "winter"; })()}) : '<svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="38" fill="#E1F5EE"/>'
     + '<path d="M18 30 L24 14 L32 26 Z M62 30 L56 14 L48 26 Z" fill="#0F6E56"/><ellipse cx="40" cy="46" rx="24" ry="26" fill="#1D9E75"/>'
     + '<ellipse cx="40" cy="54" rx="14" ry="15" fill="#9FE1CB"/><circle cx="30" cy="38" r="9" fill="#fff" stroke="#04342C" stroke-width="2.5"/>'
     + '<circle cx="50" cy="38" r="9" fill="#fff" stroke="#04342C" stroke-width="2.5"/><line x1="39" y1="38" x2="41" y2="38" stroke="#04342C" stroke-width="2.5"/>'

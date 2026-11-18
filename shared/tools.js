@@ -54,7 +54,7 @@ var TT_MENUS = [
   {id:"homeroom", icon:"🌱", name:"우리 반", color:"green", who:"homeroom", groups:[{id:"room", name:"우리 반"}]},
   {id:"student",  icon:"🤝", name:"학생",  color:"purple", who:"all",      groups:[{id:"stu", name:"학생"}]},
   {id:"school",   icon:"🏫", name:"학교",  color:"teal",   who:"all",      groups:[{id:"board", name:"업무판"}, {id:"lib", name:"자료실"}, {id:"work", name:"업무 도구"}]},
-  {id:"settings", icon:"⋯",  name:"설정",  color:"",       who:"all",      groups:[{id:"set", name:"설정"}, {id:"data", name:"백업·안내"}]}
+  {id:"settings", icon:"⋯",  name:"설정",  color:"",       who:"all",      groups:[{id:"guide", name:"안내"}, {id:"set", name:"설정"}, {id:"data", name:"백업"}, {id:"year", name:"새 학년"}]}
 ];
 /* 교과 팩 목록: 파일은 subjects/ 폴더. 팩 안의 도구는 불러올 때 TT_TOOLS 에 붙습니다(menu:"class", group:"subject", subject:id) */
 var TT_PACKS = [

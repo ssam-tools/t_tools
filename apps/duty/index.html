@@ -150,8 +150,16 @@
   function jubeon(c){
     var n = c.jb == null ? 2 : +c.jb; if(!n) return [];
     var st = cls.students.filter(function(s){ return !c.skip[s.no]; }).sort(function(a, b){ return a.no - b.no; }); if(!st.length) return [];
-    var k = (weekIdx(c) * n) % st.length, out = []; for(var j = 0; j < Math.min(n, st.length); j++) out.push(st[(k + j) % st.length]); return out;
+    var k;
+    if(c.jbFrom && c.jbAt){                                             // v2.8 시작 번호: 정한 주(jbAt)에 그 번호부터, 그 뒤로 매주 인원만큼 다음 번호
+      var b = st.findIndex(function(s){ return s.no >= c.jbFrom; }); if(b < 0) b = 0;
+      var t = new Date(); t = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+      var w = Math.round((monday(t) - monday(parse(c.jbAt))) / (7 * 864e5)) + (c.per === "week" ? off : 0);
+      k = ((b + w * n) % st.length + st.length) % st.length;
+    } else k = (weekIdx(c) * n) % st.length;
+    var out = []; for(var j = 0; j < Math.min(n, st.length); j++) out.push(st[(k + j) % st.length]); return out;
   }
+  function jbAnchor(c, from){ c.jbFrom = from; c.jbAt = key(monday(new Date())); }   // 이번 주 기준으로 다시 잡기
   function drawClean(){
     var el = $("clean"), home = TT.roster.home();
     if(!window.TT_CLEAN || !home || home.id !== cls.id){ el.hidden = true; return; }
@@ -166,7 +174,7 @@
     var c = conf(), i = Math.max(0, idxNow(c) + off), A = assign(c, i);
     $("title").textContent = (c.per === "week" ? (off === 0 ? "이번 주 " : off === 1 ? "다음 주 " : "") : (off === 0 ? "오늘 " : off === 1 ? "다음 수업일 " : "")) + label(c, i);
     $("now").textContent = c.per === "week" ? "이번 주" : "오늘";
-    var J = jubeon(c); $("jb").hidden = !J.length; $("jb").innerHTML = "🙋 " + (off === 0 || c.per !== "week" ? "이번 주" : "그 주") + " 주번 <b>(" + J.length + "명 · 번호순)</b> " + J.map(function(s){ return s.no + "번 " + esc(s.name || ""); }).join(", ");
+    var J = jubeon(c); $("jb").hidden = !J.length; $("jb").innerHTML = "🙋 " + (off === 0 || c.per !== "week" ? "이번 주" : "그 주") + " 주번 <b>(" + J.length + "명 · " + (J.length ? J[0].no + "번부터" : "번호순") + ")</b> " + J.map(function(s){ return s.no + "번 " + esc(s.name || ""); }).join(", ");
     drawClean();
     $("roles").innerHTML = c.roles.map(function(r, j){ return '<div class="role"><div class="rn">' + esc(r.name) + '</div><div class="who' + ((A[j] || []).length >= 3 ? " m" : (A[j] || []).length === 2 ? " m2" : "") + '">' + (A[j] || []).map(function(s){ return esc(s.name || s.no + "번"); }).join(", ") + "</div></div>"; }).join("");
     var slots = c.roles.reduce(function(a, r){ return a + (+r.n || 0); }, 0), n = cls.students.length - Object.keys(c.skip).length;
@@ -179,7 +187,7 @@
       + '<button type="button" class="btn" id="addR" style="padding:5px 10px;font-size:13px">＋ 역할 더하기</button>'
       + '<label class="f">돌아가는 단위</label><select id="per"><option value="week"' + (c.per === "week" ? " selected" : "") + '>매주 (월요일마다)</option><option value="day"' + (c.per === "day" ? " selected" : "") + ">수업일마다</option></select>"
       + '<label class="f">시작일 (이날이 첫 차례)</label><input type="date" id="start" value="' + c.start + '">'
-      + '<label class="f">주번 인원 (매주 번호순)</label><input type="number" id="jbN" min="0" max="10" value="' + (c.jb == null ? 2 : +c.jb) + '" style="width:70px">'
+      + '<label class="f">주번 인원 · 시작 번호 <small style="font-weight:400">(시작 번호 = 이번 주 첫 주번, 다음 주부터 이어서)</small></label><div style="display:flex;gap:8px;align-items:center"><input type="number" id="jbN" min="0" max="10" value="' + (c.jb == null ? 2 : +c.jb) + '" style="width:70px" aria-label="주번 인원"><span>명</span><input type="number" id="jbF" min="1" max="99" placeholder="1" value="' + (function(){ var J0 = jubeon(c); return off === 0 && J0.length ? J0[0].no : ""; })() + '" style="width:70px" aria-label="이번 주 시작 번호"><span>번부터</span></div>'
       + (c.order && c.order.length ? '<button type="button" class="btn" id="ordReset" style="padding:4px 10px;font-size:12.5px">역할 순서를 번호순으로 되돌리기</button>' : "")
       + (window.TT_CLEAN && TT.roster.home() && TT.roster.home().id === cls.id ? (function(){ var k = TT_CLEAN.cfg(cls.id), GK = ((TT.store.get("tt_guide_v1", null) || {}).settings || {}).gkinds || ["생활", "학습", "복장", "휴대폰", "교우관계", "진로", "칭찬👍", "기타"];
           return '<label class="f">🧹 청소 당번으로 올릴 것</label><div class="ck"><label><input type="checkbox" data-con="L"' + (k.on.L ? " checked" : "") + '> 무단지각</label><label><input type="checkbox" data-con="S"' + (k.on.S ? " checked" : "") + '> 마감 지난 미제출</label><label><input type="checkbox" data-con="G"' + (k.on.G ? " checked" : "") + '> 지도 (아래 종류만)</label></div>'
@@ -191,7 +199,8 @@
       if(t.dataset.n != null) c.roles[+t.dataset.n].n = Math.max(0, Math.min(20, +t.value || 0));
       if(t.id === "per"){ c.per = t.value; off = 0; }
       if(t.id === "start" && t.value) c.start = t.value;
-      if(t.id === "jbN") c.jb = Math.max(0, Math.min(10, +t.value || 0));
+      if(t.id === "jbN"){ var J1 = jubeon(c); c.jb = Math.max(0, Math.min(10, +t.value || 0)); if(c.jbFrom && J1.length) jbAnchor(c, J1[0].no); }   // 인원을 바꿔도 이번 주 첫 주번은 그대로
+      if(t.id === "jbF"){ if(e.type !== "change") return; var v = parseInt(t.value, 10); if(v >= 1){ off = 0; jbAnchor(c, Math.min(99, v)); } }
       if(t.dataset.con){ var k0 = TT_CLEAN.cfg(cls.id); k0.on[t.dataset.con] = t.checked; TT_CLEAN.setCfg(cls.id, {on: k0.on}); drawClean(); return; }
       save(); if(e.type === "change") draw(); else { var A = assign(c, Math.max(0, idxNow(c) + off)); var boxes = $("roles").children; c.roles.forEach(function(r, j){ if(boxes[j]){ boxes[j].querySelector(".rn").textContent = r.name; } }); }
     };

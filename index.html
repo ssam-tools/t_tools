@@ -9,13 +9,18 @@
 <meta name="theme-color" content="#2f6fb5">
 <title>쌤 노트</title>
 <script>/* v2.0: 첫 화면 고르기(⋯ → 화면 꾸미기)가 '쌤비 홈'이면 그리기 전에 표시 — 업무판이 잠깐 보였다 바뀌지 않게 */
-try{ var snQ = /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse(localStorage.getItem("snlook_v1") || "null");   /* 주소 끝 ?ui=ssambi · ?ui=board 로도 바꿈 */
+try{ var snG = /[?&]legacy=(on|off)\b/.exec(location.search);   /* v2.8: 쌤비 홈 고정 · 예전 화면(업무판 첫 화면·예전 휴대폰 화면)은 ?legacy=on 일 때만 고를 수 있음 (LEGACY.md) */
+  if(snG){ if(snG[1] === "on") localStorage.setItem("sn_legacy_ui", "1"); else localStorage.removeItem("sn_legacy_ui"); history.replaceState(null, "", location.pathname + location.search.replace(/[?&]legacy=(on|off)\b/, "").replace(/^&/, "?") + location.hash); }
+  var snLeg = localStorage.getItem("sn_legacy_ui") === "1", snQ = snLeg && /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse(localStorage.getItem("snlook_v1") || "null");
   if(snQ){ snL = snL || {}; snL.ui = snQ[1]; localStorage.setItem("snlook_v1", JSON.stringify(snL)); history.replaceState(null, "", location.pathname + location.search.replace(/[?&]ui=(ssambi|board)\b/, "").replace(/^&/, "?") + location.hash); }
-  if(snL && snL.ui === "ssambi" && localStorage.getItem("ttv_device") !== "classroom") document.documentElement.setAttribute("data-ui", "ssambi"); }catch(e){}</script>
+  if((!snLeg || (snL && snL.ui === "ssambi")) && localStorage.getItem("ttv_device") !== "classroom") document.documentElement.setAttribute("data-ui", "ssambi"); }catch(e){}</script>
 <style>html[data-ui="ssambi"]:not(.sbReady) body{visibility:hidden}</style><!-- 쌤비 홈이 다 그려질 때까지 감춤(업무판이 잠깐 보이지 않게) -->
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="assets/icon-192.png">
-<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="icon" href="assets/icon-32.png" sizes="32x32">
+<link rel="icon" href="assets/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<meta name="apple-mobile-web-app-title" content="쌤 노트">
+<meta name="application-name" content="쌤 노트">
 <link rel="stylesheet" href="shared/look.css">
 <link rel="stylesheet" href="shared/tt.css">
 <link rel="stylesheet" href="shared/v2.css">
@@ -511,20 +516,22 @@ try{ var snQ = /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse
     <details class="more" id="more">
       <summary aria-label="더 보기">⋯</summary>
       <div class="menu">
-        <button type="button" id="mHelp">처음 사용 안내</button>
-        <button type="button" id="mKeys" onclick="this.closest('details').open=false;window.TT_KEYS&&TT_KEYS.help()">⌨️ 단축키 안내 <small style="opacity:.6">?</small></button>
-        <button type="button" id="mSchool">학교·선생님 설정</button>
-        <a href="apps/setup/"><span data-tn="setup" data-ti>🧳 학기초 세팅</span> 파일</a>
-        <button type="button" id="mAuto">✨ 자동 준비 설정</button>
-        <button type="button" id="mFont">🎨 화면 꾸미기</button>
-        <button type="button" id="mJoy" onclick="this.closest('details').open=false;window.TT&&TT.joy?TT.joy.open():TT.ui.toast('교실 기기에서는 재미 요소가 꺼져 있어요.')">🎈 도장판·배지</button>
-        <button type="button" id="mBoard">학교 업무판 연결</button>
-        <button type="button" id="mInstall" hidden>앱으로 설치</button>
+        <div class="mh">안내</div>
+        <button type="button" id="mHelp" data-e="❓">처음 사용 안내</button>
+        <button type="button" id="mKeys" data-e="⌨️" onclick="this.closest('details').open=false;window.TT_KEYS&&TT_KEYS.help()">단축키 안내 <small style="opacity:.6">?</small></button>
+        <button type="button" id="mJoy" data-e="🎈" onclick="this.closest('details').open=false;window.TT&&TT.joy?TT.joy.open():TT.ui.toast('교실 기기에서는 재미 요소가 꺼져 있어요.')">도장판·배지</button>
+        <hr><div class="mh">설정</div>
+        <a href="apps/setup/" data-e="🧳"><span data-tn="setup">학기초 세팅</span></a>
+        <button type="button" id="mSchool" data-e="🏫">학교·선생님 설정</button>
+        <button type="button" id="mAuto" data-e="✨">자동 준비 설정</button>
+        <button type="button" id="mFont" data-e="🎨">화면 꾸미기</button>
+        <button type="button" id="mBoard" data-e="📅">학교 업무판 연결<i class="mst" id="mBoardSt"></i></button>
+        <button type="button" id="mInstall" data-e="📲">앱 설치하기</button>
+        <hr><div class="mh">백업</div>
+        <button type="button" id="mBackup" data-e="💾">전체 백업 저장<small class="mbk" id="mBkSt"></small></button>
+        <button type="button" id="mRestore" data-e="📂">백업 불러오기</button>
         <hr>
-        <button type="button" id="mBackup">전체 백업 저장</button>
-        <button type="button" id="mRestore">백업 불러오기</button>
-        <hr>
-        <button type="button" id="mNewYear" class="danger">새 학년 시작</button>
+        <button type="button" id="mNewYear" class="danger" data-e="🌱">새 학년 시작</button>
       </div>
     </details>
   </div>
@@ -592,16 +599,16 @@ try{ var snQ = /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse
 
 <dialog id="dlgHelp">
   <form method="dialog">
-    <h2>처음 사용 안내</h2>
+    <h2>🦉 처음 사용 안내</h2>
     <ol>
-      <li><b>시작 준비</b> 줄을 따라 학교 이름 · <b data-tn="setup">학기초 세팅</b>(세팅 파일) 또는 <b data-tn="roster">명렬표</b> · 우리 반 ★ · <b data-tn="timetable">내 시간표</b>를 넣습니다. 다 하면 그 줄은 사라집니다.</li>
-      <li><b>홈</b>: 지금 카드(다음 수업의 반·단원·지난 기록) · 오늘 챙길 것(챙길 일·종례·할 일을 한 목록으로, 아래 칸에 "종례: …"·"할 일: …") · 이번 주.</li>
-      <li><b>메뉴</b>(PC 왼쪽 · 휴대폰 아래): 📚 수업 · 🌱 우리 반(담임) · 🤝 학생 · 🏫 학교. 메뉴마다 지금 카드 · 묶음 탭 · 도구 타일(상태 한 줄)이 있습니다.</li>
-      <li><b>🔎 찾기(Ctrl+K)</b>: 학생 → 학생 카드, 도구, 📞 내선번호, 🗂️ 학교 자료실 파일을 한 칸에서. <b>✍️ 학생 기록</b>으로 본 것·한 것을 한 줄씩 남기세요.</li>
-      <li><b>⋯</b>: 학교·선생님 설정(담임/교과만 · 교과 칸) · 🎨 화면 꾸미기 · 업무판 연결 · 백업.</li>
+      <li><b>처음 한 번</b>: ⋯ → 설정 → <b data-tn="setup">학기초 세팅</b>(학교 담당 선생님이 만든 세팅 파일 넣기) 또는 <b data-tn="roster">명렬표</b>·<b data-tn="timetable">시간표</b> 넣기 → <b>학교·선생님 설정</b>에서 담임 반·교과 고르기.</li>
+      <li><b>쌤비</b>: 지금 챙길 일을 한 줄로 알려 줘요. 쌤비나 🎤를 누르면 말로 기록·찾기·바로 실행("3반 출결", "기재요령에서 봉사활동 찾아 줘").</li>
+      <li><b>검색창</b>(어디서나 <b>/</b> · 문서·업무판에서는 <b>Ctrl+F</b>): 학생·도구·내선번호·자료실을 찾고, 오른쪽에 문서가 열려 있으면 그 문서 안을 찾아요. <b>+ 할 일</b>처럼 적으면 내 할 일에 들어갑니다.</li>
+      <li><b>메뉴</b>(PC 왼쪽 · 휴대폰 위): 홈 · 수업 · 우리 반 · 학생 · 학교 · 자료실 · 설정. 메뉴를 누르면 대표 도구가 바로 열리고, 왼쪽에 그 메뉴의 도구 목록이 펼쳐져요.</li>
+      <li><b>오늘 할 일</b>: 입력한 자료에서 저절로 생기고, 끝내면 사라져요. 급한 일이 없으면 오후에 <b>퇴근 도장</b> 쾅! (⋯ → 도장판·배지)</li>
     </ol>
-    <p style="margin-top:10px">🔒 학생 자료는 이 기기의 브라우저에만 저장됩니다(⚙️ 설정 → 기기 연결·동기화를 켜면 내 비밀 문구로 잠가 학교 보관함과 맞춥니다). 학년이 끝날 때는 ⚙️ 설정의 <b>전체 백업 저장</b>을 하세요. 백업 파일에는 학생 이름이 들어 있으니 다른 사람에게 보내지 마세요.</p>
-    <p style="margin-top:6px">📱 휴대폰은 브라우저 메뉴의 "홈 화면에 추가", 컴퓨터는 주소창의 설치 아이콘을 누르면 앱처럼 쓸 수 있고, 인터넷이 끊겨도 열립니다.</p>
+    <p style="margin-top:10px">🔒 학생 자료는 이 기기의 브라우저에만 저장됩니다. ⋯ → <b>기기 연결·동기화</b>를 켜면 내 비밀 문구로 잠근 뒤에만 학교 업무판 보관함과 맞춰져요. 한 달에 한 번은 ⋯ → <b>전체 백업 저장</b>.</p>
+    <p style="margin-top:6px">📲 ⋯ → <b>앱 설치하기</b>를 누르면 바탕화면·홈 화면에 쌤비 아이콘(쌤 노트)이 생기고, 인터넷이 끊겨도 열립니다.</p>
     <div class="acts"><span></span><div class="r"><button type="submit" class="btn primary">확인</button></div></div>
   </form>
 </dialog>
@@ -799,8 +806,10 @@ try{ var snQ = /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse
         items.push({x: {icon: "📞", name: "내선번호", st: EX.length ? EX.length + "곳 · 찾기(Ctrl+K)로도" : "학교 업무판에서 불러오기", fn: function(){ sessionStorage.setItem("sn_ext", "1"); var v = TT.store.get(UIK, {}) || {}; v.mtab = v.mtab || {}; v.mtab.school = "lib"; TT.store.set(UIK, v); renderMenu("school"); }}});
       }
       if(m.id === "settings" && !TT.classroom){                                   // 설정 메뉴: ⋯ 메뉴에 있던 설정을 카드로 (누르면 같은 창이 열림)
-        (g.id === "set" ? [["mSchool","🏫","학교·선생님 설정","학교 이름 · 담임/교과만 · 교과 칸"],["mFont","🎨","화면 꾸미기","첫 화면(업무판·쌤비 홈) · 색 · 글꼴 · 글자 크기"],["mAuto","✨","자동 준비 설정","시기에 맞춰 할 일 미리 넣기"],["mBoard","📅","학교 업무판 연결","업무판 주소 · 자료실 · 내선번호"],["mVault","☁️","기기 연결·동기화","내 기기끼리 자료 맞추기"],["mInstall","📲","앱으로 설치","바탕화면·홈 화면에 아이콘"]]
-          : [["mBackup","💾","전체 백업 저장","이 기기 자료를 파일 하나로"],["mRestore","📂","백업 불러오기","백업 파일에서 되살리기"],["mHelp","❓","처음 사용 안내","쌤 노트 쓰는 법"],["mKeys","⌨️","단축키 안내","Alt+1~5 · / · Alt+N · ?"],["mNewYear","🌱","새 학년 시작","지난 학년 자료 정리 (조심)"]]
+        ({guide: [["mHelp","❓","처음 사용 안내","쌤 노트 쓰는 법"],["mKeys","⌨️","단축키 안내","/ · Ctrl+F · Alt+B · ?"],["mJoy","🎈","도장판·배지","퇴근 도장 · 아낀 시간 · 배지 · 쌤비 소품"]],
+          set: [["mSchool","🏫","학교·선생님 설정","내 정보 · 담임/교과 · 교과 칸"],["mAuto","✨","자동 준비 설정","시기에 맞춰 할 일 미리 넣기"],["mFont","🎨","화면 꾸미기","테마 색 · 글꼴 · 글자 크기"],["mBoard","📅","학교 업무판 연결","업무판 주소 · 자료실 · 내선번호"],["mVault","☁️","기기 연결·동기화","내 기기끼리 자료 맞추기"],["mInstall","📲","앱 설치하기","바탕화면·홈 화면에 쌤비 아이콘"]],
+          data: [["mBackup","💾","전체 백업 저장","이 기기 자료를 파일 하나로"],["mRestore","📂","백업 불러오기","백업 파일에서 되살리기"]],
+          year: [["mNewYear","🌱","새 학년 시작","한 해 돌아보기 → 백업 → 정리 (조심)"]]}[g.id] || []
         ).forEach(function(a){ var el = $(a[0]); if(el && !el.hidden) items.push({x: {icon: a[1], name: a[2], st: a[3], fn: clickMenu(a[0])}}); });
       }
       if(m.id === "class" && g.id === "subject") items.push({x: {icon: "🔗", name: "교과 자료 연결", st: (pk ? pk.name + " 공개 자료 · " : "") + "내 링크 " + (((TT.store.get("tt_subject_links_v1", null) || {}).list || []).length) + "개", fn: openLinks}});
@@ -1136,11 +1145,28 @@ try{ var snQ = /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse
   $("mAuto").onclick = function(){ closeMenu(); if(window.TTAuto) TTAuto.settings(); };
   /* 개편 7단계: 화면 꾸미기 (테마 · 글꼴 · 글자 크기 — shared/tt.js TT.look) */
   $("mFont").onclick = function(){ closeMenu(); if(TT.look) TT.look.open(); };
-  $("mNewYear").onclick = function(){ closeMenu(); TT.backup.newYear(function(){ showHome(); showBackup(); showTitle(); showAlerts(); }); };
+  $("mNewYear").onclick = function(){ closeMenu(); var go = function(){ TT.backup.newYear(function(){ showHome(); showBackup(); showTitle(); showAlerts(); }); }; if(TT.joy && TT.joy.yearCard) TT.joy.yearCard(go); else go(); };   // v2.8: 한 해 돌아보기 카드 → 백업 → 정리
   $("mRestore").onclick = function(){ closeMenu(); TT.backup.pick(function(){ location.reload(); }); };
   var installEvt = null;
-  window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); installEvt = e; $("mInstall").hidden = false; });
-  $("mInstall").onclick = function(){ closeMenu(); if(installEvt){ installEvt.prompt(); installEvt = null; $("mInstall").hidden = true; } };
+  window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); installEvt = e; });
+  /* v2.8 앱 설치하기: 늘 보임 — 브라우저가 바로 설치를 허락하면 설치 창, 아니면 방법 안내 (아이콘 = 쌤비, 이름 = 쌤 노트) */
+  $("mInstall").onclick = function(){
+    closeMenu();
+    if(installEvt){ installEvt.prompt(); installEvt.userChoice && installEvt.userChoice.then(function(c){ if(c && c.outcome === "accepted") TT.ui.toast("🦉 쌤 노트를 앱으로 설치했어요"); }); installEvt = null; return; }
+    if(matchMedia("(display-mode: standalone)").matches || navigator.standalone){ TT.ui.toast("🦉 지금 쌤 노트 앱으로 열려 있어요"); return; }
+    var ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
+    TT.ui.confirm("📲 앱 설치하기", ios ? "사파리 아래쪽 공유 단추(□↑) → '홈 화면에 추가' → 이름 '쌤 노트' → 추가" : and ? "크롬 오른쪽 위 ⋮ → '앱 설치' 또는 '홈 화면에 추가' → 설치" : "크롬·엣지 주소창 오른쪽의 설치 아이콘(⊕ 또는 □↓)을 누르거나, 브라우저 메뉴 ⋮ → '쌤 노트 설치'를 누르세요. 바탕화면과 시작 메뉴에 쌤비 아이콘이 생깁니다.", "알겠어요", function(){});
+  };
+  /* v2.8 ⋯ 메뉴: 선 아이콘 · 업무판 연결 상태 · 백업한 지 며칠 */
+  function menuDeco(){
+    var M = document.querySelector("#more .menu"); if(!M) return;
+    var V = $("mVault"); if(V && !V.dataset.e){ V.dataset.e = "☁️"; V.insertAdjacentHTML("beforeend", '<i class="mst" id="mVaultSt"></i>'); }
+    if(window.TT_SBART) Array.prototype.forEach.call(M.querySelectorAll("[data-e]"), function(b){ if(!b.querySelector(".mi")) b.insertAdjacentHTML("afterbegin", '<span class="mi">' + TT_SBART.toolIcon(null, b.dataset.e, 16) + "</span>"); });
+    var B = TT.store.get("tt_board_v1", null) || {}, bs = $("mBoardSt"); if(bs){ var on = !!(B.url && /^https:\/\/script\.google\.com\//.test(B.url)); bs.className = "mst" + (on ? " on" : ""); bs.title = on ? "연결됨" : "아직 연결 안 함"; }
+    var vs = $("mVaultSt"); if(vs){ var vc = null; try{ vc = JSON.parse(localStorage.getItem("ttv_vault") || "null"); }catch(e){} var von = !!(vc && vc.id) || !!document.querySelector(".ttv-chip.ok"); vs.className = "mst" + (von ? " on" : ""); vs.title = von ? "기기 연결됨" : "연결 안 함"; }
+    var k = $("mBkSt"); if(k){ var d = TT.backup.daysSince(), has = TT.backup.hasData(); k.textContent = !has ? "" : d === null ? "아직 안 함" : d === 0 ? "오늘" : d + "일 전"; k.className = "mbk" + (has && (d === null || d >= 30) ? " due" : ""); }
+  }
+  $("more").addEventListener("toggle", function(){ if($("more").open) menuDeco(); });
   window.addEventListener("storage", function(){ showHome(); showTitle(); showAlerts(); });
   window.addEventListener("tt-mytodo-change", showAlerts);
   window.addEventListener("pageshow", function(){ showHome(); showBackup(); showTitle(); showAlerts(); });

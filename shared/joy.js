@@ -27,6 +27,9 @@
   var st = document.createElement("style");
   st.textContent = ""
     + "#joyBub{position:fixed;z-index:71;max-width:min(300px,70vw);background:var(--t-card,#fff);color:var(--t-ink,#1d2733);border:2px solid #1D9E75;border-radius:16px 16px 4px 16px;padding:9px 13px;font:600 13.5px/1.5 var(--t-font,'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif);box-shadow:0 8px 22px rgba(15,110,86,.22);cursor:pointer;animation:joyIn .35s cubic-bezier(.2,1.4,.4,1)}"
+    + ".joyAcc2{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}.joyAcc2 button{font:inherit;font-size:11.5px;border:2px solid var(--t-line,#dde3ea);background:var(--t-card,#fff);border-radius:12px;padding:6px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--t-ink,#1d2733)}"
+    + ".joyAcc2 button i{font-style:normal;font-size:20px}.joyAcc2 button.on{border-color:var(--t-accent,#2f6fb5)}.joyAcc2 button:disabled{opacity:.5;cursor:default}"
+    + "#joyBub.lt{border-radius:16px 16px 16px 4px}"
     + "#joyBub small{display:block;color:var(--t-sub,#5b6773);font-weight:500;font-size:11.5px;margin-top:2px}"
     + "#joyPill{position:fixed;z-index:71;background:#1D9E75;color:#fff;border-radius:999px;padding:5px 11px;font:800 13px/1 var(--t-font,'Malgun Gothic',system-ui,sans-serif);pointer-events:none;animation:joyUp 2.4s ease-out forwards}"
     + "@keyframes joyIn{from{opacity:0;transform:translateY(8px) scale(.9)}to{opacity:1;transform:none}}"
@@ -98,8 +101,14 @@
   })();
 
   /* ---------- 쌤비 옆 말풍선 · 작은 알약 ---------- */
-  function owl(){ var b = document.getElementById("sbBtn"); if(b && b.getClientRects().length && getComputedStyle(b).display !== "none"){ var r = b.getBoundingClientRect(); if(r.width) return r; } return null; }
-  function place(el, gap){ var r = owl(); if(r){ el.style.right = Math.max(8, innerWidth - r.left + (gap || 8)) + "px"; el.style.bottom = Math.max(8, innerHeight - r.top - r.height * .55) + "px"; } else { el.style.right = "20px"; el.style.bottom = "20px"; } }
+  function owl(){   // v2.8: 쌤비 홈 디자인이면 첫 화면 큰 쌤비 · 도구 화면 왼쪽 막대 쌤비 · 휴대폰 위쪽 쌤비 중 보이는 것
+    var L = ["sbBtn", "sbBarOwl", "sbBarOwl2"];
+    for(var i = 0; i < L.length; i++){ var b = document.getElementById(L[i]); if(b && b.getClientRects().length && getComputedStyle(b).display !== "none"){ var r = b.getBoundingClientRect(); if(r.width && r.bottom > 0) return r; } }
+    return null;
+  }
+  function place(el, gap){ var r = owl();
+    if(r && r.left < innerWidth / 2){ el.style.left = Math.min(innerWidth - 260, r.right + (gap || 8)) + "px"; el.style.top = Math.max(8, r.top + r.height * .25) + "px"; el.style.right = "auto"; el.style.bottom = "auto"; el.classList.add("lt"); return; }
+    if(r){ el.style.right = Math.max(8, innerWidth - r.left + (gap || 8)) + "px"; el.style.bottom = Math.max(8, innerHeight - r.top - r.height * .55) + "px"; } else { el.style.right = "20px"; el.style.bottom = "20px"; } }
   function pill(t){ var o = document.getElementById("joyPill"); if(o) o.remove(); var p = document.createElement("div"); p.id = "joyPill"; p.textContent = t; document.body.appendChild(p); place(p, -60); p.style.bottom = (parseFloat(p.style.bottom) + 70) + "px"; setTimeout(function(){ p.remove(); }, 2500); }
   var bubT = 0;
   function bubble(html, ms){
@@ -173,6 +182,21 @@
   }
 
   /* ---------- ④ 우리 반 나무 ---------- */
+  /* v2.8 연속 퇴근 도장: 오늘(아직이면 지난 평일)부터 거꾸로 평일을 세어 도장이 이어진 날 수 */
+  function streak(){
+    var S = load().stamps, d = new Date(); d.setHours(12, 0, 0, 0);
+    if(!S[ymd(d)]) d.setDate(d.getDate() - 1);
+    var n = 0;
+    for(var i = 0; i < 400; i++){ var w = d.getDay(); if(w !== 0 && w !== 6){ if(S[ymd(d)]) n++; else break; } d.setDate(d.getDate() - 1); }
+    return n;
+  }
+  /* v2.8 나무에 물 주기: 칭찬 + 청소 당번 '완료' (우리 반 1인1역 화면) */
+  function cleaned(){
+    var D = TT.store.get("tt_duty_v1", null), y = new Date(), from = (y.getMonth() + 1 >= 3 ? y.getFullYear() : y.getFullYear() - 1) + "-03-01", n = 0;
+    try{ Object.keys((D && D.c) || {}).forEach(function(k){ var dn = (D.c[k].cl || {}).done || {}; Object.keys(dn).forEach(function(x){ if(String(dn[x]) >= from) n++; }); }); }catch(e){}
+    return n;
+  }
+  function growth(){ return praise() + cleaned(); }
   function praise(){
     var G = TT.store.get("tt_guide_v1", null), y = new Date(), from = (y.getMonth() + 1 >= 3 ? y.getFullYear() : y.getFullYear() - 1) + "-03-01";
     return G && Array.isArray(G.gd) ? G.gd.filter(function(g){ return g && String(g.kind || "").indexOf("칭찬") >= 0 && (g.date || "") >= from; }).length : 0;
@@ -184,9 +208,9 @@
     var h = mv.getAttribute("data-menu") === "homeroom" ? mv.querySelector(".mfh h2") : null, old = document.querySelector(".joyChip.tr");
     if(!h || !on()){ if(old) old.remove(); return; }
     if(old && h.contains(old)) return; if(old) old.remove();
-    var n = praise(), T = tree(n), b = document.createElement("button"); b.type = "button"; b.className = "joyChip tr";
+    var n = growth(), T = tree(n), b = document.createElement("button"); b.type = "button"; b.className = "joyChip tr";
     b.innerHTML = T.ic + " 우리 반 " + T.nm + " <small style='font-weight:600'>칭찬 " + n + "</small>";
-    b.title = "⚡ 빠른 지도에서 '칭찬👍'을 남길 때마다 자라요" + (T.next ? " · " + T.nnm + "까지 " + T.next + "번" : "");
+    b.title = "⚡ 빠른 지도의 '칭찬👍', 청소 당번 '완료'마다 자라요" + (T.next ? " · " + T.nnm + "까지 " + T.next + "번" : "");
     b.onclick = function(e){ e.preventDefault(); open("tree"); }; h.appendChild(b);
   }
 
@@ -213,13 +237,26 @@
     ["merge", "📎", "첫 파일 합치기", function(o){ return o.saved.some(function(x){ return x.k === "merge"; }); }],
     ["keys", "⌨️", "단축키 30번", function(o){ return (o.cnt.keys || 0) >= 30; }],
     ["early", "🌅", "아침 8시 전 출근", function(o){ return (o.cnt.early || 0) >= 1; }],
-    ["tools", "🧰", "하루에 도구 5가지", function(o){ return (o.cnt.toolsMax || 0) >= 5; }]
+    ["tools", "🧰", "하루에 도구 5가지", function(o){ return (o.cnt.toolsMax || 0) >= 5; }],
+    ["streak5", "🔥", "5일 연속 퇴근 도장", function(){ return streak() >= 5; }],
+    ["find50", "🔎", "검색창으로 찾기 50번", function(o){ return (o.cnt.find || 0) >= 50; }],
+    ["voice1", "🎙️", "첫 말로 기록", function(o){ return o.saved.some(function(x){ return x.k === "voice"; }) || (o.cnt.voice || 0) >= 1; }],
+    ["backup3", "💾", "백업 3번", function(o){ return (o.cnt.backup || 0) >= 3; }],
+    ["duty4", "🧹", "1인 1역 4주 운영", function(){ var D = TT.store.get("tt_duty_v1", null), ok = false; try{ Object.keys((D && D.c) || {}).forEach(function(k){ var c = D.c[k]; if(c.start && c.roles && c.roles.length && (Date.now() - new Date(c.start + "T00:00:00")) >= 28 * 864e5) ok = true; }); }catch(e){} return ok; }],
+    ["tree15", "🌳", "우리 반 나무가 '나무'로", function(){ return growth() >= 15; }]
   ];
+  /* v2.8 쌤비 소품: 배지를 받을수록 하나씩 열림 → ⋯ 화면 꾸미기 · 도장판에서 골라 씌우기 (계절 = 철마다 저절로) */
+  var ACCS = [["season", "🍂", "계절 소품", 0], ["bow", "🎀", "나비넥타이", 1], ["flower", "🌼", "꽃 핀", 3], ["hat", "🥳", "고깔모자", 5], ["grad", "🎓", "학사모", 8], ["crown", "👑", "왕관", 12]];
+  function nBadge(){ return Object.keys(load().badges).length; }
+  function accOpen(a){ return nBadge() >= a[3]; }
+  function acc(){ if(!on()) return ""; var k = load().acc; var a = ACCS.filter(function(x){ return x[0] === k; })[0]; return a && a[0] !== "season" && accOpen(a) ? a[0] : ""; }
+  function setAcc(k){ J = load(); J.acc = k; save(J); try{ if(window.TT_SBAR) TT_SBAR.draw(); }catch(e){} refresh(); }
   function badges(){
     if(!on()) return; J = load(); var got = [];
     BADGES.forEach(function(b){ if(!J.badges[b[0]]){ var ok = false; try{ ok = b[3](J); }catch(e){} if(ok){ J.badges[b[0]] = Date.now(); got.push(b); } } });
     if(!got.length) return; save(J);
-    setTimeout(function(){ confetti(["🏅", "✨", "⭐"], 14); bubble("🏅 새 배지! <b>" + got.map(function(b){ return b[1] + " " + b[2]; }).join(", ") + "</b><small>⋯ → 🎈 도장판·배지에서 모두 볼 수 있어요</small>", 8000); }, 600);
+    var nb = Object.keys(J.badges).length, nu = ACCS.filter(function(a){ return a[3] && a[3] <= nb && a[3] > nb - got.length; })[0];
+    setTimeout(function(){ confetti(["🏅", "✨", "⭐"], 14); bubble("🏅 새 배지! <b>" + got.map(function(b){ return b[1] + " " + b[2]; }).join(", ") + "</b>" + (nu ? "<small>" + nu[1] + " 쌤비 소품 '" + nu[2] + "'이(가) 열렸어요 · ⋯ → 도장판·배지에서 씌워 보세요</small>" : "<small>⋯ → 도장판·배지에서 모두 볼 수 있어요</small>"), 9000); }, 600);
   }
   function count(k){ J = load(); J.cnt[k] = (J.cnt[k] || 0) + 1; save(J); if(k === "keys" && J.cnt.keys === 30) badges(); }
   (function(){   // 하루에 쓴 도구 가짓수
@@ -234,24 +271,47 @@
     if(!dlg){ dlg = document.createElement("dialog"); dlg.className = "joyDlg"; dlg.setAttribute("aria-label", "도장판·배지"); document.body.appendChild(dlg);
       dlg.addEventListener("click", function(e){ if(e.target === dlg || (e.target.closest && e.target.closest("[data-x]"))) dlg.close(); });
       dlg.addEventListener("change", function(e){ if(e.target.id === "joyOn"){ J = load(); J.off = !e.target.checked; save(J); refresh(); open(); } });
-      dlg.addEventListener("click", function(e){ var s = e.target.closest && e.target.closest("[data-stamp]"); if(s){ dlg.close(); stamp(); } });
+      dlg.addEventListener("click", function(e){ var s = e.target.closest && e.target.closest("[data-stamp]"); if(s){ e.preventDefault(); dlg.close(); stamp(); } });
+      dlg.addEventListener("click", function(e){ var a = e.target.closest && e.target.closest("[data-acc]"); if(a && !a.disabled){ setAcc(a.dataset.acc); open(); } });
     }
     var d = new Date(), y = d.getFullYear(), m = d.getMonth(), first = new Date(y, m, 1), last = new Date(y, m + 1, 0).getDate(), cells = "", t = ymd();
     var lead = (first.getDay() + 6) % 7; if(lead > 4) lead = 0;
     for(var i = 0; i < lead; i++) cells += '<span class="no"></span>';
     for(var k = 1; k <= last; k++){ var dt = new Date(y, m, k), w = dt.getDay(); if(w === 0 || w === 6) continue; var key = ymd(dt); cells += '<span class="' + (J.stamps[key] ? "st" : "") + (key === t ? " td" : "") + '">' + k + "</span>"; }
-    var n = praise(), T = tree(n), ws = weekSaved(), al = allSaved(), ms = monthStamps();
+    var n = growth(), T = tree(n), ws = weekSaved(), al = allSaved(), ms = monthStamps(), sk = streak(), nb = Object.keys(J.badges).length, ca = J.acc || "season";
     var canStamp = !J.stamps[t] && stampable();
     dlg.innerHTML = '<h2>🎈 도장판 · 배지<button type="button" class="x" data-x>닫기 Esc</button></h2>'
-      + '<h3>✅ ' + (m + 1) + '월 퇴근 도장 <small>' + ms + "개" + (canStamp ? ' · <a href="#" data-stamp style="color:#c62828;font-weight:800">오늘 도장 찍기</a>' : "") + "</small></h3>"
+      + '<h3>✅ ' + (m + 1) + '월 퇴근 도장 <small>' + ms + "개" + (sk >= 2 ? " · 🔥 " + sk + "일 연속" : "") + (canStamp ? ' · <a href="#" data-stamp style="color:#c62828;font-weight:800">오늘 도장 찍기</a>' : "") + "</small></h3>"
       + '<div class="joyCal"><b>월</b><b>화</b><b>수</b><b>목</b><b>금</b>' + cells + "</div>"
       + '<div class="joyRow" style="margin-top:10px"><div>⏱️ 이번 주 아낀 시간<b>' + (ws ? hm(ws) : "0분") + "</b></div><div>🚀 지금까지<b>" + (al ? hm(al) : "0분") + "</b></div><div" + (focus === "tree" ? ' style="outline:2px solid #2f6b1f"' : "") + ">" + T.ic + " 우리 반 나무<b>" + T.nm + " · 칭찬 " + n + "</b>" + (T.next ? T.nnm + "까지 " + T.next + "번" : "") + "</div></div>"
       + '<h3>🏅 배지 <small>' + Object.keys(J.badges).length + " / " + BADGES.length + " · 받기 전에는 숨겨져 있어요</small></h3>"
       + '<div class="joyBd">' + BADGES.map(function(b){ var g = J.badges[b[0]]; return '<div class="' + (g ? "got" : "") + '"' + (g ? ' title="' + new Date(g).toLocaleDateString("ko-KR") + '"' : "") + "><i>" + (g ? b[1] : "❔") + "</i>" + (g ? esc(b[2]) : "숨은 배지") + "</div>"; }).join("") + "</div>"
       + '<p style="font-size:12px;color:var(--t-sub,#5b6773);margin:8px 0 0;line-height:1.5">아낀 시간은 쌤 노트가 만든 파일 내려받기·인쇄 때마다 손으로 할 때 걸릴 시간을 대략 더한 값입니다. 모든 기록은 이 기기에만 있습니다.</p>'
+      + '<h3>🦉 쌤비 소품 <small>배지를 받을수록 하나씩 열려요 · 눌러서 씌우기</small></h3><div class="joyAcc2">' + ACCS.map(function(a){ var op = a[3] <= nb;
+          return '<button type="button" data-acc="' + a[0] + '"' + (op ? "" : " disabled") + ' class="' + (ca === a[0] ? "on" : "") + '" title="' + (op ? a[2] : "배지 " + a[3] + "개를 받으면 열려요") + '"><i>' + (op ? a[1] : "🔒") + "</i>" + (op ? esc(a[2]) : "배지 " + a[3] + "개") + "</button>"; }).join("") + "</div>"
       + '<label class="joyOff"><input type="checkbox" id="joyOn"' + (on() ? " checked" : "") + "> 재미 요소 켜기 (쌤비 소품·한마디·도장·배지·D-day 칩)</label>";
     if(!dlg.open){ if(dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", ""); }
   }
+
+  /* ---------- v2.8 학년 마무리 카드 (새 학년 시작 바로 전) ---------- */
+  function yearCard(next){
+    if(!on() || TT.classroom){ next(); return; }
+    J = load(); var y = new Date(), from = (y.getMonth() + 1 >= 3 ? y.getFullYear() : y.getFullYear() - 1) + "-03-01";
+    var st = Object.keys(J.stamps).filter(function(k){ return k >= from; }).length;
+    var sv = J.saved.reduce(function(a, x){ return x.d >= from ? a + (+x.m || 0) : a; }, 0);
+    var use = ((TT.store.get("tt_ui_v1", {}) || {}).tools || {}).use || {}, top = Object.keys(use).map(function(k){ return {id: k, n: +use[k].n || 0}; }).sort(function(a, b){ return b.n - a.n; }).slice(0, 3)
+      .map(function(x){ var t = typeof TT_TOOLS !== "undefined" ? TT_TOOLS.filter(function(z){ return z.id === x.id; })[0] : null; return t ? t.icon + " " + (t.short || t.name) : ""; }).filter(Boolean);
+    var T = tree(growth()), d = document.createElement("dialog"); d.className = "joyDlg"; d.setAttribute("aria-label", "한 해 돌아보기");
+    d.innerHTML = '<h2>🦉 올해도 수고 많으셨어요</h2><p style="color:var(--t-sub,#5b6773);margin:0 0 10px;font-size:13px">새 학년을 시작하기 전에, 쌤 노트와 함께한 한 해를 돌아봐요.</p>'
+      + '<div class="joyRow"><div>✅ 퇴근 도장<b>' + st + '개</b></div><div>⏱️ 아낀 시간<b>' + (sv ? hm(sv) : "0분") + '</b></div><div>' + T.ic + ' 우리 반 나무<b>' + T.nm + '</b></div></div>'
+      + '<div class="joyRow" style="margin-top:8px"><div>🏅 배지<b>' + Object.keys(J.badges).length + " / " + BADGES.length + '</b></div><div style="flex:2 1 280px">🧰 많이 쓴 도구<b style="font-size:15px">' + (top.length ? esc(top.join(" · ")) : "—") + "</b></div></div>"
+      + '<p style="font-size:12.5px;color:var(--t-sub,#5b6773);margin:12px 0 0">다음 단계에서 지금 자료를 백업 파일로 저장한 뒤 이 기기를 비웁니다. 도장·배지·아낀 시간도 백업 파일에 들어 있어요.</p>'
+      + '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button type="button" class="x" data-c style="position:static;float:none">취소</button><button type="button" class="x" data-n style="position:static;float:none;background:var(--t-accent,#2f6fb5);color:#fff;border-color:var(--t-accent,#2f6fb5)">다음: 새 학년 시작 →</button></div>';
+    document.body.appendChild(d); confetti(["🌸", "🎓", "✨", "🌟"], 20);
+    d.addEventListener("click", function(e){ if(e.target.closest && e.target.closest("[data-n]")){ d.close(); d.remove(); next(); } else if(e.target === d || (e.target.closest && e.target.closest("[data-c]"))){ d.close(); d.remove(); } });
+    if(d.showModal) d.showModal(); else d.setAttribute("open", "");
+  }
+  (function(){ var B = TT.backup; if(B && B.save && !B.save.__joy){ var s0 = B.save; B.save = function(){ var r = s0.apply(this, arguments); try{ count("backup"); badges(); }catch(e){} return r; }; B.save.__joy = 1; } })();   // 백업 횟수(배지)
 
   /* ---------- 붙이기 · 다시 그리기 ---------- */
   function refresh(){ dress(); stampBtn(); treeChip(); if(HOME) leadChips(); }
@@ -266,5 +326,6 @@
   }
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
   TT.joy = {saved: saved, count: count, open: open, stamp: stamp, on: on, weekSaved: weekSaved, dday: dday, examNear: examNear, season: season,
-            stamped: function(){ return !!load().stamps[ymd()]; }, stampable: stampable, monthStamps: monthStamps};   // v2.0 쌤비 홈도 함께 씀
+            stamped: function(){ return !!load().stamps[ymd()]; }, stampable: stampable, monthStamps: monthStamps,
+            streak: streak, acc: acc, setAcc: setAcc, yearCard: yearCard, treeNow: function(){ var n = growth(); var t = tree(n); t.n = n; return t; }, bubble: bubble, allSaved: allSaved};   // v2.8   // v2.0 쌤비 홈도 함께 씀
 })();

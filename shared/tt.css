@@ -127,3 +127,12 @@ dialog textarea{height:clamp(110px,26vh,200px);resize:vertical}
   header,footer,#tt-toast,.tt-warn{display:none!important}
   main.panel{border:0;padding:0;display:block}
 }
+/* v2.8 ⋯ 메뉴: 안내 · 설정 · 백업 · 새 학년 묶음, 선 아이콘, 상태 표시 */
+.menu .mh{font-size:11.5px;font-weight:700;color:var(--sub,#6b7785);padding:6px 12px 2px;letter-spacing:.02em}
+.menu button[data-e],.menu a[data-e],.menu #mVault{display:flex;align-items:center;gap:9px}
+.menu .mi{display:inline-flex;flex:none;color:var(--sub,#6b7785)}
+.menu .mst{width:8px;height:8px;border-radius:50%;margin-left:auto;background:#c9d1da;flex:none}
+.menu .mst.on{background:#1f9d5f}
+.menu .mbk{margin-left:auto;font-size:11.5px;color:var(--sub,#6b7785);font-weight:400}
+.menu .mbk.due{color:#c0392b;font-weight:700}
+.menu{max-height:calc(100vh - 80px);overflow:auto}

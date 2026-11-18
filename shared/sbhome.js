@@ -45,14 +45,23 @@
     function r(item, line, sub, o){ o = o || {}; return {item: item, deco: deco, open: !!o.open, sleep: !!o.sleep, listen: !!o.listen, line: line, sub: sub || ""}; }
     var pr = prepStep(); if(pr) return r("paper", "시작 준비: " + pr, "말풍선을 누르면 바로 해요.");   // 예전 "시작 준비" 줄 대신
     if(st.listen) return r("listen", "듣고 있어요.", "말하면 오른쪽에 적혀요.", {listen: true});
-    if(!cnt && wk && d.getHours() >= 12 && J){
-      if(J.stamped()) return r("stamp", "오늘 할 일 끝! 수고 많으셨어요.", "이번 달 퇴근 도장 " + J.monthStamps() + "개");
-      return r("stamp", "오늘 할 일 끝! 퇴근 도장 찍을까요?", "");
+    if(!urgent.length && wk && d.getHours() >= 12 && J){                 // v2.8: 급한 일만 없으면 퇴근 도장 (남은 일은 내일 해도 됨)
+      var sk = J.streak ? J.streak() : 0;
+      if(J.stamped()) return r("stamp", (cnt ? "급한 일 끝! " : "오늘 할 일 끝! ") + "수고 많으셨어요.", "이번 달 퇴근 도장 " + J.monthStamps() + "개" + (sk >= 2 ? " · 🔥 " + sk + "일 연속" : ""));
+      if(d.getHours() >= 14 || !cnt) return r("stamp", (cnt ? "급한 일은 없어요. " : "오늘 할 일 끝! ") + "퇴근 도장 찍을까요?", cnt ? "남은 " + cnt + "개는 내일 해도 돼요." : "");
     }
     if(urgent.length) return r("alarm", "‘" + urgent[0].t + "’" + josa(urgent[0].t, "을", "를") + " 오늘 꼭 챙겨요.", urgent.length > 1 ? "급한 일이 " + urgent.length + "개 있어요." : "");
     if(N.cur) return r("shh", N.n + "교시 " + N.cls + " 수업 중이에요.", "끝까지 " + N.left + "분");
     if(nxt && nxt.left <= 15) return r("book", nxt.left + "분 뒤 " + nxt.n + "교시 " + nxt.cls + (nxt.subj ? " " + nxt.subj : "") + " 수업이에요.", nxt.prog && nxt.prog.now ? "이번 차시: " + nxt.prog.now : (nxt.unit ? "단원: " + nxt.unit : ""));
     if(wk && m >= 720 && m < 780){ var ml = ""; try{ ml = window.TTMeal ? TTMeal.todayText() : ""; }catch(e){} return r("spoon", "점심시간이에요. 맛있게 드세요!", ml || (cnt ? "오후에 챙길 일 " + cnt + "개" : "")); }
+    /* v2.8: 새로 바뀐 점(업데이트 후 첫날) · 금요일 한 주 결산 · 백업 30일 */
+    var NEWS = {"2.8.0": ["새 기능: 퇴근 도장은 급한 일만 없으면!", "쌤비 소품 · 연속 도장 · 우리 반 나무 · 앱 설치하기(쌤비 아이콘) — ⋯ 메뉴에서"]}, nv = NEWS[TT.VERSION];
+    if(nv && m >= 300){ var sk = "sn_news_seen", sv0 = ""; try{ sv0 = localStorage.getItem(sk) || ""; }catch(e){}
+      var td = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+      if(sv0.indexOf(TT.VERSION + "|") !== 0){ try{ localStorage.setItem(sk, TT.VERSION + "|" + td); }catch(e){} sv0 = TT.VERSION + "|" + td; }
+      if(sv0 === TT.VERSION + "|" + td) return r("paper", nv[0], nv[1]); }
+    if(J && w === 5 && d.getHours() >= 14 && d.getHours() < 18 && J.weekSaved && J.weekSaved() >= 10){ var ws = J.weekSaved(); return r("stamp", "이번 주 쌤 노트로 " + (ws >= 60 ? Math.floor(ws / 60) + "시간 " + (ws % 60 ? ws % 60 + "분" : "") : ws + "분") + " 아꼈어요!", "한 주 수고 많으셨어요." + (cnt ? " 남은 일 " + cnt + "개" : "")); }
+    if(wk && m >= 300 && TT.backup && TT.backup.hasData()){ var bd = TT.backup.daysSince(); if(bd === null || bd >= 30) return r("paper", bd === null ? "아직 백업을 안 했어요." : "백업한 지 " + bd + "일 됐어요.", "⋯ → 전체 백업 저장 (파일 하나로)"); }
     if(m < 300) return r("night", "늦은 시간이에요." + (wk && N.count ? " 오늘 수업 " + N.count + "시간" : ""), cnt ? "챙길 일 " + cnt + "개는 아침에 봐요. 푹 쉬세요." : "푹 쉬세요.", {sleep: true});   // 자정~새벽 5시
     if(wk && m < 540) return r("coffee", "좋은 아침이에요!" + (N.count ? " 오늘 수업 " + N.count + "시간" : ""), cnt ? "오늘 챙길 일 " + cnt + "개예요." : "오늘 챙길 일은 아직 없어요.");
     if(J && J.examNear && J.examNear()) return r("redpen", "시험 기간이에요. 조금만 힘내요!", cnt ? "챙길 일 " + cnt + "개" : "");
@@ -120,6 +129,9 @@
         + (stamped ? "이번 달 " + J.monthStamps() + "개" : can ? "" : "") + "</small></div>"
         + (J && (stamped || can) ? '<button type="button" class="sbBtn' + (stamped ? "" : " p") + '" data-stamp>' + (stamped ? "도장판 보기" : "퇴근 도장") + "</button>" : "") + "</div>";
     }
+    var urg = T.some(function(x){ return x.lv === "hi" && /^(오늘|지남|종례|지금|D-[01])$/.test(String(x.n)); });
+    if(J && wk && !urg && (J.stamped() || d.getHours() >= 12))           // v2.8: 급한 일이 없으면 할 일이 남아 있어도 퇴근 도장
+      hd = hd.replace("</h2>", '</h2><button type="button" class="sbStampS' + (J.stamped() ? " on" : "") + '" data-stamp title="' + (J.stamped() ? "도장판 보기" : "급한 일이 없어요. 퇴근 도장 쾅!") + '">' + (J.stamped() ? "✅ 퇴근 도장 " + J.monthStamps() : "🙌 퇴근 도장") + "</button>");
     var L = st.more ? T : T.slice(0, MAX);
     return hd + '<ul class="sbList">' + L.map(row).join("") + "</ul>"
       + (T.length > MAX ? '<button type="button" class="sbMore" data-more>' + (st.more ? "접기" : "+ " + (T.length - MAX) + "개 더 보기") + "</button>" : "");

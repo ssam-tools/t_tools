@@ -49,6 +49,14 @@
     winter: '<g class="sbDeco"><path d="M30 68 Q60 76 90 68 L90 75 Q60 83 30 75 Z" fill="' + RED + '"/><path d="M78 74 l4 16 l7 -2 l-4 -15 z" fill="' + RED + '"/><path d="M80 88 h8" stroke="#fff" stroke-width="1.4" stroke-dasharray="2 2"/></g>'
   };
 
+  /* v2.8 쌤비 소품 (배지를 받으면 하나씩 열림 · 화면 꾸미기에서 고름) */
+  var ACC = {
+    hat: '<g class="sbAcc"><path d="M49 29 L60 3 L71 29 Z" fill="#F4C0D1" stroke="#04342C" stroke-width="1.4" stroke-linejoin="round"/><path d="M53 20 L67 20 M56 12 L64 12" stroke="#D9483B" stroke-width="2.4" stroke-linecap="round"/><circle cx="60" cy="3" r="3.4" fill="#EF9F27" stroke="#04342C" stroke-width="1.2"/></g>',
+    bow: '<g class="sbAcc"><path d="M60 73 L49 67 L49 79 Z M60 73 L71 67 L71 79 Z" fill="#D9483B" stroke="#04342C" stroke-width="1.2" stroke-linejoin="round"/><circle cx="60" cy="73" r="2.8" fill="#A32D24" stroke="#04342C" stroke-width="1.2"/></g>',
+    flower: '<g class="sbAcc"><circle cx="89.0" cy="31.0" r="4.2" fill="#FFE27A" stroke="#C99A1E" stroke-width=".8"/><circle cx="85.5" cy="35.8" r="4.2" fill="#FFE27A" stroke="#C99A1E" stroke-width=".8"/><circle cx="80.0" cy="33.9" r="4.2" fill="#FFE27A" stroke="#C99A1E" stroke-width=".8"/><circle cx="80.0" cy="28.1" r="4.2" fill="#FFE27A" stroke="#C99A1E" stroke-width=".8"/><circle cx="85.5" cy="26.2" r="4.2" fill="#FFE27A" stroke="#C99A1E" stroke-width=".8"/><circle cx="84" cy="31" r="3" fill="#EF9F27"/></g>',
+    grad: '<g class="sbAcc"><path d="M60 8 L86 18 L60 28 L34 18 Z" fill="#2C2C2A" stroke="#04342C" stroke-width="1.2" stroke-linejoin="round"/><path d="M45 22 v8 q15 6 30 0 v-8" fill="#2C2C2A"/><path d="M86 18 v12" stroke="#EF9F27" stroke-width="1.6"/><circle cx="86" cy="31" r="2" fill="#EF9F27"/></g>',
+    crown: '<g class="sbAcc"><path d="M44 30 L46 12 L53 21 L60 8 L67 21 L74 12 L76 30 Z" fill="#F2C744" stroke="#9A6A00" stroke-width="1.4" stroke-linejoin="round"/><circle cx="60" cy="24" r="2.4" fill="#D9483B"/><circle cx="51" cy="25" r="1.8" fill="#378ADD"/><circle cx="69" cy="25" r="1.8" fill="#378ADD"/></g>'
+  };
   /* ── 선 아이콘 한 종류 (굵기 1.8 · 둥근 끝) — 쌤비 홈·메뉴 막대·도구 화면 왼쪽 막대가 함께 씀 ── */
   var ICONS = {
     search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
@@ -160,7 +168,7 @@
       + '<circle cx="46" cy="52" r="13" fill="#fff" stroke="' + INK + '" stroke-width="3"/><circle cx="74" cy="52" r="13" fill="#fff" stroke="' + INK + '" stroke-width="3"/>'
       + '<path d="M58.5 50.5 q1.5 -2 3 0" fill="none" stroke="' + INK + '" stroke-width="3"/>' + eyes
       + '<path d="M56 63 L60 70 L64 63 Z" fill="' + BEAK + '"/>'
-      + note + it + (o.deco !== "winter" && dc ? '<g transform="translate(-9 -5)">' + dc + "</g>" : "") + "</svg>";
+      + note + it + (o.deco !== "winter" && dc && !(o.acc && ACC[o.acc] && o.acc !== "bow") ? '<g transform="translate(-9 -5)">' + dc + "</g>" : "") + (o.acc && ACC[o.acc] ? ACC[o.acc] : "") + "</svg>";
   }
   function logo(size){
     size = size || 28;
@@ -175,5 +183,5 @@
     + ".sbArt.lis .sbWave{animation:sbArtWave 1s ease-in-out infinite}@keyframes sbArtWave{0%,100%{opacity:.35}50%{opacity:1}}"
     + "@media (prefers-reduced-motion:reduce){.sbArt *{animation:none!important}}";
   (function(){ var s = document.createElement("style"); s.textContent = CSS; (document.head || document.documentElement).appendChild(s); })();
-  window.TT_SBART = {svg: svg, logo: logo, icon: icon, toolIcon: toolIcon, ICONS: ICONS, railIcons: railIcons, items: Object.keys(ITEMS), decos: Object.keys(DECO)};
+  window.TT_SBART = {accs: Object.keys(ACC), svg: svg, logo: logo, icon: icon, toolIcon: toolIcon, ICONS: ICONS, railIcons: railIcons, items: Object.keys(ITEMS), decos: Object.keys(DECO)};
 })();

@@ -185,7 +185,7 @@ html[data-ui="ssambi"] header h1 .sbHi svg{width:22px;height:22px}
 #sbBar .sbTabs a.on svg{color:var(--t-accent)}
 
 /* 첫 화면(index): 예전 머리글·메뉴 막대·바닥글·메뉴 화면 대신 */
-body.sbOn:not(.inmenu) #today,body.sbOn:not(.inmenu) .toprow,body.sbOn:not(.inmenu) #tbar,body.sbOn #joyBub,body.sbOn #mview,
+body.sbOn:not(.inmenu) #today,body.sbOn:not(.inmenu) .toprow,body.sbOn:not(.inmenu) #tbar,body.sbOn #mview,
 body.sbOn > header,body.sbOn #mnav,body.sbOn > footer,body.sbOn #sbBtn,body.sbOn #sbTip{display:none!important}
 body.sbOn{padding-left:clamp(12px,3vw,28px)!important;padding-top:4px!important;padding-bottom:clamp(10px,2vh,20px)!important;overflow:auto!important}
 /* 도구 화면(apps): 예전 왼쪽 막대·☰ 도구·← 쌤 노트·떠 있는 쌤비 대신 */
@@ -388,3 +388,12 @@ html[data-ui="ssambi"] .tbtn{border-radius:12px;font-weight:500}
 html[data-ui="ssambi"] .tbtn.rec{background:var(--t-card)!important;color:var(--t-ink)!important;border:1px solid #DAD6CD!important}
 html[data-ui="ssambi"] .tbtn.rec:hover{border-color:var(--t-accent)!important;color:var(--t-accent)!important}
 html[data-ui="ssambi"] .tpd .on,html[data-ui="ssambi"] .tpd b.on{border-radius:10px}
+/* v2.8 퇴근 도장(할 일이 남아 있어도 급한 일이 없으면) */
+.sbStampS{border:1px solid var(--t-line);background:var(--t-card);color:var(--t-ink);border-radius:999px;padding:3px 11px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.sbStampS:hover{border-color:var(--t-accent);color:var(--t-accent)}
+.sbStampS.on{background:#e8f6ee;border-color:#9fd5b5;color:#1f7a4a}
+/* v2.8 우리 반 나무 (메뉴 '우리 반' 옆) */
+.sbTree{font-style:normal;font-size:13px;line-height:1;margin-left:auto;cursor:pointer;filter:saturate(1.1)}
+#sbHero .circ .ci{position:relative}
+#sbHero .circ .ci .sbTree{position:absolute;right:-4px;bottom:-2px;font-size:15px;margin:0}
+#sbBar .sbTree{display:none}
