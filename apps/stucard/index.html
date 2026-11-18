@@ -39,6 +39,26 @@
   .none{color:var(--sub);font-size:13.5px;padding:8px 2px}
   .nav2{display:flex;gap:4px}
   .pick{display:flex;gap:6px;align-items:center}
+  /* 반 전체 보기 (첫 화면) */
+  #ov{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:10px}
+  #ov[hidden],main[hidden]{display:none!important}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chips button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 12px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}
+  .chips button b{font-weight:800;margin-left:2px}
+  .chips button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:minmax(64px,1fr);gap:8px}
+  .tc{position:relative;display:flex;flex-direction:column;justify-content:center;gap:4px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:6px 10px;cursor:pointer;font:inherit;text-align:left;color:var(--ink);min-width:0}
+  .tc:hover{border-color:var(--accent)}
+  .tc .nm2{font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tc .nm2 small{font-size:12px;font-weight:600;color:var(--sub);margin-right:5px}
+  .tc .bd{display:flex;gap:4px;flex-wrap:wrap;font-size:11.5px;min-height:18px}
+  .tc .bd span{border-radius:999px;padding:0 6px;background:var(--t-chip,#eceff3);color:var(--t-chip-ink,#4a5560);font-weight:700}
+  .tc .bd .bad{background:var(--danger-soft);color:var(--danger)}
+  .tc.f0{border-style:dashed;border-color:var(--accent)}
+  .tc.fl{border-color:var(--danger);box-shadow:inset 3px 0 0 var(--danger)}
+  .tc.off{opacity:.3}
+  .tc .qa{position:absolute;top:4px;right:4px;border:0;background:var(--accent);color:#fff;border-radius:8px;width:28px;height:28px;font-size:14px;cursor:pointer;display:none}
+  .tc:hover .qa,.tc:focus-within .qa{display:block}
+  @media (max-width:760px){ .grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:64px} .tc .qa{display:block} }
   @media (max-width:760px){ main{grid-template-columns:1fr;grid-template-rows:none} body{height:auto;min-height:100dvh;overflow:auto} .ls{max-height:none} }
   @media print{ .bar,.nav2{display:none!important} main{display:grid!important} }
 </style>
@@ -50,6 +70,7 @@
     <h1>📇 학생 카드</h1>
   </div>
   <div class="bar">
+    <button class="btn" id="all" title="반 전체 보기">▦ 전체</button>
     <span class="pick"><select id="clsSel" aria-label="학급 선택"></select><select id="stuSel" aria-label="학생 선택"></select><button class="btn" id="pk" title="번호 칸에서 학생 고르기">👆</button></span>
     <span class="nav2"><button class="btn" id="prev" title="앞 번호">◀</button><button class="btn" id="next" title="다음 번호">▶</button></span>
     <button class="btn primary" id="addRec">✍️ 기록 더하기</button>
@@ -57,6 +78,7 @@
   </div>
 </header>
 <section class="who" id="who"></section>
+<section id="ov" hidden><div class="chips" id="chips"></div><div class="grid" id="grid"></div></section>
 <main class="panel" id="m">
   <section class="bx" id="bRec"></section>
   <section class="bx" id="bAtt"></section>
@@ -81,11 +103,13 @@
     var sel = $("stuSel"); sel.innerHTML = "";
     (cls ? cls.students : []).forEach(function(s){ var o = document.createElement("option"); o.value = s.no; o.textContent = s.no + "번 " + s.name; sel.appendChild(o); });
     var want = q.get("no"); q.delete("no");
-    st = cls ? (cls.students.filter(function(s){ return String(s.no) === String(want); })[0] || (st && cls.students.filter(function(s){ return s.no === st.no; })[0]) || cls.students[0] || null) : null;
-    if(st) sel.value = st.no;
+    var o0 = document.createElement("option"); o0.value = ""; o0.textContent = "▦ 반 전체"; sel.insertBefore(o0, sel.firstChild);
+    st = cls ? (cls.students.filter(function(s){ return String(s.no) === String(want); })[0] || (st && cls.students.filter(function(s){ return s.no === st.no; })[0]) || null) : null;   // 처음에는 반 전체
+    sel.value = st ? st.no : "";
     draw();
   }
   $("pk").onclick = function(){ TT.ui.pickStudent({cls: cls && cls.id, sel: st && st.no, title: "학생 카드 — 누구를 볼까요?"}, function(r){ var cs = $("clsSel"); if(cs.value !== r.cls.id){ cs.value = r.cls.id; cs.dispatchEvent(new Event("change")); } $("stuSel").value = r.no; $("stuSel").onchange(); }); };   // PLAN_다듬기 4단계
+  $("all").onclick = function(){ st = null; $("stuSel").value = ""; draw(); };
   $("stuSel").onchange = function(){ st = cls.students.filter(function(s){ return String(s.no) === this.value; }, this)[0] || null; draw(); };
   function move(k){ if(!cls || !st) return; var i = cls.students.indexOf(st), j = i + k; if(j < 0 || j >= cls.students.length) return; st = cls.students[j]; $("stuSel").value = st.no; draw(); }
   $("prev").onclick = function(){ move(-1); }; $("next").onclick = function(){ move(1); };
@@ -94,7 +118,49 @@
   window.addEventListener("storage", draw);
   window.addEventListener("focus", draw);
 
+  /* ── 반 전체 보기: 학생마다 기록·출결·상담·제출물 수, 살펴볼 학생은 테두리로 ── */
+  var flt = "all";
+  function ymd(d){ return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function overview(){
+    document.title = "학생 카드 · 쌤 노트";
+    var N = TT.notes, D = N.load(), home = TT.roster.home(), isHome = home && home.id === cls.id, G = isHome ? TT.store.get("tt_guide_v1", null) : null;
+    var S = TT.store.get("tt_submit_v1", null), I = S && S.items ? S.items.filter(function(it){ return it.cls === cls.id; }) : [];
+    var now = new Date(), mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay() + 6) % 7)); var w0 = ymd(mon);
+    var JS = null, code = cls.grade != null && cls.cls != null ? cls.grade * 100 + cls.cls : null; try{ JS = TT.store.get("tt_journal_v1", null); }catch(e){}
+    var L = cls.students.map(function(s){
+      var k = N.key(cls, s), no = String(s.no), x = {s: s, rec: 0, att: 0, wk: 0, cns: 0, miss: 0};
+      D.recs.forEach(function(r){ if(r.k === k) x.rec++; });
+      if(JS && code) (JS.records || []).forEach(function(r){ if(+r.cls === code && +r.no === +s.no) x.rec++; });
+      if(G){ Object.keys(G.att || {}).forEach(function(d){ var r = (G.att[d] || {})[no], kk = kindOf(r); if(!kk) return; x.att++; if(d >= w0 && (kk === "Lu" || kk === "sick")) x.wk++; });
+        x.cns = (G.counsel || []).filter(function(c){ return String(c.sid) === no; }).length; }
+      x.miss = I.filter(function(it){ return !((S.m || {})[it.id] || {})[s.no]; }).length;
+      return x;
+    });
+    var F = {all: ["전체", function(){ return true; }], rec0: ["기록 없음", function(x){ return !x.rec; }], wk: ["이번 주 지각·결석", function(x){ return x.wk > 0; }], miss: ["미제출", function(x){ return x.miss > 0; }], cns: ["상담", function(x){ return x.cns > 0; }]};
+    if(!G) delete F.wk, delete F.cns;
+    if(!I.length) delete F.miss;
+    if(!F[flt]) flt = "all";
+    $("who").innerHTML = '<span class="nm">' + esc(cls.name) + '</span><span class="meta">' + cls.students.length + "명" + (isHome ? " · ★ 우리 반" : "") + " · 이름을 누르면 학생 카드</span>";
+    $("chips").innerHTML = Object.keys(F).map(function(f){ var n = L.filter(F[f][1]).length; return '<button type="button" data-f="' + f + '" class="' + (f === flt ? "on" : "") + '">' + F[f][0] + (f === "all" ? "" : " <b>" + n + "</b>") + "</button>"; }).join("");
+    Array.prototype.forEach.call($("chips").querySelectorAll("button"), function(b){ b.onclick = function(){ flt = b.dataset.f; overview(); }; });
+    var g = $("grid"); g.innerHTML = "";
+    L.forEach(function(x){
+      var b = document.createElement("div"); b.tabIndex = 0; b.setAttribute("role", "button");
+      b.className = "tc" + (!x.rec ? " f0" : "") + (x.wk ? " fl" : "") + (F[flt][1](x) ? "" : " off");
+      b.title = x.s.no + "번 " + x.s.name + (x.rec ? "" : " · 아직 기록 없음") + (x.wk ? " · 이번 주 지각·결석 " + x.wk : "");
+      var bd = (x.rec ? "<span>✍ " + x.rec + "</span>" : "") + (x.att ? '<span class="' + (x.wk ? "bad" : "") + '">🧭 ' + x.att + "</span>" : "") + (x.cns ? "<span>🗣 " + x.cns + "</span>" : "") + (x.miss ? '<span class="bad">📦 ' + x.miss + "</span>" : "");
+      b.innerHTML = '<span class="nm2"><small>' + esc(x.s.no) + "</small>" + esc(x.s.name) + '</span><span class="bd">' + bd + '</span><button type="button" class="qa" title="한 줄 기록">✍</button>';
+      function open(){ st = x.s; $("stuSel").value = st.no; draw(); }
+      b.onclick = function(ev){ if(ev.target.classList.contains("qa")){ TT.notes.quick({cls: cls.id, nos: [x.s.no], src: "학생 카드"}); return; } open(); };
+      b.onkeydown = function(ev){ if(ev.key === "Enter") open(); };
+      g.appendChild(b);
+    });
+  }
+
   function draw(){
+    var ov = !!(cls && !st && cls.students.length);
+    $("ov").hidden = !ov; $("m").hidden = ov; $("prev").disabled = $("next").disabled = ov; $("addRec").hidden = ov; $("all").hidden = ov;
+    if(ov){ overview(); return; }
     if(!cls || !st){
       $("who").innerHTML = '<span class="none">' + (TT.roster.has() ? "학급과 학생을 고르세요." : "명렬표에 학생 명단을 넣으면 학생 카드를 볼 수 있습니다. <a href=\"../roster/\">" + TN("roster", "명렬표") + " →</a>") + "</span>";
       ["bRec", "bAtt", "bCns", "bSub"].forEach(function(id){ $(id).innerHTML = ""; }); return;

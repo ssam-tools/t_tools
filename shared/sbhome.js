@@ -149,13 +149,14 @@
     if(!L.length) return '<div class="sbMid"><p class="sbEmpty">이 메뉴에 보일 도구가 없어요.</p></div>';
     var use = ((TT.store.get("tt_ui_v1", {}) || {}).tools || {}).use || {};
     function n(it){ return it.id && use[it.id] ? +use[it.id].n || 0 : 0; }
-    var big = L.length > 4 ? L.map(function(it, i){ return {it: it, i: i}; }).filter(function(x){ return !x.it.dim; })
+    var flat = m === "settings";                                  // 설정: 큰 카드 없이 설정 6 · 백업·안내 4를 같은 크기 칸으로(설명 글 없음)
+    var big = !flat && L.length > 4 ? L.map(function(it, i){ return {it: it, i: i}; }).filter(function(x){ return !x.it.dim; })
       .sort(function(a, b){ return (n(b.it) - n(a.it)) || ((b.it.hot ? 1 : 0) - (a.it.hot ? 1 : 0)) || (a.i - b.i); }).slice(0, 3).map(function(x){ return x.it; }) : [];
     mid = [];
     function idx(it){ mid.push(it); return mid.length - 1; }
     function ico(it, sz){ return ART && ART.toolIcon ? ART.toolIcon(it.id, it.ic, sz) : esc(it.ic); }
     var pk = typeof ttPack === "function" ? ttPack() : null, my = pk ? pk.name : "";
-    var h = '<div class="sbMid">';
+    var h = '<div class="sbMid' + (flat ? ' flat' : '') + '">';
     if(big.length) h += '<div class="sbBig">' + big.map(function(it){
       return '<button type="button" class="bc' + (it.dim ? " dim" : "") + '" data-mid="' + idx(it) + '" title="' + esc(it.tip || it.st) + '"><span class="ci">' + ico(it, 24) + '</span><span class="tx"><b>' + esc(it.name) + "</b><small" + (it.warn ? ' class="warn"' : "") + ">" + esc(it.st) + "</small></span>" + (it.hot ? '<em>지금</em>' : "") + "</button>";
     }).join("") + "</div>";
