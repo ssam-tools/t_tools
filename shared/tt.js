@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.0.0";
+  var VERSION = "2.0.1";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -689,7 +689,7 @@ var TT = (function(){
       /* v1.10.1: 도구 화면에도 쌤비(오른쪽 아래 둥근 캐릭터 · Alt+B). 교실 기기 모드에서는 숨김 */
       if(!classroom && !window.TT_SSAMBI && !document.getElementById("sbBtn")) (function(){
         function add(src, cb){ var s = document.createElement("script"); s.src = BASE + src; s.onload = cb || null; s.onerror = cb || null; document.head.appendChild(s); }
-        function sb(){ add("shared/sbart.js", function(){ add("shared/ssambi.js"); }); }
+        function sb(){ add("shared/sbart.js", function(){ add("shared/sbbar.js", function(){ add("shared/ssambi.js"); }); }); }   // v2.0.1: 쌤비 홈 디자인이면 위쪽 고정 줄(shared/sbbar.js)
         if(window.TTVoice) sb(); else add("shared/voice.js", sb);
       })();
     }

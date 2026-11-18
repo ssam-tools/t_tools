@@ -141,7 +141,7 @@
       return;
     }
     if(!isSide()){                                                      // 떠 있는 부엉이 → 부엉이 위(자리가 없으면 아래), 오른쪽 끝 맞춤
-      if(!seen(btn)) return;
+      if(!seen(btn)){ var bo = document.getElementById("sbBarOwl"); if(bo && seen(bo)){ from = bo; place(); } return; }   // v2.0.1: 위쪽 고정 줄의 쌤비 아래로
       var b = btn.getBoundingClientRect(), bw = Math.min(360, w - 24), lx = Math.round(Math.max(12, Math.min(b.right - bw, w - bw - 12)));
       box.style.left = lx + "px"; box.style.right = "auto";
       if(b.top > 320 || b.top > h - b.bottom){ box.style.top = "auto"; box.style.bottom = Math.round(h - b.top + 14) + "px"; box.style.maxHeight = Math.round(b.top - 26) + "px"; }

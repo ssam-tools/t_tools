@@ -11,7 +11,7 @@
   var host = document.getElementById("sbHome"); if(!host) return;
   var R = document.documentElement, ART = window.TT_SBART;
   var MAX = 5, st = {listen: false, more: false};
-  function fitMax(){ var h = window.innerHeight; MAX = h < 700 ? 3 : h < 860 ? 4 : 5; }   // 스크롤 없이: 화면 높이에 맞춰 할 일 줄 수
+  function fitMax(){ var h = window.innerHeight; MAX = h < 700 ? 4 : h < 860 ? 5 : 7; }   // 스크롤 없이: 화면 높이에 맞춰 할 일 줄 수
   fitMax(); window.addEventListener("resize", function(){ soon(); });
   var DOW = "일월화수목금토";
 
@@ -49,7 +49,7 @@
     if(urgent.length) return r("alarm", "‘" + urgent[0].t + "’" + josa(urgent[0].t, "을", "를") + " 오늘 꼭 챙겨요.", urgent.length > 1 ? "급한 일이 " + urgent.length + "개 있어요." : urgent[0].kind === "bag" ? "종례 때 꼭 전해요." : "끝내면 아래에서 ○를 눌러 주세요.");
     if(N.cur) return r("shh", N.n + "교시 " + N.cls + " 수업 중이에요.", "끝까지 " + N.left + "분 · 끝나면 진도 기록을 알려 드릴게요.");
     if(nxt && nxt.left <= 15) return r("book", nxt.left + "분 뒤 " + nxt.n + "교시 " + nxt.cls + (nxt.subj ? " " + nxt.subj : "") + " 수업이에요.", nxt.prog && nxt.prog.now ? "이번 차시: " + nxt.prog.now : (nxt.unit ? "단원: " + nxt.unit : ""));
-    if(wk && m >= 720 && m < 780) return r("spoon", "점심시간이에요. 맛있게 드세요!", cnt ? "오후에 챙길 일 " + cnt + "개" : "");
+    if(wk && m >= 720 && m < 780){ var ml = ""; try{ ml = window.TTMeal ? TTMeal.todayText() : ""; }catch(e){} return r("spoon", "점심시간이에요. 맛있게 드세요!", ml || (cnt ? "오후에 챙길 일 " + cnt + "개" : "")); }
     if(wk && m < 540) return r("coffee", "좋은 아침이에요!" + (N.count ? " 오늘 수업 " + N.count + "시간" : ""), cnt ? "오늘 챙길 일 " + cnt + "개예요." : "오늘 챙길 일은 아직 없어요.");
     if(J && J.examNear && J.examNear()) return r("redpen", "시험 기간이에요. 조금만 힘내요!", cnt ? "챙길 일 " + cnt + "개" : "");
     var mo = d.getMonth() + 1, dt = d.getDate();
@@ -83,21 +83,28 @@
     return h;
   }
 
-  /* ── 오늘 할 일 ── */
-  var TAGN = {"class": "수업", homeroom: "우리 반", student: "학생", school: "학교"};
+  /* ── 오늘 할 일: 꼬리표 없이 왼쪽 동그라미(끝내기)·그림, 오른쪽은 마감만. 쌤 노트가 준비해 둔 일은 한 줄로 묶음 ── */
   var cur = [];
+  var HOT = /^(오늘|지남|종례|지금|D-[01])$/;
   function row(x, i){
-    var can = x.kind === "bag" || x.kind === "todo", hot = x.lv === "hi" && /^(오늘|지남|종례|지금|D-[01])$/.test(String(x.n));
-    var tag = x.kind === "bag" ? "종례" : x.kind === "todo" ? "할 일" : x.kind === "auto" ? "준비됨" : TAGN[x.menu] || "";
+    var can = x.kind === "bag" || x.kind === "todo", hot = x.lv === "hi" && HOT.test(String(x.n));
     var lead = can ? '<button type="button" class="ck" data-done="' + i + '" aria-label="' + esc(x.t) + ' 끝냈어요" title="끝냈어요"></button>' : '<span class="ico" aria-hidden="true">' + esc(x.ic) + "</span>";
-    var go = x.kind === "auto" || x.pop || x.href || x.kind === "todo";
-    var body = '<span class="tx"><b>' + esc(x.t) + "</b>" + (x.tip && x.kind === "item" ? "<small>" + esc(x.tip) + "</small>" : "") + "</span>";
+    var go = x.kind === "auto" || x.kind === "autos" || x.pop || x.href || x.kind === "todo";
+    var sub = x.kind === "bag" ? "종례 때 전할 말" : x.kind === "item" ? x.tip : x.kind === "autos" ? "확인하고 복사 · 인쇄 · 저장만 하면 돼요" : "";
+    var body = '<span class="tx"><b>' + esc(x.t) + "</b>" + (sub ? "<small>" + esc(sub) + "</small>" : "") + "</span>";
     return '<li class="sbRow ' + esc(x.kind) + (hot ? " hot" : "") + '">' + lead
       + (go ? '<button type="button" class="go" data-go="' + i + '">' + body + "</button>" : '<span class="go">' + body + "</span>")
-      + (tag ? '<span class="tg">' + tag + "</span>" : "") + (x.n ? '<span class="n">' + esc(x.n) + "</span>" : "") + "</li>";
+      + '<span class="n">' + esc(x.n || "") + "</span></li>";
+  }
+  function group(T){                                                   // "준비됨"은 여러 개면 한 줄로
+    var A = T.filter(function(x){ return x.kind === "auto"; });
+    if(A.length < 2) return T;
+    var at = T.indexOf(A[0]), out = T.filter(function(x){ return x.kind !== "auto"; });
+    out.splice(at, 0, {kind: "autos", ic: "✨", t: "쌤 노트가 준비해 둔 일 " + A.length + "개", n: "확인 ›", lv: "rd"});
+    return out;
   }
   function tasks(T){
-    cur = T;
+    T = cur = group(T);
     var J = TT.joy && TT.joy.on && TT.joy.on() ? TT.joy : null, d = new Date(), wk = d.getDay() >= 1 && d.getDay() <= 5;
     var hd = '<div class="sbTh"><h2>오늘 할 일 <span class="c">' + T.length + '</span></h2><span class="hint">입력한 자료에서 저절로 생기고, 끝내면 사라져요</span>'
       + '<button type="button" class="sbAdd" data-add title="할 일이나 종례 때 전할 말 적기">' + ic(I.plus, 16) + "적기</button></div>";
@@ -112,15 +119,7 @@
       + (T.length > MAX ? '<button type="button" class="sbMore" data-more>' + (st.more ? "접기" : "+ " + (T.length - MAX) + "개 더 보기") + "</button>" : "");
   }
 
-  /* ── 바로가기 6개 (Alt 단축키는 shared/keys.js 와 같음) ── */
-  function shortcuts(){
-    var L = [["class", "수업", "Alt+2"], ["homeroom", "우리 반", "Alt+3"], ["student", "학생", "Alt+4"], ["school", "학교", "Alt+5"], ["lib", "자료실", ""], ["settings", "설정", "Alt+0"]];
-    return '<nav class="sbGo" aria-label="메뉴">' + L.filter(function(x){ return x[0] === "lib" || x[0] === "settings" || menuOk(x[0]); }).map(function(x){
-      return '<a href="#' + (x[0] === "lib" ? "school" : x[0]) + '" data-m="' + x[0] + '"><span class="ci">' + ic(I[x[0]], 24) + "</span><b>" + x[1] + "</b>" + (x[2] ? "<small>" + x[2] + "</small>" : "<small>&nbsp;</small>") + "</a>";
-    }).join("") + "</nav>";
-  }
-
-  /* ── 그리기 ── */
+  /* ── 그리기: 쌤비·검색창·메뉴는 위쪽 고정 줄(shared/sbbar.js), 여기는 쌤비 한마디 · 지금 · 오늘 할 일 ── */
   function render(){
     var ok = on();
     document.body.classList.toggle("sbOn", ok);
@@ -128,42 +127,27 @@
     if(document.body.classList.contains("inmenu")){ host.hidden = true; return; }
     var H; try{ H = TT_TODAY.home(); }catch(e){ console.warn("쌤비 홈:", e); return; }
     var P = pick(H), d = new Date();
+    if(window.TT_SBAR) TT_SBAR.setOwl({item: P.item, open: P.open, sleep: P.sleep, listen: P.listen, title: "쌤비 · " + P.line});
+    var sch = (TT.school && TT.school.load ? TT.school.load() : {}) || {};
     host.hidden = false;
     host.innerHTML = '<div class="sbWrap">'
-      + '<div class="sbHero"><button type="button" class="sbOwl" id="sbOwl" title="쌤비 — 말로 입력 · 찾기 · 오늘 브리핑 (Alt+B)" aria-label="쌤비 열기">' + (ART ? ART.svg({item: P.item, deco: P.deco, open: P.open, sleep: P.sleep, listen: P.listen, size: 132}) : "🦉") + "</button>"
-      + '<div class="sbBub" role="status"><div class="when">' + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + DOW[d.getDay()] + "요일 · " + clockTxt(d) + (H.events.length ? ' · <span class="ev">📌 ' + esc(H.events.join(" · ")) + "</span>" : "") + "</div>"
-      + "<p>" + esc(P.line) + "</p>" + (P.sub ? "<small>" + esc(P.sub) + "</small>" : "") + "</div></div>"
-      + '<div class="sbSearch" role="search">' + ic(I.search, 20) + '<label for="sbQ" class="sr">찾기 또는 한 줄 입력</label><input id="sbQ" type="search" autocomplete="off" placeholder="학생 · 도구 · 내선번호 찾기, 할 일 바로 적기">'
-      + '<kbd title="어느 화면에서나 / 키로 찾기">/</kbd><button type="button" class="mic" data-mic aria-label="말로 기록" title="말로 기록 (쌤비)">' + ic(I.mic, 20) + "</button></div>"
+      + '<div class="sbBub" role="status"><div class="when">' + (sch.name ? esc(sch.name) + " · " : "") + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + DOW[d.getDay()] + "요일 · " + clockTxt(d) + (H.events.length ? ' · <span class="ev">📌 ' + esc(H.events.join(" · ")) + "</span>" : "") + "</div>"
+      + "<p>" + esc(P.line) + "</p>" + (P.sub ? "<small>" + esc(P.sub) + "</small>" : "") + "</div>"
       + '<div class="sbNowWrap">' + nowCard(H.now) + "</div>"
-      + '<section class="sbTasks" aria-label="오늘 할 일">' + tasks(H.tasks) + "</section>"
-      + shortcuts() + "</div>";
-    var shown = Math.min(MAX, H.tasks.length);
+      + '<section class="sbTasks" aria-label="오늘 할 일">' + tasks(H.tasks) + "</section></div>";
+    var shown = Math.min(MAX, cur.length);
     if(!st.more && window.innerWidth > 760 && shown > 2 && document.documentElement.scrollHeight > window.innerHeight + 2){ MAX = shown - 1; render(); }   // 넘치면 한 줄씩 줄여 스크롤 없이
   }
 
   /* ── 누르기 ── */
   host.addEventListener("click", function(e){
     var t = e.target.closest("button,a"); if(!t) return;
-    if(t.id === "sbOwl"){ e.stopPropagation(); var bx = document.getElementById("sbBox"); if(window.TT_SSAMBI){ if(bx && !bx.hidden) TT_SSAMBI.close(); else TT_SSAMBI.open("menu", null, t); } return; }   // 다시 누르면 닫힘 (바깥 누르기로 바로 닫히지 않게 전파를 막음)
-    if(t.hasAttribute("data-mic")){ e.stopPropagation(); if(window.TT_SSAMBI){ TT_SSAMBI.open("menu", null, document.getElementById("sbOwl")); var b = document.querySelector('#sbBox [data-a="listen"]'); if(b) b.click(); } return; }
-    if(t.hasAttribute("data-go")){ TT_TODAY.act(cur[+t.dataset.go], t); return; }
+    if(t.hasAttribute("data-go")){ var x = cur[+t.dataset.go]; if(x && x.kind === "autos"){ if(window.TTAuto) TTAuto.list(); } else TT_TODAY.act(x, t); return; }
     if(t.hasAttribute("data-done")){ TT_TODAY.done(cur[+t.dataset.done]); return; }
     if(t.hasAttribute("data-more")){ st.more = !st.more; render(); return; }
     if(t.hasAttribute("data-add")){ if(window.TT_FIND) TT_FIND.open("할 일: "); return; }
     if(t.hasAttribute("data-stamp")){ if(TT.joy){ if(TT.joy.stamped()) TT.joy.open(); else { TT.joy.stamp(); setTimeout(render, 300); } } return; }
     if(t.hasAttribute("data-plus")){ if(window.TTFollow) TTFollow.plusOneNow(+t.dataset.plus); setTimeout(render, 200); return; }
-    if(t.dataset.m === "lib"){                                            // 자료실 = 학교 메뉴의 자료실 묶음
-      var u = TT.store.get("tt_ui_v1", {}) || {}; u.mtab = u.mtab || {}; u.mtab.school = "lib"; TT.store.set("tt_ui_v1", u);
-    }else if(t.dataset.m && t.dataset.m !== "lib"){
-      var u2 = TT.store.get("tt_ui_v1", {}) || {}; if(u2.mtab && t.dataset.m === "school" && u2.mtab.school === "lib"){ u2.mtab.school = "all"; TT.store.set("tt_ui_v1", u2); }
-    }
-  });
-  /* 검색창: 누르면 바로 공통 찾기 창(Ctrl+K)이 열리고 거기에 적습니다 — 찾기·한 줄 입력이 한곳에.
-     (한글 입력 중에 창을 옮기면 글자가 깨지므로, 글자를 넣기 전에 엽니다) */
-  host.addEventListener("focusin", function(e){
-    if(e.target.id !== "sbQ" || !window.TT_FIND) return;
-    var v = e.target.value; e.target.value = ""; e.target.blur(); TT_FIND.open(v);
   });
   document.addEventListener("keydown", function(e){                    // 어디서나 / → 찾기 (글 쓰는 칸 밖에서만)
     if(e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey || !on()) return;

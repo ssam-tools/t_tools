@@ -60,42 +60,47 @@ html[data-ui="ssambi"] header .lead{color:var(--t-sub)}
 html[data-ui="ssambi"] header .lead .tc,html[data-ui="ssambi"] .meal,html[data-ui="ssambi"] .joyChip{background:var(--t-chip)!important;color:var(--t-ink)!important;font-weight:500!important;border-radius:999px}
 html[data-ui="ssambi"] header .lead a{color:var(--t-ink)}
 
-/* ---------- 4. 쌤비 홈: 홈에서는 업무판 칸을 숨기고 쌤비 홈만 ---------- */
-body.sbOn:not(.inmenu) #today,body.sbOn:not(.inmenu) .toprow,body.sbOn:not(.inmenu) #tbar,body.sbOn:not(.inmenu) footer,
-body.sbOn:not(.inmenu) header .lead > :not(#mealChip),body.sbOn:not(.inmenu) #qFind,body.sbOn:not(.inmenu) .sbHd,body.sbOn:not(.inmenu) #joyBub,
-html[data-ui="ssambi"] #hClock,body.sbOn #sbBtn,body.sbOn #sbTip{display:none!important}
+/* ---------- 4. 위쪽 고정 줄 (shared/sbbar.js): 쌤비 · 검색창 · 메뉴 — 모든 화면 같은 자리 ---------- */
+#sbBar{display:none}
+html[data-ui="ssambi"] #sbBar{display:block;flex:none;border-bottom:1px solid var(--t-line);margin-bottom:clamp(8px,1.4vh,14px);font-family:var(--t-font)}
+#sbBar .in{display:flex;align-items:center;justify-content:center;gap:12px;max-width:820px;margin:0 auto}
+#sbBar .owl{flex:none;width:56px;height:56px;border:0;background:transparent;padding:0;cursor:pointer;border-radius:50%;transition:transform .2s}
+#sbBar .owl svg{width:100%;height:100%}
+#sbBar .owl:hover{transform:translateY(-2px) rotate(-4deg)}
+#sbBar .q{flex:1;min-width:0;max-width:640px;display:flex;align-items:center;gap:10px;height:48px;border:1px solid #DAD6CD;border-radius:999px;background:var(--t-card);padding:0 14px 0 18px;color:var(--t-faint);font:inherit;font-size:15px;cursor:text;text-align:left;box-shadow:var(--sb-shadow)}
+#sbBar .q:hover{border-color:var(--t-accent)}
+#sbBar .q span{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#sbBar .q kbd{font:inherit;font-size:13px;color:var(--t-faint);border:1px solid var(--t-line);border-radius:6px;padding:0 8px}
+#sbBar .ib{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--t-accent-soft);color:var(--t-accent);display:flex;align-items:center;justify-content:center;cursor:pointer}
+#sbBar .ib:hover{background:var(--t-accent);color:#fff}
+#sbBar .ib.plus{display:none;background:var(--t-accent);color:#fff}
+#sbBar .sbTabs{display:flex;justify-content:center;gap:2px;margin-top:4px}
+#sbBar .sbTabs a{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;color:var(--t-sub);text-decoration:none;font-size:15px;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+#sbBar .sbTabs a:hover{color:var(--t-ink)}
+#sbBar .sbTabs a.on{color:var(--t-ink);border-bottom-color:var(--t-accent)}
+#sbBar .sbTabs a.on svg{color:var(--t-accent)}
+
+/* 첫 화면(index): 예전 머리글·메뉴 막대·바닥글 대신 고정 줄 */
+body.sbOn:not(.inmenu) #today,body.sbOn:not(.inmenu) .toprow,body.sbOn:not(.inmenu) #tbar,body.sbOn #joyBub,
+body.sbOn > header,body.sbOn #mnav,body.sbOn > footer,body.sbOn .mfh .back,body.sbOn .msea,body.sbOn #sbBtn,body.sbOn #sbTip{display:none!important}
+body.sbOn{padding-left:clamp(12px,3vw,28px)!important;padding-bottom:clamp(10px,2vh,20px)!important}
 body.sbOn:not(.inmenu){overflow:auto}
-body.sbOn header{align-items:center}
-@media (min-width:761px){
-  body.sbOn:not(.inmenu){padding-left:clamp(16px,3vw,32px)}
-  body.sbOn:not(.inmenu) .mnav{display:none}
-}
+/* 도구 화면(apps): 왼쪽 막대·☰ 도구·← 쌤 노트·떠 있는 쌤비 대신 고정 줄 */
+html[data-ui="ssambi"] .tt-rail,html[data-ui="ssambi"] .tt-navbtn,html[data-ui="ssambi"] .tt-sheet,html[data-ui="ssambi"] #sbBtn,html[data-ui="ssambi"] #sbTip,
+html[data-ui="ssambi"] a.back,html[data-ui="ssambi"] a.ttback{display:none!important}
+html[data-ui="ssambi"].tt-hasnav body{margin-left:0!important}
+html[data-ui="ssambi"] body.sbBarOn{display:flex!important;flex-direction:column}
+html[data-ui="ssambi"] body.sbBarOn > .app,html[data-ui="ssambi"] body.sbBarOn > #app{height:auto!important;flex:1 1 0;min-height:0;width:100%}
+html[data-ui="ssambi"].tt-hasnav .cta,html[data-ui="ssambi"].tt-hasnav .tabs,html[data-ui="ssambi"].tt-hasnav .dock{left:0!important}
 
+/* ---------- 5. 쌤비 홈 본문: 쌤비 한마디 · 지금 · 오늘 할 일 ---------- */
 .sbhome{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;font-family:var(--t-font)}
-.sbhome .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.sbWrap{margin:auto 0;width:100%;max-width:780px;display:flex;flex-direction:column;align-items:stretch;gap:clamp(12px,2vh,20px);padding:clamp(0px,1vh,12px) 0 clamp(6px,1.4vh,14px)}
-
-/* 쌤비 + 한마디 */
-.sbHero{display:flex;align-items:center;justify-content:center;gap:clamp(12px,2vw,22px)}
-.sbOwl{flex:none;border:0;background:transparent;padding:0;cursor:pointer;border-radius:50%;width:clamp(104px,15vh,140px);height:clamp(104px,15vh,140px);transition:transform .2s}
-.sbOwl svg{width:100%;height:100%}
-.sbOwl:hover{transform:translateY(-3px) rotate(-3deg)}
-.sbBub{position:relative;background:var(--t-card);border:1px solid var(--t-line);border-radius:18px;padding:clamp(10px,1.6vh,14px) 18px;max-width:440px;box-shadow:var(--sb-shadow)}
-.sbBub::before{content:"";position:absolute;left:-8px;top:50%;width:14px;height:14px;background:var(--t-card);border-left:1px solid var(--t-line);border-bottom:1px solid var(--t-line);transform:translateY(-50%) rotate(45deg)}
+.sbWrap{margin:0 0 auto;width:100%;max-width:780px;display:flex;flex-direction:column;align-items:stretch;gap:clamp(12px,1.8vh,18px);padding:clamp(2px,1vh,10px) 0 clamp(6px,1.4vh,14px)}
+.sbBub{background:var(--t-card);border:1px solid var(--t-line);border-radius:16px;padding:clamp(10px,1.6vh,14px) 20px;box-shadow:var(--sb-shadow)}
 .sbBub .when{font-size:13px;color:var(--t-sub);font-variant-numeric:tabular-nums}
 .sbBub .when .ev{color:var(--t-accent)}
 .sbBub p{font-size:clamp(16px,2.2vh,18px);font-weight:700;line-height:1.5;margin-top:2px;word-break:keep-all}
 .sbBub small{display:block;font-size:14px;color:var(--t-sub);margin-top:2px;word-break:keep-all}
-
-/* 검색창 하나 */
-.sbSearch{display:flex;align-items:center;gap:12px;background:var(--t-card);border:1px solid #DAD6CD;border-radius:999px;height:clamp(52px,7vh,60px);padding:0 8px 0 22px;color:var(--t-faint);box-shadow:var(--sb-shadow)}
-.sbSearch:focus-within{border-color:var(--t-accent);box-shadow:0 0 0 4px var(--t-accent-soft)}
-.sbSearch input{flex:1;min-width:0;border:0;outline:none;background:transparent;font:inherit;font-size:17px;color:var(--t-ink);height:100%}
-.sbSearch input::placeholder{color:var(--t-faint)}
-.sbSearch input::-webkit-search-cancel-button{display:none}
-.sbSearch kbd{font:inherit;font-size:13px;color:var(--t-faint);border:1px solid var(--t-line);border-radius:6px;padding:1px 8px}
-.sbSearch .mic{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--t-accent-soft);color:var(--t-accent);display:flex;align-items:center;justify-content:center;cursor:pointer}
-.sbSearch .mic:hover{background:var(--t-accent);color:#fff}
 
 /* 지금 카드 */
 .sbNowWrap{display:flex;flex-direction:column;gap:6px}
@@ -138,10 +143,9 @@ body.sbOn header{align-items:center}
 .sbRow .tx b{font-size:16px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sbRow .tx small{font-size:13px;color:var(--t-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sbRow button.go:hover b{color:var(--t-accent)}
-.sbRow .tg{flex:none;white-space:nowrap;font-size:13px;color:var(--t-sub);background:var(--t-chip);border-radius:999px;padding:2px 10px}
 .sbRow .n{flex:none;min-width:48px;text-align:right;font-size:13px;font-weight:700;color:var(--t-sub);font-variant-numeric:tabular-nums}
 .sbRow.hot .n{color:var(--t-accent)}
-.sbRow.auto .tg{background:var(--t-accent-soft);color:var(--t-accent)}
+.sbRow.autos .n,.sbRow.auto .n{color:var(--t-accent)}
 .sbMore{display:block;margin:8px auto 0;border:0;background:transparent;font:inherit;font-size:14px;color:var(--t-sub);cursor:pointer;border-radius:10px;padding:6px 12px}
 .sbMore:hover{background:var(--t-chip);color:var(--t-ink)}
 .sbDone{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;background:var(--t-card);border:1px dashed var(--t-accent);border-radius:16px;padding:18px 20px}
@@ -150,28 +154,12 @@ body.sbOn header{align-items:center}
 .sbDone b{display:block;font-size:16px;font-weight:700}
 .sbDone small{display:block;font-size:14px;color:var(--t-sub)}
 
-/* 바로가기 6개 */
-.sbGo{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-top:clamp(0px,1vh,8px)}
-.sbGo a{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:14px;text-decoration:none;color:var(--t-ink);min-height:44px}
-.sbGo a:hover{background:var(--t-chip)}
-.sbGo .ci{width:52px;height:52px;border-radius:50%;background:var(--t-chip);color:var(--t-accent);display:flex;align-items:center;justify-content:center}
-.sbGo a:hover .ci{background:var(--t-accent);color:#fff}
-.sbGo b{font-size:14px;font-weight:500}
-.sbGo small{font-size:13px;color:var(--t-faint);line-height:1}
-
-/* 짧은 화면(노트북 768): 조금씩 줄여 스크롤 없이 */
-html[data-ui="ssambi"] .mnav a span[data-ic]{display:flex;align-items:center;justify-content:center}
-@media (min-width:761px) and (max-height:860px){
-  .sbWrap{gap:10px}
-  .sbOwl{width:92px;height:92px}
-  .sbBub{padding:8px 16px}
-  .sbRow{min-height:46px}
-  .sbGo .ci{width:44px;height:44px}
-  .sbGo a{padding:6px 4px;gap:4px}
-  .sbGo small{display:none}
+@media (min-width:761px) and (max-height:820px){
+  #sbBar .owl{width:48px;height:48px}#sbBar .q{height:44px}#sbBar .sbTabs a{min-height:40px}
+  .sbWrap{gap:10px}.sbRow{min-height:46px}
 }
 
-/* ---------- 5. 메뉴 화면 (#class …): 업무판과 같은 코드, 모양만 ---------- */
+/* ---------- 6. 메뉴 화면 = 중메뉴 (#class …): 업무판과 같은 코드, 모양만 ---------- */
 @media (min-width:761px){
   html[data-ui="ssambi"] .mnav{background:var(--t-card);border-right:1px solid var(--t-line)}
 }
@@ -179,6 +167,7 @@ html[data-ui="ssambi"] .mnav a{color:var(--t-sub);font-weight:700}
 html[data-ui="ssambi"] .mnav a:hover{background:var(--t-accent-soft);color:var(--t-accent)}
 html[data-ui="ssambi"] .mnav a.on{background:var(--t-accent);color:#fff}
 html[data-ui="ssambi"] .mfh h2{color:var(--t-ink);font-size:22px}
+html[data-ui="ssambi"] .mfh h2 > span:first-child{display:none}
 html[data-ui="ssambi"] .mfh .back{color:var(--t-sub);font-weight:500}
 html[data-ui="ssambi"] .msea{border-color:var(--t-line);font-weight:500}
 html[data-ui="ssambi"] .mnow .tdy{border-top:0;border-radius:16px;background:var(--t-accent-soft);border-color:transparent}
@@ -192,26 +181,25 @@ html[data-ui="ssambi"] .mt b{font-weight:500;color:var(--t-ink)}
 html[data-ui="ssambi"] .mt .mh{background:var(--t-accent-soft);color:var(--t-accent);font-weight:700}
 html[data-ui="ssambi"] .tdy,html[data-ui="ssambi"] .cat,html[data-ui="ssambi"] .card{border-radius:16px;border-color:var(--t-line)}
 
-/* ---------- 6. 휴대폰: 입력이 먼저 (아래 메뉴 + ＋ 빠른 입력은 그대로) ---------- */
+/* ---------- 7. 휴대폰: 위쪽 고정 줄은 같고, 메뉴는 아이콘 + 짧은 이름, ＋ 빠른 입력 ---------- */
 @media (max-width:760px){
-  body.sbOn:not(.inmenu){padding:12px 14px calc(84px + env(safe-area-inset-bottom,0px))}
-  body.sbOn:not(.inmenu) header{flex-wrap:nowrap}
+  body.sbOn{padding:10px 12px 14px!important}
+  #sbBar .in{gap:8px}
+  #sbBar .owl{width:46px;height:46px}
+  #sbBar .q{height:44px;padding:0 12px;font-size:14px}
+  #sbBar .q kbd{display:none}
+  #sbBar .ib{width:40px;height:40px}
+  #sbBar .ib.plus{display:flex}
+  #sbBar .sbTabs{justify-content:space-between;gap:0}
+  #sbBar .sbTabs a{flex:1;flex-direction:column;justify-content:center;gap:2px;padding:4px 0;font-size:12px;min-height:50px}
   .sbWrap{gap:12px;padding-top:0}
-  .sbHero{justify-content:flex-start;gap:10px}
-  .sbOwl{width:84px;height:84px}
-  .sbBub{padding:9px 13px;border-radius:16px}
+  .sbBub{padding:10px 14px}
   .sbBub p{font-size:15px}.sbBub small{font-size:13px}
-  .sbSearch{height:52px;padding-left:16px}
-  .sbSearch kbd{display:none}
-  .sbSearch input{font-size:16px}
   .sbNow{padding:12px 14px;gap:10px}
   .sbNow .tt{font-size:18px}
   .sbNow .acts{width:100%}.sbNow .acts .sbBtn{flex:1}
   .sbTh .hint{display:none}
   .sbRow{padding:0 12px;gap:10px}
-  .sbRow .tg{display:none}
-  .sbGo{display:none}
-  html[data-ui="ssambi"] .mnav{border-top:1px solid var(--t-line);box-shadow:0 -2px 10px rgba(31,35,40,.06)}
 }
 @media print{.sbhome{display:none!important}}
 
