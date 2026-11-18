@@ -35,12 +35,15 @@
     if(lk === "spring" || lk === "summer" || lk === "autumn" || lk === "winter") return lk;
     var m = new Date().getMonth() + 1; return m >= 3 && m <= 5 ? "spring" : m >= 6 && m <= 8 ? "summer" : m >= 9 && m <= 11 ? "autumn" : "winter";
   }
+  function prepStep(){ var a = document.querySelector("#prep .pi"); return a ? a.textContent.replace(/^\d+\.\s*/, "").replace(/^[^\s가-힣A-Za-z0-9★]+\s*/, "").replace(/\s*\(.*\)$/, "") : ""; }
+  function prepGo(){ var a = document.querySelector("#prep .pi"); if(!a) return false; a.click(); return true; }
   function pick(H){
     var d = new Date(), w = d.getDay(), wk = w >= 1 && w <= 5, m = d.getHours() * 60 + d.getMinutes(), N = H.now, T = H.tasks;
     var J = TT.joy && TT.joy.on && TT.joy.on() ? TT.joy : null, dd = J && J.dday ? J.dday() : null;
     var urgent = T.filter(function(x){ return x.lv === "hi" && /^(오늘|지남|종례|지금|D-[01])$/.test(String(x.n)); });
     var nxt = N.has && !N.cur && N.n ? N : null, cnt = T.length, deco = J ? season() : "";
     function r(item, line, sub, o){ o = o || {}; return {item: item, deco: deco, open: !!o.open, sleep: !!o.sleep, listen: !!o.listen, line: line, sub: sub || ""}; }
+    var pr = prepStep(); if(pr) return r("paper", "시작 준비: " + pr, "말풍선을 누르면 바로 해요.");   // 예전 "시작 준비" 줄 대신
     if(st.listen) return r("listen", "듣고 있어요.", "말하면 오른쪽에 적혀요.", {listen: true});
     if(!cnt && wk && d.getHours() >= 12 && J){
       if(J.stamped()) return r("stamp", "오늘 할 일 끝! 수고 많으셨어요.", "이번 달 퇴근 도장 " + J.monthStamps() + "개");
@@ -85,10 +88,10 @@
 
   /* ── 오늘 할 일: 꼬리표 없이 왼쪽 동그라미(끝내기)·그림, 오른쪽은 마감만. 쌤 노트가 준비해 둔 일은 한 줄로 묶음 ── */
   var cur = [];
-  var HOT = /^(오늘|지남|종례|지금|D-[01])$/;
+  var HOT = /^(오늘|지남)$/;   // 강조색은 오늘·지난 일에만
   function row(x, i){
     var can = x.kind === "bag" || x.kind === "todo", hot = x.lv === "hi" && HOT.test(String(x.n));
-    var lead = can ? '<button type="button" class="ck" data-done="' + i + '" aria-label="' + esc(x.t) + ' 끝냈어요" title="끝냈어요"></button>' : '<span class="ico" aria-hidden="true">' + esc(x.ic) + "</span>";
+    var lead = can ? '<button type="button" class="ck" data-done="' + i + '" aria-label="' + esc(x.t) + ' 끝냈어요" title="끝냈어요"></button>' : '<span class="ico" aria-hidden="true">' + (ART && ART.toolIcon ? ART.toolIcon("", x.ic, 18) : esc(x.ic)) + "</span>";
     var go = x.kind === "auto" || x.kind === "autos" || x.pop || x.href || x.kind === "todo";
     var sub = "";
     var body = '<span class="tx"><b>' + esc(x.t) + "</b>" + (sub ? "<small>" + esc(sub) + "</small>" : "") + "</span>";
@@ -178,7 +181,7 @@
     h += '<ul class="sbList">' + R0.map(function(r, k){
       if(r.h) return '<li class="rgh">' + r.h + "</li>";
       var on = !r.bag && ++i === Q.sel;
-      return '<li class="sbRow rr' + (on ? " on" : "") + '"><span class="ico" aria-hidden="true">' + r.ic + '</span><button type="button" class="go" data-r="' + k + '"><span class="tx"><b>' + r.tx + "</b>" + (r.sub ? "<small>" + r.sub + "</small>" : "") + "</span></button>"
+      return '<li class="sbRow rr' + (on ? " on" : "") + '"><span class="ico" aria-hidden="true">' + (ART && ART.toolIcon ? ART.toolIcon("", String(r.ic).replace(/<[^>]*>/g, ""), 18) : r.ic) + '</span><button type="button" class="go" data-r="' + k + '"><span class="tx"><b>' + r.tx + "</b>" + (r.sub ? "<small>" + r.sub + "</small>" : "") + "</span></button>"
         + (r.btns || []).map(function(b, j){ return '<button type="button" class="sbBtn sm" data-r="' + k + '" data-b="' + j + '">' + b[0] + "</button>"; }).join("") + "</li>";
     }).join("") + "</ul></div>";
     return h;
@@ -275,7 +278,7 @@
   window.addEventListener("tt-menu-refresh", soon);
   window.addEventListener("tt-find-update", function(){ if(Q.q) render(); });
   window.addEventListener("hashchange", function(){ if(Q.q){ Q.q = ""; if(window.TT_SBAR) TT_SBAR.clearSearch(); } });
-  window.TT_SBHOME = {render: render, pick: pick,
+  window.TT_SBHOME = {render: render, pick: pick, prepGo: prepGo,
     search: function(q){ q = String(q || "").trim(); if(q === Q.q) return; Q.q = q; Q.sel = 0; render(); },
     query: function(){ return Q.q; },
     move: function(d){ var n = picks().length; if(!n) return; Q.sel = (Q.sel + d + n) % n; render(); },

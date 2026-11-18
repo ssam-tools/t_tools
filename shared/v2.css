@@ -99,12 +99,16 @@ html[data-ui="ssambi"] body.sbOn #sbHero{display:flex;flex-direction:column;alig
 #sbHero .circ a.on .ci{background:var(--t-accent);color:#fff}
 #sbHero .circ a.on b{font-weight:700}
 
-/* 쌤비 창(#sbBox): 넓은 화면(1400 이상)은 오른쪽 빈 공간에 고정 — 말풍선·검색창·메뉴는 움직이지 않음 */
-@media (min-width:1400px){
+/* 쌤비 창(#sbBox): 넓은 화면(1280 이상)은 오른쪽 빈 공간에 고정 — 말풍선·검색창·메뉴는 움직이지 않음 */
+@media (min-width:1280px){
   #sbHero{position:relative}
-  #sbHero > #sbBox{position:absolute!important;top:clamp(48px,7vh,72px)!important;right:0!important;left:auto!important;bottom:auto!important;width:clamp(260px,calc((100vw - 780px) / 2 - 48px),360px)!important;max-height:none!important;z-index:5}
+  #sbHero > #sbBox{position:absolute!important;top:clamp(48px,7vh,72px)!important;right:0!important;left:auto!important;bottom:auto!important;width:300px!important;zoom:.8;max-height:none!important;z-index:5}
   #sbHero > #sbBox .hd .av{display:none}
 }
+@media (min-width:1680px){ #sbHero > #sbBox{zoom:.92} }
+body.sbOn > #sbBox{zoom:.88}   /* 좁은 화면: 쌤비 아래에 작게 */
+body.sbOn #prep{display:none!important}   /* 시작 준비는 쌤비 말풍선이 알려 줌 */
+#sbHero .bub:has(.b0){cursor:default}
 
 /* ② 도구 화면(넓은 화면): 왼쪽 막대 = 쌤비 + 한마디 / 찾기 / 메뉴(지금 메뉴는 펼쳐 도구 목록) */
 @media (min-width:900px) and (min-height:460px){
@@ -265,7 +269,7 @@ html[data-ui="ssambi"].tt-hasnav .cta,html[data-ui="ssambi"].tt-hasnav .tabs,htm
 .sbRow button.go:hover b{color:var(--t-accent)}
 .sbRow .n{flex:none;min-width:48px;text-align:right;font-size:13px;font-weight:700;color:var(--t-sub);font-variant-numeric:tabular-nums}
 .sbRow.hot .n{color:var(--t-accent)}
-.sbRow.autos .n,.sbRow.auto .n{color:var(--t-accent)}
+.sbRow .ico{color:var(--t-sub);display:flex;align-items:center;justify-content:center}
 .sbMore{display:block;margin:8px auto 0;border:0;background:transparent;font:inherit;font-size:14px;color:var(--t-sub);cursor:pointer;border-radius:10px;padding:6px 12px}
 .sbMore:hover{background:var(--t-chip);color:var(--t-ink)}
 .sbDone{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;background:var(--t-card);border:1px dashed var(--t-accent);border-radius:16px;padding:18px 20px}

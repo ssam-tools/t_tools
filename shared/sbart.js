@@ -104,6 +104,12 @@
     save: '<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/>',
     help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.7M12 17h.01"/>',
     sprout: '<path d="M12 21v-9M12 12C12 7 8 5 4 5c0 4 3 7 8 7zM12 10c0-4 3-6 7-6 0 4-3 6-7 6z"/>',
+    eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+    megaphone: '<path d="M3 10v4h4l7 4V6l-7 4z"/><path d="M17 9a4 4 0 0 1 0 6"/>',
+    refresh: '<path d="M20 11a8 8 0 0 0-14-4l-2 2M4 13a8 8 0 0 0 14 4l2-2"/><path d="M4 4v5h5M20 20v-5h-5"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    alarm: '<circle cx="12" cy="13" r="7"/><path d="M12 10v3l2 2M4 5l3-2M20 5l-3-2"/>',
     dots: '<circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/>'
   };
   var TOOL = {timetable: "clock", book: "class", journal: "notebook", mpace: "hourglass", "class": "toolbox", group: "group", assess: "chart", mblue: "target",
@@ -111,9 +117,13 @@
     stucard: "idcard", voice: "mic", gquick: "bolt", counsel: "chat", record: "doc", advisor: "cap", bonus: "medal",
     year: "calendar", lib: "search", ai: "robot", train: "cert", merge: "clip", setup: "suitcase",
     concept: "map", mgen: "numbers", mcheck: "check", mstudy: "open", mqr: "qr", play: "game", kread: "open", kreadt: "teacher"};
-  var EMO = {"📅": "calendar", "🔗": "link", "📞": "phone", "🏫": "school", "🎨": "palette", "✨": "sparkle", "☁️": "cloud", "💾": "save", "📂": "lib", "❓": "help", "🌱": "sprout", "🧳": "suitcase"};
+  var EMO = {"🗣️": "chat", "🔁": "refresh", "⚡": "bolt", "📄": "doc", "📦": "box", "📝": "pencil", "⏳": "hourglass", "📆": "calendar", "🏖️": "sun", "👀": "eye", "🧭": "compass", "✏️": "pencil", "⏰": "alarm", "📣": "megaphone", "🎓": "cap", "📋": "list", "📞": "phone", "🗂️": "lib", "🙋": "doc", "📅": "calendar", "🔗": "link", "📞": "phone", "🏫": "school", "🎨": "palette", "✨": "sparkle", "☁️": "cloud", "💾": "save", "📂": "lib", "❓": "help", "🌱": "sprout", "🧳": "suitcase"};
   Object.keys(T).forEach(function(k){ if(!ICONS[k]) ICONS[k] = T[k]; });
-  function toolIcon(id, emoji, size){ var k = TOOL[id] || EMO[String(emoji || "").trim()] || "dots"; return icon(k, size); }
+  function toolIcon(id, emoji, size){
+    var e = String(emoji || "").trim(), k = TOOL[id] || EMO[e];
+    if(!k && e && typeof TT_TOOLS !== "undefined"){ var t = TT_TOOLS.filter(function(x){ return x.icon === e; })[0]; if(t) k = TOOL[t.id]; }   // 그림 글자만 아는 칸(찾기 결과 등)은 도구 목록에서
+    return icon(k || "dots", size);
+  }
   function icon(name, size){ var d = ICONS[name]; return d ? '<svg viewBox="0 0 24 24" width="' + (size || 22) + '" height="' + (size || 22) + '" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + d + "</svg>" : ""; }
   /* 도구 화면 왼쪽 막대(tt.js)의 메뉴 그림 글자도 같은 선 아이콘으로 (쌤비 홈 디자인일 때만) */
   function railIcons(){

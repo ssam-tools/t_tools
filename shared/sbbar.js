@@ -96,7 +96,7 @@
   }
   function seatBox(){                                                   // 쌤비 창(#sbBox): 넓은 화면은 오른쪽 빈 공간에 고정(말풍선 크기는 그대로), 좁으면 쌤비 아래
     var box = document.getElementById("sbBox"); if(!box) return;
-    var on = R.getAttribute("data-ui") === "ssambi" && document.body.classList.contains("sbOn") && window.innerWidth >= 1400;
+    var on = R.getAttribute("data-ui") === "ssambi" && document.body.classList.contains("sbOn") && window.innerWidth >= 1280;
     if(on && hero){ if(box.parentNode !== hero) hero.appendChild(box); }
     else if(box.parentNode !== document.body) document.body.appendChild(box);
   }
@@ -193,6 +193,7 @@
   }
   document.addEventListener("click", function(e){
     var host = e.target.closest && e.target.closest("#sbHero,#sbRail,#sbBar"); if(!host) return;
+    if(e.target.closest(".bub .b0") && window.TT_SBHOME && TT_SBHOME.prepGo && document.querySelector("#prep .pi")){ TT_SBHOME.prepGo(); return; }   // 시작 준비 → 말풍선을 누르면 바로
     var t = e.target.closest("button,a"); if(!t || (t.closest("#more") && !t.dataset.m)) return;
     if(t.id === "sbBarOwl" || t.id === "sbBarOwl2"){ e.stopPropagation(); openSsambi(false); return; }
     if(t.hasAttribute("data-mic")){ e.stopPropagation(); openSsambi(true); return; }
