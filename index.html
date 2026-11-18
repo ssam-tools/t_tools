@@ -8,6 +8,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2f6fb5">
 <title>쌤 노트</title>
+<script>/* v2.0: 첫 화면 고르기(⋯ → 화면 꾸미기)가 '쌤비 홈'이면 그리기 전에 표시 — 업무판이 잠깐 보였다 바뀌지 않게 */
+try{ var snQ = /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse(localStorage.getItem("snlook_v1") || "null");   /* 주소 끝 ?ui=ssambi · ?ui=board 로도 바꿈 */
+  if(snQ){ snL = snL || {}; snL.ui = snQ[1]; localStorage.setItem("snlook_v1", JSON.stringify(snL)); history.replaceState(null, "", location.pathname + location.search.replace(/[?&]ui=(ssambi|board)\b/, "").replace(/^&/, "?") + location.hash); }
+  if(snL && snL.ui === "ssambi" && localStorage.getItem("ttv_device") !== "classroom") document.documentElement.setAttribute("data-ui", "ssambi"); }catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icon-192.png">
@@ -526,6 +530,7 @@
 
 <section id="prep" class="prep" hidden aria-label="시작 준비"></section>
 <section id="mview" class="mview" hidden aria-live="polite"></section>
+<section id="sbHome" class="sbhome" hidden aria-label="쌤비 홈"></section>
 
 <div id="today" class="tdrow" aria-label="오늘"></div>
 
@@ -629,8 +634,10 @@
 <script src="shared/meal.js"></script>
 <script src="shared/libd.js"></script>
 <script src="shared/voice.js"></script>
+<script src="shared/sbart.js"></script>
 <script src="shared/ssambi.js"></script>
 <script src="shared/quick.js"></script>
+<script src="shared/sbhome.js"></script>
 <script>
 (function(){
   "use strict";
@@ -788,7 +795,7 @@
         items.push({x: {icon: "📞", name: "내선번호", st: EX.length ? EX.length + "곳 · 찾기(Ctrl+K)로도" : "학교 업무판에서 불러오기", fn: function(){ sessionStorage.setItem("sn_ext", "1"); var v = TT.store.get(UIK, {}) || {}; v.mtab = v.mtab || {}; v.mtab.school = "lib"; TT.store.set(UIK, v); renderMenu("school"); }}});
       }
       if(m.id === "settings" && !TT.classroom){                                   // 설정 메뉴: ⋯ 메뉴에 있던 설정을 카드로 (누르면 같은 창이 열림)
-        (g.id === "set" ? [["mSchool","🏫","학교·선생님 설정","학교 이름 · 담임/교과만 · 교과 칸"],["mFont","🎨","화면 꾸미기","색 · 글꼴 · 글자 크기 · 휴대폰 화면"],["mAuto","✨","자동 준비 설정","시기에 맞춰 할 일 미리 넣기"],["mBoard","📅","학교 업무판 연결","업무판 주소 · 자료실 · 내선번호"],["mVault","☁️","기기 연결·동기화","내 기기끼리 자료 맞추기"],["mInstall","📲","앱으로 설치","바탕화면·홈 화면에 아이콘"]]
+        (g.id === "set" ? [["mSchool","🏫","학교·선생님 설정","학교 이름 · 담임/교과만 · 교과 칸"],["mFont","🎨","화면 꾸미기","첫 화면(업무판·쌤비 홈) · 색 · 글꼴 · 글자 크기"],["mAuto","✨","자동 준비 설정","시기에 맞춰 할 일 미리 넣기"],["mBoard","📅","학교 업무판 연결","업무판 주소 · 자료실 · 내선번호"],["mVault","☁️","기기 연결·동기화","내 기기끼리 자료 맞추기"],["mInstall","📲","앱으로 설치","바탕화면·홈 화면에 아이콘"]]
           : [["mBackup","💾","전체 백업 저장","이 기기 자료를 파일 하나로"],["mRestore","📂","백업 불러오기","백업 파일에서 되살리기"],["mHelp","❓","처음 사용 안내","쌤 노트 쓰는 법"],["mNewYear","🌱","새 학년 시작","지난 학년 자료 정리 (조심)"]]
         ).forEach(function(a){ var el = $(a[0]); if(el && !el.hidden) items.push({x: {icon: a[1], name: a[2], st: a[3], fn: clickMenu(a[0])}}); });
       }

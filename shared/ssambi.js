@@ -28,7 +28,8 @@
   var VO = window.TTVoice, SR = !!(VO && VO.supported);           // 말→글은 공통 엔진(shared/voice.js)을 씁니다
 
   /* ── 부엉이 그림 (직접 그린 SVG, 외부 파일 없음) ── */
-  var OWL = '<svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="38" fill="#E1F5EE"/>'
+  var V2 = document.documentElement.getAttribute("data-ui") === "ssambi" && window.TT_SBART;   // v2.0 쌤비 홈: 노트를 든 새 쌤비(shared/sbart.js)
+  var OWL = V2 ? TT_SBART.svg({size: 80, deco: (function(){ var lk = document.documentElement.getAttribute("data-look"), m = new Date().getMonth() + 1; return /^(spring|summer|autumn|winter)$/.test(lk || "") ? lk : m >= 3 && m <= 5 ? "spring" : m >= 6 && m <= 8 ? "summer" : m >= 9 && m <= 11 ? "autumn" : "winter"; })()}) : '<svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="38" fill="#E1F5EE"/>'
     + '<path d="M18 30 L24 14 L32 26 Z M62 30 L56 14 L48 26 Z" fill="#0F6E56"/><ellipse cx="40" cy="46" rx="24" ry="26" fill="#1D9E75"/>'
     + '<ellipse cx="40" cy="54" rx="14" ry="15" fill="#9FE1CB"/><circle cx="30" cy="38" r="9" fill="#fff" stroke="#04342C" stroke-width="2.5"/>'
     + '<circle cx="50" cy="38" r="9" fill="#fff" stroke="#04342C" stroke-width="2.5"/><line x1="39" y1="38" x2="41" y2="38" stroke="#04342C" stroke-width="2.5"/>'
@@ -127,6 +128,12 @@
   function place(){                                                     // 창·말풍선 자리: 누른 단추 옆 / 휴대폰은 오른쪽 아래
     [box, tip].forEach(function(el){ el.style.top = el.style.bottom = el.style.left = el.style.right = el.style.borderRadius = el.style.maxHeight = ""; });
     var h = window.innerHeight, w = window.innerWidth;
+    if(from && from.nodeType === 1 && from !== hd && from !== hb && from !== btn && seen(from)){   // v2.0: 쌤비 홈의 큰 쌤비 → 바로 아래 가운데
+      var a = from.getBoundingClientRect(), bw = Math.min(360, w - 24), lx = Math.round(Math.max(12, Math.min(w - bw - 12, a.left + a.width / 2 - bw / 2))), ty = Math.round(Math.min(a.bottom + 8, h - 220));
+      box.style.top = ty + "px"; box.style.bottom = "auto"; box.style.left = lx + "px"; box.style.right = "auto"; box.style.maxHeight = (h - ty - 16) + "px";
+      tip.style.top = ty + "px"; tip.style.bottom = "auto"; tip.style.left = lx + "px"; tip.style.right = "auto";
+      return;
+    }
     if(from === hd && seen(hd)){                                        // 위쪽 단추 → 바로 아래
       var q = hd.getBoundingClientRect(), rt = Math.max(12, w - q.right) + "px", yy = Math.round(q.bottom + 8);
       box.style.top = yy + "px"; box.style.bottom = "auto"; box.style.right = rt; box.style.maxHeight = (h - yy - 16) + "px";
@@ -156,7 +163,7 @@
     return '<div class="hd">' + (back ? '<button type="button" class="bk" data-a="menu" aria-label="처음으로">←</button>' : '<span class="av">' + OWL + "</span>")
       + "<b>" + title + '</b><button type="button" class="x" data-a="close" aria-label="닫기">✕</button></div>';
   }
-  function open(view, arg){ tip.hidden = true; place(); box.hidden = false; mark(); show(view || "menu", arg); }
+  function open(view, arg, anchor){ if(anchor) from = anchor; tip.hidden = true; place(); box.hidden = false; mark(); show(view || "menu", arg); }
   function close(){ stopListen(); box.hidden = true; mark(); }
   function show(view, arg){ box.innerHTML = (V[view] || V.menu)(arg);
     Array.prototype.forEach.call(box.querySelectorAll("a[href]"), function(a){ a.setAttribute("href", abs(a.getAttribute("href"))); });

@@ -118,7 +118,7 @@
     if(a.textContent !== x[0]){ a.textContent = x[0]; a.title = x[1]; } return true;
   }
   function greet(){
-    if(!on() || !HOME) return;
+    if(!on() || !HOME || document.documentElement.getAttribute("data-ui") === "ssambi") return;   // v2.0 쌤비 홈은 쌤비 말풍선이 첫 화면에 늘 있음
     var d = new Date(), h = d.getHours() + d.getMinutes() / 60, w = d.getDay(), slot = h < 9 ? "am0" : h < 12 ? "am" : h < 13.2 ? "lunch" : h < 16.5 ? "pm" : "eve", k = ymd() + "|" + slot;
     J = load(); if(J.seen.greet === k) return;
     var msg = "", sub = "", dd = dday(), tt = null;
@@ -264,5 +264,6 @@
     badges();
   }
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
-  TT.joy = {saved: saved, count: count, open: open, stamp: stamp, on: on, weekSaved: weekSaved, dday: dday};
+  TT.joy = {saved: saved, count: count, open: open, stamp: stamp, on: on, weekSaved: weekSaved, dday: dday, examNear: examNear, season: season,
+            stamped: function(){ return !!load().stamps[ymd()]; }, stampable: stampable, monthStamps: monthStamps};   // v2.0 쌤비 홈도 함께 씀
 })();

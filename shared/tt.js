@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "1.34.0";
+  var VERSION = "2.0.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -689,7 +689,7 @@ var TT = (function(){
       /* v1.10.1: 도구 화면에도 쌤비(오른쪽 아래 둥근 캐릭터 · Alt+B). 교실 기기 모드에서는 숨김 */
       if(!classroom && !window.TT_SSAMBI && !document.getElementById("sbBtn")) (function(){
         function add(src, cb){ var s = document.createElement("script"); s.src = BASE + src; s.onload = cb || null; s.onerror = cb || null; document.head.appendChild(s); }
-        function sb(){ add("shared/ssambi.js"); }
+        function sb(){ add("shared/sbart.js", function(){ add("shared/ssambi.js"); }); }
         if(window.TTVoice) sb(); else add("shared/voice.js", sb);
       })();
     }
@@ -929,11 +929,12 @@ var TT = (function(){
     ];
     var SIZES = [{id: "m", name: "보통"}, {id: "l", name: "크게"}, {id: "xl", name: "아주 크게"}];
     var MOBS = [{id: "new", name: "새 화면", desc: "＋ 빠른 입력 · 오늘 업무 바로 보기 · 큰 글씨"}, {id: "old", name: "예전 화면", desc: "v1.33 까지의 휴대폰 화면"}];   // 화면 개편 3·4단계 (휴대폰에서만 달라짐)
+    var UIS = [{id: "board", name: "업무판", desc: "v1 · 오늘 칸 · 이번 주 업무 · 도구 카드를 한 화면에"}, {id: "ssambi", name: "쌤비 홈", desc: "v2 · 심플 · 지금 할 일만 드러나게"}];   // v2.0 첫 화면 고르기 (자료는 같음)
     function has(L, id){ return L.some(function(x){ return x.id === id; }); }
     function get(){
       var o = null; try{ o = JSON.parse(localStorage.getItem(KEY) || "null"); }catch(e){}
       if(!o){ var u = store.get("tt_ui_v1", {}) || {}, old = {soft: "dodum", cute: "dodum", neat: "batang"}[u.font]; o = {font: old || "basic"}; }   // 예전 '화면 글꼴'에서 이어받기
-      return {look: has(THEMES, o.look) ? o.look : "basic", font: has(FONTS, o.font) ? o.font : "basic", size: has(SIZES, o.size) ? o.size : "m", mob: has(MOBS, o.mob) ? o.mob : "new"};
+      return {look: has(THEMES, o.look) ? o.look : "basic", font: has(FONTS, o.font) ? o.font : "basic", size: has(SIZES, o.size) ? o.size : "m", mob: has(MOBS, o.mob) ? o.mob : "new", ui: has(UIS, o.ui) ? o.ui : "board"};
     }
     function apply(o){
       var r = document.documentElement; o = o || get();
@@ -941,12 +942,15 @@ var TT = (function(){
       if(o.font === "basic") r.removeAttribute("data-font"); else r.setAttribute("data-font", o.font);
       if(o.size === "m") r.removeAttribute("data-size"); else r.setAttribute("data-size", o.size);
       if(o.mob === "new") r.removeAttribute("data-mob"); else r.setAttribute("data-mob", o.mob);
+      if(o.ui === "board") r.removeAttribute("data-ui"); else r.setAttribute("data-ui", o.ui);   // v2.0: 쌤비 홈 디자인(shared/v2.css)은 이 표시가 있을 때만
       var mt = document.querySelector('meta[name="theme-color"]'), th = THEMES.filter(function(x){ return x.id === o.look; })[0]; if(mt && th) mt.setAttribute("content", th.c[1]);
     }
     function set(k, v){ var o = get(); o[k] = v; try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){} apply(o); }
-    function reset(){ try{ localStorage.removeItem(KEY); }catch(e){} var u = store.get("tt_ui_v1", {}) || {}; if(u.font){ delete u.font; store.set("tt_ui_v1", u); } apply(); }
+    /* 처음대로: 색·글꼴·크기만 되돌림 (첫 화면 고르기는 그대로) */
+    function reset(){ var keepUi = get().ui; try{ localStorage.removeItem(KEY); if(keepUi !== "board") localStorage.setItem(KEY, JSON.stringify({ui: keepUi})); }catch(e){} var u = store.get("tt_ui_v1", {}) || {}; if(u.font){ delete u.font; store.set("tt_ui_v1", u); } apply(); }
     try{ if(!document.querySelector('link[href$="shared/look.css"]')){ var lk = document.createElement("link"); lk.rel = "stylesheet"; lk.href = BASE + "shared/look.css"; document.head.appendChild(lk); } }catch(e){}   // 화면 꾸미기 값(색·글꼴 변수)
     try{ var l = document.createElement("link"); l.rel = "stylesheet"; l.href = BASE + "shared/fonts.css"; document.head.appendChild(l); }catch(e){}
+    try{ if(!document.querySelector('link[href$="shared/v2.css"]')){ var l2 = document.createElement("link"); l2.rel = "stylesheet"; l2.href = BASE + "shared/v2.css?v=" + VERSION; document.head.appendChild(l2); } }catch(e){}   // v2.0 쌤비 홈 디자인 (html[data-ui=ssambi] 일 때만 적용)
     apply();
     window.addEventListener("storage", function(e){ if(e.key === KEY || e.key === "tt_ui_v1") apply(); });
     /* 화면 꾸미기 창: 고르면 바로 바뀌고(미리 보기), [처음대로]로 되돌림 */
@@ -962,6 +966,7 @@ var TT = (function(){
         + ".ttlook .btn.p{background:var(--t-accent,#2f6fb5);color:#fff;border-color:var(--t-accent,#2f6fb5)}"
         + "@media (max-width:560px){.ttlook .g5{grid-template-columns:repeat(3,minmax(0,1fr))}.ttlook .g4{grid-template-columns:repeat(2,minmax(0,1fr))}}";
       d.innerHTML = "<style>" + css + "</style><h2>🎨 화면 꾸미기</h2><p>고르면 바로 바뀝니다 · 모든 화면에 함께 · 이 기기에만 저장</p>"
+        + "<h3>첫 화면 <small style=\"font-weight:400\">· 자료는 그대로, 화면 모양만 바뀝니다</small></h3><div class=\"g g2\" data-k=\"ui\">" + UIS.map(function(z){ return '<button type="button" class="o" data-v="' + z.id + '"><b>' + z.name + "</b><small>" + z.desc + "</small></button>"; }).join("") + "</div>"
         + "<h3>테마</h3><div class=\"g g5\" data-k=\"look\">" + THEMES.map(function(t){ return '<button type="button" class="o" data-v="' + t.id + '"><span class="sw" style="background:' + t.c[0] + '">' + t.c.slice(1).map(function(c){ return '<i style="background:' + c + '"></i>'; }).join("") + "</span><b>" + t.name + "</b><small>" + t.desc + "</small></button>"; }).join("") + "</div>"
         + "<h3>글꼴</h3><div class=\"g g4\" data-k=\"font\">" + FONTS.map(function(f){ return '<button type="button" class="o" data-v="' + f.id + '"><span class="fs" style="font-family:' + f.ff.replace(/"/g, "&quot;") + '">가나다 Aa 12</span><b>' + f.name + "</b><small>" + f.desc + "</small></button>"; }).join("") + "</div>"
         + "<h3>글자 크기</h3><div class=\"g g3\" data-k=\"size\">" + SIZES.map(function(z, i){ return '<button type="button" class="o" data-v="' + z.id + '"><b style="font-size:' + (14 + i * 3) + 'px">' + z.name + "</b></button>"; }).join("") + "</div>"
@@ -976,7 +981,7 @@ var TT = (function(){
       d.addEventListener("close", function(){ d.remove(); });
       document.body.appendChild(d); mark(); d.showModal();
     }
-    return {themes: THEMES, fonts: FONTS, sizes: SIZES, mobs: MOBS, get: get, set: set, reset: reset, open: open};
+    return {themes: THEMES, fonts: FONTS, sizes: SIZES, mobs: MOBS, uis: UIS, get: get, set: set, reset: reset, open: open};
   })();
   var font = {list: look.fonts, get: function(){ return look.get().font; }, set: function(id){ look.set("font", id); }};   // 예전 이름
 
