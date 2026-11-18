@@ -465,7 +465,7 @@
   function pfShow(r){
     if(!PV) return; var c = PV.d.querySelector("#pvQc"), L = PV.d.querySelector("#pvQl"); if(!c) return;
     c.textContent = r.n == null ? "" : r.n ? (r.i ? r.i + " / " : "") + r.n + (r.busy ? "…" : "") : r.busy ? "찾는 중…" : "없음";
-    var rows = (r.rows || []).filter(function(x){ return x.ic !== "📄"; });
+    var rows = (r.rows || []).filter(function(x){ return x.ic !== "📄" && !(x.ic === "🗂️" && r.n); });   // 찾은 게 있으면 쪽은 노란 표시로 충분 · 없을 때만 다른 자료 줄
     L.innerHTML = rows.map(function(x, k){ return '<button type="button" data-pr="' + k + '"><b>' + x.ic + " " + x.tx + "</b>" + (x.sub ? "<small>" + x.sub + "</small>" : "") + "</button>"; }).join("") + (r.note ? "<div>" + r.note + "</div>" : "");
     L.hidden = !L.innerHTML; L._rows = rows;
   }
