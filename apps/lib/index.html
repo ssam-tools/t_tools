@@ -129,7 +129,7 @@
   /* ---------- 목록 ---------- */
   function load(){
     $("body").innerHTML = '<div class="empty"><div class="big">⏳</div><div>자료 목록을 불러오는 중…</div></div>';
-    post({action: "liblist"}).then(function(r){ items = r.items || []; drawNav(); drawList(); openFromUrl(); }).catch(function(e){ $("body").innerHTML = '<div class="empty"><div class="big">⚠️</div><div><b>자료실을 열지 못했습니다.</b><br>' + esc(err(e)) + "</div></div>"; });
+    post({action: "liblist"}).then(function(r){ items = (r.items || []).filter(function(x){ return !/^ttbook__/.test(String(x.name || "")); });   /* 교과서 조각(교과서 띄우기용)은 목록에서 숨김 */ drawNav(); drawList(); openFromUrl(); }).catch(function(e){ $("body").innerHTML = '<div class="empty"><div class="big">⚠️</div><div><b>자료실을 열지 못했습니다.</b><br>' + esc(err(e)) + "</div></div>"; });
     post({action: "aiinfo"}).then(function(r){ canAsk = !!r.enabled; $("ask").hidden = !canAsk; }).catch(function(){});
   }
   function drawNav(){
@@ -331,7 +331,7 @@
   $("sf").onsubmit = function(e){
     e.preventDefault(); var q = $("q").value.trim(); if(!q){ drawList(); return; }
     $("body").innerHTML = '<div class="empty"><div class="big">🔎</div><div>찾는 중…</div></div>';
-    post({action: "libsearch", q: q}).then(function(r){ $("body").innerHTML = showHits(r.hits || [], q); $("info").textContent = "'" + q + "' " + (r.hits || []).length + "곳 · 최신 판을 먼저 보여 줍니다"; }).catch(function(e2){ $("body").innerHTML = '<div class="empty"><div>' + esc(err(e2)) + "</div></div>"; });
+    post({action: "libsearch", q: q}).then(function(r){ r.hits = (r.hits || []).filter(function(h){ return !/^ttbook__/.test(String(h.name || "")) && !/^교과서 조각/.test(String(h.title || "")); }); $("body").innerHTML = showHits(r.hits, q); $("info").textContent = "'" + q + "' " + (r.hits || []).length + "곳 · 최신 판을 먼저 보여 줍니다"; }).catch(function(e2){ $("body").innerHTML = '<div class="empty"><div>' + esc(err(e2)) + "</div></div>"; });
   };
   $("ask").onclick = function(){
     var q = $("q").value.trim(); if(!q){ TT.ui.toast("물어볼 말을 찾기 칸에 적어 주세요. (예: 체험학습 신청 기한)"); return; }

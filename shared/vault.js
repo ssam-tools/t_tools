@@ -15,8 +15,8 @@
 (function () {
   'use strict';
   var DEV = 'ttv_device', CFG = 'ttv_vault', SES = 'ttv_session', META = 'ttv_meta', SRV = 'ttv_server';
-  var LOCAL_ONLY = ['tt_board_v1', 'tt_board_cache_v1', 'tt_last_backup', 'tt_probe', 'tt_mode', 'tt_ui_v1'];
-  var CLASS_KEYS = ['tt_roster_v1', 'tt_timetable_v1', 'tt_journal_v1', 'tt_group_v1', 'tt_school_v1', 'tt_class_v1', 'tt_duty_v1', 'tt_calendar_v1'];
+  var LOCAL_ONLY = ['tt_remote_v1', 'tt_rstate_v1', 'tt_board_v1', 'tt_board_cache_v1', 'tt_last_backup', 'tt_probe', 'tt_mode', 'tt_ui_v1'];
+  var CLASS_KEYS = ['tt_roster_v1', 'tt_timetable_v1', 'tt_journal_v1', 'tt_group_v1', 'tt_school_v1', 'tt_class_v1', 'tt_duty_v1', 'tt_calendar_v1', 'tt_book_v1', 'tt_bookink_v1'];   // PLAN_수업: 교과서 진도·판서도 교실 기기와 함께
   var URL_RE = /^https:\/\/script\.google\.com\/(?:a\/macros\/[^\/?#\s]+|macros)\/s\/[\w-]+\/exec$/;
   var ITER = 310000, IDLE_MS = 20 * 60 * 1000;
   var enc = new TextEncoder(), dec = new TextDecoder();
@@ -256,6 +256,30 @@
       var c = active(); if (!c) return { error: '연결되어 있지 않아요.' };
       try { await call('vwipe', { id: c.id, auth: c.auth }); Vault.disconnect(); return { ok: true }; }
       catch (e) { return { error: errText(e) }; }
+    },
+    /* PLAN_수업 4단계: 휴대폰 리모컨 — 같은 보관함 ID의 두 기기가 잠근 글자 한 칸(tt_remote_v1 명령 · tt_rstate_v1 교실 화면 상태)으로 주고받음.
+       자동 동기화(LOCAL_ONLY)에는 끼지 않습니다. */
+    rsend: async function (key, obj) {
+      var c = active(); if (!c) return { error: '보관함이 열려 있지 않아요.' };
+      if (key !== 'tt_remote_v1' && key !== 'tt_rstate_v1') return { error: 'key' };
+      try {
+        var ver = Date.now(), data = await seal(c, key, JSON.stringify({ v: JSON.stringify(obj) }));
+        var j = await call('vpush', { id: c.id, auth: c.auth, items: [{ key: key, ver: ver, data: data }] });
+        var r = j.results && j.results[key];
+        return r && r.ok === false ? { error: '보내지 못했어요.' } : { ok: true, ver: ver };
+      } catch (e) { return { error: errText(e) }; }
+    },
+    rget: async function (key, since) {
+      var c = active(); if (!c) return { error: '보관함이 열려 있지 않아요.', off: true };
+      if (key !== 'tt_remote_v1' && key !== 'tt_rstate_v1') return { error: 'key' };
+      try {
+        var s = {}; s[key] = since || 0;
+        var j = await call('vpull', { id: c.id, auth: c.auth, since: s, keys: [key] });
+        var it = (j.items || []).filter(function (x) { return x.key === key; })[0];
+        if (!it || it.ver <= (since || 0)) return { ok: true, ver: since || 0 };
+        var o = J(await unseal(c, key, it.data));
+        return { ok: true, ver: it.ver, obj: o && o.v ? J(o.v) : null };
+      } catch (e) { return { error: errText(e) }; }
     },
     server: function () { var s = server(); return { url: s.url || '', hasPw: !!s.pw }; },
     IDLE_MS: IDLE_MS, CLASS_KEYS: CLASS_KEYS

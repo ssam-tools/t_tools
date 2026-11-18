@@ -112,7 +112,7 @@
     alarm: '<circle cx="12" cy="13" r="7"/><path d="M12 10v3l2 2M4 5l3-2M20 5l-3-2"/>',
     dots: '<circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/>'
   };
-  var TOOL = {timetable: "clock", book: "class", journal: "notebook", mpace: "hourglass", "class": "toolbox", group: "group", assess: "chart", mblue: "target",
+  var TOOL = {timetable: "clock", book: "class", remote: "phone", journal: "notebook", mpace: "hourglass", "class": "toolbox", group: "group", assess: "chart", mblue: "target",
     roster: "homeroom", photo: "camera", tardy: "compass", parent: "mail", submit: "box", duty: "list", seat: "seats",
     stucard: "idcard", voice: "mic", gquick: "bolt", counsel: "chat", record: "doc", advisor: "cap", bonus: "medal",
     year: "calendar", schoolhub: "school", lib: "search", ai: "robot", train: "cert", merge: "clip", setup: "suitcase",
