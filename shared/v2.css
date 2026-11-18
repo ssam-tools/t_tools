@@ -63,7 +63,7 @@ html[data-ui="ssambi"] header .lead a{color:var(--t-ink)}
 /* ---------- 4. 쌤비와 메뉴 (shared/sbbar.js) — 쌤비는 어디에나 ---------- */
 #sbHero,#sbRail,#sbBar{display:none}
 /* ① 첫 화면·중메뉴 머리: 빈칸 + ⋯ / 큰 쌤비 + 말풍선 / 검색창 / 동그라미 메뉴 */
-html[data-ui="ssambi"] body.sbOn #sbHero{display:flex;flex-direction:column;align-items:center;flex:none;font-family:var(--t-font);gap:clamp(14px,2.6vh,26px);margin-bottom:clamp(16px,3vh,30px)}
+html[data-ui="ssambi"] body.sbOn #sbHero{display:flex;flex-direction:column;align-items:center;flex:none;font-family:var(--t-font);gap:clamp(14px,2.6vh,26px);margin-bottom:clamp(8px,1.5vh,15px)}
 #sbHero .top{position:relative;align-self:stretch;display:flex;justify-content:flex-end;align-items:center;min-height:clamp(32px,5vh,52px)}
 #sbHero .top details.more{position:relative}
 #sbHero .top details.more .menu{right:0;left:auto}
@@ -91,7 +91,7 @@ html[data-ui="ssambi"] body.sbOn #sbHero{display:flex;flex-direction:column;alig
 #sbHero .ib,#sbBar .ib{flex:none;width:48px;height:48px;border-radius:50%;border:0;background:var(--t-accent-soft);color:var(--t-accent);display:flex;align-items:center;justify-content:center;cursor:pointer}
 #sbHero .ib:hover,#sbBar .ib:hover{background:var(--t-accent);color:#fff}
 #sbHero .ib.plus{display:none;background:var(--t-accent);color:#fff}
-#sbHero .circ{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;width:100%;max-width:780px;padding-bottom:clamp(12px,2vh,20px);border-bottom:1px solid var(--t-line)}
+#sbHero .circ{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;width:100%;max-width:780px;padding-bottom:clamp(6px,1vh,10px);border-bottom:1px solid var(--t-line)}
 #sbHero .circ a{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 2px;border-radius:14px;text-decoration:none;color:var(--t-ink);min-height:44px}
 #sbHero .circ .ci{width:clamp(44px,6vh,54px);height:clamp(44px,6vh,54px);border-radius:50%;background:var(--t-chip);color:var(--t-accent);display:flex;align-items:center;justify-content:center;transition:background .15s}
 #sbHero .circ b{font-size:14px;font-weight:500}
@@ -105,7 +105,7 @@ html[data-ui="ssambi"] body.sbOn #sbHero{display:flex;flex-direction:column;alig
 #sbHero > #sbBox.sbSide .hd .av{display:none}
 body.sbOn > #sbBox{transform:scale(.88);transform-origin:top center}
 body.sbOn #prep{display:none!important}   /* 시작 준비는 쌤비 말풍선이 알려 줌 */
-html[data-ui="ssambi"] body.sbOn{scrollbar-gutter:stable}   /* 결과가 길어져도 화면이 옆으로 밀리지 않게 */
+html[data-ui="ssambi"],html[data-ui="ssambi"] body.sbOn{scrollbar-gutter:stable}   /* 결과가 길어져도 화면이 옆으로 밀리지 않게 */
 
 /* ② 도구 화면(넓은 화면): 왼쪽 막대 = 쌤비 + 한마디 / 찾기 / 메뉴(지금 메뉴는 펼쳐 도구 목록) */
 @media (min-width:900px) and (min-height:460px){
@@ -179,7 +179,7 @@ html[data-ui="ssambi"].tt-hasnav .cta,html[data-ui="ssambi"].tt-hasnav .tabs,htm
 
 /* ---------- 5. 쌤비 홈 본문: 쌤비 한마디 · 지금 · 오늘 할 일 ---------- */
 .sbhome{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;font-family:var(--t-font)}
-.sbWrap{margin:0 0 auto;width:100%;max-width:780px;display:flex;flex-direction:column;align-items:stretch;gap:clamp(16px,2.4vh,24px);padding:clamp(2px,1vh,10px) 0 clamp(6px,1.4vh,14px)}
+.sbWrap{margin:0 0 auto;width:100%;max-width:780px;display:flex;flex-direction:column;align-items:stretch;gap:clamp(16px,2.4vh,24px);padding:0 0 clamp(6px,1.4vh,14px)}
 .sbBub{background:var(--t-card);border:1px solid var(--t-line);border-radius:16px;padding:clamp(10px,1.6vh,14px) 20px;box-shadow:var(--sb-shadow)}
 .sbBub .when{font-size:13px;color:var(--t-sub);font-variant-numeric:tabular-nums}
 .sbBub .when .ev{color:var(--t-accent)}
@@ -205,7 +205,8 @@ html[data-ui="ssambi"].tt-hasnav .cta,html[data-ui="ssambi"].tt-hasnav .tabs,htm
 
 /* 중메뉴: 자주 쓰는 3개 크게 + 묶음별 작은 동그라미 */
 .sbWrap.mid{max-width:780px}
-.sbMid{display:flex;flex-direction:column;gap:clamp(14px,2.2vh,22px)}
+.sbMid{display:flex;flex-direction:column;gap:clamp(12px,1.8vh,18px)}
+.sbGroups .col{display:flex;flex-direction:column;gap:8px;min-width:0}
 .sbBig{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .sbBig .bc{position:relative;display:flex;align-items:center;gap:14px;min-height:clamp(72px,10vh,88px);padding:12px 16px;border:1px solid var(--t-line);border-radius:16px;background:var(--t-card);font:inherit;color:var(--t-ink);text-align:left;cursor:pointer;box-shadow:var(--sb-shadow)}
 .sbBig .bc:hover{border-color:var(--t-accent)}
@@ -219,9 +220,10 @@ html[data-ui="ssambi"].tt-hasnav .cta,html[data-ui="ssambi"].tt-hasnav .tabs,htm
 .sbGroups .gp h3{font-size:13px;font-weight:700;color:var(--t-sub);margin:0 0 8px 4px}
 .sbGroups .gp h3 button{border:0;background:transparent;font:inherit;color:var(--t-sub);cursor:pointer;padding:4px 8px;border-radius:8px;margin-left:-8px}
 .sbGroups .gp h3 button:hover{background:var(--t-chip);color:var(--t-ink)}
-.sbGroups .ic{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px 4px}
-.sbGroups .sc{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 2px;border:0;border-radius:14px;background:transparent;font:inherit;color:var(--t-ink);cursor:pointer;min-height:44px}
-.sbGroups .sc .ci{width:44px;height:44px;border-radius:50%;background:var(--t-chip);color:var(--t-sub);display:flex;align-items:center;justify-content:center}
+.sbGroups .ic{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:4px 2px}
+.sbGroups .gp + .gp.sub{margin-top:8px}
+.sbGroups .sc{display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 2px;border:0;border-radius:14px;background:transparent;font:inherit;color:var(--t-ink);cursor:pointer;min-height:44px}
+.sbGroups .sc .ci{width:40px;height:40px;border-radius:50%;background:var(--t-chip);color:var(--t-sub);display:flex;align-items:center;justify-content:center}
 .sbGroups .sc b{color:var(--t-ink);font-size:13px;font-weight:500;text-align:center;line-height:1.3;word-break:keep-all}
 .sbGroups .sc:hover .ci{background:var(--t-accent-soft);color:var(--t-accent)}
 .sbGroups .sc:hover b{color:var(--t-accent)}
