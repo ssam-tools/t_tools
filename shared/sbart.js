@@ -119,6 +119,8 @@
     concept: "map", mgen: "numbers", mcheck: "check", mstudy: "open", mqr: "qr", play: "game", kread: "open", kreadt: "teacher"};
   var EMO = {"🗣️": "chat", "🔁": "refresh", "⚡": "bolt", "📄": "doc", "📦": "box", "📝": "pencil", "⏳": "hourglass", "📆": "calendar", "🏖️": "sun", "👀": "eye", "🧭": "compass", "✏️": "pencil", "⏰": "alarm", "📣": "megaphone", "🎓": "cap", "📋": "list", "📞": "phone", "🗂️": "lib", "🙋": "doc", "📅": "calendar", "🔗": "link", "📞": "phone", "🏫": "school", "🎨": "palette", "✨": "sparkle", "☁️": "cloud", "💾": "save", "📂": "lib", "❓": "help", "🌱": "sprout", "🧳": "suitcase"};
   Object.keys(T).forEach(function(k){ if(!ICONS[k]) ICONS[k] = T[k]; });
+  if(!ICONS.keyboard) ICONS.keyboard = '<rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M7 14h10"/>';
+  EMO["⌨️"] = EMO["⌨"] = "keyboard";
   function toolIcon(id, emoji, size){
     var e = String(emoji || "").trim(), k = TOOL[id] || EMO[e];
     if(!k && e && typeof TT_TOOLS !== "undefined"){ var t = TT_TOOLS.filter(function(x){ return x.icon === e; })[0]; if(t) k = TOOL[t.id]; }   // 그림 글자만 아는 칸(찾기 결과 등)은 도구 목록에서

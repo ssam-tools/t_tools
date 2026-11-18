@@ -600,7 +600,7 @@ try{ var snQ = /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse
       <li><b>🔎 찾기(Ctrl+K)</b>: 학생 → 학생 카드, 도구, 📞 내선번호, 🗂️ 학교 자료실 파일을 한 칸에서. <b>✍️ 학생 기록</b>으로 본 것·한 것을 한 줄씩 남기세요.</li>
       <li><b>⋯</b>: 학교·선생님 설정(담임/교과만 · 교과 칸) · 🎨 화면 꾸미기 · 업무판 연결 · 백업.</li>
     </ol>
-    <p style="margin-top:10px">🔒 학생 자료는 이 기기의 브라우저에만 저장됩니다(⋯ → 기기 연결·동기화를 켜면 내 비밀 문구로 잠가 학교 보관함과 맞춥니다). 학년이 끝날 때는 ⋯ 메뉴의 <b>전체 백업 저장</b>을 하세요. 백업 파일에는 학생 이름이 들어 있으니 다른 사람에게 보내지 마세요.</p>
+    <p style="margin-top:10px">🔒 학생 자료는 이 기기의 브라우저에만 저장됩니다(⚙️ 설정 → 기기 연결·동기화를 켜면 내 비밀 문구로 잠가 학교 보관함과 맞춥니다). 학년이 끝날 때는 ⚙️ 설정의 <b>전체 백업 저장</b>을 하세요. 백업 파일에는 학생 이름이 들어 있으니 다른 사람에게 보내지 마세요.</p>
     <p style="margin-top:6px">📱 휴대폰은 브라우저 메뉴의 "홈 화면에 추가", 컴퓨터는 주소창의 설치 아이콘을 누르면 앱처럼 쓸 수 있고, 인터넷이 끊겨도 열립니다.</p>
     <div class="acts"><span></span><div class="r"><button type="submit" class="btn primary">확인</button></div></div>
   </form>
@@ -799,7 +799,7 @@ try{ var snQ = /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse
       }
       if(m.id === "settings" && !TT.classroom){                                   // 설정 메뉴: ⋯ 메뉴에 있던 설정을 카드로 (누르면 같은 창이 열림)
         (g.id === "set" ? [["mSchool","🏫","학교·선생님 설정","학교 이름 · 담임/교과만 · 교과 칸"],["mFont","🎨","화면 꾸미기","첫 화면(업무판·쌤비 홈) · 색 · 글꼴 · 글자 크기"],["mAuto","✨","자동 준비 설정","시기에 맞춰 할 일 미리 넣기"],["mBoard","📅","학교 업무판 연결","업무판 주소 · 자료실 · 내선번호"],["mVault","☁️","기기 연결·동기화","내 기기끼리 자료 맞추기"],["mInstall","📲","앱으로 설치","바탕화면·홈 화면에 아이콘"]]
-          : [["mBackup","💾","전체 백업 저장","이 기기 자료를 파일 하나로"],["mRestore","📂","백업 불러오기","백업 파일에서 되살리기"],["mHelp","❓","처음 사용 안내","쌤 노트 쓰는 법"],["mNewYear","🌱","새 학년 시작","지난 학년 자료 정리 (조심)"]]
+          : [["mBackup","💾","전체 백업 저장","이 기기 자료를 파일 하나로"],["mRestore","📂","백업 불러오기","백업 파일에서 되살리기"],["mHelp","❓","처음 사용 안내","쌤 노트 쓰는 법"],["mKeys","⌨️","단축키 안내","Alt+1~5 · / · Alt+N · ?"],["mNewYear","🌱","새 학년 시작","지난 학년 자료 정리 (조심)"]]
         ).forEach(function(a){ var el = $(a[0]); if(el && !el.hidden) items.push({x: {icon: a[1], name: a[2], st: a[3], fn: clickMenu(a[0])}}); });
       }
       if(m.id === "class" && g.id === "subject") items.push({x: {icon: "🔗", name: "교과 자료 연결", st: (pk ? pk.name + " 공개 자료 · " : "") + "내 링크 " + (((TT.store.get("tt_subject_links_v1", null) || {}).list || []).length) + "개", fn: openLinks}});
@@ -964,7 +964,7 @@ try{ var snQ = /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse
       if(x.href) a.href = x.href; else { a.type = "button"; a.onclick = x.fn; }
       box.appendChild(a);
     });
-    var c = document.createElement("button"); c.type = "button"; c.className = "px"; c.textContent = "✕ 숨기기"; c.title = "시작 준비 칸 숨기기 (⋯ → 처음 사용 안내에서 다시 보기)";
+    var c = document.createElement("button"); c.type = "button"; c.className = "px"; c.textContent = "✕ 숨기기"; c.title = "시작 준비 칸 숨기기 (⚙️ 설정 → 처음 사용 안내에서 다시 보기)";
     c.onclick = function(){ var v = TT.store.get("tt_ui_v1", {}) || {}; v.prepHide = true; TT.store.set("tt_ui_v1", v); renderPrep(); fitRows(); };
     box.appendChild(c);
   }

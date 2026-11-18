@@ -196,8 +196,20 @@
   function drawApp(){
     if(!rail){ rail = document.createElement("aside"); rail.id = "sbRail"; rail.setAttribute("aria-label", "쌤비와 메뉴"); document.body.appendChild(rail); document.body.classList.add("sbRailOn"); }
     if(!bar){ bar = document.createElement("div"); bar.id = "sbBar"; document.body.insertBefore(bar, document.body.firstChild); document.body.classList.add("sbBarOn"); }
-    rail.innerHTML = railHTML(); bar.innerHTML = barHTML();
+    rail.innerHTML = railHTML(); bar.innerHTML = barHTML(); headIcon();
     requestAnimationFrame(function(){ R.classList.add("sbReady"); });
+  }
+  /* 도구 머리말: 제목 앞 컬러 이모지(🔎 🧭 📇 …)를 홈·왼쪽 막대와 같은 선 아이콘으로 (쌤비 홈 디자인일 때만) */
+  var EMO = /^[\s\u200d\ufe0f]*(?:[\u2190-\u2bff\u2600-\u27bf\u3297\u3299]|\ud83c[\udc00-\udfff]|\ud83d[\udc00-\udfff]|\ud83e[\udc00-\udfff])[\u200d\ufe0f\ud83c\udffb-\udfff]*\s*/;
+  function headIcon(){
+    var h = document.querySelector("header h1"); if(!h || h.dataset.sbi) return;
+    var me = hereTool(), tn = null;
+    for(var n = h.firstChild; n; n = n.nextSibling){ if(n.nodeType === 3 && n.nodeValue.trim()){ tn = n; break; } if(n.nodeType === 1) break; }
+    if(!tn || !EMO.test(tn.nodeValue)) return;
+    var em = tn.nodeValue.match(EMO)[0].trim(); tn.nodeValue = tn.nodeValue.replace(EMO, "");
+    var sp = document.createElement("span"); sp.className = "sbHi"; sp.setAttribute("aria-hidden", "true");
+    sp.innerHTML = ART && ART.toolIcon ? ART.toolIcon(me ? me.id : "", em, 24) : esc(em);
+    h.insertBefore(sp, h.firstChild); h.dataset.sbi = "1";
   }
   function draw(){ if(HOME) drawHero(); else drawApp(); }
 

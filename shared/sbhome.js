@@ -68,6 +68,7 @@
 
   /* ── 지금 카드 ── */
   function nowCard(N){
+    if(!N.has && prepStep()) return "";                                  // 시작 준비 중에는 말풍선이 안내하므로 숨김
     if(!N.has) return '<div class="sbNow none"><div class="nb"><div class="k">지금</div><div class="tt">내 시간표를 넣으면 다음 수업이 여기에 나와요</div></div>'
       + '<div class="acts"><a class="sbBtn p" href="apps/timetable/">시간표 넣기</a></div></div>';
     var h = "";
@@ -114,6 +115,7 @@
       + '<button type="button" class="sbAdd" data-add title="할 일이나 종례 때 전할 말 적기">' + ic(I.plus, 16) + "적기</button></div>";
     if(!T.length){
       var stamped = J && J.stamped(), can = J && wk && d.getHours() >= 12;
+      if(!stamped && !can) return hd.replace("</h2>", '</h2><span class="sbNone">지금 챙길 일이 없어요</span>');   // 빈 상자 대신 한 줄
       return hd + '<div class="sbDone"><div class="stp' + (stamped ? " on" : "") + '" aria-hidden="true">퇴근</div><div><b>' + (stamped ? "오늘 퇴근 도장 쾅!" : "지금 챙길 일이 없어요") + "</b><small>"
         + (stamped ? "이번 달 " + J.monthStamps() + "개" : can ? "" : "") + "</small></div>"
         + (J && (stamped || can) ? '<button type="button" class="sbBtn' + (stamped ? "" : " p") + '" data-stamp>' + (stamped ? "도장판 보기" : "퇴근 도장") + "</button>" : "") + "</div>";

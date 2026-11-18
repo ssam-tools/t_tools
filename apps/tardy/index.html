@@ -678,7 +678,7 @@ function renderSettings() {
       <div class="row" style="margin-top:8px"><button class="btn" data-act="hol-add">추가</button></div><div class="err" id="holErr"></div>
       <div style="margin-top:8px;max-height:200px;overflow:auto">${hols.map(d => `<div class="holrow"><span>${d} (${kd(d)}) · ${esc(S.holidays[d])}</span><button class="btn btn-sm" data-act="hol-del" data-d="${d}">삭제</button></div>`).join('') || '<span class="muted small">등록된 휴일이 없습니다.</span>'}</div></section>
     <section class="card"><h2>개인정보와 백업</h2>
-      <p class="small">출결·상담·결석신고서 자료는 이 기기의 브라우저에만 저장됩니다. 기기를 옮길 때는 도구 모음 첫 화면의 <b>⋯ → 전체 백업</b>을 쓰세요. 공용 화면에서는 위쪽 “이름 가리기”를 켜세요.${storageOK ? '' : ' <b style="color:var(--alert)">이 브라우저에서는 자동 저장이 되지 않습니다.</b>'}</p>
+      <p class="small">출결·상담·결석신고서 자료는 이 기기의 브라우저에만 저장됩니다. 기기를 옮길 때는 쌤 노트 <b>⚙️ 설정 → 전체 백업 저장</b>을 쓰세요. 공용 화면에서는 위쪽 “이름 가리기”를 켜세요.${storageOK ? '' : ' <b style="color:var(--alert)">이 브라우저에서는 자동 저장이 되지 않습니다.</b>'}</p>
       <div class="row"><button class="btn btn-danger" data-act="wipe">이 도구의 자료 모두 지우기</button></div></section>
   </div></div>`;
 }

@@ -132,7 +132,7 @@
       var s = lastStatus || {};
       dialog('<h2>☁️ 기기 연결·동기화</h2><p>이 기기는 <b>' + esc(cfg.id) + '</b> 보관함과 연결된 <b>내 기기</b>예요. 바뀐 내용은 잠긴 채로 학교 업무판 보관함에 자동으로 맞춰집니다.</p>'
         + '<div class="ttv-box">마지막 동기화: <b class="ttv-last">' + (s.last ? new Date(s.last).toLocaleString("ko-KR") : "—") + '</b>' + (s.error ? '<br><span style="color:var(--t-danger,#b3261e)">' + esc(s.error) + '</span>' : '') + '</div>'
-        + '<p>다른 기기 연결: 그 기기에서 <b>⋯ → 기기 연결·동기화</b>를 열고 같은 ID와 비밀 문구를 넣으세요. 전자칠판은 “교실 기기”로 정하세요.</p>'
+        + '<p>다른 기기 연결: 그 기기에서 <b>⚙️ 설정 → 기기 연결·동기화</b>를 열고 같은 ID와 비밀 문구를 넣으세요. 전자칠판은 “교실 기기”로 정하세요.</p>'
         + '<div class="ttv-err"></div><div class="acts"><button class="ttv-btn d" data-a="off">이 기기 연결 끊기</button><div class="r"><button class="ttv-btn" data-a="close">닫기</button><button class="ttv-btn p" data-a="now">지금 동기화</button></div></div>'
         + '<p style="margin-top:14px;font-size:12px">보관함을 아예 없애려면 <a href="#" data-a="wipe" style="color:var(--t-danger,#b3261e)">보관함 지우기</a> (학교 업무판에 있는 내 자료와 ID가 지워지고, 이 기기의 자료는 남아요)</p>');
       q("[data-a=close]").onclick = function(){ dlg.close(); };

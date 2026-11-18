@@ -184,7 +184,7 @@
     var r = TTComci.teachers(rows), me = TT.school.load().teacher;
     if(!r) return null;
     var t = r.teachers.filter(function(x){ return x.name === me || x.name.indexOf(me + "(") === 0; })[0];
-    if(!t) return {err: me ? "붙여 넣은 표에서 " + me + " 선생님 줄을 찾지 못했어요." : "선생님이 여럿인 표예요. 첫 화면 ⋯ → 학교·선생님 설정에 내 이름을 넣으면 내 줄만 골라 읽습니다."};
+    if(!t) return {err: me ? "붙여 넣은 표에서 " + me + " 선생님 줄을 찾지 못했어요." : "선생님이 여럿인 표예요. ⚙️ 설정 → 학교·선생님 설정에 내 이름을 넣으면 내 줄만 골라 읽습니다."};
     return {slots: t.slots, count: Object.keys(t.slots).length, periods: null, dates: {}};
   }
   function diffKeys(a, b){ var u = {}; Object.keys(a).concat(Object.keys(b)).forEach(function(k){ if(!same(a[k], b[k])) u[k] = 1; }); return Object.keys(u).sort(); }

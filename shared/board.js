@@ -256,7 +256,7 @@
     TT.store.remove(CACHE);
     setCfg(had ? {} : {hidden: true});
     st = {}; dlg.close(); render();
-    TT.ui.toast(had ? "업무판 연결을 해제했습니다." : "숨겼습니다. ⋯ 메뉴의 '학교 업무판 연결'에서 다시 켤 수 있습니다.");
+    TT.ui.toast(had ? "업무판 연결을 해제했습니다." : "숨겼습니다. ⚙️ 설정의 '학교 업무판 연결'에서 다시 켤 수 있습니다.");
   };
 
   box.addEventListener("click", function(e){
@@ -266,7 +266,7 @@
     if(act === "setup") openSetup();
     if(act === "retry") refresh();
     if(act === "all"){ st.all = true; render(); }
-    if(act === "hide"){ setCfg({hidden: true}); render(); TT.ui.toast("숨겼습니다. ⋯ 메뉴의 '학교 업무판 연결'에서 다시 켤 수 있습니다."); }
+    if(act === "hide"){ setCfg({hidden: true}); render(); TT.ui.toast("숨겼습니다. ⚙️ 설정의 '학교 업무판 연결'에서 다시 켤 수 있습니다."); }
   });
   box.addEventListener("click", function(e){                            // 휴대폰 한 줄: 요일을 누르면 그날 내용 펼치기/접기
     var b = e.target.closest("[data-day]"), a = e.target.closest("[data-addday]");

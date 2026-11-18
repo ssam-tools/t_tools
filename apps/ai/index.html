@@ -383,7 +383,7 @@
     if(nd.cls || t.table || nd.stu) chips.push(["👥", "학급", cx["학급"] ? cx["학급"] + " " + cx["인원"] : ""]);
     if(/\{(전화)\}/.test(tplText(t)) || t.kind === "gong") chips.push(["☎", "전화", cx["전화"]]);
     h += '<div class="auto" title="자동으로 채운 값">' + chips.map(function(c){ return c[2] ? "<span>" + c[0] + " " + esc(c[2]) + "</span>" : '<span class="no">' + c[0] + " " + c[1] + " 없음</span>"; }).join("") + "</div>";
-    if(chips.some(function(c){ return !c[2]; })) h += '<div class="muted">빈 값은 첫 화면 ⋯ → 🏷️ 학교·선생님 설정(또는 🧳 학기초 세팅)에 한 번 넣으면 모든 틀에 들어갑니다.</div>';
+    if(chips.some(function(c){ return !c[2]; })) h += '<div class="muted">빈 값은 ⚙️ 설정 → 학교·선생님 설정(또는 🧳 학기초 세팅)에 한 번 넣으면 모든 틀에 들어갑니다.</div>';
     if(nd.cls || t.table || nd.stu){
       var L = classesWith();
       h += '<div class="row"><select id="fCls" aria-label="학급">' + (L.length ? L.map(function(c){ return '<option value="' + esc(c.id) + '"' + (F.cls && c.id === F.cls.id ? " selected" : "") + ">" + esc(c.name) + " (" + c.students.length + "명)</option>"; }).join("") : "<option>명단 없음</option>") + "</select>";
