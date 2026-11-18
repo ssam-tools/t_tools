@@ -110,8 +110,8 @@ main{flex:1;min-height:0;overflow:hidden}
 .tile.t-alert{border-color:var(--alert-fill);background:var(--alert-bg)} .tile.t-alert b{color:var(--alert)}
 .tile.t-caution{border-color:var(--caution-fill);background:var(--caution-bg)} .tile.t-caution b{color:var(--caution)}
 .tile[aria-pressed="true"]{outline:2px solid var(--accent)}
-.wkgrid{flex:1;min-height:0;display:grid;grid-template-rows:34px;grid-auto-rows:minmax(26px,1fr);border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:auto}
-.wkrow{display:grid;grid-template-columns:minmax(86px,1.8fr) repeat(5,minmax(0,1fr)) 28px 58px;align-items:stretch;border-bottom:1px solid var(--line);min-height:26px}
+.wkgrid{flex:1;min-height:0;display:grid;grid-template-rows:34px;grid-auto-rows:minmax(15px,1fr);border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:auto}
+.wkrow{display:grid;grid-template-columns:minmax(86px,1.8fr) repeat(5,minmax(0,1fr)) 28px 58px;align-items:stretch;border-bottom:1px solid var(--line);min-height:15px}
 .wkrow:last-child{border-bottom:0}
 .wkrow>*{display:flex;align-items:center;justify-content:center;padding:1px;min-width:0}
 .wkhead{font-size:12px;color:var(--muted);background:var(--surface);position:sticky;top:0;z-index:1}
@@ -123,7 +123,9 @@ main{flex:1;min-height:0;overflow:hidden}
 .nm button{border:0;background:none;padding:0;cursor:pointer;text-align:left;font-weight:700;white-space:nowrap;overflow:hidden;max-width:100%}
 .nm button:hover{color:var(--accent);text-decoration:underline}
 .no{color:var(--muted);font-weight:400;font-size:12px;margin-right:5px}
-.dc{width:100%;height:100%;min-height:22px;max-height:34px;border:1px solid var(--line);background:transparent;border-radius:6px;font-size:12px;font-weight:800;color:var(--muted);padding:0;cursor:pointer}
+.dc{width:100%;height:100%;min-height:13px;max-height:34px;line-height:1;border:1px solid var(--line);background:transparent;border-radius:6px;font-size:12px;font-weight:800;color:var(--muted);padding:0;cursor:pointer}
+.dc{position:relative}.dc .gk,.dc .gp,.cc .gk{position:absolute;right:2px;top:0;font-style:normal;font-size:11px;line-height:1}.dc .gp{left:2px;right:auto}.cc{position:relative}
+.chip2.sall .cst{color:var(--muted);font-weight:600}
 .dc.has{background:var(--c);border-color:var(--c);color:var(--on)}
 .dc.has.appr{background:transparent;color:var(--c);border-width:2px}
 .dc.has.c-caution{background:var(--caution-fill);border-color:var(--caution-fill);color:var(--caution-on)}
@@ -240,10 +242,10 @@ table.plain{width:100%;border-collapse:collapse;font-size:13.5px}
   <main id="main"></main>
   <nav class="tabs" role="tablist" aria-label="화면 선택">
     <button class="tab" role="tab" data-act="tab" data-tab="entry">입력</button>
+    <button class="tab" role="tab" data-act="tab" data-tab="guide">⚡ 지도</button>
     <button class="tab" role="tab" data-act="tab" data-tab="week">주간</button>
     <button class="tab" role="tab" data-act="tab" data-tab="student">학생</button>
     <button class="tab" role="tab" data-act="tab" data-tab="stats">통계</button>
-    <button class="tab" role="tab" data-act="tab" data-tab="guide">⚡ 지도</button>
     <button class="tab" role="tab" data-act="tab" data-tab="counsel">상담</button>
     <button class="tab" role="tab" data-act="tab" data-tab="report" id="tabReport">결석신고서</button>
     <button class="tab" role="tab" data-act="tab" data-tab="settings">설정</button>
@@ -421,7 +423,8 @@ function renderWeek() {
       const r = rec(st.no, d), t = grpOf(r);
       const tardy = t === 'L' && L.isTardy(S.att, S.holidays, String(st.no), d);
       const cls = r ? `dc has t-${t}` + (tardy ? (w.alert ? ' c-alert' : w.runDates.has(d) ? ' c-caution' : '') + (w.runDates.has(d) ? ' run' : '') : '') : 'dc';
-      return `<div><button class="${cls}" data-act="cell" data-no="${st.no}" data-date="${d}" title="${esc(recLabel(r) + (r && r.r ? ' · ' + r.r : ''))}">${cellCh(r)}</button></div>`;
+      const gs = gOf(st.id, d), gp = gs.filter(g => g.kind.indexOf('칭찬') >= 0).length, gn = gs.length - gp;   /* 지도 연계: ⚡ 지도 · 👍 칭찬 */
+      return `<div><button class="${cls}${gs.length ? ' gdot' : ''}" data-act="cell" data-no="${st.no}" data-date="${d}" title="${esc(recLabel(r) + (r && r.r ? ' · ' + r.r : '') + (gs.length ? ' · 지도: ' + gs.map(g => g.kind).join(', ') : ''))}">${cellCh(r)}${gn ? '<i class="gk">⚡' + (gn > 1 ? gn : '') + '</i>' : ''}${gp ? '<i class="gp">👍</i>' : ''}</button></div>`;
     }).join('');
     const stt = w.alert ? `<span class="st pill-alert">주 ${w.count}회</span>` : w.caution ? `<span class="st pill-caution">연속 ${Math.max.apply(null, w.runs.map(x => x.len))}일</span>` : '';
     return `<div class="wkrow row-${w.level}"><div class="nm"><button data-act="student" data-sid="${st.id}"><span class="no">${st.no}</span>${esc(nm(st))}</button></div>${cells}<div class="sum">${w.count}</div><div>${stt}</div></div>`;
@@ -472,9 +475,19 @@ function logAfter(c) {
   return `상담 후 ${el}일간 무단지각 ${n}회`;
 }
 
+function renderStudentAll() {   /* 학생 탭 첫 화면: 반 전체 (번호·이름 + 지각·결석·인정·지도·상담 수) — 누르면 그 학생 */
+  const list = students(), n = list.length, cols = n <= 16 ? 4 : n <= 36 ? 6 : 7;
+  return `<div class="view"><div class="row spread" style="flex:none"><b>반 전체 ${n}명 <span class="muted small" style="font-weight:400">학생을 누르면 최근 8주 출결·상담 · 숫자는 전체 기간</span></b><span class="small muted">지 무단지각 · 결 결석 · 인 인정 · ⚡ 지도 · 🗣 상담</span></div>
+    <div class="chips2" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${list.map(st => {
+      const c = typeCounts(String(st.no), () => true), A = c.sick, Rr = c.ok + c.early + c.late, G = S.gd.filter(g => g.sid === st.id && g.kind.indexOf('칭찬') < 0).length, P = S.gd.filter(g => g.sid === st.id && g.kind.indexOf('칭찬') >= 0).length, C = S.counsel.filter(x => x.sid === st.id).length;
+      const b = [c.Lu ? '지' + c.Lu : '', A ? '결' + A : '', Rr ? '인' + Rr : '', G ? '⚡' + G : '', P ? '👍' + P : '', C ? '🗣' + C : ''].filter(Boolean).join(' ');
+      return `<button class="chip2 sall${c.Lu >= 3 ? ' f-caution' : ''}" data-act="student" data-sid="${st.id}"><span class="cn">${st.no}</span><span class="cname">${esc(nm(st))}</span><span class="cst">${esc(b)}</span></button>`;
+    }).join('')}</div></div>`;
+}
 function renderStudent() {
   const list = students();
-  let st = stu(view.sel) || list[0]; view.sel = st.id;
+  if (!view.sel || !stu(view.sel)) return renderStudentAll();
+  let st = stu(view.sel); view.sel = st.id;
   const idx = list.findIndex(x => x.id === st.id), no = String(st.no), td = today();
   const c = typeCounts(no, () => true);
   const logs = S.counsel.filter(x => x.sid === st.id).sort((a, b) => b.date.localeCompare(a.date));
@@ -486,15 +499,18 @@ function renderStudent() {
       if (!L.isSchoolDay(d, S.holidays)) return `<button class="cc hol" disabled title="${esc(S.holidays[d] || '휴일')}"><small>${mdShort(d)}</small>휴</button>`;
       if (d > td) return `<button class="cc" disabled><small>${mdShort(d)}</small></button>`;
       const r = rec(no, d), t = grpOf(r);
-      return `<button class="cc${r ? ` has t-${t}` : ''}${csDates.has(d) ? ' cs' : ''}" data-act="cell" data-no="${no}" data-date="${d}" title="${esc(r && r.r ? r.r : '')}"><small>${mdShort(d)}</small>${esc(recLabel(r))}</button>`;
+      const gs = gOf(st.id, d);
+      return `<button class="cc${r ? ` has t-${t}` : ''}${csDates.has(d) ? ' cs' : ''}" data-act="cell" data-no="${no}" data-date="${d}" title="${esc((r && r.r ? r.r : '') + (gs.length ? ' 지도: ' + gs.map(g => g.kind + (g.memo ? '(' + g.memo + ')' : '')).join(', ') : ''))}"><small>${mdShort(d)}</small>${esc(recLabel(r))}${gs.length ? `<i class="gk">${gs.map(g => g.kind.indexOf('칭찬') >= 0 ? '👍' : '⚡').join('')}</i>` : ''}</button>`;
     }).join('');
     return `<div class="wl ${w.alert ? 'f-alert' : w.caution ? 'f-caution' : ''}">${mdShort(m)}~${w.alert ? ' 주' + w.count : w.caution ? ' 연속' : ''}</div>${cells}`;
   }).join('');
+  const gl = S.gd.filter(g => g.sid === st.id).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
+  const gHtml = gl.length ? `<div class="log"><b class="small">⚡ 지도 ${S.gd.filter(g => g.sid === st.id).length}건</b>${gl.map(g => `<div class="small">${esc(mdShort(g.date))} <span class="pill">${esc(g.kind)}</span> ${esc(g.how || '')}${g.memo ? ' · ' + esc(g.memo) : ''}</div>`).join('')}</div>` : '';
   const recent = logs.slice(0, 4).map(x => `<div class="log"><div class="row spread"><b>${esc(x.date)}</b><span class="row">${(x.reasons || []).map(r => `<span class="pill">${esc(r)}</span>`).join('')}</span></div>
     ${x.trigger ? `<p class="small muted">${esc(x.trigger)}</p>` : ''}${x.content ? `<p class="small">${esc(x.content)}</p>` : ''}
     <div class="row"><button class="btn btn-sm" data-act="counsel-edit" data-id="${x.id}">열기</button><span class="small muted">${esc(logAfter(x))}</span></div></div>`).join('');
   return `<div class="view">
-    <div class="row" style="flex:none;flex-wrap:nowrap"><button class="btn" data-act="sstep" data-s="-1" ${idx <= 0 ? 'disabled' : ''} aria-label="이전 학생">◀</button>
+    <div class="row" style="flex:none;flex-wrap:nowrap"><button class="btn" data-act="sall" title="반 전체 보기">▦ 전체</button><button class="btn" data-act="sstep" data-s="-1" ${idx <= 0 ? 'disabled' : ''} aria-label="이전 학생">◀</button>
       <select id="stuSel" data-chg="stuSel" aria-label="학생 선택" style="font-weight:700">${list.map(s => `<option value="${s.id}" ${s.id === st.id ? 'selected' : ''}>${s.no}번 ${esc(nm(s))}</option>`).join('')}</select>
       <button class="btn" data-act="sstep" data-s="1" ${idx >= list.length - 1 ? 'disabled' : ''} aria-label="다음 학생">▶</button></div>
     <div class="kv"><div><b>${c.Lu}</b><span>무단지각</span></div><div><b>${c.sick}</b><span>병결</span></div>
@@ -502,7 +518,7 @@ function renderStudent() {
     <div class="split two"><div class="main"><h3 style="margin:0;flex:none">최근 8주 출결 <span class="muted small" style="font-weight:400">칸을 누르면 수정 · 파란 점은 상담한 날</span></h3>
       <div class="cal scroll" style="flex:1;grid-auto-rows:minmax(30px,1fr)">${cal}</div></div>
     <div class="side"><div class="row spread" style="flex:none"><h3 style="margin:0">상담 기록 ${logs.length}건</h3><button class="btn btn-sm btn-primary" data-act="counsel-new" data-sid="${st.id}">상담일지 쓰기</button></div>
-      <div class="stack scroll" style="gap:8px">${recent || '<p class="muted small">상담 기록이 없습니다.</p>'}</div></div></div>
+      <div class="stack scroll" style="gap:8px">${recent || '<p class="muted small">상담 기록이 없습니다.</p>'}${gHtml}</div></div></div>
     <div class="row mo" style="flex:none"><button class="btn btn-primary" data-act="counsel-new" data-sid="${st.id}" style="flex:1">상담일지 쓰기 (${logs.length}건)</button></div>
   </div>`;
 }
@@ -524,26 +540,31 @@ function renderStats() {
     const runs = L.allRuns(S.att, S.holidays, key, o.runN).filter(r => inRange(r.end)).length;
     const byDow = [0, 0, 0, 0, 0, 0, 0]; dates.forEach(d => byDow[L.dow(d)]++);
     let top = 1; for (let i = 2; i <= 5; i++) if (byDow[i] > byDow[top]) top = i;
-    return { s, c, aw, runs, top: dates.length ? `${L.KD[top]}(${byDow[top]})` : '-', byDow, logs: S.counsel.filter(x => x.sid === s.id).length };
+    const gA = S.gd.filter(g => g.sid === s.id && inRange(g.date)), gp = gA.filter(g => g.kind.indexOf('칭찬') >= 0).length;
+    return { s, c, aw, runs, top: dates.length ? `${L.KD[top]}(${byDow[top]})` : '-', byDow, logs: S.counsel.filter(x => x.sid === s.id).length, gd: gA.length - gp, gp };
   }).sort((a, b) => b.c.Lu - a.c.Lu || (b.c.sick + b.c.ok + b.c.early + b.c.late) - (a.c.sick + a.c.ok + a.c.early + a.c.late) || a.s.no - b.s.no);
   const dow = [0, 0, 0, 0, 0]; rows.forEach(r => { for (let i = 1; i <= 5; i++) dow[i - 1] += r.byDow[i]; });
   const mx = Math.max(1, ...dow), sum = dow.reduce((a, b) => a + b, 0);
   const T = rows.reduce((a, r) => { Object.keys(a).forEach(k => { a[k] += r.c[k]; }); return a; }, { Lu: 0, sick: 0, ok: 0, early: 0, late: 0 });
   const sel = `<select id="rangeSel" data-chg="range" style="width:auto" aria-label="기간">${[['all', '전체 기간'], ['month', '이번 달'], ['last', '지난 달'], ['4w', '최근 4주']].map(([v, t]) => `<option value="${v}" ${view.range === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
-  return `<div class="view"><div class="row spread" style="flex:none"><div class="row">${sel}<span class="small muted">무단지각 <b>${T.Lu}</b> · 병결 <b>${T.sick}</b> · 인정결 <b>${T.ok}</b> · 인정조퇴 <b>${T.early}</b> · 인정지각 <b>${T.late}</b></span></div>
+  return `<div class="view"><div class="row spread" style="flex:none"><div class="row">${sel}<label class="small" style="display:inline-flex;gap:4px;align-items:center"><input type="checkbox" data-chg="sAll" ${view.sAll ? 'checked' : ''}> 모두 보기</label><span class="small muted">기록 있는 학생 ${rows.filter(r => r.c.Lu + r.c.sick + r.c.ok + r.c.early + r.c.late + r.gd + r.gp + r.logs > 0).length}명 · 무단지각 <b>${T.Lu}</b> · 병결 <b>${T.sick}</b> · 인정결 <b>${T.ok}</b> · 인정조퇴 <b>${T.early}</b> · 인정지각 <b>${T.late}</b></span></div>
     <span class="row"><button class="btn btn-sm" data-act="att-csv">출결 표(CSV) 저장</button></span></div>
-    <div class="split two"><div class="main"><div class="card scroll" style="flex:1;padding:6px 10px"><table class="plain"><thead><tr><th>학생</th><th>무단지각</th><th>병결</th><th>인정결</th><th>인정조퇴</th><th>인정지각</th><th>주${o.weekN}회+</th><th>연속</th><th>많은 요일</th><th>상담</th></tr></thead>
-      <tbody>${rows.map(r => `<tr><td><button class="btn btn-sm" style="border:0;background:none;padding:0;font-weight:700" data-act="student" data-sid="${r.s.id}">${r.s.no} ${esc(nm(r.s))}</button></td><td>${r.c.Lu}</td><td>${r.c.sick}</td><td>${r.c.ok}</td><td>${r.c.early}</td><td>${r.c.late}</td><td>${r.aw}주</td><td>${r.runs}회</td><td>${esc(r.top)}</td><td>${r.logs}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="split two"><div class="main"><div class="card scroll" style="flex:1;padding:6px 10px"><table class="plain"><thead><tr><th>학생</th><th>무단지각</th><th>병결</th><th>인정결</th><th>인정조퇴</th><th>인정지각</th><th>주${o.weekN}회+</th><th>연속</th><th>많은 요일</th><th>⚡지도</th><th>👍칭찬</th><th>상담</th></tr></thead>
+      <tbody>${rows.filter(r => view.sAll || r.c.Lu + r.c.sick + r.c.ok + r.c.early + r.c.late + r.gd + r.gp + r.logs > 0).map(r => `<tr><td><button class="btn btn-sm" style="border:0;background:none;padding:0;font-weight:700" data-act="student" data-sid="${r.s.id}">${r.s.no} ${esc(nm(r.s))}</button></td><td>${r.c.Lu}</td><td>${r.c.sick}</td><td>${r.c.ok}</td><td>${r.c.early}</td><td>${r.c.late}</td><td>${r.aw}주</td><td>${r.runs}회</td><td>${esc(r.top)}</td><td>${r.gd}</td><td>${r.gp}</td><td>${r.logs}</td></tr>`).join('')}</tbody></table></div></div>
     <div class="side"><section class="card"><h3>요일별 무단지각 (${sum}회)</h3><div class="bars">${dow.map((n, i) => `<div class="b"><span>${n}</span><i style="height:${Math.round(n / mx * 62)}px"></i><span>${L.KD[i + 1]}</span></div>`).join('')}</div></section>
       <section class="card small muted">주${o.weekN}회+·연속·많은 요일은 <b>무단 지각</b>만 셉니다. 실제 처리는 학교 규정과 나이스를 따르세요.</section></div></div></div>`;
 }
 
 function renderCounsel() {
-  const list = S.counsel.filter(c => !view.logStudent || c.sid === view.logStudent).sort((a, b) => (b.date + b.created).toString().localeCompare((a.date + a.created).toString()));
+  const cf = view.cf || 'c', gl = cf === 'c' ? [] : S.gd.filter(g => !view.logStudent || g.sid === view.logStudent).map(g => ({ g: g, date: g.date, created: g.created || 0 }));
+  const segs = `<span class="chips">${[['c', '상담'], ['g', '⚡ 지도'], ['a', '모두']].map(x => `<button class="chip" data-act="cf" data-f="${x[0]}" aria-pressed="${cf === x[0]}">${x[1]}</button>`).join('')}</span>`;
+  const list0 = cf === 'g' ? [] : S.counsel.filter(c => !view.logStudent || c.sid === view.logStudent).sort((a, b) => (b.date + b.created).toString().localeCompare((a.date + a.created).toString()));
+  const list = list0.concat(gl).sort((a, b) => (b.date + (b.created || '')).toString().localeCompare((a.date + (a.created || '')).toString()));
   const opts = '<option value="">전체 학생</option>' + students().map(s => `<option value="${s.id}" ${view.logStudent === s.id ? 'selected' : ''}>${s.no} ${esc(nm(s))}</option>`).join('');
-  return `<div class="view"><div class="row spread" style="flex:none"><select id="logStu" data-chg="logStu" style="width:auto" aria-label="학생 선택">${opts}</select>
+  return `<div class="view"><div class="row spread" style="flex:none"><span class="row"><select id="logStu" data-chg="logStu" style="width:auto" aria-label="학생 선택">${opts}</select>${segs}</span>
     <div class="row"><button class="btn btn-primary" data-act="counsel-new" data-sid="${esc(view.logStudent)}">새 상담일지</button><button class="btn" data-act="csv">표(CSV)로 저장</button></div></div>
     <div class="stack scroll" style="gap:8px;flex:1">${list.length ? list.map(c => {
+      if (c.g) { const g = c.g; return `<article class="log"><div class="row spread"><b>${esc(nm(stu(g.sid)))} <span class="muted small">${esc(g.date)}${g.time ? ' ' + esc(g.time) : ''}</span></b><span class="row"><span class="pill">⚡ ${esc(g.kind)}</span><span class="pill">${esc(g.how || '')}</span></span></div>${g.memo ? `<p class="small">${esc(g.memo)}</p>` : ''}<div class="row"><button class="btn btn-sm" data-act="g-counsel" data-id="${g.id}">상담일지로 자세히</button></div></article>`; }
       const st = stu(c.sid), after = logAfter(c);
       return `<article class="log"><div class="row spread"><b>${esc(nm(st))} <span class="muted small">${esc(c.date)}</span></b><span class="row">${(c.reasons || []).map(r => `<span class="pill">${esc(r)}</span>`).join('')}
         ${c.next ? `<span class="pill ${c.done ? 'pill-good' : ''}">${c.done ? '개선 확인함' : '후속 ' + esc(mdShort(c.next))}</span>` : ''}</span></div>
@@ -953,7 +974,7 @@ function setRec(no, d, r) {
 }
 function afterDelta(no, d, before) { const w = wkStat(no, L.weekStart(d)); if (w.level !== 'ok' && w.level !== before) toast(`${nm(stu(no))}: ${L.describe(w)}`); }
 const A = {
-  tab: t => { view.tab = t.dataset.tab; closeModal(); render(); },
+  tab: t => { view.tab = t.dataset.tab; if (view.tab === 'student') view.sel = null; closeModal(); render(); },
   mask: () => { S.settings.mask = !S.settings.mask; persist(); render(); },
   mode: t => { view.mode = t.dataset.m; view.ok = false; render(); },
   dstep: t => {
@@ -985,6 +1006,8 @@ const A = {
   filter: t => { view.filter = view.filter === t.dataset.f ? 'all' : t.dataset.f; render(); },
   goday: t => { const d = t.dataset.date; if (d > today()) return; view.date = d; view.monday = L.weekStart(d); view.tab = 'entry'; render(); },
   student: t => { view.sel = t.dataset.sid; view.tab = 'student'; closeModal(); render(); },
+  cf: t => { view.cf = t.dataset.f; render(); },
+  sall: t => { view.sel = null; render(); },
   sstep: t => { const l = students(), i = l.findIndex(s => s.id === view.sel) + (+t.dataset.s); if (l[i]) { view.sel = l[i].id; render(); } },
   'rec-type': t => {
     const { no, d } = recCtx, ty = t.dataset.t, cur = rec(no, d);
@@ -1087,6 +1110,7 @@ const C = {
   stuSel: t => { view.sel = t.value; render(); },
   logStu: t => { view.logStudent = t.value; render(); },
   range: t => { view.range = t.value; render(); },
+  sAll: t => { view.sAll = t.checked; render(); },
   rmonth: t => { view.rmonth = t.value; render(); },
   runN: t => { S.settings.runN = Math.min(5, Math.max(2, +t.value || 2)); persist(); render(); },
   weekN: t => { S.settings.weekN = Math.min(5, Math.max(2, +t.value || 3)); persist(); render(); },
