@@ -257,7 +257,8 @@
     var c = cfg(), sn = TT.school.load().name || c.school || "";
     var code = btoa(unescape(encodeURIComponent(JSON.stringify({s: sn, b: c.url})))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
     var link = location.origin + (TT.BASE ? new URL(TT.BASE, location.href).pathname : location.pathname) + "?invite=" + code;
-    try{ navigator.clipboard.writeText(link); TT.ui.toast("🔗 초대 링크를 복사했어요. 쿨메신저로 보내고, 비밀번호는 따로 알려 주세요.", null, null, 10000); }catch(e){ prompt("이 링크를 복사해 보내 주세요", link); }
+    var ask = function(){ prompt("이 링크를 복사해 쿨메신저로 보내 주세요 (비밀번호는 따로)", link); };
+    try{ navigator.clipboard.writeText(link).then(function(){ TT.ui.toast("🔗 초대 링크를 복사했어요. 쿨메신저로 보내고, 비밀번호는 따로 알려 주세요.", null, null, 10000); }, ask); }catch(e){ ask(); }
   };
   $("bOff").onclick = function(){
     var had = !!cfg().url;

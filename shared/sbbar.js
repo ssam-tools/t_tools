@@ -220,7 +220,7 @@
     bar.querySelector(".bo").innerHTML = '<button type="button" class="owl" id="sbBarOwl2" title="쌤비 (Alt+B)" aria-label="쌤비 열기">' + owlSvg(46) + "</button>";
     bar.querySelector(".sbTabs").innerHTML = barTabs();
     F.ph(); headIcon();
-    requestAnimationFrame(function(){ R.classList.add("sbReady"); });
+    requestAnimationFrame(function(){ R.classList.add("sbReady"); }); setTimeout(function(){ R.classList.add("sbReady"); }, 120);   // v2.8.1: 창이 뒤에 있어 그림 신호가 늦어도 보이게
   }
 
   /* ── v2.7 도구 화면 검색창: 오른쪽 화면이 무엇이냐에 따라 찾는 곳이 바뀝니다 ──

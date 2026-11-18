@@ -303,5 +303,5 @@
     move: function(d){ var n = picks().length; if(!n) return; Q.sel = (Q.sel + d + n) % n; render(); },
     run: function(){ var p = picks()[Q.sel]; if(!p) return; runRow(Q.rows.indexOf(p), null); }};
   render(); logo(); navIcons();
-  requestAnimationFrame(function(){ R.classList.add("sbReady"); });   // 첫 그림이 끝나면 보이기
+  requestAnimationFrame(function(){ R.classList.add("sbReady"); }); setTimeout(function(){ R.classList.add("sbReady"); }, 120);   // v2.8.1: 창이 뒤에 있어 그림 신호가 늦어도 보이게   // 첫 그림이 끝나면 보이기
 })();

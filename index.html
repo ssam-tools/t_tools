@@ -1174,6 +1174,7 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
     TT.ui.confirm("📲 앱 설치하기", ios ? "사파리 아래쪽 공유 단추(□↑) → '홈 화면에 추가' → 이름 '쌤 노트' → 추가" : and ? "크롬 오른쪽 위 ⋮ → '앱 설치' 또는 '홈 화면에 추가' → 설치" : "크롬·엣지 주소창 오른쪽의 설치 아이콘(⊕ 또는 □↓)을 누르거나, 브라우저 메뉴 ⋮ → '쌤 노트 설치'를 누르세요. 바탕화면과 시작 메뉴에 쌤비 아이콘이 생깁니다.", "알겠어요", function(){});
   };
   /* v2.8.1 의견 보내기: 학교 업무판(Apps Script) '의견' 시트로 — 연결 전이면 복사해서 쿨메신저로 */
+  function copyTxt(t){ try{ return navigator.clipboard.writeText(t).then(function(){ return true; }, function(){ return false; }); }catch(e){ return Promise.resolve(false); } }
   $("mFeedback").onclick = function(){ closeMenu(); $("fbErr").textContent = ""; $("fbOk").disabled = false; $("fbName").value = (TT.school.load().teacher || ""); $("dlgFb").showModal(); setTimeout(function(){ $("fbText").focus(); }, 0); };
   $("fbCancel").onclick = function(){ $("dlgFb").close(); };
   $("fFb").addEventListener("submit", function(e){
@@ -1181,8 +1182,10 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
     var t = $("fbText").value.trim(); if(t.length < 2){ $("fbErr").textContent = "내용을 적어 주세요."; return; }
     var B = TT.store.get("tt_board_v1", null) || {}, msg = "[쌤 노트 의견 · v" + TT.VERSION + "] " + t + ($("fbName").value.trim() ? " — " + $("fbName").value.trim() : "");
     if(!(B.url && B.pw)){
-      try{ navigator.clipboard.writeText(msg); }catch(x){}
-      $("dlgFb").close(); TT.ui.toast("학교 업무판이 연결되어 있지 않아 내용을 복사했어요. 쿨메신저로 담당 선생님께 붙여 넣어 보내 주세요.", null, null, 12000); return;
+      copyTxt(msg).then(function(ok){
+        if(ok){ $("dlgFb").close(); TT.ui.toast("학교 업무판이 연결되어 있지 않아 내용을 복사했어요. 쿨메신저로 담당 선생님께 붙여 넣어 보내 주세요.", null, null, 12000); }
+        else{ $("fbErr").textContent = "학교 업무판이 연결되어 있지 않아요. 내용 칸의 글을 복사(Ctrl+C)해 쿨메신저로 보내 주세요."; $("fbText").select(); }
+      }); return;
     }
     $("fbOk").disabled = true; $("fbErr").textContent = "보내는 중…";
     fetch(B.url, {method: "POST", redirect: "follow", credentials: "omit", cache: "no-store", headers: {"Content-Type": "text/plain;charset=utf-8"},
@@ -1191,8 +1194,8 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
         if(!j || !j.ok) throw new Error(j && j.error || "보내지 못했어요");
         $("fbText").value = ""; $("dlgFb").close(); TT.ui.toast("💬 의견을 보냈어요. 고맙습니다!");
       }).catch(function(err){
-        try{ navigator.clipboard.writeText(msg); }catch(x){}
-        $("fbOk").disabled = false; $("fbErr").textContent = (/지원하지 않는/.test(String(err.message)) ? "업무판이 아직 의견 받기를 지원하지 않아요." : "보내지 못했어요.") + " 내용을 복사해 두었으니 쿨메신저로 보내 주세요.";
+        $("fbOk").disabled = false;
+        copyTxt(msg).then(function(ok){ $("fbErr").textContent = (/지원하지 않는/.test(String(err.message)) ? "업무판이 아직 의견 받기를 지원하지 않아요." : /AUTH/.test(String(err.message)) ? "업무판 비밀번호가 바뀌었어요. ⋯ → 학교 업무판 연결에서 다시 넣어 주세요." : "보내지 못했어요.") + (ok ? " 내용을 복사해 두었으니 쿨메신저로 보내 주세요." : " 내용 칸의 글을 복사해 쿨메신저로 보내 주세요."); });
       });
   });
   /* v2.8.1 선생님 초대 링크: ?invite=… 로 열면 학교 이름 · 업무판 주소를 넣고 비밀번호만 묻기 */
