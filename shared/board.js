@@ -116,7 +116,7 @@
                 : '<button type="button" class="btn primary" data-act="setup">업무판 연결</button><button type="button" class="bk" data-act="hide" title="이 칸 숨기기">숨기기</button>')
       + "</div>";
     if(window.matchMedia && window.matchMedia("(max-width:760px)").matches){   // 개편 5단계: 휴대폰은 이번 주 한 줄(건수만) · 누르면 그날 내용
-      var tot = 0, sel = st.day || "";
+      var tot = 0, nmob = !document.documentElement.hasAttribute("data-mob"), sel = st.day != null ? st.day : (nmob && mon <= new Date() ? tk : "");   // 화면 개편 4단계: 새 휴대폰 화면은 오늘 업무를 처음부터 펼침
       h = '<div class="bline"><b>📅 ' + (weekend ? "다음 주" : "이번 주") + "</b>";
       for(var j = 0; j < 5; j++){
         var dj = add(mon, j), kj = ymd(dj), nj = items.filter(function(x){ return x.type === "item" && x.date === kj; }).length + mine.filter(function(x){ return x.date === kj; }).length;
@@ -128,7 +128,9 @@
       if(sel){
         var ds = new Date(+sel.slice(0,4), +sel.slice(5,7) - 1, +sel.slice(8,10)), L2 = mine.filter(function(x){ return x.date === sel; }).map(function(x){ return '<div class="bi me">' + (x.ic || "📝") + " " + esc(x.text) + "</div>"; })
           .concat(items.filter(function(x){ return x.type === "item" && x.date === sel; }).map(function(x){ return '<div class="bi"><b style="color:' + color(x.dept) + '">' + esc(short(x.dept)) + "</b>" + (x.time ? '<span class="t">' + esc(x.time) + "</span>" : "") + esc(x.text) + "</div>"; }));
-        h += '<div class="bday"><div class="bdh">' + (ds.getMonth()+1) + "/" + ds.getDate() + " " + DOW[ds.getDay()] + '요일 <button type="button" class="bk" data-addday="' + sel + '">＋ 할 일</button></div>' + (L2.length ? L2.join("") : '<div class="bnone">일정 없음</div>') + "</div>";
+        var cut = nmob && !st.all && L2.length > 4 ? 3 : 0;                 // 새 휴대폰 화면: 3건 + "모두 보기"
+        h += '<div class="bday"><div class="bdh">' + (ds.getMonth()+1) + "/" + ds.getDate() + " " + DOW[ds.getDay()] + '요일' + (sel === tk ? " · 오늘" : "") + ' <button type="button" class="bk" data-addday="' + sel + '">＋ 할 일</button></div>'
+          + (L2.length ? (cut ? L2.slice(0, cut).join("") + '<button type="button" class="bk bmore2" data-act="all">＋ ' + (L2.length - cut) + "건 모두 보기</button>" : L2.join("")) : '<div class="bnone">일정 없음</div>') + "</div>";
       }
       box.className = "board mob"; box.innerHTML = h; return;
     }
@@ -161,21 +163,36 @@
     if(notice.length) h += '<div class="bn" title="' + esc(notice.map(function(x){ return x.text; }).join("\n")) + '">📢 ' + esc(notice.map(function(x){ return x.text; }).join("  ·  ")) + "</div>";
     box.className = "board";
     box.innerHTML = h;
-    requestAnimationFrame(clamp);
+    requestAnimationFrame(fit);
   }
   function stamp(t){ var d = new Date(t); return (d.toDateString() === new Date().toDateString() ? "" : (d.getMonth()+1) + "/" + d.getDate() + " ") + pad(d.getHours()) + ":" + pad(d.getMinutes()); }
-  /* 칸에 다 안 들어가면 뒤쪽을 숨기고 "+N건"으로 표시 */
-  function clamp(){
-    Array.prototype.forEach.call(box.querySelectorAll(".bdl"), function(l){
-      var its = l.querySelectorAll(".bi");
-      if(l.scrollHeight <= l.clientHeight + 1 || its.length < 2) return;
-      var more = document.createElement("div"); more.className = "bmore"; l.appendChild(more);
-      var n = 0;
-      for(var k = its.length - 1; k >= 1; k--){
-        its[k].style.display = "none"; n++; more.textContent = "+" + n + "건 더";
-        if(l.scrollHeight <= l.clientHeight + 1) break;
-      }
-    });
+  /* 화면 개편 1단계: 업무가 많은 주는 업무 칸을 내용만큼 키움(위 '오늘' 칸이 그만큼 줄어듦).
+     화면의 절반(2주 보기는 62%)까지 늘리고, 그래도 넘치는 날만 그 칸 안에서 스크롤합니다(숨기지 않음). */
+  function fit(){
+    var row = box.parentElement; if(!row || !row.classList.contains("toprow")) return;
+    row.style.height = ""; row.style.maxHeight = ""; row.style.flex = "";
+    var L = Array.prototype.filter.call(box.querySelectorAll(".bdl"), function(l){ l.classList.remove("scr"); return l.offsetParent; });
+    if(!L.length || document.body.classList.contains("allv") || document.body.classList.contains("inmenu")) return;
+    function need(){                                                    // 줄(주)마다 가장 긴 날이 더 필요한 높이의 합 (남으면 음수)
+      var rows = {}, x = 0;
+      L.forEach(function(l){
+        var k = l.lastElementChild, top = Math.round(l.getBoundingClientRect().top);
+        var n = k ? k.getBoundingClientRect().bottom - l.getBoundingClientRect().top - l.clientHeight + l.scrollTop : -l.clientHeight;
+        if(!(top in rows) || n > rows[top]) rows[top] = n;
+      });
+      Object.keys(rows).forEach(function(k){ x += rows[k]; }); return x;
+    }
+    var base = row.offsetHeight, x = need();
+    if(x > 1){
+      var td = document.getElementById("today"), give = 0;
+      if(td && td.offsetParent){ var mn = parseFloat(getComputedStyle(td).minHeight) || 0; give = Math.max(0, td.offsetHeight - mn); }   // 위 '오늘' 칸이 내줄 수 있는 만큼만
+      var cap = Math.min(Math.round(window.innerHeight * (row.classList.contains("wk2") ? .62 : .5)), base + give);
+      row.style.flex = "0 0 auto"; row.style.maxHeight = "none";
+      row.style.height = Math.max(base, Math.min(cap, base + Math.ceil(x) + 2)) + "px";
+      var over = document.documentElement.scrollHeight - window.innerHeight;   // 그래도 화면이 넘치면 다시 줄임 (스크롤 없이 한 화면)
+      if(over > 0) row.style.height = Math.max(base, row.offsetHeight - over) + "px";
+    }
+    L.forEach(function(l){ if(l.scrollHeight > l.clientHeight + 1) l.classList.add("scr"); });
   }
 
   /* 불러오기 (지난번 내용을 먼저 보여 주고, 새 내용으로 바꿉니다) */
@@ -248,11 +265,12 @@
     var act = b.getAttribute("data-act");
     if(act === "setup") openSetup();
     if(act === "retry") refresh();
+    if(act === "all"){ st.all = true; render(); }
     if(act === "hide"){ setCfg({hidden: true}); render(); TT.ui.toast("숨겼습니다. ⋯ 메뉴의 '학교 업무판 연결'에서 다시 켤 수 있습니다."); }
   });
   box.addEventListener("click", function(e){                            // 휴대폰 한 줄: 요일을 누르면 그날 내용 펼치기/접기
     var b = e.target.closest("[data-day]"), a = e.target.closest("[data-addday]");
-    if(b){ st.day = st.day === b.dataset.day ? "" : b.dataset.day; render(); return; }
+    if(b){ var on = box.querySelector(".bc.on"); st.day = on && on.dataset.day === b.dataset.day ? "" : b.dataset.day; st.all = false; render(); return; }
     if(a){ var k = a.dataset.addday; TT.ui.prompt("📝 " + (+k.slice(5,7)) + "/" + (+k.slice(8,10)) + " 내 할 일", "", "나만 보는 할 일", function(v){ addMine(k, v); render(); TT.ui.toast("내 할 일에 넣었습니다 (나만 보기)."); }); }
   });
   /* 날짜 칸의 빈 곳(또는 내 할 일)을 누르면 그 날짜로 내 할 일 추가. 학교 업무를 누르면 업무판이 열립니다. */

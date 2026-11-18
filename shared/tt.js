@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "1.33.0";
+  var VERSION = "1.34.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -928,17 +928,19 @@ var TT = (function(){
       {id: "batang", name: "고운바탕", desc: "차분함 · 책", ff: '"Gowun Batang","SN Gowun Batang",serif'}
     ];
     var SIZES = [{id: "m", name: "보통"}, {id: "l", name: "크게"}, {id: "xl", name: "아주 크게"}];
+    var MOBS = [{id: "new", name: "새 화면", desc: "＋ 빠른 입력 · 오늘 업무 바로 보기 · 큰 글씨"}, {id: "old", name: "예전 화면", desc: "v1.33 까지의 휴대폰 화면"}];   // 화면 개편 3·4단계 (휴대폰에서만 달라짐)
     function has(L, id){ return L.some(function(x){ return x.id === id; }); }
     function get(){
       var o = null; try{ o = JSON.parse(localStorage.getItem(KEY) || "null"); }catch(e){}
       if(!o){ var u = store.get("tt_ui_v1", {}) || {}, old = {soft: "dodum", cute: "dodum", neat: "batang"}[u.font]; o = {font: old || "basic"}; }   // 예전 '화면 글꼴'에서 이어받기
-      return {look: has(THEMES, o.look) ? o.look : "basic", font: has(FONTS, o.font) ? o.font : "basic", size: has(SIZES, o.size) ? o.size : "m"};
+      return {look: has(THEMES, o.look) ? o.look : "basic", font: has(FONTS, o.font) ? o.font : "basic", size: has(SIZES, o.size) ? o.size : "m", mob: has(MOBS, o.mob) ? o.mob : "new"};
     }
     function apply(o){
       var r = document.documentElement; o = o || get();
       if(o.look === "basic") r.removeAttribute("data-look"); else r.setAttribute("data-look", o.look);
       if(o.font === "basic") r.removeAttribute("data-font"); else r.setAttribute("data-font", o.font);
       if(o.size === "m") r.removeAttribute("data-size"); else r.setAttribute("data-size", o.size);
+      if(o.mob === "new") r.removeAttribute("data-mob"); else r.setAttribute("data-mob", o.mob);
       var mt = document.querySelector('meta[name="theme-color"]'), th = THEMES.filter(function(x){ return x.id === o.look; })[0]; if(mt && th) mt.setAttribute("content", th.c[1]);
     }
     function set(k, v){ var o = get(); o[k] = v; try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){} apply(o); }
@@ -952,7 +954,7 @@ var TT = (function(){
       var d = document.createElement("dialog"), o = get(); d.className = "ttlook";
       var css = ".ttlook{border:0;border-radius:16px;padding:16px 18px;width:min(640px,96vw);max-height:calc(100vh - 16px);box-shadow:0 10px 40px rgba(0,0,0,.28);color:var(--t-ink,#1d2733);background:var(--t-card,#fff);font-family:var(--t-font)}"
         + ".ttlook::backdrop{background:rgba(20,30,45,.45)}.ttlook h2{font-size:18px;margin:0 0 4px}.ttlook h3{font-size:13px;color:var(--t-sub,#5b6773);margin:12px 0 6px}.ttlook p{font-size:12.5px;color:var(--t-sub,#5b6773);margin:0}"
-        + ".ttlook .g{display:grid;gap:7px}.ttlook .g5{grid-template-columns:repeat(5,minmax(0,1fr))}.ttlook .g4{grid-template-columns:repeat(4,minmax(0,1fr))}.ttlook .g3{grid-template-columns:repeat(3,minmax(0,1fr))}"
+        + ".ttlook .g{display:grid;gap:7px}.ttlook .g5{grid-template-columns:repeat(5,minmax(0,1fr))}.ttlook .g4{grid-template-columns:repeat(4,minmax(0,1fr))}.ttlook .g3{grid-template-columns:repeat(3,minmax(0,1fr))}.ttlook .g2{grid-template-columns:repeat(2,minmax(0,1fr))}"
         + ".ttlook .o{font:inherit;border:2px solid var(--t-line,#dde3ea);background:var(--t-card,#fff);border-radius:12px;padding:8px;cursor:pointer;text-align:left;color:var(--t-ink,#1d2733);display:flex;flex-direction:column;gap:4px;min-width:0}"
         + ".ttlook .o.on{border-color:var(--t-accent,#2f6fb5);box-shadow:0 0 0 2px var(--t-accent-soft,#e6f0fa)}.ttlook .o b{font-size:14px}.ttlook .o small{font-size:11px;color:var(--t-sub,#5b6773);line-height:1.3}"
         + ".ttlook .sw{display:flex;gap:3px;border-radius:8px;padding:5px}.ttlook .sw i{flex:1;height:16px;border-radius:4px}.ttlook .fs{font-size:20px;line-height:1.2}"
@@ -963,6 +965,7 @@ var TT = (function(){
         + "<h3>테마</h3><div class=\"g g5\" data-k=\"look\">" + THEMES.map(function(t){ return '<button type="button" class="o" data-v="' + t.id + '"><span class="sw" style="background:' + t.c[0] + '">' + t.c.slice(1).map(function(c){ return '<i style="background:' + c + '"></i>'; }).join("") + "</span><b>" + t.name + "</b><small>" + t.desc + "</small></button>"; }).join("") + "</div>"
         + "<h3>글꼴</h3><div class=\"g g4\" data-k=\"font\">" + FONTS.map(function(f){ return '<button type="button" class="o" data-v="' + f.id + '"><span class="fs" style="font-family:' + f.ff.replace(/"/g, "&quot;") + '">가나다 Aa 12</span><b>' + f.name + "</b><small>" + f.desc + "</small></button>"; }).join("") + "</div>"
         + "<h3>글자 크기</h3><div class=\"g g3\" data-k=\"size\">" + SIZES.map(function(z, i){ return '<button type="button" class="o" data-v="' + z.id + '"><b style="font-size:' + (14 + i * 3) + 'px">' + z.name + "</b></button>"; }).join("") + "</div>"
+        + "<h3>휴대폰 화면 <small style=\"font-weight:400\">· 마음에 들지 않으면 예전 화면으로 (자료는 그대로)</small></h3><div class=\"g g2\" data-k=\"mob\">" + MOBS.map(function(z){ return '<button type="button" class="o" data-v="' + z.id + '"><b>' + z.name + "</b><small>" + z.desc + "</small></button>"; }).join("") + "</div>"
         + '<div class="acts"><button type="button" class="btn" data-act="reset">↺ 처음대로</button><button type="button" class="btn p" data-act="close">닫기</button></div>';
       function mark(){ var c = get(); Array.prototype.forEach.call(d.querySelectorAll("[data-k]"), function(g){ Array.prototype.forEach.call(g.children, function(b){ b.classList.toggle("on", b.dataset.v === c[g.dataset.k]); }); }); }
       d.addEventListener("click", function(e){
@@ -973,7 +976,7 @@ var TT = (function(){
       d.addEventListener("close", function(){ d.remove(); });
       document.body.appendChild(d); mark(); d.showModal();
     }
-    return {themes: THEMES, fonts: FONTS, sizes: SIZES, get: get, set: set, reset: reset, open: open};
+    return {themes: THEMES, fonts: FONTS, sizes: SIZES, mobs: MOBS, get: get, set: set, reset: reset, open: open};
   })();
   var font = {list: look.fonts, get: function(){ return look.get().font; }, set: function(id){ look.set("font", id); }};   // 예전 이름
 
