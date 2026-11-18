@@ -75,11 +75,17 @@ html[data-ui="ssambi"] body.sbOn #sbHero{display:flex;flex-direction:column;alig
 #sbHero .bub::before{content:"";position:absolute;left:-8px;top:50%;width:14px;height:14px;background:var(--t-card);border-left:1px solid var(--t-line);border-bottom:1px solid var(--t-line);transform:translateY(-50%) rotate(45deg)}
 #sbHero .bub .when{font-size:13px;color:var(--t-sub);font-variant-numeric:tabular-nums}
 #sbHero .bub .ev{color:var(--t-accent)}
-#sbHero .bub p{font-size:clamp(16px,2.2vh,18px);font-weight:700;line-height:1.5;margin-top:2px;word-break:keep-all}
-#sbHero .bub small{display:block;font-size:14px;color:var(--t-sub);margin-top:2px;word-break:keep-all}
+#sbHero .bub .b0 p{font-size:clamp(16px,2.2vh,18px);font-weight:700;line-height:1.5;margin-top:2px;word-break:keep-all}
+#sbHero .bub .b0 small{display:block;font-size:14px;color:var(--t-sub);margin-top:2px;word-break:keep-all}
 #sbHero .srow{display:flex;align-items:center;gap:10px;width:100%;max-width:780px}
-#sbHero .q{flex:1;min-width:0;display:flex;align-items:center;gap:12px;height:clamp(50px,6.6vh,58px);border:1px solid #DAD6CD;border-radius:999px;background:var(--t-card);padding:0 16px 0 22px;color:var(--t-faint);font:inherit;font-size:17px;cursor:text;text-align:left;box-shadow:var(--sb-shadow)}
+#sbHero .q{cursor:text;flex:1;min-width:0;display:flex;align-items:center;gap:12px;height:clamp(50px,6.6vh,58px);border:1px solid #DAD6CD;border-radius:999px;background:var(--t-card);padding:0 16px 0 22px;color:var(--t-faint);font:inherit;font-size:17px;cursor:text;text-align:left;box-shadow:var(--sb-shadow)}
 #sbHero .q:hover{border-color:var(--t-accent)}
+#sbHero .q:focus-within{border-color:var(--t-accent);box-shadow:0 0 0 4px var(--t-accent-soft)}
+#sbHero .q input{flex:1;min-width:0;border:0;outline:none;background:transparent;font:inherit;font-size:inherit;color:var(--t-ink);height:100%}
+#sbHero .q input::placeholder{color:var(--t-faint)}
+#sbHero .q input:focus-visible{outline:none}
+#sbHero .qx{flex:none;border:0;background:var(--t-chip);color:var(--t-sub);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px}
+#sbHero .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 #sbHero .q span{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 #sbHero .q kbd,#sbRail .q kbd{font:inherit;font-size:13px;color:var(--t-faint);border:1px solid var(--t-line);border-radius:6px;padding:0 8px}
 #sbHero .ib,#sbBar .ib{flex:none;width:48px;height:48px;border-radius:50%;border:0;background:var(--t-accent-soft);color:var(--t-accent);display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -92,6 +98,16 @@ html[data-ui="ssambi"] body.sbOn #sbHero{display:flex;flex-direction:column;alig
 #sbHero .circ a:hover .ci{background:var(--t-accent-soft)}
 #sbHero .circ a.on .ci{background:var(--t-accent);color:#fff}
 #sbHero .circ a.on b{font-weight:700}
+
+/* 쌤비 창(#sbBox)은 첫 화면에서 따로 뜨지 않고 말풍선 안에 */
+#sbHero .bub #sbBox{position:static!important;inset:auto!important;width:auto!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important;overflow:visible!important;animation:none!important}
+#sbHero .bub:has(#sbBox:not([hidden])) .b0{display:none}
+#sbHero .bub{min-width:0}
+#sbHero .bub:has(#sbBox:not([hidden])){width:min(480px,100%);max-width:480px}
+#sbHero .bub #sbBox .hd .av{display:none}
+#sbHero .bub #sbBox .nt{display:none}
+#sbHero .bub #sbBox .ex{font-size:12.5px;line-height:1.5}
+#sbHero .bub #sbBox .say{margin-bottom:8px}
 
 /* ② 도구 화면(넓은 화면): 왼쪽 막대 = 쌤비 + 한마디 / 찾기 / 메뉴(지금 메뉴는 펼쳐 도구 목록) */
 @media (min-width:900px) and (min-height:460px){
@@ -171,6 +187,18 @@ html[data-ui="ssambi"].tt-hasnav .cta,html[data-ui="ssambi"].tt-hasnav .tabs,htm
 .sbBub .when .ev{color:var(--t-accent)}
 .sbBub p{font-size:clamp(16px,2.2vh,18px);font-weight:700;line-height:1.5;margin-top:2px;word-break:keep-all}
 .sbBub small{display:block;font-size:14px;color:var(--t-sub);margin-top:2px;word-break:keep-all}
+
+/* 검색 결과 (메뉴 줄 아래) */
+.sbRes .rh{display:flex;align-items:baseline;gap:10px;padding:0 4px 8px}
+.sbRes .rh b{font-size:16px}.sbRes .rh .c{color:var(--t-accent)}
+.sbRes .rh .hint{flex:1;font-size:13px;color:var(--t-faint)}
+.sbRes .rgh{padding:8px 16px 4px;font-size:12.5px;font-weight:700;color:var(--t-sub);background:var(--t-bg);border-top:1px solid #EFECE6}
+.sbRes .rgh:first-child{border-top:0}
+.sbRes .rr .tx b{font-weight:500}
+.sbRes .rr .tx b b{font-weight:700}
+.sbRes .rr.on{background:var(--t-accent-soft)}
+.sbRes .rr .sbBtn{flex:none}
+.sbRes .sbList{max-height:none}
 
 /* 중메뉴: 자주 쓰는 3개 크게 + 묶음별 작은 동그라미 */
 .sbWrap.mid{max-width:820px}
@@ -283,7 +311,10 @@ html[data-ui="ssambi"] .tdy,html[data-ui="ssambi"] .cat,html[data-ui="ssambi"] .
   #sbHero .hrow{justify-content:flex-start;gap:10px}
   #sbHero .owl{width:84px;height:84px}
   #sbHero .bub{padding:9px 13px;border-radius:16px}
-  #sbHero .bub p{font-size:15px}#sbHero .bub small{font-size:13px}
+  #sbHero .bub .b0 p{font-size:15px}#sbHero .bub .b0 small{font-size:13px}
+  #sbHero .bub:has(#sbBox:not([hidden])){width:auto;flex:1 1 0}
+  #sbHero .hrow:has(#sbBox:not([hidden])) .owl{width:60px;height:60px;align-self:flex-start}
+  #sbHero .bub #sbBox input{min-width:0}
   #sbHero .q{height:46px;padding:0 12px 0 16px;font-size:15px}
   #sbHero .q kbd{display:none}
   #sbHero .ib{width:44px;height:44px}

@@ -41,22 +41,22 @@
     var urgent = T.filter(function(x){ return x.lv === "hi" && /^(오늘|지남|종례|지금|D-[01])$/.test(String(x.n)); });
     var nxt = N.has && !N.cur && N.n ? N : null, cnt = T.length, deco = J ? season() : "";
     function r(item, line, sub, o){ o = o || {}; return {item: item, deco: deco, open: !!o.open, sleep: !!o.sleep, listen: !!o.listen, line: line, sub: sub || ""}; }
-    if(st.listen) return r("listen", "듣고 있어요. “12번 지각”처럼 말해 주세요.", "학생 이름 대신 번호로 말하면 더 안전해요.", {listen: true});
+    if(st.listen) return r("listen", "듣고 있어요.", "", {listen: true});
     if(!cnt && wk && d.getHours() >= 12 && J){
       if(J.stamped()) return r("stamp", "오늘 할 일 끝! 수고 많으셨어요.", "이번 달 퇴근 도장 " + J.monthStamps() + "개");
-      return r("stamp", "오늘 챙길 일을 다 했어요. 퇴근 도장 찍을까요?", "아래 [퇴근 도장]을 누르세요.");
+      return r("stamp", "오늘 할 일 끝! 퇴근 도장 찍을까요?", "");
     }
-    if(urgent.length) return r("alarm", "‘" + urgent[0].t + "’" + josa(urgent[0].t, "을", "를") + " 오늘 꼭 챙겨요.", urgent.length > 1 ? "급한 일이 " + urgent.length + "개 있어요." : urgent[0].kind === "bag" ? "종례 때 꼭 전해요." : "끝내면 아래에서 ○를 눌러 주세요.");
-    if(N.cur) return r("shh", N.n + "교시 " + N.cls + " 수업 중이에요.", "끝까지 " + N.left + "분 · 끝나면 진도 기록을 알려 드릴게요.");
+    if(urgent.length) return r("alarm", "‘" + urgent[0].t + "’" + josa(urgent[0].t, "을", "를") + " 오늘 꼭 챙겨요.", urgent.length > 1 ? "급한 일이 " + urgent.length + "개 있어요." : "");
+    if(N.cur) return r("shh", N.n + "교시 " + N.cls + " 수업 중이에요.", "끝까지 " + N.left + "분");
     if(nxt && nxt.left <= 15) return r("book", nxt.left + "분 뒤 " + nxt.n + "교시 " + nxt.cls + (nxt.subj ? " " + nxt.subj : "") + " 수업이에요.", nxt.prog && nxt.prog.now ? "이번 차시: " + nxt.prog.now : (nxt.unit ? "단원: " + nxt.unit : ""));
     if(wk && m >= 720 && m < 780){ var ml = ""; try{ ml = window.TTMeal ? TTMeal.todayText() : ""; }catch(e){} return r("spoon", "점심시간이에요. 맛있게 드세요!", ml || (cnt ? "오후에 챙길 일 " + cnt + "개" : "")); }
     if(wk && m < 540) return r("coffee", "좋은 아침이에요!" + (N.count ? " 오늘 수업 " + N.count + "시간" : ""), cnt ? "오늘 챙길 일 " + cnt + "개예요." : "오늘 챙길 일은 아직 없어요.");
     if(J && J.examNear && J.examNear()) return r("redpen", "시험 기간이에요. 조금만 힘내요!", cnt ? "챙길 일 " + cnt + "개" : "");
     var mo = d.getMonth() + 1, dt = d.getDate();
-    if((mo === 2 && dt >= 20) || (mo === 3 && dt <= 14)) return r("paper", "새 학년이에요. 명렬·시간표를 넣어 두면 제가 다 챙길게요.", "⚙ 설정 → 학기초 세팅");
+    if((mo === 2 && dt >= 20) || (mo === 3 && dt <= 14)) return r("paper", "새 학년이에요. 명렬·시간표를 넣어 주세요.", "");
     if(dd && /방학/.test(dd.t) && dd.n <= 21) return r("calendar", dd.t + "까지 D-" + dd.n + "!", cnt ? "그 전에 챙길 일 " + cnt + "개" : "");
-    if(!wk) return r("night", "주말이에요. 쉬어 가세요.", cnt ? "다음 주에 챙길 일 " + cnt + "개는 제가 기억할게요." : "", {sleep: true});
-    if(d.getHours() >= 18) return r("night", "오늘도 수고하셨어요. 푹 쉬세요.", cnt ? "남은 " + cnt + "개는 내일 다시 알려 드릴게요." : "", {sleep: true});
+    if(!wk) return r("night", "주말이에요. 쉬어 가세요.", cnt ? "" : "", {sleep: true});
+    if(d.getHours() >= 18) return r("night", "오늘도 수고하셨어요. 푹 쉬세요.", cnt ? "" : "", {sleep: true});
     var line = cnt ? "오늘 챙길 일이 " + cnt + "개 있어요." : "지금 챙길 일은 없어요.";
     var sub = nxt ? "다음은 " + nxt.n + "교시 " + nxt.cls + " (" + nxt.t + ")" : (dd ? dd.t + "까지 D-" + dd.n : "");
     return r("", line, sub, {open: true});
@@ -69,13 +69,13 @@
     var h = "";
     if(N.n){
       var k = N.cur ? "지금 수업 · 끝까지 " + N.left + "분" : "다음 수업 · " + (N.left <= 180 ? N.left + "분 뒤" : N.t + " 시작");
-      var sub = N.prog ? (N.prog.done ? "✔ 이 교시 진행 완료 · " + N.prog.done : N.prog.skip ? "수업 없음 · " + N.prog.skip : (N.prog.last ? "지난 " + N.prog.last + " → " : "") + "이번 " + N.prog.now) : (N.unit ? "단원 " + N.unit : "수업 기록을 쓰면 지난 진도가 나와요");
+      var sub = N.prog ? (N.prog.done ? "✔ 이 교시 진행 완료 · " + N.prog.done : N.prog.skip ? "수업 없음 · " + N.prog.skip : (N.prog.last ? "지난 " + N.prog.last + " → " : "") + "이번 " + N.prog.now) : (N.unit ? "단원 " + N.unit : "");
       h += '<div class="sbNow' + (N.cur ? " cur" : "") + '"><div class="nb"><div class="k">' + esc(k) + (N.chg ? ' <span class="chg">수업 교체</span>' : "") + "</div>"
         + '<div class="tt">' + N.n + "교시 " + esc(N.cls) + (N.subj ? " " + esc(N.subj) : "") + "</div>"
         + '<div class="sb">' + esc(sub) + (N.page ? " · p." + esc(N.page) : "") + "</div>" + (N.memo ? '<div class="sb memo">📝 ' + esc(N.memo) + "</div>" : "") + "</div>"
         + '<div class="acts">' + (N.book ? '<a class="sbBtn p" href="' + esc(N.book) + '">자료 열기</a><a class="sbBtn" href="apps/journal/">수업 기록</a>' : '<a class="sbBtn p" href="apps/journal/">수업 기록</a>') + "</div></div>";
     }else{
-      var msg = !N.weekday ? "주말이에요 · 월요일 수업은 내 시간표에서" : !N.count ? "오늘은 수업이 없어요" : N.miss ? "오늘 수업이 끝났어요 · 기록을 확인해 주세요" : "✔ 오늘 수업 끝";
+      var msg = !N.weekday ? "주말이에요" : !N.count ? "오늘은 수업이 없어요" : N.miss ? "오늘 수업 끝 · 기록 확인" : "✔ 오늘 수업 끝";
       h += '<div class="sbNow none"><div class="nb"><div class="k">지금</div><div class="tt">' + esc(msg) + '</div></div><div class="acts"><a class="sbBtn" href="apps/journal/">수업 기록</a></div></div>';
     }
     if(N.miss) h += '<div class="sbMiss"><a href="apps/journal/">✏️ ' + N.miss.n + "교시 " + esc(N.miss.cls) + " 기록 안 함" + (N.miss.count > 1 ? " 외 " + (N.miss.count - 1) + "개" : "") + "</a>"
@@ -90,7 +90,7 @@
     var can = x.kind === "bag" || x.kind === "todo", hot = x.lv === "hi" && HOT.test(String(x.n));
     var lead = can ? '<button type="button" class="ck" data-done="' + i + '" aria-label="' + esc(x.t) + ' 끝냈어요" title="끝냈어요"></button>' : '<span class="ico" aria-hidden="true">' + esc(x.ic) + "</span>";
     var go = x.kind === "auto" || x.kind === "autos" || x.pop || x.href || x.kind === "todo";
-    var sub = x.kind === "bag" ? "종례 때 전할 말" : x.kind === "item" ? x.tip : x.kind === "autos" ? "확인하고 복사 · 인쇄 · 저장만 하면 돼요" : "";
+    var sub = "";
     var body = '<span class="tx"><b>' + esc(x.t) + "</b>" + (sub ? "<small>" + esc(sub) + "</small>" : "") + "</span>";
     return '<li class="sbRow ' + esc(x.kind) + (hot ? " hot" : "") + '">' + lead
       + (go ? '<button type="button" class="go" data-go="' + i + '">' + body + "</button>" : '<span class="go">' + body + "</span>")
@@ -106,12 +106,12 @@
   function tasks(T){
     T = cur = group(T);
     var J = TT.joy && TT.joy.on && TT.joy.on() ? TT.joy : null, d = new Date(), wk = d.getDay() >= 1 && d.getDay() <= 5;
-    var hd = '<div class="sbTh"><h2>오늘 할 일 <span class="c">' + T.length + '</span></h2><span class="hint">입력한 자료에서 저절로 생기고, 끝내면 사라져요</span>'
+    var hd = '<div class="sbTh"><h2>오늘 할 일 <span class="c">' + T.length + '</span></h2>'
       + '<button type="button" class="sbAdd" data-add title="할 일이나 종례 때 전할 말 적기">' + ic(I.plus, 16) + "적기</button></div>";
     if(!T.length){
       var stamped = J && J.stamped(), can = J && wk && d.getHours() >= 12;
       return hd + '<div class="sbDone"><div class="stp' + (stamped ? " on" : "") + '" aria-hidden="true">퇴근</div><div><b>' + (stamped ? "오늘 퇴근 도장 쾅!" : "지금 챙길 일이 없어요") + "</b><small>"
-        + (stamped ? "이번 달 도장 " + J.monthStamps() + "개 · 수고하셨어요" : can ? "오늘 할 일을 다 했어요. 도장을 찍어 볼까요?" : "새로 생기는 일은 쌤비가 알려 줄게요") + "</small></div>"
+        + (stamped ? "이번 달 " + J.monthStamps() + "개" : can ? "" : "") + "</small></div>"
         + (J && (stamped || can) ? '<button type="button" class="sbBtn' + (stamped ? "" : " p") + '" data-stamp>' + (stamped ? "도장판 보기" : "퇴근 도장") + "</button>" : "") + "</div>";
     }
     var L = st.more ? T : T.slice(0, MAX);
@@ -167,6 +167,29 @@
     return h + "</div>";
   }
 
+  /* ── 검색 결과 (창 없이 메뉴 줄 아래에) — 찾는 규칙은 업무판 찾기 창과 같음(TT_FIND.rows) ── */
+  var Q = {q: "", rows: [], sel: 0};
+  function picks(){ return Q.rows.filter(function(r){ return !r.h && !r.bag; }); }
+  function resHTML(){
+    var R0 = Q.rows = window.TT_FIND && TT_FIND.rows ? TT_FIND.rows(Q.q) : [], pk = picks(), i = -1;
+    if(Q.sel >= pk.length) Q.sel = 0;
+    var h = '<div class="sbRes"><div class="rh"><b>‘' + esc(Q.q) + '’ 찾은 결과 <span class="c">' + pk.length + '</span></b><span class="hint"></span><button type="button" class="sbAdd" data-qclose>닫기 ✕</button></div>';
+    if(!R0.length) return h + '<p class="sbEmpty">맞는 것이 없어요.</p></div>';
+    h += '<ul class="sbList">' + R0.map(function(r, k){
+      if(r.h) return '<li class="rgh">' + r.h + "</li>";
+      var on = !r.bag && ++i === Q.sel;
+      return '<li class="sbRow rr' + (on ? " on" : "") + '"><span class="ico" aria-hidden="true">' + r.ic + '</span><button type="button" class="go" data-r="' + k + '"><span class="tx"><b>' + r.tx + "</b>" + (r.sub ? "<small>" + r.sub + "</small>" : "") + "</span></button>"
+        + (r.btns || []).map(function(b, j){ return '<button type="button" class="sbBtn sm" data-r="' + k + '" data-b="' + j + '">' + b[0] + "</button>"; }).join("") + "</li>";
+    }).join("") + "</ul></div>";
+    return h;
+  }
+  function doneSearch(){ Q.q = ""; Q.sel = 0; if(window.TT_SBAR) TT_SBAR.clearSearch(); render(); }
+  function runRow(k, b){
+    var r = Q.rows[k]; if(!r) return;
+    if(b != null && r.btns && r.btns[b]){ r.btns[b][1](); setTimeout(render, 50); return; }
+    if(r.go){ var keep = Q.q; r.go(); if(Q.q === keep) doneSearch(); }
+  }
+
   /* ── 그리기: 쌤비·말풍선·검색창·메뉴는 shared/sbbar.js(머리), 여기는 홈 = 지금 · 오늘 할 일 / 중메뉴 = 도구 ── */
   var lastP = null;
   function render(){
@@ -177,6 +200,8 @@
     var P = lastP = pick(H);
     if(window.TT_SBAR) TT_SBAR.setOwl({item: P.item, open: P.open, sleep: P.sleep, listen: P.listen, line: P.line, sub: P.sub, ev: H.events.join(" · ")});
     host.hidden = false;
+    if(window.TT_SBAR && TT_SBAR.seatBox) TT_SBAR.seatBox();
+    if(Q.q){ host.innerHTML = '<div class="sbWrap mid">' + resHTML() + "</div>"; var on1 = host.querySelector(".rr.on"); if(on1 && on1.scrollIntoView) on1.scrollIntoView({block: "nearest"}); return; }
     if(document.body.classList.contains("inmenu")){ host.innerHTML = '<div class="sbWrap mid">' + midHTML() + "</div>"; return; }
     host.innerHTML = '<div class="sbWrap">'
       + '<div class="sbNowWrap">' + nowCard(H.now) + "</div>"
@@ -188,6 +213,8 @@
   /* ── 누르기 ── */
   host.addEventListener("click", function(e){
     var t = e.target.closest("button,a"); if(!t) return;
+    if(t.hasAttribute("data-qclose")){ doneSearch(); return; }
+    if(t.hasAttribute("data-r")){ runRow(+t.dataset.r, t.hasAttribute("data-b") ? +t.dataset.b : null); return; }
     if(t.hasAttribute("data-mid")){ var it = mid[+t.dataset.mid]; if(it && it.el) it.el.click(); return; }
     if(t.hasAttribute("data-open")){ openG[t.dataset.open] = 1; render(); return; }
     if(t.hasAttribute("data-go")){ var x = cur[+t.dataset.go]; if(x && x.kind === "autos"){ if(window.TTAuto) TTAuto.list(); } else TT_TODAY.act(x, t); return; }
@@ -201,7 +228,7 @@
     if(e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey || !on()) return;
     var a = document.activeElement, tg = a && a.tagName;
     if(tg === "INPUT" || tg === "TEXTAREA" || tg === "SELECT" || (a && a.isContentEditable) || document.querySelector("dialog[open]")) return;
-    e.preventDefault(); if(window.TT_FIND) TT_FIND.open("");
+    e.preventDefault(); if(window.TT_SBAR && TT_SBAR.focusSearch) TT_SBAR.focusSearch(""); else if(window.TT_FIND) TT_FIND.open("");
   });
 
   /* ── 다시 그리기: 자료가 바뀌거나, 분이 바뀌거나, 화면을 옮길 때 ── */
@@ -246,6 +273,12 @@
   new MutationObserver(navIcons).observe(R, {attributes: true, attributeFilter: ["data-ui"]});
 
   window.addEventListener("tt-menu-refresh", soon);
-  window.TT_SBHOME = {render: render, pick: pick};
+  window.addEventListener("tt-find-update", function(){ if(Q.q) render(); });
+  window.addEventListener("hashchange", function(){ if(Q.q){ Q.q = ""; if(window.TT_SBAR) TT_SBAR.clearSearch(); } });
+  window.TT_SBHOME = {render: render, pick: pick,
+    search: function(q){ q = String(q || "").trim(); if(q === Q.q) return; Q.q = q; Q.sel = 0; render(); },
+    query: function(){ return Q.q; },
+    move: function(d){ var n = picks().length; if(!n) return; Q.sel = (Q.sel + d + n) % n; render(); },
+    run: function(){ var p = picks()[Q.sel]; if(!p) return; runRow(Q.rows.indexOf(p), null); }};
   render(); logo(); navIcons();
 })();

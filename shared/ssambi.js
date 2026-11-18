@@ -275,11 +275,13 @@
       return head("쌤비 <small style='font-weight:500;color:var(--sub,#5b6775)'>· " + hi + "</small>")
         + '<ul class="v2b">' + L.map(function(x){ var in1 = '<span class="i">' + x[0] + "</span><span>" + esc(x[1]) + "</span>"; return "<li>" + (x[2] ? '<a href="' + esc(x[2]) + '">' + in1 + "</a>" : in1) + "</li>"; }).join("") + "</ul>"
         + (window.TT_TODAY ? '<div class="v2r"><button type="button" class="lk" data-a="speak">🔊 읽어 주기</button><button type="button" class="lk" data-a="brief">자세히 보기 ›</button></div>' : "")
-        + '<button type="button" class="bt p v2talk" data-a="talk" autofocus><i>🎤</i><span>' + (md === "long" ? "눌러서 길게 기록" : "눌러서 말하기") + "<small>" + (md === "long" ? "상담 · 학부모 상담 · 회의 · 수업 관찰" : "“12번 지각” · “종례: 내일 체육복”") + "</small></span></button>"
+        + '<button type="button" class="bt p v2talk" data-a="talk" autofocus><i>🎤</i><span>' + (md === "long" ? "눌러서 길게 기록" : "눌러서 말하기") + "<small>" + (md === "long" ? "상담 · 회의" : "예: 12번 지각") + "</small></span></button>"
         + '<div class="v2m" role="group" aria-label="말하기 방식"><button type="button" data-a="m-short"' + (md === "short" ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + ">한마디</button>"
         + '<button type="button" data-a="m-long"' + (md === "long" ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + ">길게 기록</button></div>"
-        + '<p class="nt">🔒 기록은 이 기기 안에만 저장돼요 · <b>Alt+B</b> 쌤비 · <b>/</b> 찾기</p>';
+        + "";
     };
+    var listen0 = V.listen;                                             // 심플: 예시는 한 줄로, 안내 문구는 짧게
+    V.listen = function(a){ return listen0(a).replace(/<div class="ex"[^>]*>[\s\S]*?<\/div>/, '<div class="ex" style="margin-top:6px">예: 12번 지각 · 종례: 내일 체육복</div>').replace(/<p class="nt">[\s\S]*?<\/p>/, '<p class="nt">🔒 이름 대신 번호로 말해 주세요.</p>'); };
   }
 
   /* ── 음성 인식 ── */

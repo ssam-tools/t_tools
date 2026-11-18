@@ -664,11 +664,11 @@
     var LD = window.TT_LIBD, E = [], D = [];
     if(!m0 && LD){
       var EX = LD.extCached();
-      if(!EX.length && LD.connected() && !extTried){ extTried = true; LD.ext().then(function(){ if(dlg && dlg.open) draw(); }, function(){}); }
+      if(!EX.length && LD.connected() && !extTried){ extTried = true; LD.ext().then(function(){ if(dlg && dlg.open) draw(); window.dispatchEvent(new Event("tt-find-update")); }, function(){}); }
       E = EX.filter(function(x){ return (x.n + " " + x.d + " " + x.m).toLowerCase().indexOf(low) >= 0 || x.t === qq; }).slice(0, 5)
         .map(function(x){ return {ic: "📞", tx: "<b>" + esc(x.t) + "</b> " + esc(x.n) + " <small>" + esc(x.d) + "</small>", sub: "내선번호 · Enter 복사", go: function(){ copyText(x.t); TT.ui.toast("📞 " + x.n + " " + x.t + " — 번호를 복사했어요"); }}; });
       if(LD.connected() && qq.length >= 2){
-        if(docQ !== qq){ docQ = qq; docHits = null; clearTimeout(docT); docT = setTimeout(function(){ var q0 = qq; LD.search(q0).then(function(H){ if(docQ !== q0) return; docHits = H; if(dlg && dlg.open) draw(); }, function(){ if(docQ === q0){ docHits = []; } }); }, 450); }
+        if(docQ !== qq){ docQ = qq; docHits = null; clearTimeout(docT); docT = setTimeout(function(){ var q0 = qq; LD.search(q0).then(function(H){ if(docQ !== q0) return; docHits = H; if(dlg && dlg.open) draw(); window.dispatchEvent(new Event("tt-find-update")); }, function(){ if(docQ === q0){ docHits = []; } }); }, 450); }
         D = (docHits || []).slice(0, 5).map(function(x){
           var btns = []; if(x.view) btns.push(["바로 보기", function(){ LD.view(x.view); }]); btns.push(["내려받기", function(){ LD.down(x.orig || x.id); }]);
           return {ic: "🗂️", tx: esc(x.name), sub: esc(x.cat) + (x.match === "내용" ? " · 본문" : ""), go: function(){ if(x.view) LD.view(x.view); else LD.down(x.orig || x.id); }, btns: btns};
@@ -751,7 +751,7 @@
   });
   var fBtn = document.getElementById("qFind");
   if(fBtn){ fBtn.hidden = false; fBtn.onclick = openFind; }
-  window.TT_FIND = {open: openFind, parseDate: parseDate};
+  window.TT_FIND = {open: openFind, parseDate: parseDate, rows: function(q){ pasted = null; return build(String(q || "")); }};   // rows: v2.2 쌤비 홈 검색창이 결과를 창 없이 그대로 보여 줄 때
 
   function render(){
     var md = null; try{ md = mode(); }catch(err){}
