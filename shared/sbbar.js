@@ -151,6 +151,7 @@
       if(e.key !== "Enter") return;
       e.preventDefault();
       var v = q.value.trim(); if(!v){ h.search(""); return; }
+      if(v.charAt(0) === "+" && v.length > 1) v = "할 일: " + v.replace(/^\+\s*/, "");   // v2.7: "+ 할 일" = 할 일 넣기 (도구 화면 검색창과 같게)
       if(/^(종례|할\s*일|todo)\s*[:：]/i.test(v) && window.TT_FIND && TT_FIND.rows){ var r = TT_FIND.rows(v).filter(function(r){ return !r.h && !r.bag && r.go; })[0]; if(r){ r.go(); q.value = ""; sync(); h.search(""); return; } }
       if(h.query() === v) h.run(); else h.search(v);
     });
@@ -171,12 +172,19 @@
       return t.menu === mid;
     });
   }
-  function railHTML(){
-    var cur = curMenu(), me = hereTool(), p = P();
+  /* v2.7: 쌤비·한마디(.rt)와 메뉴(.rn)만 1분마다 다시 그리고, 검색창(.rs)은 한 번 만든 그대로 둠(적던 글자·결과가 지워지지 않게) */
+  function railTop(){
+    var p = P();
     return '<button type="button" class="owl" id="sbBarOwl" title="쌤비 — 오늘 상황 · 말로 기록 (Alt+B)" aria-label="쌤비 열기 (Alt+B)">' + owlSvg(76) + "</button>"
-      + '<div class="say"><b>' + esc(p.line || "") + "</b>" + (p.sub ? "<small>" + esc(p.sub) + "</small>" : "") + "</div>"
-      + '<button type="button" class="q" data-q title="찾기 · 한 줄 입력 (/)">' + icon("search", 16) + "<span>찾기</span><kbd>/</kbd></button>"
-      + '<nav class="ml" aria-label="메뉴">' + MENUS.filter(function(m){ return shown(m[0]); }).map(function(m){
+      + '<div class="say"><b>' + esc(p.line || "") + "</b>" + (p.sub ? "<small>" + esc(p.sub) + "</small>" : "") + "</div>";
+  }
+  function fboxHTML(k){                                                  // 도구 화면 검색창: 누르면 바로 적기 (팝업 없음)
+    return '<div class="q fq">' + icon("search", 16) + '<input id="sb' + k + 'q" type="text" enterkeyhint="search" autocomplete="off" spellcheck="false" aria-label="찾기 또는 한 줄 입력" placeholder="찾기">'
+      + '<button type="button" class="fx" data-fx aria-label="지우기" hidden>✕</button><kbd title="어디서나 / 키 · Ctrl+F">/</kbd></div>';
+  }
+  function railHTML(){
+    var cur = curMenu(), me = hereTool();
+    return '<nav class="ml" aria-label="메뉴">' + MENUS.filter(function(m){ return shown(m[0]); }).map(function(m){
           var on = m[0] === cur, L = on ? tools(m[0]) : [];
           return '<a class="mi' + (on ? " on" : "") + '" href="' + esc(href(m[0])) + '" data-m="' + m[0] + '" title="' + m[1] + (KEYS[m[0]] ? " (" + KEYS[m[0]] + ")" : "") + '">' + icon(m[0], 20) + "<span>" + m[1] + "</span></a>"
             + (L.length ? '<div class="tl" role="group" aria-label="' + m[1] + ' 도구">' + L.map(function(t){
@@ -185,21 +193,157 @@
               }).join("") + "</div>" : "");
         }).join("") + "</nav>";
   }
-  function barHTML(){
+  function barTabs(){
     var cur = curMenu();
-    return '<div class="in"><button type="button" class="owl" id="sbBarOwl2" title="쌤비 (Alt+B)" aria-label="쌤비 열기">' + owlSvg(46) + "</button>"
-      + '<button type="button" class="q" data-q>' + icon("search", 18) + "<span>찾기 · 할 일 적기</span></button>"
-      + '<button type="button" class="ib" data-mic aria-label="말로 기록">' + icon("mic", 18) + "</button></div>"
-      + '<nav class="sbTabs" aria-label="메뉴">' + MENUS.filter(function(m){ return shown(m[0]); }).map(function(m){
-          return '<a href="' + esc(href(m[0])) + '" data-m="' + m[0] + '"' + (m[0] === cur ? ' class="on" aria-current="page"' : "") + ">" + icon(m[0], 18) + "<span>" + m[1] + "</span></a>";
-        }).join("") + "</nav>";
+    return MENUS.filter(function(m){ return shown(m[0]); }).map(function(m){
+      return '<a href="' + esc(href(m[0])) + '" data-m="' + m[0] + '"' + (m[0] === cur ? ' class="on" aria-current="page"' : "") + ">" + icon(m[0], 18) + "<span>" + m[1] + "</span></a>";
+    }).join("");
   }
   function drawApp(){
-    if(!rail){ rail = document.createElement("aside"); rail.id = "sbRail"; rail.setAttribute("aria-label", "쌤비와 메뉴"); document.body.appendChild(rail); document.body.classList.add("sbRailOn"); }
-    if(!bar){ bar = document.createElement("div"); bar.id = "sbBar"; document.body.insertBefore(bar, document.body.firstChild); document.body.classList.add("sbBarOn"); }
-    rail.innerHTML = railHTML(); bar.innerHTML = barHTML(); headIcon();
+    if(!rail){
+      rail = document.createElement("aside"); rail.id = "sbRail"; rail.setAttribute("aria-label", "쌤비와 메뉴");
+      rail.innerHTML = '<div class="rt"></div><div class="rs">' + fboxHTML("R") + '<div class="fr" id="sbRr" hidden></div></div><div class="rn"></div>';
+      document.body.appendChild(rail); document.body.classList.add("sbRailOn");
+    }
+    if(!bar){
+      bar = document.createElement("div"); bar.id = "sbBar";
+      bar.innerHTML = '<div class="in"><span class="bo"></span>' + fboxHTML("B") + '<button type="button" class="ib" data-mic aria-label="말로 기록">' + icon("mic", 18) + '</button></div><div class="fr" id="sbBr" hidden></div><nav class="sbTabs" aria-label="메뉴"></nav>';
+      document.body.insertBefore(bar, document.body.firstChild); document.body.classList.add("sbBarOn");
+      F.wire("R"); F.wire("B");
+    }
+    rail.querySelector(".rt").innerHTML = railTop(); rail.querySelector(".rn").innerHTML = railHTML();
+    bar.querySelector(".bo").innerHTML = '<button type="button" class="owl" id="sbBarOwl2" title="쌤비 (Alt+B)" aria-label="쌤비 열기">' + owlSvg(46) + "</button>";
+    bar.querySelector(".sbTabs").innerHTML = barTabs();
+    F.ph(); headIcon();
     requestAnimationFrame(function(){ R.classList.add("sbReady"); });
   }
+
+  /* ── v2.7 도구 화면 검색창: 오른쪽 화면이 무엇이냐에 따라 찾는 곳이 바뀝니다 ──
+     화면이 window.TT_SBFIND_P 에 '찾기'를 정해 두면 그것을 쓰고(문서 · 업무판 · 내선번호 …), 없으면 기본(학생 · 도구 · 내선번호 · 자료실).
+     찾기 = {key, ph:안내 글자, find(q), step(±1)?:다음·이전, page(n)?:쪽 이동, clear()} — 결과는 TT_SBAR.show({n, i, busy, rows:[{ic, tx(html), sub(html), go}], note, more})
+     ·  "+ 할 일"처럼 +로 시작하면 내 할 일에 넣기 · 비운 채 누르면 최근 찾은 말 · Enter 다음 / Shift+Enter 이전 · Esc 지우기 */
+  var F = (function(){
+    var act = "R", q = "", T = 0, res = null, sel = 0, RK = "tt_sbq_recent_v1";
+    function inp(k){ return document.getElementById("sb" + (k || act) + "q"); }
+    function box(k){ return document.getElementById("sb" + (k || act) + "r"); }
+    function prov(){ var p = window.TT_SBFIND_P; return p && typeof p.find === "function" ? p : DEF; }
+    function both(fn){ ["R", "B"].forEach(function(k){ var i = inp(k), b = box(k); if(i && b) fn(i, b, k); }); }
+    function ph(){ var p = prov(); both(function(i){ i.placeholder = p.ph || "찾기"; }); }
+    function recent(){ var o = TT.store.get(RK, null) || {}; return (o[prov().key || "all"] || []).slice(0, 4); }
+    function remember(v){
+      v = String(v || "").trim(); if(v.length < 2 || v.charAt(0) === "+" || /^\d+$/.test(v)) return;
+      var o = TT.store.get(RK, null) || {}, k = prov().key || "all", L = (o[k] || []).filter(function(x){ return x !== v; });
+      L.unshift(v); o[k] = L.slice(0, 6);
+      var ks = Object.keys(o); if(ks.length > 30) delete o[ks[0]];
+      TT.store.set(RK, o);
+    }
+    function todoRow(v){
+      var t = v.replace(/^\+\s*/, "").trim();
+      return {n: null, rows: t ? [{ic: "📝", tx: "내 할 일에 넣기 · <b>" + esc(t) + "</b>", sub: "Enter · 앞에 '내일'을 쓰면 내일 할 일", go: function(){ addTodo(t); }}] : [], note: t ? "" : "+ 다음에 할 일을 적어 주세요"};
+    }
+    function addTodo(t){
+      var d = "", m = t.match(/^(오늘|내일|모레)\s+/), n = new Date();
+      if(m){ var x = new Date(n.getFullYear(), n.getMonth(), n.getDate() + {"오늘": 0, "내일": 1, "모레": 2}[m[1]]); d = x.getFullYear() + "-" + pad(x.getMonth() + 1) + "-" + pad(x.getDate()); t = t.slice(m[0].length); }
+      t = t.trim().slice(0, 120); if(!t) return;
+      var M = TT.store.get("tt_mytodo_v1", null); M = M && Array.isArray(M.items) ? M : {items: []};
+      M.items.push({id: "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: t, date: d, done: false, created: Date.now()});
+      TT.store.set("tt_mytodo_v1", M); window.dispatchEvent(new CustomEvent("tt-mytodo-change", {detail: "rail"}));
+      TT.ui.toast("📝 내 할 일에 넣었습니다" + (m ? " · " + m[1] : "")); clear();
+    }
+    function run(v){
+      q = String(v == null ? "" : v); var t = q.trim(), p = prov();
+      if(!t){ try{ p.clear && p.clear(); }catch(e){} res = null; paint(); return; }
+      if(t.charAt(0) === "+"){ try{ p.clear && p.clear(); }catch(e){} show(todoRow(t)); return; }
+      if(/^\d{1,4}$/.test(t) && p.page){ show({n: null, rows: [{ic: "↪", tx: "<b>" + t + "쪽</b>으로 가기", sub: "Enter", go: function(){ p.page(+t); }}]}); return; }
+      try{ p.find(t); }catch(e){ show({n: 0, rows: [], note: "찾지 못했어요"}); }
+    }
+    function show(r){ res = r || null; sel = 0; paint(); }
+    function paint(){
+      var t = q.trim(), p = prov();
+      both(function(i, b){
+        var x = i.parentNode.querySelector("[data-fx]"); if(x) x.hidden = !i.value;
+        var h = "";
+        if(!t){
+          var L = recent();
+          if(L.length && document.activeElement === i) h = '<div class="rc"><span>최근</span>' + L.map(function(w){ return '<button type="button" data-rq="' + esc(w) + '">' + esc(w) + "</button>"; }).join("") + "</div>";
+        }else if(res){
+          if(res.n != null || res.busy) h += '<div class="fh"><span>' + (res.n ? (res.i ? "<b>" + res.i + "</b> / " : "") + res.n + "곳" : res.busy ? "찾는 중…" : "없어요") + (res.busy && res.n ? " · 찾는 중" : "") + "</span>"
+            + (p.step && res.n ? '<button type="button" data-fs="-1" title="이전 (Shift+Enter)">▲</button><button type="button" data-fs="1" title="다음 (Enter)">▼</button>' : "") + "</div>";
+          h += (res.rows || []).slice(0, 40).map(function(r, k){
+            return '<button type="button" class="r' + (k === sel && !p.step ? " on" : "") + '" data-ri="' + k + '"><b>' + (r.ic ? '<i>' + r.ic + "</i>" : "") + r.tx + "</b>" + (r.sub ? "<small>" + r.sub + "</small>" : "") + "</button>";
+          }).join("");
+          if(res.note) h += '<div class="fn">' + res.note + "</div>";
+        }
+        b.innerHTML = h; b.hidden = !h;
+      });
+    }
+    function pick(k){ var r = res && res.rows && res.rows[k]; if(!r || !r.go) return; remember(q); try{ r.go(); }catch(e){} }
+    function clear(){ both(function(i){ i.value = ""; }); run(""); }
+    function wire(k){
+      var i = inp(k), b = box(k); if(!i || !b) return;
+      i.addEventListener("focus", function(){ act = k; if(!i.value) paint(); });
+      i.addEventListener("blur", function(){ setTimeout(function(){ if(!q.trim()) paint(); }, 200); });
+      i.addEventListener("input", function(){ act = k; both(function(o){ if(o !== i) o.value = i.value; }); clearTimeout(T); var v = i.value; paint(); T = setTimeout(function(){ run(v); }, /^\s*\+/.test(v) ? 0 : 220); });
+      i.addEventListener("keydown", function(e){
+        if(e.isComposing) return;
+        var p = prov(), n = res && res.rows ? res.rows.length : 0;
+        if(e.key === "Escape"){ e.preventDefault(); if(i.value) clear(); else i.blur(); return; }
+        if(e.key === "ArrowDown" || e.key === "ArrowUp"){
+          e.preventDefault(); var d = e.key === "ArrowDown" ? 1 : -1;
+          if(p.step && res && res.n) p.step(d); else if(n){ sel = (sel + d + n) % n; paint(); }
+          return;
+        }
+        if(e.key !== "Enter") return;
+        e.preventDefault(); clearTimeout(T);
+        var v = i.value.trim(); if(!v) return;
+        if(v !== q.trim()){ run(i.value); if(v.charAt(0) !== "+" && !/^\d{1,4}$/.test(v)) return; }
+        if(v.charAt(0) === "+" || (/^\d{1,4}$/.test(v) && p.page)){ pick(0); return; }
+        if(p.step && res && res.n){ remember(v); p.step(e.shiftKey ? -1 : 1); return; }
+        if(n) pick(sel);
+      });
+      b.addEventListener("mousedown", function(e){ if(e.target.closest("button")) e.preventDefault(); });   // 누르는 동안 검색창 초점 유지
+      b.addEventListener("click", function(e){
+        var r = e.target.closest("[data-ri]"), s = e.target.closest("[data-fs]"), w = e.target.closest("[data-rq]");
+        if(r){ pick(+r.dataset.ri); return; }
+        if(s){ var p = prov(); if(p.step){ remember(q); p.step(+s.dataset.fs); } return; }
+        if(w){ both(function(o){ o.value = w.dataset.rq; }); run(w.dataset.rq); i.focus(); }
+      });
+      i.parentNode.querySelector("[data-fx]").addEventListener("click", function(){ clear(); i.focus(); });
+    }
+    function visible(){ var r = inp("R"), b = inp("B"); return r && r.offsetParent !== null ? r : b && b.offsetParent !== null ? b : r || b; }
+    function focus(v){
+      var i = visible(); if(!i) return false; act = i.id === "sbBq" ? "B" : "R";
+      if(typeof v === "string" && v){ both(function(o){ o.value = v; }); run(v); } else paint();
+      i.focus(); try{ i.select(); }catch(e){} return true;
+    }
+    function refresh(){ ph(); if(q.trim()) run(q); else paint(); }
+    return {wire: wire, ph: ph, show: show, focus: focus, refresh: refresh, clear: clear, q: function(){ return q.trim(); }};
+  })();
+
+  /* 기본 찾기: 학생 이름 → 학생 카드 · 도구 이름 → 바로 열기 · 내선번호 → 복사 · 자료실에서 찾기 */
+  var libdTried = false;
+  function students(){ var out = []; try{ TT.roster.classes().forEach(function(c){ (c.students || []).forEach(function(s){ if(s.name) out.push({c: c, s: s}); }); }); }catch(e){} return out; }
+  var DEF = {
+    key: "all",
+    get ph(){ var m = curMenu(); return m === "student" || m === "homeroom" ? "학생 이름 · 도구 찾기" : "도구 · 학생 · 자료 찾기"; },
+    find: function(qq){
+      var low = qq.toLowerCase(), m = curMenu(), stuFirst = m === "student" || m === "homeroom";
+      var S = students().filter(function(x){ return x.s.name.indexOf(qq) >= 0; }).slice(0, 6).map(function(x){
+        return {ic: "🧑‍🎓", tx: esc(x.s.name) + " <small>" + esc(x.c.name) + " " + esc(x.s.no) + "번</small>", sub: "학생 카드", go: function(){ location.href = BASE + "apps/stucard/?c=" + encodeURIComponent(x.c.id) + "&no=" + encodeURIComponent(x.s.no); }};
+      });
+      var T = (typeof TT_TOOLS === "undefined" ? [] : TT_TOOLS).filter(function(t){
+        return t.ready && t.href && (typeof ttToolShown !== "function" || ttToolShown(t)) && (t.name + " " + (t.short || "") + " " + (t.old || "") + " " + (t.desc || "") + " " + t.id).toLowerCase().indexOf(low) >= 0;
+      }).slice(0, 5).map(function(t){ return {ic: t.icon, tx: esc(t.name), sub: "도구", go: function(){ location.href = BASE + t.href; }}; });
+      if(!window.TT_LIBD && !libdTried){ libdTried = true; var s = document.createElement("script"); s.src = BASE + "shared/libd.js?v=" + (TT.VERSION || ""); s.onload = function(){ if(F.q()) F.refresh(); }; document.head.appendChild(s); }
+      var E = window.TT_LIBD ? TT_LIBD.extCached().filter(function(x){ return (x.n + " " + x.d + " " + (x.m || "")).toLowerCase().indexOf(low) >= 0 || x.t === qq; }).slice(0, 4).map(function(x){
+        return {ic: "📞", tx: "<b>" + esc(x.t) + "</b> " + esc(x.n), sub: esc(x.d) + " · 누르면 번호 복사", go: function(){ try{ navigator.clipboard.writeText(x.t); }catch(e){} TT.ui.toast("📞 " + x.n + " " + x.t + " — 번호를 복사했어요"); }};
+      }) : [];
+      var rows = stuFirst ? S.concat(T, E) : T.concat(S, E), n = rows.length;
+      if(qq.length >= 2) rows.push({ic: "🗂️", tx: "자료실에서 '" + esc(qq) + "' 찾기", sub: "규정집 · 교육계획서 · 기재요령 등 내용까지", go: function(){ location.href = BASE + "apps/lib/?q=" + encodeURIComponent(qq); }});
+      F.show({n: n, rows: rows, note: n ? "" : "맞는 학생·도구가 없어요"});
+    },
+    clear: function(){}
+  };
   /* 도구 머리말: 제목 앞 컬러 이모지(🔎 🧭 📇 …)를 홈·왼쪽 막대와 같은 선 아이콘으로 (쌤비 홈 디자인일 때만) */
   var EMO = /^[\s\u200d\ufe0f]*(?:[\u2190-\u2bff\u2600-\u27bf\u3297\u3299]|\ud83c[\udc00-\udfff]|\ud83d[\udc00-\udfff]|\ud83e[\udc00-\udfff])[\u200d\ufe0f\ud83c\udffb-\udfff]*\s*/;
   function headIcon(){
@@ -226,7 +370,7 @@
     if(listen){ var b = document.querySelector('#sbBox [data-a="talk"],#sbBox [data-a="listen"]'); if(b) b.click(); }
   }
   function v2home(){ return HOME && R.getAttribute("data-ui") === "ssambi" && document.body.classList.contains("sbOn"); }
-  function find(){ if(v2home()) focusSearch(""); else if(HOME && window.TT_FIND) TT_FIND.open(""); else location.href = BASE + "?sb=find"; }
+  function find(){ if(v2home()) focusSearch(""); else if(HOME && window.TT_FIND) TT_FIND.open(""); else if(!HOME && F.focus("")) return; else location.href = BASE + "?sb=find"; }
   if(HOME){                                                             // 쌤비 홈에서는 찾기 창 대신 이 검색창으로 (Ctrl+K · / · 할 일 적기 · 도구 화면에서 넘어온 찾기)
     var wrapFind = function(){ if(!window.TT_FIND || TT_FIND.__sb) return; var o = TT_FIND.open; TT_FIND.open = function(q){ if(v2home() && focusSearch(q || "")) return; return o.apply(this, arguments); }; TT_FIND.__sb = 1; };
     wrapFind(); window.addEventListener("load", wrapFind);
@@ -254,6 +398,11 @@
       else location.hash = h;
     }
   }, true);
+  document.addEventListener("keydown", function(e){                    // v2.7: 문서·업무판을 볼 때 Ctrl+F → 브라우저 찾기 대신 왼쪽 검색창
+    if(HOME || !(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || !(e.code === "KeyF" || e.key === "f" || e.key === "F") || R.getAttribute("data-ui") !== "ssambi") return;
+    var p = window.TT_SBFIND_P; if(!p || !p.step) return;
+    e.preventDefault(); F.focus("");
+  }, true);
   document.addEventListener("keydown", function(e){                    // 도구 화면에서도 / → 찾기 (첫 화면은 shared/sbhome.js)
     if(HOME || e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey || R.getAttribute("data-ui") !== "ssambi") return;
     var a = document.activeElement, tg = a && a.tagName;
@@ -272,7 +421,9 @@
 
   window.TT_SBAR = {
     setOwl: function(p){ var k = JSON.stringify(p || null); if(k === JSON.stringify(owlState)) return; owlState = p || null; draw(); },
-    draw: draw, cur: curMenu, sub: sub, focusSearch: focusSearch, clearSearch: clearSearch, seatBox: function(){ if(HOME && hero) seatBox(); }
+    draw: draw, cur: curMenu, sub: sub, seatBox: function(){ if(HOME && hero) seatBox(); },
+    focusSearch: function(v){ return HOME ? focusSearch(v) : F.focus(v); }, clearSearch: function(){ if(HOME) clearSearch(); else F.clear(); },
+    show: function(r){ if(!HOME) F.show(r); }, refresh: function(){ if(!HOME) F.refresh(); }, query: function(){ return HOME ? "" : F.q(); }   // v2.7: 도구 화면 검색창 (화면이 정한 찾기 window.TT_SBFIND_P)
   };
   if(document.body) draw(); else document.addEventListener("DOMContentLoaded", draw);
 })();

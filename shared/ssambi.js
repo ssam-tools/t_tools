@@ -192,7 +192,7 @@
       + '<div class="row" style="margin-top:0"><input id="sbTxt" type="text" placeholder="또는 글로: 12번 지각" style="flex:1;min-width:0;height:40px;border:1px solid var(--line,#dde3ea);border-radius:10px;padding:0 10px;font:inherit;background:var(--card,#fff);color:inherit" autocomplete="off">'
       + '<button type="button" class="bt p" data-a="typed" style="flex:none;min-height:40px">확인</button></div>'
       + '<div class="row">' + (noSR ? "" : '<button type="button" class="bt" data-a="relisten">🎤 다시 듣기</button>') + "</div>"
-      + '<div class="ex" style="margin-top:8px">이렇게 말해 보세요<br><b>12번 지각</b> · <b>5번 결석</b> · <b>3번 휴대폰 지도</b> · <b>3반 5번 칠판 풀이</b> · <b>12번 진학</b> · <b>종례 내일 체육복</b> · <b>할 일 금요일 공문 회신</b> · <b>결석신고서 열어</b> · <b>찾아 줘 교복</b> · <b>브리핑</b></div>'
+      + '<div class="ex" style="margin-top:8px">이렇게 말해 보세요<br><b>12번 지각</b> · <b>5번 결석</b> · <b>3번 휴대폰 지도</b> · <b>3반 5번 칠판 풀이</b> · <b>12번 진학</b> · <b>종례 내일 체육복</b> · <b>할 일 금요일 공문 회신</b> · <b>결석신고서 열어</b> · <b>찾아 줘 교복</b> · <b>기재요령에서 봉사활동 찾아 줘</b> · <b>브리핑</b></div>'
       + '<p class="nt">🔒 음성 인식은 브라우저 회사 서버를 거칠 수 있어요. 학생은 <b>이름 대신 번호</b>로 말해 주세요.</p>';
   };
   V.confirm = function(c){
@@ -383,11 +383,20 @@
       [x.name, x.short, x.old].some(function(n){ return n && n.replace(/\s/g, "") === w; }); })[0];
     return hit ? hit.href : null;
   }
-  function find(q){ close(); if(window.TT_FIND) TT_FIND.open(q || ""); else go("?sb=find" + (q ? "&q=" + encodeURIComponent(q) : "")); }   // 도구 화면: 첫 화면 찾기 창으로
+  function find(q){ close(); if(window.TT_FIND) TT_FIND.open(q || ""); else if(window.TT_SBAR && /\/apps\//.test(location.pathname) && document.getElementById("sbRq") && TT_SBAR.focusSearch(q || "")) return; else go("?sb=find" + (q ? "&q=" + encodeURIComponent(q) : "")); }   // v2.7: 도구 화면은 왼쪽 검색창에서 (보고 있는 화면 안에서 찾음)
+  /* v2.7: "기재요령에서 봉사활동 찾아 줘" → 그 문서를 열고 바로 찾기 · "업무판에서 시험 찾아" · "내선번호에서 김 찾아" */
+  function findIn(where, q){
+    close(); var w = where.replace(/\s+/g, "");
+    if(/업무판|주간업무|월간업무/.test(w)) go("apps/school/?tab=board&q=" + encodeURIComponent(q));
+    else if(/내선|전화번호/.test(w)) go("apps/school/?tab=ext&q=" + encodeURIComponent(q));
+    else go("apps/lib/?find=" + encodeURIComponent(where.replace(/^(학교\s*)?(자료실|문서)\s*/, "").trim()) + "&q=" + encodeURIComponent(q));
+  }
   function handle(raw){
     var t = norm(raw); if(!t) return;
     var say = box.querySelector("#sbSay"); if(say){ say.classList.remove("ph"); say.textContent = t; }
     if(/^(오늘\s*)?브리핑|^오늘\s*(일정|할\s*일\s*알려|뭐\s*있)/.test(t)){ show("brief"); return; }
+    var dm = t.match(/^(.+?)\s*에서\s+(.+?)\s*(?:을|를)?\s*(찾아\s*줘|찾아\s*봐|찾아|검색해\s*줘|검색)$/);
+    if(dm && dm[1].trim().length >= 2){ findIn(dm[1].trim(), dm[2].trim()); return; }
     var fm = t.match(/^(.+?)\s*(찾아\s*줘|찾아|검색해\s*줘|검색)$/) || t.match(/^(?:찾아\s*줘|찾아|검색)\s+(.+)$/);
     if(fm){ find(fm[1]); return; }
     var rc = recCmd(t);

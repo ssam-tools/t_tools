@@ -81,6 +81,19 @@
   .pvp::before{content:attr(data-n);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#c3cad2;font-size:22px;font-weight:800}
   .pvp.done::before{display:none}
   .pvmsg{color:#fff;text-align:center;margin-top:30vh;font-size:15px}
+  /* v2.7 문서 안 찾기: 찾은 자리 노랗게 · 지금 자리 주황 */
+  .pvp .dfm{position:absolute;display:block;background:rgba(255,214,0,.42);mix-blend-mode:multiply;border-radius:2px;pointer-events:none}
+  .pvp .dfm.cur{background:rgba(255,128,0,.55);box-shadow:0 0 0 2px rgba(255,110,0,.9)}
+  .pvf{position:relative;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 12px;background:#fff}
+  .pvf:focus-within{border-color:var(--accent,#2f6fb5)}
+  .pvh .pvf input{width:170px;border:0;outline:0;font:inherit;font-size:13px;text-align:left;padding:4px 0}
+  .pvf #pvQc{font-size:12px;color:var(--sub);min-width:40px;text-align:right;white-space:nowrap}
+  .pvh .pvf .btn{padding:3px 8px;font-size:11px;border-radius:999px}
+  #pvQl{position:absolute;top:calc(100% + 6px);left:0;width:340px;max-height:50vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:4px;z-index:3;display:flex;flex-direction:column;gap:2px}
+  #pvQl[hidden]{display:none}
+  #pvQl button{display:flex;flex-direction:column;gap:2px;text-align:left;border:0;background:none;border-radius:8px;padding:6px 8px;font:inherit;cursor:pointer}
+  #pvQl button:hover{background:#f2f4f7}#pvQl b{font-size:13px}#pvQl small{font-size:12px;color:var(--sub)}#pvQl div{font-size:12px;color:var(--sub);padding:4px 8px}
+  html.inframe .pvf{display:none}
   @media (max-width:760px){ main{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} .bar{justify-content:flex-start} }
   .btn.star{font-size:16px;color:#9aa5b1;padding-left:10px;padding-right:10px}.btn.star.on{color:#e0a526}
   html.inframe header{display:none}
@@ -174,8 +187,9 @@
   var opened = false;
   function openFromUrl(){
     if(opened) return; opened = true;
-    var u = new URLSearchParams(location.search), id = u.get("id"), find = u.get("find"), page = parseInt(u.get("page"), 10) || 1, side = u.get("side");
-    if(!id && !find) return;
+    var u = new URLSearchParams(location.search), id = u.get("id"), find = u.get("find"), page = parseInt(u.get("page"), 10) || 1, side = u.get("side"), qq = u.get("q");
+    if(!id && !find){ if(qq){ $("q").value = qq; $("sf").requestSubmit ? $("sf").requestSubmit() : $("sf").onsubmit(new Event("submit")); } return; }   // v2.7: 왼쪽 검색창 "자료실에서 찾기"
+    if(qq) DF.want = qq;                                                // v2.7: 쌤비 "○○에서 △△ 찾아 줘" → 그 문서를 열고 바로 찾기
     var x = id ? items.filter(function(i){ return i.id === id; })[0] : pick(find);
     if(!x){ TT.ui.toast("자료실에서 " + (find ? "'" + find + "'" : "그 자료") + "을(를) 찾지 못했습니다. 자료 이름에 연도와 '문제'·'해설'을 넣어 올려 주세요."); return; }
     if(!isPdf(x.name)){ TT.ui.toast("PDF가 아니라 바로 볼 수 없습니다. ⬇ 내려받기를 눌러 주세요."); return; }
@@ -218,14 +232,33 @@
   function pvBox(){
     if(PV) return PV;
     var d = document.createElement("dialog"); d.className = "pv";
-    d.innerHTML = '<div class="pvh"><b id="pvT"></b><button type="button" class="btn" id="pvPrev" title="이전 쪽">▲</button><span class="pn"><input id="pvN" inputmode="numeric" aria-label="쪽 번호"> / <span id="pvC">0</span>쪽</span><button type="button" class="btn" id="pvNext" title="다음 쪽">▼</button>'
+    d.innerHTML = '<div class="pvh"><b id="pvT"></b><span class="pvf"><input id="pvQ" type="search" placeholder="이 문서에서 찾기 (Ctrl+F)" aria-label="이 문서에서 찾기" autocomplete="off"><span id="pvQc"></span><button type="button" class="btn" id="pvQp" title="이전 (Shift+Enter)">▲</button><button type="button" class="btn" id="pvQn" title="다음 (Enter)">▼</button><div id="pvQl" hidden></div></span><button type="button" class="btn" id="pvPrev" title="이전 쪽">▲</button><span class="pn"><input id="pvN" inputmode="numeric" aria-label="쪽 번호"> / <span id="pvC">0</span>쪽</span><button type="button" class="btn" id="pvNext" title="다음 쪽">▼</button>'
       + '<button type="button" class="btn" id="pvOut" title="작게">－</button><span class="pn" id="pvZ" style="min-width:44px">100%</span><button type="button" class="btn" id="pvIn" title="크게">＋</button><button type="button" class="btn" id="pvPage" title="한 쪽이 화면에 다 들어오게">한 쪽 맞춤</button><button type="button" class="btn" id="pvFit" title="화면 폭에 맞춰 크게">폭 맞춤</button>'
       + '<button type="button" class="btn" id="pvLink" title="지금 보는 쪽으로 바로 열리는 주소를 복사합니다(학교 업무판 비밀번호가 있는 선생님만 열림)">🔗 이 쪽 링크</button><button type="button" class="btn" id="pvDl">⬇ 내려받기</button><button type="button" class="btn primary" id="pvX">닫기 ✕</button></div><div class="pvb" id="pvB"></div>';
     document.body.appendChild(d);
     PV = {d: d, B: d.querySelector("#pvB"), doc: null, w: 0, h: 0, z: 1, fit: 1, wraps: [], io: null, task: 0};
     var q = function(s){ return d.querySelector(s); };
     q("#pvX").onclick = function(){ d.close(); };
-    d.addEventListener("close", function(){ if(PV.io) PV.io.disconnect(); if(PV.lt){ try{ PV.lt.destroy(); }catch(e){} PV.lt = null; } PV.doc = null; PV.B.textContent = ""; PV.task++; });
+    var Q = q("#pvQ");
+    Q.addEventListener("input", function(){ clearTimeout(pfT); var v = Q.value; pfT = setTimeout(function(){ if(/^\d{1,4}$/.test(v.trim())) return; dfFind(v); }, 250); });
+    Q.addEventListener("keydown", function(e){
+      if(e.isComposing) return;
+      if(e.key === "Escape" && Q.value){ e.preventDefault(); e.stopPropagation(); Q.value = ""; dfFind(""); return; }
+      if(e.key !== "Enter") return; e.preventDefault(); clearTimeout(pfT);
+      var v = Q.value.trim(); if(/^\d{1,4}$/.test(v)){ go(+v); return; }
+      if(v.replace(/\s+/g, "").toLowerCase() !== DF.q){ dfFind(v); return; }
+      if(DF.hits.length) dfJump(DF.i + (e.shiftKey ? -1 : 1));
+    });
+    q("#pvQp").onclick = function(){ if(DF.hits.length) dfJump(DF.i - 1); };
+    q("#pvQn").onclick = function(){ if(DF.hits.length) dfJump(DF.i + 1); };
+    q("#pvQl").addEventListener("click", function(e){ var b = e.target.closest("[data-pr]"), L = q("#pvQl")._rows; if(b && L && L[+b.dataset.pr]) L[+b.dataset.pr].go(); });
+    d.addEventListener("keydown", function(e){
+      if((e.ctrlKey || e.metaKey) && !e.altKey && (e.code === "KeyF" || e.key === "f" || e.key === "F")){
+        e.preventDefault();
+        if(window.top !== window){ try{ parent.TT_SBAR && parent.TT_SBAR.focusSearch(""); }catch(x){} } else { Q.focus(); Q.select(); }
+      }
+    });
+    d.addEventListener("close", function(){ DF.task++; DF.q = ""; DF.hits = []; DF.pages = []; DF.doc = null; if(window.top === window){ Q.value = ""; pfShow({n: null, rows: []}); } else { try{ parent.TT_DOCFIND_READY && parent.TT_DOCFIND_READY(null); }catch(x){} } if(PV.io) PV.io.disconnect(); if(PV.lt){ try{ PV.lt.destroy(); }catch(e){} PV.lt = null; } PV.doc = null; PV.B.textContent = ""; PV.task++; });
     q("#pvIn").onclick = function(){ zoom(Math.min(4, PV.z * 1.2)); };
     q("#pvOut").onclick = function(){ zoom(Math.max(0.3, PV.z / 1.2)); };
     q("#pvPage").onclick = function(){ zoom(1); };
@@ -242,7 +275,7 @@
     q("#pvN").onchange = function(){ go(parseInt(this.value, 10) || 1); };
     PV.B.addEventListener("scroll", function(){ q("#pvN").value = curPage(); }, {passive: true});
     d.addEventListener("keydown", function(e){
-      if(e.target.id === "pvN") return;
+      if(e.target.id === "pvN" || e.target.id === "pvQ") return;
       if(e.key === "PageDown" || e.key === "ArrowRight"){ e.preventDefault(); go(curPage() + 1); }
       else if(e.key === "PageUp" || e.key === "ArrowLeft"){ e.preventDefault(); go(curPage() - 1); }
       else if((e.key === "+" || e.key === "=") && e.ctrlKey){ e.preventDefault(); q("#pvIn").click(); }
@@ -277,7 +310,7 @@
       var c = document.createElement("canvas"); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
       return page.render({canvasContext: c.getContext("2d"), viewport: vp}).promise.then(function(){
         if(task !== PV.task || s !== PV.fit * PV.z) return;
-        w.textContent = ""; w.appendChild(c); w.classList.add("done"); w._s = s;
+        w.textContent = ""; w.appendChild(c); w.classList.add("done"); w._s = s; dfPaint(w);
       });
     }).catch(function(){}).then(function(){ w._busy = false; });
   }
@@ -307,12 +340,135 @@
       go(page || 1);
       if(side === "r") P.B.scrollLeft = P.B.scrollWidth; else P.B.scrollLeft = 0;
       P.side = side || "";
+      dfReady();
     }).catch(function(e){
       if(task !== P.task) return;
       P.B.innerHTML = '<div class="pvmsg">⚠️ 열지 못했습니다: ' + esc(err(e)) + "<br><br>⬇ 내려받기로 받아서 열어 보세요.</div>";
     });
   }
   window.addEventListener("resize", function(){ if(PV && PV.d.open && PV.doc){ var k = curPage(); PV.fit = fitP(); layout(); go(k); } });
+
+  /* ---------- v2.7 문서 안 찾기 (PDF 찾기처럼) ----------
+     학교 업무판 안에 열렸을 때는 왼쪽 쌤비 아래 검색창이, 자료실에서 바로 열었을 때는 보기 창 위쪽 찾기 칸이 씁니다.
+     쪽마다 글자를 이 기기에서 읽어(pdf.js getTextContent) 찾은 자리를 노랗게 칠합니다. 띄어쓰기는 무시하고 찾습니다. */
+  var DF = {q: "", raw: "", hits: [], i: -1, pages: [], doc: null, task: 0, done: 0, want: ""};
+  function dfReset(){ DF.pages = []; DF.doc = PV && PV.doc; DF.done = 0; DF.hits = []; DF.i = -1; }
+  async function dfIndex(n){                                             // n쪽 글자와 자리 읽기
+    var page = await PV.doc.getPage(n), vp = page.getViewport({scale: 1}), tc = await page.getTextContent();
+    var its = [], str = "", map = [], raw = "", rawAt = [];
+    tc.items.forEach(function(it){
+      var s = it.str || ""; if(!s && !it.hasEOL) return;
+      var k = its.length, t = it.transform || [1, 0, 0, 1, 0, 0], h = Math.hypot(t[2], t[3]) || it.height || 10;
+      its.push({s: s, x: t[4], y: t[5], w: it.width || 0, h: h});
+      for(var c = 0; c < s.length; c++){ raw += s.charAt(c); if(/\s/.test(s.charAt(c))) continue; str += s.charAt(c).toLowerCase(); map.push([k, c]); rawAt.push(raw.length - 1); }
+      if(it.hasEOL) raw += " ";
+    });
+    return {n: n, vp: vp, its: its, str: str, map: map, raw: raw, rawAt: rawAt};
+  }
+  function dfScan(P){
+    if(!DF.q) return;
+    var at = -1;
+    while((at = P.str.indexOf(DF.q, at + 1)) >= 0) DF.hits.push({p: P.n, a: at, b: at + DF.q.length});
+  }
+  function dfSnip(h){
+    var P = DF.pages[h.p], r0 = P.rawAt[h.a], r1 = P.rawAt[h.b - 1] + 1, s = Math.max(0, r0 - 18), e = Math.min(P.raw.length, r1 + 28);
+    return (s > 0 ? "…" : "") + esc(P.raw.slice(s, r0)) + "<mark>" + esc(P.raw.slice(r0, r1)) + "</mark>" + esc(P.raw.slice(r1, e)) + (e < P.raw.length ? "…" : "");
+  }
+  function dfRects(h){                                                   // 찾은 글자 자리 → 쪽 안 % 네모들
+    var P = DF.pages[h.p], seg = {}, out = [];
+    for(var c = h.a; c < h.b; c++){ var m = P.map[c], g = seg[m[0]] || (seg[m[0]] = [m[1], m[1]]); g[0] = Math.min(g[0], m[1]); g[1] = Math.max(g[1], m[1]); }
+    Object.keys(seg).forEach(function(k){
+      var it = P.its[k], L = Math.max(1, it.s.length), x0 = it.x + it.w * seg[k][0] / L, x1 = it.x + it.w * (seg[k][1] + 1) / L;
+      var a = P.vp.convertToViewportPoint(x0, it.y - it.h * 0.25), b = P.vp.convertToViewportPoint(x1, it.y + it.h * 0.95);
+      out.push({l: Math.min(a[0], b[0]) / P.vp.width * 100, t: Math.min(a[1], b[1]) / P.vp.height * 100, w: Math.abs(b[0] - a[0]) / P.vp.width * 100, h: Math.abs(b[1] - a[1]) / P.vp.height * 100});
+    });
+    return out;
+  }
+  function dfPaint(w){
+    if(!w) return;
+    Array.prototype.forEach.call(w.querySelectorAll(".dfm"), function(x){ x.remove(); });
+    if(!DF.q || !DF.hits.length || !w.classList.contains("done")) return;
+    var n = +w.dataset.n, cur = DF.hits[DF.i];
+    DF.hits.forEach(function(h){
+      if(h.p !== n) return;
+      dfRects(h).forEach(function(r){ var m = document.createElement("i"); m.className = "dfm" + (h === cur ? " cur" : ""); m.style.cssText = "left:" + r.l + "%;top:" + r.t + "%;width:" + r.w + "%;height:" + r.h + "%"; w.appendChild(m); });
+    });
+  }
+  function dfPaintAll(){ if(PV) PV.wraps.forEach(function(w){ if(w.classList.contains("done")) dfPaint(w); }); }
+  function dfEmit(){
+    var busy = !!DF.q && DF.done < (PV && PV.doc ? PV.doc.numPages : 0), seen = {}, rows = [];
+    DF.hits.forEach(function(h, k){ if(seen[h.p] || rows.length >= 40) return; seen[h.p] = 1;
+      var c = DF.hits.filter(function(x){ return x.p === h.p; }).length;
+      rows.push({ic: "📄", tx: h.p + "쪽" + (c > 1 ? " <small>" + c + "곳</small>" : ""), sub: dfSnip(h), go: function(){ dfJump(k); }}); });
+    if(DF.q && !busy) rows.push({ic: "🗂️", tx: "다른 자료에서도 찾기", sub: "규정집 · 교육계획서 등 자료실 전체", go: function(){ dfOthers(DF.raw); }});
+    var r = {n: DF.q ? DF.hits.length : null, i: DF.i >= 0 ? DF.i + 1 : 0, busy: busy, rows: DF.q ? rows : [], note: DF.q && !busy && !DF.hits.length ? "이 문서에는 '" + esc(DF.raw) + "'이(가) 없어요" : ""};
+    if(window.top !== window){ try{ if(parent.TT_DOCFIND_EMIT) parent.TT_DOCFIND_EMIT(r); }catch(e){} }
+    else pfShow(r);
+  }
+  function dfJump(k){
+    if(!DF.hits.length) return;
+    var old = DF.hits[DF.i]; DF.i = (k + DF.hits.length) % DF.hits.length; var h = DF.hits[DF.i], w = PV.wraps[h.p - 1]; if(!w) return;
+    var r = dfRects(h)[0] || {t: 0, l: 0};
+    PV.B.scrollTop = w.offsetTop + w.offsetHeight * r.t / 100 - PV.B.clientHeight * 0.35;
+    if(PV.B.scrollWidth > PV.B.clientWidth + 4) PV.B.scrollLeft = w.offsetLeft + w.offsetWidth * r.l / 100 - PV.B.clientWidth / 2;
+    PV.d.querySelector("#pvN").value = h.p;
+    if(old && old.p !== h.p) dfPaint(PV.wraps[old.p - 1]);
+    dfPaint(w); dfEmit();
+  }
+  async function dfFind(q){
+    q = String(q || ""); var nq = q.replace(/\s+/g, "").toLowerCase(), task = ++DF.task;
+    if(!PV || !PV.doc){ DF.want = q; return; }
+    if(DF.doc !== PV.doc) dfReset();
+    DF.raw = q.trim(); DF.q = nq; DF.hits = []; DF.i = -1;
+    if(!nq){ dfPaintAll(); dfEmit(); return; }
+    var N = PV.doc.numPages, from = curPage(), jumped = false;
+    function firstJump(){ if(jumped || !DF.hits.length) return; var k = DF.hits.findIndex(function(h){ return h.p >= from; }); if(k < 0 && DF.done >= N) k = 0; if(k >= 0){ jumped = true; dfJump(k); } }
+    DF.pages.forEach(function(P){ if(P){ P.st = task; dfScan(P); } });
+    DF.hits.sort(function(a, b){ return a.p - b.p || a.a - b.a; });
+    firstJump(); dfPaintAll(); dfEmit();
+    for(var n = 1; n <= N; n++){
+      if(DF.pages[n]){ if(DF.pages[n].st !== task){ DF.pages[n].st = task; dfScan(DF.pages[n]); } continue; }
+      var P1; try{ P1 = await dfIndex(n); }catch(e){ P1 = {n: n, str: "", map: [], raw: "", rawAt: [], its: []}; }
+      if(!PV.doc || DF.doc !== PV.doc) return;
+      if(!DF.pages[n]){ DF.pages[n] = P1; DF.done++; }
+      if(task !== DF.task) return;
+      if(DF.pages[n].st !== task){ DF.pages[n].st = task; dfScan(DF.pages[n]); }
+      if(n % 8 === 0 || n === N){ var keep = DF.hits[DF.i]; DF.hits.sort(function(a, b){ return a.p - b.p || a.a - b.a; }); if(keep) DF.i = DF.hits.indexOf(keep); firstJump(); dfPaintAll(); dfEmit(); }
+    }
+    firstJump(); dfEmit();
+  }
+  function dfOthers(q){                                                  // 다른 자료에서도: 자료실 전체(쪽별 색인)에서 찾고 누르면 그 자료 그 쪽을 열어 이어서 찾기
+    var r0 = {n: null, busy: true, rows: [], note: "자료실 전체에서 '" + esc(q) + "' 찾는 중…"};
+    if(window.top !== window){ try{ parent.TT_DOCFIND_EMIT(r0); }catch(e){} } else pfShow(r0);
+    post({action: "libsearch", q: q}).then(function(r){
+      var cur = last && last.id, H = (r.hits || []).filter(function(h){ return h.id !== cur && !/^ttbook__/.test(String(h.name || "")) && !/^교과서 조각/.test(String(h.title || "")); }).slice(0, 20);
+      var res = {n: null, rows: H.map(function(h){ return {ic: "📕", tx: esc(h.title) + (h.page ? " <small>" + esc(pg(h.page)) + "</small>" : ""), sub: hl(h.snip || "", [q]).replace(/^…?/, "…"), go: function(){
+        var x = items.filter(function(i){ return i.id === h.id; })[0]; if(x && !isPdf(x.name)){ TT.ui.toast("PDF가 아니라 바로 볼 수 없어요. 자료실에서 내려받아 주세요."); return; }
+        DF.want = q; view(h.id, /^\d+$/.test(h.page) ? +h.page : 1); }}; }), note: H.length ? "누르면 그 자료를 열고 이어서 찾아요" : "다른 자료에도 '" + esc(q) + "'이(가) 없어요"};
+      if(window.top !== window){ try{ parent.TT_DOCFIND_EMIT(res); }catch(e){} } else pfShow(res);
+    }).catch(function(e){ var res = {n: null, rows: [], note: esc(err(e))}; if(window.top !== window){ try{ parent.TT_DOCFIND_EMIT(res); }catch(x){} } else pfShow(res); });
+  }
+  function dfReady(){                                                    // 새 문서가 열린 뒤: 기다리던 찾기 이어서 · 부모 화면에 알리기
+    dfReset();
+    var w = DF.want; DF.want = "";
+    if(window.top !== window){ try{ if(parent.TT_DOCFIND_READY) parent.TT_DOCFIND_READY(w); }catch(e){} }
+    else if(w){ var i = PV.d.querySelector("#pvQ"); if(i) i.value = w; }
+    if(w || (window.top === window && PV.d.querySelector("#pvQ").value.trim())) dfFind(w || PV.d.querySelector("#pvQ").value);
+  }
+  window.TT_DOCFIND = {
+    find: function(q){ dfFind(q); }, step: function(d){ if(DF.hits.length) dfJump(DF.i + d); },
+    page: function(n){ if(PV && PV.doc) go(n); }, clear: function(){ dfFind(""); },
+    open: function(){ return !!(PV && PV.d.open && PV.doc); }, title: function(){ return last ? last.name : ""; }
+  };
+  /* 자료실에서 바로 연 보기 창(맨 위 창)의 찾기 칸 */
+  var pfT = 0;
+  function pfShow(r){
+    if(!PV) return; var c = PV.d.querySelector("#pvQc"), L = PV.d.querySelector("#pvQl"); if(!c) return;
+    c.textContent = r.n == null ? "" : r.n ? (r.i ? r.i + " / " : "") + r.n + (r.busy ? "…" : "") : r.busy ? "찾는 중…" : "없음";
+    var rows = (r.rows || []).filter(function(x){ return x.ic !== "📄"; });
+    L.innerHTML = rows.map(function(x, k){ return '<button type="button" data-pr="' + k + '"><b>' + x.ic + " " + x.tx + "</b>" + (x.sub ? "<small>" + x.sub + "</small>" : "") + "</button>"; }).join("") + (r.note ? "<div>" + r.note + "</div>" : "");
+    L.hidden = !L.innerHTML; L._rows = rows;
+  }
   function del(id){
     var x = items.filter(function(i){ return i.id === id; })[0]; if(!x) return;
     TT.ui.confirm("자료 지우기", "'" + x.title + "'을(를) 자료실에서 지웁니다. 드라이브 휴지통으로 옮겨집니다.", "지우기", function(){

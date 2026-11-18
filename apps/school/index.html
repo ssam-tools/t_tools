@@ -29,7 +29,9 @@
   .exl{flex:1 1 0;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px;align-content:start}
   .exl div{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:14px}
   .exl b{font-size:17px;font-variant-numeric:tabular-nums;color:var(--accent);min-width:44px}
-  .exl span{display:flex;flex-direction:column;min-width:0}.exl small{color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .exl span{display:flex;flex-direction:column;min-width:0}
+  html[data-ui="ssambi"] .ext #exq{display:none}   /* v2.7: 쌤비 홈 디자인에서는 왼쪽 검색창 하나로 찾음 */
+  .exl div.hit{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft,rgba(0,0,0,.06))}.exl small{color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -57,9 +59,59 @@
     else SUG.forEach(function(x){ L.push({k: "find:" + x[1], t: x[0]}); });
     return L;
   }
-  var cur = sessionStorage.getItem(TK) || "board";
+  var U0 = new URLSearchParams(location.search), Q0 = U0.get("q") || "";
+  var cur = /^(board|ext)$/.test(U0.get("tab") || "") ? U0.get("tab") : sessionStorage.getItem(TK) || "board";
+  if(U0.get("tab") || Q0) try{ history.replaceState(null, "", location.pathname); }catch(e){}
+
+  /* ── v2.7 왼쪽 쌤비 아래 검색창(shared/sbbar.js)과 연결: 보고 있는 칸에 따라 찾는 곳이 바뀜 ──
+     업무판 = 업무판 안의 글자(업무판 쪽 Index.html이 칠해 줌, 메시지로 주고받음) · 내선번호 = 이름·부서·번호 · 문서 = 그 PDF 안 (apps/lib 의 TT_DOCFIND) */
+  function SB(){ return window.TT_SBAR || null; }
+  function sq(){ return SB() ? TT_SBAR.query() : ""; }
+  function show(r){ if(SB()) TT_SBAR.show(r); }
+  var BW = null;                                                        // 업무판 화면(구글 쪽 안쪽 창)
+  function bsend(o){ if(BW) try{ BW.postMessage(o, "*"); }catch(e){} }
+  window.addEventListener("message", function(e){
+    if(!/^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/.test(e.origin)) return;
+    var d = e.data; if(!d || typeof d !== "object") return;
+    if(d.tt === "ttboard-ready"){ BW = e.source; bsend({tt: "tthello"}); if(cur === "board" && sq()) bsend({tt: "ttfind", q: sq()}); return; }
+    if(e.source !== BW) return;
+    if(d.tt === "ttctrlf"){ if(SB()) TT_SBAR.focusSearch(""); return; }
+    if(d.tt === "ttfound" && cur === "board") show({n: +d.n || 0, i: +d.i || 0, rows: (d.rows || []).map(function(r, k){ return {ic: "📅", tx: esc(r.t), sub: esc(r.d || ""), go: function(){ bsend({tt: "ttgo", k: k}); }}; }),
+      note: d.n ? "" : "지금 보는 주(달)에는 없어요 · 업무판의 ◀ ▶로 다른 주를 보면 거기서 찾아요"});
+  });
+  var PB = {key: "board", ph: "업무판에서 찾기",
+    find: function(q){ if(!BW){ show({n: null, rows: [], note: "업무판에 들어간 뒤(비밀번호) 찾을 수 있어요"}); return; } bsend({tt: "ttfind", q: q}); },
+    step: function(d){ bsend({tt: "ttstep", d: d}); }, clear: function(){ bsend({tt: "ttfind", q: ""}); }};
+  var EXL = [];
+  function extHits(q){ return EXL.filter(function(x){ return [x.t, x.n, x.d, x.m].join(" ").indexOf(q) >= 0; }); }
+  var PE = {key: "ext", ph: "이름 · 부서 · 번호 찾기",
+    find: function(q){
+      var i = $("exq"); if(!i){ show({n: null, rows: [], note: "업무판 비밀번호를 넣으면 찾을 수 있어요"}); return; }
+      i.value = q; i.oninput();
+      var H = extHits(q);
+      show({n: H.length, rows: H.slice(0, 8).map(function(x){ return {ic: "📞", tx: "<b>" + esc(x.t) + "</b> " + esc(x.n), sub: esc([x.d, x.m].filter(Boolean).join(" · ")) + " · 누르면 번호 복사", go: function(){ try{ navigator.clipboard.writeText(x.t); }catch(e){} TT.ui.toast("📞 " + x.n + " " + x.t + " — 번호를 복사했어요"); }}; }), note: H.length ? "Enter = 첫 번호 복사" : ""});
+    },
+    clear: function(){ var i = $("exq"); if(i){ i.value = ""; i.oninput(); } }};
+  function DW(){ var f = document.querySelector("#pane iframe.frame"); try{ return f && f.contentWindow && f.contentWindow.TT_DOCFIND || null; }catch(e){ return null; } }
+  var PD = {key: "doc", ph: "이 문서에서 찾기",
+    find: function(q){ var d = DW(); if(d && d.open()) d.find(q); else show({n: null, busy: true, rows: [], note: "문서를 여는 중이에요. 열리면 바로 찾아요"}); },
+    step: function(k){ var d = DW(); if(d) d.step(k); }, page: function(n){ var d = DW(); if(d) d.page(n); }, clear: function(){ var d = DW(); if(d) d.clear(); }};
+  window.TT_DOCFIND_EMIT = function(r){ if(cur.indexOf("doc:") === 0 || cur.indexOf("find:") === 0) show(r); };
+  window.TT_DOCFIND_READY = function(w){                                // 문서가 열렸을 때(w: 이어서 찾을 말) · 닫혔을 때(null)
+    if(w === null){ if(sq()) show({n: null, rows: [], note: "문서가 닫혔어요"}); return; }
+    if(w){ if(SB()) TT_SBAR.focusSearch(w); return; }
+    var d = DW(), q = sq(); if(q && d && !/^\d{1,4}$/.test(q)) d.find(q);
+  };
+  function setProv(){
+    window.TT_SBFIND_P = cur === "board" ? PB : cur === "ext" ? PE : PD;
+    if(PD === window.TT_SBFIND_P){ PD.key = cur; var t = tabs().filter(function(x){ return x.k === cur; })[0]; PD.ph = "이 문서에서 찾기" + (t ? " · " + t.t.replace(/^★\s*/, "").slice(0, 10) : ""); }
+    if(SB()) TT_SBAR.refresh();
+  }
+  if(Q0) (function wait(n){ if(SB() && document.getElementById("sbRq")){ setProv(); TT_SBAR.focusSearch(Q0); } else if(n < 60) setTimeout(function(){ wait(n + 1); }, 100); })(0);
+
   function draw(){
     var L = tabs(); if(!L.some(function(x){ return x.k === cur; })) cur = "board";
+    BW = null; setProv();
     $("tabs").innerHTML = L.map(function(x){ return '<button type="button" data-k="' + esc(x.k) + '"' + (x.k === cur ? ' class="on" aria-pressed="true"' : "") + ">" + esc(x.t) + "</button>"; }).join("")
       + '<a class="add" href="../lib/" title="자료실에서 ☆를 누르면 여기에 자주 보는 문서로 나와요">☆ 문서 고르기</a>';
     var P = $("pane");
@@ -81,11 +133,11 @@
     if(pw && sessionStorage.getItem(OK) !== "1"){
       P.innerHTML = '<form class="lock" id="lk" autocomplete="off"><b>📞 내선번호</b><input type="password" id="lkp" placeholder="업무판 비밀번호" aria-label="업무판 비밀번호"><span class="er" id="lke"></span><button type="submit" class="btn primary">보기</button></form>';
       $("lkp").focus();
-      $("lk").onsubmit = function(e){ e.preventDefault(); if($("lkp").value === pw){ sessionStorage.setItem(OK, "1"); drawExt(P); } else $("lke").textContent = "비밀번호가 맞지 않아요."; };
+      $("lk").onsubmit = function(e){ e.preventDefault(); if($("lkp").value === pw){ sessionStorage.setItem(OK, "1"); drawExt(P); if(sq()) PE.find(sq()); } else $("lke").textContent = "비밀번호가 맞지 않아요."; };
       return;
     }
     P.innerHTML = '<div class="ext"><input type="search" id="exq" placeholder="이름 · 부서 · 번호 찾기" aria-label="내선번호 찾기"><div class="exl" id="exl"></div><div class="note" id="exn"></div></div>';
-    var L = window.TT_LIBD ? TT_LIBD.extCached() : [];
+    var L = window.TT_LIBD ? TT_LIBD.extCached() : []; EXL = L;
     function paint(){
       var q = ($("exq").value || "").trim(), R = L.filter(function(x){ return !q || [x.t, x.n, x.d, x.m].join(" ").indexOf(q) >= 0; });
       $("exl").innerHTML = R.length ? R.map(function(x){ return "<div><b>" + esc(x.t) + "</b><span>" + esc(x.n) + "<small>" + esc([x.d, x.m].filter(Boolean).join(" · ")) + "</small></span></div>"; }).join("") : '<div class="msg" style="grid-column:1/-1">' + (L.length ? "맞는 번호가 없어요." : "내선번호가 아직 없어요. 학기초 세팅 파일이나 업무판 '내선번호' 시트를 넣어 주세요.") + "</div>";
@@ -93,7 +145,7 @@
     $("exq").oninput = paint; paint();
     if(window.TT_LIBD && TT_LIBD.connected()){
       $("exn").textContent = "업무판에서 새로 받는 중…";
-      TT_LIBD.ext(true).then(function(){ L = TT_LIBD.extCached(); paint(); $("exn").textContent = "🔒 이 창을 닫으면 다시 비밀번호를 물어요."; }, function(){ $("exn").textContent = "🔒 이 기기에 있는 번호를 보여 줍니다."; });
+      TT_LIBD.ext(true).then(function(){ L = TT_LIBD.extCached(); EXL = L; paint(); if(cur === "ext" && sq()) PE.find(sq()); $("exn").textContent = "🔒 이 창을 닫으면 다시 비밀번호를 물어요."; }, function(){ $("exn").textContent = "🔒 이 기기에 있는 번호를 보여 줍니다."; });
     }else $("exn").textContent = "🔒 이 창을 닫으면 다시 비밀번호를 물어요.";
   }
   $("tabs").addEventListener("click", function(e){ var b = e.target.closest("[data-k]"); if(!b) return; cur = b.dataset.k; sessionStorage.setItem(TK, cur); draw(); });
