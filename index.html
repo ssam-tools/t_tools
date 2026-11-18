@@ -14,11 +14,14 @@ try{ var snG = /[?&]legacy=(on|off)\b/.exec(location.search);   /* v2.8: 쌤비 
   var snLeg = localStorage.getItem("sn_legacy_ui") === "1", snQ = snLeg && /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse(localStorage.getItem("snlook_v1") || "null");
   if(snQ){ snL = snL || {}; snL.ui = snQ[1]; localStorage.setItem("snlook_v1", JSON.stringify(snL)); history.replaceState(null, "", location.pathname + location.search.replace(/[?&]ui=(ssambi|board)\b/, "").replace(/^&/, "?") + location.hash); }
   if((!snLeg || (snL && snL.ui === "ssambi")) && localStorage.getItem("ttv_device") !== "classroom") document.documentElement.setAttribute("data-ui", "ssambi"); }catch(e){}</script>
-<style>html[data-ui="ssambi"]:not(.sbReady) body{visibility:hidden}</style><!-- 쌤비 홈이 다 그려질 때까지 감춤(업무판이 잠깐 보이지 않게) -->
+<style id="sbHold">html[data-ui="ssambi"]:not(.sbReady) body{visibility:hidden}
+/* v2.8.1: 쌤비 홈이 준비되기 전에는 예전 업무판 부분을 아예 그리지 않음(잠깐 보였다 바뀌지 않게) */
+html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #today,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) .toprow,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #tbar,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #mview,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #mnav,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > footer,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #sbBtn{display:none!important}</style>
+<script>setTimeout(function(){ document.documentElement.classList.add("sbLate", "sbReady"); }, 8000);   /* 혹시 쌤비 홈이 못 뜨면 8초 뒤 예전 화면이라도 보이게 */</script><!-- 쌤비 홈이 다 그려질 때까지 감춤(업무판이 잠깐 보이지 않게) -->
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="assets/ssambi-32.png" sizes="32x32">
-<link rel="icon" href="assets/ssambi-192.png" sizes="192x192">
-<link rel="apple-touch-icon" href="assets/ssambi-180.png">
+<link rel="icon" href="assets/ssambi2-32.png" sizes="32x32">
+<link rel="icon" href="assets/ssambi2-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="assets/ssambi2-180.png">
 <meta name="apple-mobile-web-app-title" content="쌤 노트">
 <meta name="application-name" content="쌤 노트">
 <link rel="stylesheet" href="shared/look.css">
@@ -519,6 +522,7 @@ try{ var snG = /[?&]legacy=(on|off)\b/.exec(location.search);   /* v2.8: 쌤비 
         <div class="mh">안내</div>
         <button type="button" id="mHelp" data-e="❓">처음 사용 안내</button>
         <button type="button" id="mKeys" data-e="⌨️" onclick="this.closest('details').open=false;window.TT_KEYS&&TT_KEYS.help()">단축키 안내 <small style="opacity:.6">?</small></button>
+        <button type="button" id="mFeedback" data-e="💬">의견 보내기</button>
         <button type="button" id="mJoy" data-e="🎈" onclick="this.closest('details').open=false;window.TT&&TT.joy?TT.joy.open():TT.ui.toast('교실 기기에서는 재미 요소가 꺼져 있어요.')">도장판·배지</button>
         <hr><div class="mh">설정</div>
         <a href="apps/setup/" data-e="🧳"><span data-tn="setup">학기초 세팅</span></a>
@@ -613,6 +617,17 @@ try{ var snG = /[?&]legacy=(on|off)\b/.exec(location.search);   /* v2.8: 쌤비 
   </form>
 </dialog>
 
+<dialog id="dlgFb">
+  <form id="fFb">
+    <h2>💬 의견 보내기</h2>
+    <p>불편한 점·오류·아이디어를 적어 주세요. 학교 업무판의 '의견' 시트로 담당 선생님께 갑니다.</p>
+    <label class="field" style="margin-top:10px">내용<textarea id="fbText" rows="5" maxlength="1000" placeholder="예: 출결 화면에서 ○○를 누르면 … / ○○ 기능이 있으면 좋겠어요"></textarea></label>
+    <label class="field" style="margin-top:8px">이름 <small>(선택 · 답을 받고 싶을 때)</small><input type="text" id="fbName" maxlength="20" autocomplete="off"></label>
+    <p class="sm" style="margin-top:8px">🔒 학생 이름 등 개인정보는 적지 말아 주세요. 함께 가는 것: 쌤 노트 버전 · 보고 있던 화면 이름</p>
+    <p class="bErr" id="fbErr"></p>
+    <div class="acts"><span></span><div class="r"><button type="button" class="btn" id="fbCancel">취소</button><button type="submit" class="btn primary" id="fbOk">보내기</button></div></div>
+  </form>
+</dialog>
 <dialog id="dlgBoard">
   <form id="fBoard">
     <h2>📅 학교 주간 업무판 연결</h2>
@@ -623,6 +638,7 @@ try{ var snG = /[?&]legacy=(on|off)\b/.exec(location.search);   /* v2.8: 쌤비 
       <input type="password" id="bPw" autocomplete="off"></label>
     <p class="sm" style="margin-top:8px">🔒 주소와 비밀번호는 이 기기 브라우저에만 저장됩니다. 업무판에는 날짜와 비밀번호만 보내고, 학생 자료는 보내지 않습니다. 업무판 내용은 읽기만 합니다(입력은 업무판에서).</p>
     <p class="bErr" id="bErr"></p>
+    <p class="sm" id="bInvWrap" hidden style="margin-top:8px">🔗 <button type="button" class="btn" id="bInvite" style="padding:4px 10px;font-size:13px">선생님 초대 링크 복사</button> 받은 선생님은 링크를 누르면 학교 이름·업무판 주소가 저절로 들어가요. <b>비밀번호는 링크에 넣지 않으니</b> 따로 알려 주세요.</p>
     <div class="acts"><button type="button" class="btn" id="bOff">이 기능 쓰지 않기</button>
       <div class="r"><button type="button" class="btn" id="bCancel">취소</button><button type="submit" class="btn primary" id="bOk">연결 확인</button></div></div>
   </form>
@@ -806,7 +822,7 @@ try{ var snG = /[?&]legacy=(on|off)\b/.exec(location.search);   /* v2.8: 쌤비 
         items.push({x: {icon: "📞", name: "내선번호", st: EX.length ? EX.length + "곳 · 찾기(Ctrl+K)로도" : "학교 업무판에서 불러오기", fn: function(){ sessionStorage.setItem("sn_ext", "1"); var v = TT.store.get(UIK, {}) || {}; v.mtab = v.mtab || {}; v.mtab.school = "lib"; TT.store.set(UIK, v); renderMenu("school"); }}});
       }
       if(m.id === "settings" && !TT.classroom){                                   // 설정 메뉴: ⋯ 메뉴에 있던 설정을 카드로 (누르면 같은 창이 열림)
-        ({guide: [["mHelp","❓","처음 사용 안내","쌤 노트 쓰는 법"],["mKeys","⌨️","단축키 안내","/ · Ctrl+F · Alt+B · ?"],["mJoy","🎈","도장판·배지","퇴근 도장 · 아낀 시간 · 배지 · 쌤비 소품"]],
+        ({guide: [["mHelp","❓","처음 사용 안내","쌤 노트 쓰는 법"],["mKeys","⌨️","단축키 안내","/ · Ctrl+F · Alt+B · ?"],["mFeedback","💬","의견 보내기","불편한 점 · 아이디어를 담당 선생님께"],["mJoy","🎈","도장판·배지","퇴근 도장 · 아낀 시간 · 배지 · 쌤비 소품"]],
           set: [["mSchool","🏫","학교·선생님 설정","내 정보 · 담임/교과 · 교과 칸"],["mAuto","✨","자동 준비 설정","시기에 맞춰 할 일 미리 넣기"],["mFont","🎨","화면 꾸미기","테마 색 · 글꼴 · 글자 크기"],["mBoard","📅","학교 업무판 연결","업무판 주소 · 자료실 · 내선번호"],["mVault","☁️","기기 연결·동기화","내 기기끼리 자료 맞추기"],["mInstall","📲","앱 설치하기","바탕화면·홈 화면에 쌤비 아이콘"]],
           data: [["mBackup","💾","전체 백업 저장","이 기기 자료를 파일 하나로"],["mRestore","📂","백업 불러오기","백업 파일에서 되살리기"]],
           year: [["mNewYear","🌱","새 학년 시작","한 해 돌아보기 → 백업 → 정리 (조심)"]]}[g.id] || []
@@ -1157,6 +1173,43 @@ try{ var snG = /[?&]legacy=(on|off)\b/.exec(location.search);   /* v2.8: 쌤비 
     var ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
     TT.ui.confirm("📲 앱 설치하기", ios ? "사파리 아래쪽 공유 단추(□↑) → '홈 화면에 추가' → 이름 '쌤 노트' → 추가" : and ? "크롬 오른쪽 위 ⋮ → '앱 설치' 또는 '홈 화면에 추가' → 설치" : "크롬·엣지 주소창 오른쪽의 설치 아이콘(⊕ 또는 □↓)을 누르거나, 브라우저 메뉴 ⋮ → '쌤 노트 설치'를 누르세요. 바탕화면과 시작 메뉴에 쌤비 아이콘이 생깁니다.", "알겠어요", function(){});
   };
+  /* v2.8.1 의견 보내기: 학교 업무판(Apps Script) '의견' 시트로 — 연결 전이면 복사해서 쿨메신저로 */
+  $("mFeedback").onclick = function(){ closeMenu(); $("fbErr").textContent = ""; $("fbOk").disabled = false; $("fbName").value = (TT.school.load().teacher || ""); $("dlgFb").showModal(); setTimeout(function(){ $("fbText").focus(); }, 0); };
+  $("fbCancel").onclick = function(){ $("dlgFb").close(); };
+  $("fFb").addEventListener("submit", function(e){
+    e.preventDefault();
+    var t = $("fbText").value.trim(); if(t.length < 2){ $("fbErr").textContent = "내용을 적어 주세요."; return; }
+    var B = TT.store.get("tt_board_v1", null) || {}, msg = "[쌤 노트 의견 · v" + TT.VERSION + "] " + t + ($("fbName").value.trim() ? " — " + $("fbName").value.trim() : "");
+    if(!(B.url && B.pw)){
+      try{ navigator.clipboard.writeText(msg); }catch(x){}
+      $("dlgFb").close(); TT.ui.toast("학교 업무판이 연결되어 있지 않아 내용을 복사했어요. 쿨메신저로 담당 선생님께 붙여 넣어 보내 주세요.", null, null, 12000); return;
+    }
+    $("fbOk").disabled = true; $("fbErr").textContent = "보내는 중…";
+    fetch(B.url, {method: "POST", redirect: "follow", credentials: "omit", cache: "no-store", headers: {"Content-Type": "text/plain;charset=utf-8"},
+      body: JSON.stringify({action: "fb", pw: B.pw, text: t, name: $("fbName").value.trim(), ver: TT.VERSION, page: (location.hash || "#home").slice(1)})})
+      .then(function(r){ return r.json(); }).then(function(j){
+        if(!j || !j.ok) throw new Error(j && j.error || "보내지 못했어요");
+        $("fbText").value = ""; $("dlgFb").close(); TT.ui.toast("💬 의견을 보냈어요. 고맙습니다!");
+      }).catch(function(err){
+        try{ navigator.clipboard.writeText(msg); }catch(x){}
+        $("fbOk").disabled = false; $("fbErr").textContent = (/지원하지 않는/.test(String(err.message)) ? "업무판이 아직 의견 받기를 지원하지 않아요." : "보내지 못했어요.") + " 내용을 복사해 두었으니 쿨메신저로 보내 주세요.";
+      });
+  });
+  /* v2.8.1 선생님 초대 링크: ?invite=… 로 열면 학교 이름 · 업무판 주소를 넣고 비밀번호만 묻기 */
+  (function(){
+    var m = /[?&]invite=([A-Za-z0-9_-]+)/.exec(location.search); if(!m) return;
+    try{ history.replaceState(null, "", location.pathname + location.hash); }catch(e){}
+    var o = null; try{ o = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g, "+").replace(/_/g, "/"))))); }catch(e){}
+    if(!o || !/^https:\/\/script\.google\.com\/(?:a\/macros\/[^\/?#\s]+|macros)\/s\/[\w-]+\/exec$/.test(o.b || "")){ TT.ui.toast("초대 링크가 올바르지 않아요. 링크를 다시 받아 주세요."); return; }
+    var sn = String(o.s || "").slice(0, 20);
+    setTimeout(function(){
+      TT.ui.confirm("🦉 쌤 노트 초대", (sn ? sn + " " : "") + "쌤 노트에 초대받았어요. 학교 이름과 학교 업무판 주소를 넣을까요? 다음 창에서 업무판 공용 비밀번호(따로 받은 것)만 입력하면 됩니다.", "넣기", function(){
+        if(sn && !TT.school.load().name) TT.school.save({name: sn});
+        var B = TT.store.get("tt_board_v1", null) || {}; B.url = o.b; delete B.hidden; TT.store.set("tt_board_v1", B);
+        var mb = $("mBoard"); if(mb) mb.click();
+      });
+    }, 900);
+  })();
   /* v2.8 ⋯ 메뉴: 선 아이콘 · 업무판 연결 상태 · 백업한 지 며칠 */
   function menuDeco(){
     var M = document.querySelector("#more .menu"); if(!M) return;

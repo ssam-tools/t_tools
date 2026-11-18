@@ -225,6 +225,7 @@
     $("bErr").textContent = "";
     $("bOff").textContent = c.url ? "연결 해제" : "이 기능 쓰지 않기";
     $("bOk").disabled = false; $("bOk").textContent = "연결 확인";
+    var iw = document.getElementById("bInvWrap"); if(iw) iw.hidden = !(c.url && c.pw);   // v2.8.1 연결된 선생님(담당자)만 초대 링크 만들기
     dlg.showModal();
     setTimeout(function(){ (c.url ? $("bPw") : $("bUrl")).focus(); }, 0);
   }
@@ -251,6 +252,13 @@
     });
   });
   $("bCancel").onclick = function(){ dlg.close(); };
+  var inv = document.getElementById("bInvite");
+  if(inv) inv.onclick = function(){                                   // 학교 이름 + 업무판 주소만 (비밀번호·학생 자료는 넣지 않음)
+    var c = cfg(), sn = TT.school.load().name || c.school || "";
+    var code = btoa(unescape(encodeURIComponent(JSON.stringify({s: sn, b: c.url})))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    var link = location.origin + (TT.BASE ? new URL(TT.BASE, location.href).pathname : location.pathname) + "?invite=" + code;
+    try{ navigator.clipboard.writeText(link); TT.ui.toast("🔗 초대 링크를 복사했어요. 쿨메신저로 보내고, 비밀번호는 따로 알려 주세요.", null, null, 10000); }catch(e){ prompt("이 링크를 복사해 보내 주세요", link); }
+  };
   $("bOff").onclick = function(){
     var had = !!cfg().url;
     TT.store.remove(CACHE);

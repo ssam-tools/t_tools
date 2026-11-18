@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.8.0";
+  var VERSION = "2.8.1";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -304,15 +304,15 @@ var TT = (function(){
   }
   var ui = {
     /* 아래쪽 알림. undo 함수를 주면 "되돌리기" 버튼이 붙습니다. */
-    toast: function(msg, undo){
+    toast: function(msg, undo, label, ms){   // v2.8.1: label = 단추 글자(기본 '되돌리기'), ms = 보이는 시간
       var t = document.getElementById("tt-toast");
       if(!t){ t = el("div"); t.id = "tt-toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
       t.textContent = ""; t.appendChild(el("span", "", msg));
       if(undo){
-        var b = el("button", "", "되돌리기"); b.type = "button";
+        var b = el("button", "", label || "되돌리기"); b.type = "button";
         b.onclick = function(){ undo(); t.hidden = true; }; t.appendChild(b);
       }
-      t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.hidden = true; }, 8000);
+      t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.hidden = true; }, ms || 8000);
     },
     confirm: function(title, msg, okLabel, cb){
       var x = dialog();
@@ -510,6 +510,19 @@ var TT = (function(){
   /* ================= 설치·오프라인 ================= */
   if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
     window.addEventListener("load", function(){ navigator.serviceWorker.register(BASE + "sw.js", {scope: BASE}).catch(function(){}); });
+    /* v2.8.1 새 버전 알림: version.json 의 번호가 지금과 다르면 "새로고침" 단추 (처음 열 때 + 30분마다, 다른 화면 안에서는 안 함) */
+    if(window.top === window){
+      var verNum = function(v){ return String(v || "").split(".").map(function(x){ return ("000" + (parseInt(x, 10) || 0)).slice(-3); }).join("."); }, verTold = "";
+      var verCheck = function(){
+        if(navigator.onLine === false) return;
+        fetch(BASE + "version.json?t=" + Date.now(), {cache: "no-store"}).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+          if(!j || !j.v || verNum(j.v) <= verNum(VERSION) || verTold === j.v) return; verTold = j.v;
+          var go = function(){ try{ navigator.serviceWorker && navigator.serviceWorker.getRegistration && navigator.serviceWorker.getRegistration().then(function(g){ if(g) g.update(); }); }catch(e){} setTimeout(function(){ location.reload(); }, 300); };
+          setTimeout(function(){ ui.toast("🦉 쌤 노트 새 버전(" + j.v + ")이 나왔어요" + (j.note ? " · " + j.note : ""), go, "새로고침", 60000); }, 2500);
+        }).catch(function(){});
+      };
+      window.addEventListener("load", function(){ setTimeout(verCheck, 4000); setInterval(verCheck, 30 * 60 * 1000); });
+    }
   }
   if(!canStore){ if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", ui.warnStore); else ui.warnStore(); }
 
@@ -949,7 +962,7 @@ var TT = (function(){
       if(o.ui === "board") r.removeAttribute("data-ui"); else r.setAttribute("data-ui", o.ui);
       if(o.ui === "ssambi" && !document.getElementById("sbHold")){        // 쌤비 홈 디자인: 새 화면이 준비될 때까지 감춤 (예전 화면이 잠깐 보이지 않게, 늦어도 2.5초 뒤에는 보임)
         try{ var hs = document.createElement("style"); hs.id = "sbHold"; hs.textContent = 'html[data-ui="ssambi"]:not(.sbReady) body{visibility:hidden}html[data-ui="ssambi"] .tt-rail{display:none!important}'; (document.head || r).appendChild(hs); }catch(e){}
-        setTimeout(function(){ r.classList.add("sbReady"); }, 2500);
+        setTimeout(function(){ r.classList.add("sbReady"); }, /\/apps\//.test(location.pathname) ? 2500 : 8000);   // v2.8.1: 첫 화면은 쌤비 홈이 다 그리면 보임(느린 기기에서 2.5초에 예전 업무판이 잠깐 보이던 문제)
       }   // v2.0: 쌤비 홈 디자인(shared/v2.css)은 이 표시가 있을 때만
       var mt = document.querySelector('meta[name="theme-color"]'), th = THEMES.filter(function(x){ return x.id === o.look; })[0]; if(mt && th) mt.setAttribute("content", th.c[1]);
     }
