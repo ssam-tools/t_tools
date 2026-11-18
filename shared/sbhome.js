@@ -161,16 +161,15 @@
     }).join("") + "</div>";
     var rest = G.map(function(g){ return {name: g.name, items: g.items.filter(function(it){ return big.indexOf(it) < 0; })}; }).filter(function(g){ return g.items.length; });
     /* 교과 칸은 한 칸(열)에 모아, 내 교과가 아닌 칸은 그 아래 한 줄로 접어 둠 → 3칸 안에 다 들어가 스크롤 없이 */
-    var cols = [], subj = null;
-    rest.forEach(function(g){ if(/교과 칸/.test(g.name)){ if(!subj){ subj = []; cols.push(subj); } subj.push(g); } else cols.push([g]); });
+    var cols = rest.map(function(g){ return [g]; });                   // 묶음마다 한 칸 — 교과 칸도 수학 · 국어 나란히(접지 않음)
     function sec(g){
-      var fold = /교과 칸/.test(g.name) && my && g.name.indexOf(my) < 0 && !openG[g.name];
+      var fold = false;
       return '<section class="gp' + (fold ? " fold" : "") + '"><h3>' + (fold ? '<button type="button" data-open="' + esc(g.name) + '">' + esc(g.name.replace(/^교과 칸\s*·\s*/, "")) + " (" + g.items.length + ") ▸</button>" : esc(g.name || "그 밖의 도구")) + "</h3>"
         + (fold ? "" : '<div class="ic">' + g.items.map(function(it){
             return '<button type="button" class="sc' + (it.dim ? " dim" : "") + '" data-mid="' + idx(it) + '" title="' + esc(it.name + (it.st ? " · " + it.st : "")) + '"><span class="ci">' + ico(it, 20) + "</span><b>" + esc(it.name) + "</b></button>";
           }).join("") + "</div>") + "</section>";
     }
-    if(cols.length) h += '<div class="sbGroups" style="--gc:' + Math.min(cols.length, 3) + '">' + cols.map(function(c){ return '<div class="col">' + c.map(sec).join("") + "</div>"; }).join("") + "</div>";
+    if(cols.length) h += '<div class="sbGroups" style="--gc:' + Math.min(cols.length, 4) + '">' + cols.map(function(c){ return '<div class="col">' + c.map(sec).join("") + "</div>"; }).join("") + "</div>";
     return h + "</div>";
   }
 
