@@ -23,7 +23,7 @@
   .bar label{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:var(--sub)}
   .bar input[type=number]{width:52px;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:6px}
   main{display:flex!important;flex-direction:column;gap:8px;padding:10px!important;min-height:0}
-  .front{align-self:center;font-size:13px;font-weight:800;color:var(--sub);background:var(--t-chip,#eceff3);border-radius:8px;padding:4px 28px}
+  .front{align-self:center;font-size:clamp(16px,2.4vh,22px);font-weight:900;color:#fff;background:#3b4652;border-radius:10px;padding:8px 0;width:min(60%,640px);text-align:center;letter-spacing:.2em;box-shadow:0 4px 0 #22292f}
   .room{flex:1;min-height:0;display:grid;gap:clamp(4px,1vh,8px);grid-template-columns:repeat(var(--c,6),minmax(0,1fr));grid-template-rows:repeat(var(--r,5),minmax(0,1fr))}
   .room.flip{transform:rotate(180deg)}.room.flip .seat>*{transform:rotate(180deg)}
   .seat{position:relative;font:inherit;border:1.5px solid var(--line);background:var(--card);border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:var(--ink);min-height:0;padding:2px}
@@ -35,7 +35,35 @@
   .hint{font-size:12.5px;color:var(--sub);text-align:center}
   .mode button[aria-pressed=true]{background:var(--t-homeroom,#1f7a4d);color:#fff;border-color:var(--t-homeroom,#1f7a4d)}
   @media (max-width:760px){ body{height:auto;min-height:100dvh;overflow:auto} .room{min-height:62vh} }
-  @media print{ .bar,.hint,footer{display:none!important} main.panel{display:flex!important;height:90vh} .seat{border:1px solid #333} }
+  /* 섞는 애니메이션 · 바꾸기 움직임 */
+  .seat.cv{background:var(--t-accent-soft,#e9f2fc);border-color:var(--accent,#2f6fb5)}
+  .seat.cv b{color:var(--accent,#2f6fb5);opacity:.55;filter:blur(1px)}
+  .seat.cv i{visibility:hidden}
+  .seat.rv{animation:rv .45s ease}
+  @keyframes rv{0%{transform:rotateY(90deg) scale(.9)}100%{transform:none}}
+  .seat.mv{transition:transform .45s cubic-bezier(.2,.8,.2,1.2);z-index:3;box-shadow:0 10px 24px rgba(0,0,0,.18)}
+  #skip{position:fixed;right:24px;bottom:24px;z-index:50}
+  #pdlg{border:0;border-radius:16px;padding:18px 20px;width:min(460px,92vw)}
+  #pdlg h2{font-size:18px;margin:0 0 10px}#pdlg label{display:block;font-size:13px;font-weight:700;color:var(--sub);margin:8px 0 3px}
+  #pdlg input{width:100%;box-sizing:border-box;font:inherit;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  #pdlg .row{display:flex;gap:6px;justify-content:flex-end;margin-top:14px}
+  #pr{display:none}
+  @media print{
+    @page{size:A4 landscape;margin:9mm}
+    html,body{height:auto!important;min-height:0!important;overflow:visible!important;margin:0!important;padding:0!important;background:#fff!important}
+    body>*{display:none!important}
+    #pr{display:block!important;font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:#111}
+    #pr .ph{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid #111;padding-bottom:4px;margin-bottom:6px}
+    #pr .ph h1{font-size:20pt;margin:0}#pr .ph .fx{font-size:13pt;font-weight:700}#pr .ph .mm{margin-left:auto;font-size:11pt}
+    #pr .pb{display:grid;grid-template-columns:3fr 1fr;gap:6mm;height:160mm}
+    #pr .pl{display:flex;flex-direction:column;gap:3mm;min-height:0}
+    #pr .pf{align-self:center;width:60%;text-align:center;font-size:16pt;font-weight:900;letter-spacing:.3em;border:2px solid #111;background:#e9e9e9;padding:2mm 0}
+    #pr .pg{flex:1;display:grid;gap:2mm;grid-template-columns:repeat(var(--c),1fr);grid-template-rows:repeat(var(--r),1fr)}
+    #pr .pg div{border:1.2px solid #333;border-radius:2mm;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    #pr .pg b{font-size:14pt}#pr .pg i{font-style:normal;font-size:9pt;color:#555}#pr .pg .e{border-style:dashed;border-color:#aaa}
+    #pr .pn{border-left:1px solid #999;padding-left:4mm;font-size:9.5pt;overflow:hidden;columns:var(--cols,1);column-gap:4mm}
+    #pr .pn h3{font-size:12pt;margin:0 0 2mm;column-span:all}#pr .pn div{break-inside:avoid;line-height:1.38}#pr .pn span{display:inline-block;width:2.2em;color:#555}
+  }
 </style>
 </head>
 <body>
@@ -60,6 +88,8 @@
   <div class="room" id="room"></div>
   <div class="hint" id="hint">두 자리를 차례로 누르면 서로 바뀝니다 · 빈자리도 고를 수 있어요 · 🔒 고정을 켜고 누르면 그 자리는 무작위 때 그대로</div>
 </main>
+<div id="pr"></div>
+<dialog id="pdlg"><h2>🖨 자리표 인쇄 (A4 가로)</h2><label for="pFix">고정 문구 (저장됨 · 예: 급훈)</label><input id="pFix" maxlength="60" placeholder="예: 서로 존중하는 우리 반"><label for="pMemo">이번에 적을 한 줄</label><input id="pMemo" maxlength="60" placeholder="예: 2학기 3차 자리 (11/19~)"><div class="row"><button class="btn" id="pX" type="button">취소</button><button class="btn primary" id="pGo" type="button">인쇄</button></div></dialog>
 <footer><span class="priv">🔒 자리표는 이 기기에만 저장됩니다(백업·동기화에 들어가지 않음).</span><span id="info"></span></footer>
 <script src="../../shared/tools.js"></script>
 <script src="../../shared/tt.js"></script>
@@ -104,9 +134,33 @@
     var b = e.target.closest(".seat"); if(!b) return; var i = +b.dataset.i, s = cur();
     if(lockMode){ if(s.lock[i]) delete s.lock[i]; else s.lock[i] = 1; put(s); draw(); return; }
     if(sel < 0){ sel = i; draw(); return; }
-    if(sel !== i){ var t = s.seats[sel]; s.seats[sel] = s.seats[i]; s.seats[i] = t; var lk = !!s.lock[sel]; if(s.lock[i]) s.lock[sel] = 1; else delete s.lock[sel]; if(lk) s.lock[i] = 1; else delete s.lock[i]; put(s); }
+    if(sel !== i){
+      var A0 = seatEl(sel).getBoundingClientRect(), B0 = seatEl(i).getBoundingClientRect(), a0 = sel;
+      var t = s.seats[sel]; s.seats[sel] = s.seats[i]; s.seats[i] = t; var lk = !!s.lock[sel]; if(s.lock[i]) s.lock[sel] = 1; else delete s.lock[sel]; if(lk) s.lock[i] = 1; else delete s.lock[i]; put(s);
+      sel = -1; draw(); fly(seatEl(i), A0); fly(seatEl(a0), B0); tone(520, .08); tone(780, .12, .1); return;   /* 두 카드가 서로 날아가 자리를 바꿈 */
+    }
     sel = -1; draw();
   });
+  function seatEl(i){ return $("room").querySelector('.seat[data-i="' + i + '"]'); }
+  function fly(el, from){ if(!el) return; var to = el.getBoundingClientRect(), k = flip ? -1 : 1; el.classList.remove("mv"); el.style.transform = "translate(" + k * (from.left - to.left) + "px," + k * (from.top - to.top) + "px)"; void el.offsetWidth; el.classList.add("mv"); el.style.transform = ""; setTimeout(function(){ el.classList.remove("mv"); }, 500); }
+  var AC = null;
+  function tone(f, d, w){ try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var t = AC.currentTime + (w || 0), o = AC.createOscillator(), g = AC.createGain(); o.frequency.value = f; o.type = "triangle"; g.gain.setValueAtTime(.12, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + d + .02); }catch(e){} }
+  /* 🎲 무작위: 모든 카드를 가리고 이름이 마구 바뀌다가(북소리) 앞자리부터 한 자리씩 공개 · [⏩ 바로 보기]로 건너뛰기 */
+  var anim = null;
+  function reveal(s, locks){
+    var room = $("room"), els = Array.prototype.slice.call(room.querySelectorAll(".seat")), names = cls.students.map(function(x){ return x.name; }), n = 0, idx = 0, skip;
+    skip = document.createElement("button"); skip.id = "skip"; skip.className = "btn primary"; skip.textContent = "⏩ 바로 보기"; document.body.appendChild(skip);
+    function done(){ clearInterval(anim); anim = null; skip.remove(); draw(); }
+    skip.onclick = done;
+    els.forEach(function(e, i){ if(!locks[i] && s.seats[i]) e.classList.add("cv"); });
+    anim = setInterval(function(){
+      n++;
+      if(n <= 14){ els.forEach(function(e){ if(e.classList.contains("cv")){ var b = e.querySelector("b"); if(b) b.textContent = names[Math.floor(Math.random() * names.length)]; } }); tone(140 + Math.random() * 60, .05); return; }
+      while(idx < els.length && !els[idx].classList.contains("cv")) idx++;
+      if(idx >= els.length){ tone(523, .15); tone(784, .3, .12); done(); TT.ui.toast("🎲 새 자리 완성!"); return; }
+      var e = els[idx], no = s.seats[idx]; e.classList.remove("cv"); e.classList.add("rv"); e.innerHTML = "<b>" + esc(name(no)) + "</b><i>" + esc(no) + "번</i>"; tone(600 + idx * 12, .07); idx++;
+    }, 90);
+  }
   function size(){
     var s = cur(), r = Math.max(1, Math.min(10, +$("nr").value || s.r)), c = Math.max(1, Math.min(10, +$("nc").value || s.c));
     if(r === s.r && c === s.c) return;
@@ -121,12 +175,24 @@
     var spots = free.slice(); for(var m = spots.length - 1; m > 0; m--){ var j2 = Math.floor(Math.random() * (m + 1)), t2 = spots[m]; spots[m] = spots[j2]; spots[j2] = t2; }
     spots = spots.slice(0, who.length).sort(function(a, b){ return a - b; });                       // 빈자리는 뒤쪽에 남도록 앞자리부터 채움
     free.forEach(function(i){ s.seats[i] = ""; }); spots.forEach(function(i, k2){ s.seats[i] = who[k2]; });
-    put(s); sel = -1; draw(); TT.ui.toast("🎲 자리를 섞었습니다" + (Object.keys(s.lock).length ? " (🔒 고정 자리는 그대로)" : "") + ".");
+    put(s); sel = -1; if(anim) return; draw(); reveal(s, s.lock);
   };
   $("order").onclick = function(){ if(!cls) return; TT.ui.confirm("번호순으로 앉히기", "지금 자리표를 1번부터 차례로 다시 채웁니다. 고정도 풀립니다.", "번호순", function(){ var s = cur(); fillOrder(s); put(s); sel = -1; draw(); }); };
   $("lockM").onclick = function(){ lockMode = !lockMode; this.setAttribute("aria-pressed", lockMode); $("hint").textContent = lockMode ? "🔒 고정 켜짐: 자리를 누르면 고정/해제 — 다 했으면 [🔒 고정]을 다시 누르세요" : "두 자리를 차례로 누르면 서로 바뀝니다 · 빈자리도 고를 수 있어요 · 🔒 고정을 켜고 누르면 그 자리는 무작위 때 그대로"; sel = -1; draw(); };
   $("flip").onclick = function(){ flip = !flip; this.setAttribute("aria-pressed", flip); draw(); };
-  $("print").onclick = function(){ window.print(); };
+  /* 🖨 인쇄: A4 가로 · 맨 위 학년 반 + 고정 문구 + 한 줄 · 왼쪽 3/4 자리표 · 오른쪽 1/4 명단 */
+  $("print").onclick = function(){ if(!cls) return; var o = all(), P = (o.p || {})[cls.id] || {}; $("pFix").value = P.fix || ""; $("pMemo").value = P.memo || ""; $("pdlg").showModal(); };
+  $("pX").onclick = function(){ $("pdlg").close(); };
+  $("pGo").onclick = function(){
+    var o = all(); o.p = o.p || {}; o.p[cls.id] = {fix: $("pFix").value.trim(), memo: $("pMemo").value.trim()}; saveAll(o); $("pdlg").close();
+    var s = sync(cur()), P = o.p[cls.id], L = cls.students.slice().sort(function(a, b){ return a.no - b.no; });
+    var seats = s.seats.map(function(no){ return no ? "<div><b>" + esc(name(no)) + "</b><i>" + esc(no) + "번</i></div>" : '<div class="e"></div>'; });
+    if(flip) seats.reverse();
+    var front = '<div class="pf">교탁 · 칠판</div>', grid = '<div class="pg" style="--r:' + s.r + ";--c:" + s.c + '">' + seats.join("") + "</div>";
+    $("pr").innerHTML = '<div class="ph"><h1>' + esc(cls.name) + ' 자리 배치</h1>' + (P.fix ? '<span class="fx">' + esc(P.fix) + "</span>" : "") + '<span class="mm">' + esc(P.memo || "") + "</span></div>"
+      + '<div class="pb"><div class="pl">' + (flip ? grid + front : front + grid) + '</div><div class="pn" style="--cols:' + (L.length > 34 ? 2 : 1) + '"><h3>명단 (' + L.length + "명)</h3>" + L.map(function(x){ return "<div><span>" + esc(x.no) + "</span>" + esc(x.name) + "</div>"; }).join("") + "</div></div>";
+    setTimeout(function(){ window.print(); }, 50);
+  };
   TT.ui.classSelect($("clsSel"), "seat", function(c){ cls = c; sel = -1; draw(); });
 })();
 </script>
