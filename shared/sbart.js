@@ -115,7 +115,7 @@
   var TOOL = {timetable: "clock", book: "class", journal: "notebook", mpace: "hourglass", "class": "toolbox", group: "group", assess: "chart", mblue: "target",
     roster: "homeroom", photo: "camera", tardy: "compass", parent: "mail", submit: "box", duty: "list", seat: "seats",
     stucard: "idcard", voice: "mic", gquick: "bolt", counsel: "chat", record: "doc", advisor: "cap", bonus: "medal",
-    year: "calendar", lib: "search", ai: "robot", train: "cert", merge: "clip", setup: "suitcase",
+    year: "calendar", schoolhub: "school", lib: "search", ai: "robot", train: "cert", merge: "clip", setup: "suitcase",
     concept: "map", mgen: "numbers", mcheck: "check", mstudy: "open", mqr: "qr", play: "game", kread: "open", kreadt: "teacher"};
   var EMO = {"🗣️": "chat", "🔁": "refresh", "⚡": "bolt", "📄": "doc", "📦": "box", "📝": "pencil", "⏳": "hourglass", "📆": "calendar", "🏖️": "sun", "👀": "eye", "🧭": "compass", "✏️": "pencil", "⏰": "alarm", "📣": "megaphone", "🎓": "cap", "📋": "list", "📞": "phone", "🗂️": "lib", "🙋": "doc", "📅": "calendar", "🔗": "link", "📞": "phone", "🏫": "school", "🎨": "palette", "✨": "sparkle", "☁️": "cloud", "💾": "save", "📂": "lib", "❓": "help", "🌱": "sprout", "🧳": "suitcase"};
   Object.keys(T).forEach(function(k){ if(!ICONS[k]) ICONS[k] = T[k]; });

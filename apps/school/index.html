@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 막습니다. 예외: 학교 업무판(구글 앱스 스크립트) — 업무판 화면을 이 안에 띄우고, 내선번호를 읽어 옵니다. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; frame-src 'self' https://script.google.com https://*.googleusercontent.com; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>학교 업무판 · 쌤 노트</title>
+<link rel="stylesheet" href="../../shared/look.css">
+<link rel="stylesheet" href="../../shared/tt.css">
+<style>
+  /* 학교 업무판 (v2.3) — 학교 메뉴의 대표 화면: 주간·월간 업무판 · 내선번호 · 자주 보는 문서(자료실에서 ★)를 한 화면에서 */
+  .tabs2{display:flex;gap:6px;flex-wrap:wrap;flex:none}
+  .tabs2 button,.tabs2 a{font:inherit;font-size:14px;font-weight:500;border:1px solid var(--line);background:var(--card);color:var(--sub);border-radius:999px;padding:7px 14px;cursor:pointer;text-decoration:none;min-height:38px;display:inline-flex;align-items:center;gap:4px}
+  .tabs2 button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .tabs2 .add{border-style:dashed}
+  main.pane{flex:1 1 0;min-height:0;display:flex;flex-direction:column;gap:8px}
+  .frame{flex:1 1 0;min-height:0;width:100%;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+  .note{font-size:13px;color:var(--sub);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .note a,.note button{font:inherit;font-size:13px;color:var(--accent);background:none;border:0;cursor:pointer;padding:0;text-decoration:underline}
+  .msg{margin:auto;text-align:center;color:var(--sub);line-height:1.7;max-width:460px}
+  .msg b{color:var(--ink)}
+  .lock{margin:auto;display:flex;flex-direction:column;gap:10px;align-items:center;max-width:320px;width:100%}
+  .lock input{font:inherit;font-size:16px;width:100%;height:46px;border:1px solid var(--line);border-radius:12px;padding:0 14px;background:var(--card);color:var(--ink)}
+  .lock .er{color:var(--danger);font-size:13px;min-height:18px}
+  .ext{display:flex;flex-direction:column;gap:8px;min-height:0;flex:1 1 0}
+  .ext input{font:inherit;font-size:15px;height:42px;border:1px solid var(--line);border-radius:999px;padding:0 16px;background:var(--card);color:var(--ink);max-width:420px}
+  .exl{flex:1 1 0;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px;align-content:start}
+  .exl div{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:14px}
+  .exl b{font-size:17px;font-variant-numeric:tabular-nums;color:var(--accent);min-width:44px}
+  .exl span{display:flex;flex-direction:column;min-width:0}.exl small{color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl"><a class="back" href="../../">← 쌤 노트</a><h1>🏫 학교 업무판</h1></div>
+  <nav class="tabs2" id="tabs" aria-label="학교 업무판 칸"></nav>
+</header>
+<main class="pane" id="pane" aria-live="polite"></main>
+
+<script src="../../shared/tt.js"></script>
+<script src="../../shared/libd.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var TK = "sbSchoolTab", OK = "sbExtOk";
+  var SUG = [["학교 배치도", "배치도"], ["교육계획서", "교육계획"], ["규정집", "규정"]];   // ★가 없을 때 보여 줄 자주 보는 문서(자료실에서 이름으로 찾음)
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function B(){ return TT.store.get("tt_board_v1", null) || {}; }
+  function boardOk(){ var b = B(); return !!(b.url && /^https:\/\/script\.google\.com\//.test(b.url) && !b.hidden); }
+  function stars(){ var o = (TT.store.get("tt_lib_star_v1", null) || {}).ids || {}; return Object.keys(o).map(function(id){ return {id: id, t: o[id].t, at: o[id].at || 0}; }).sort(function(a, b){ return a.at - b.at; }); }
+  function tabs(){
+    var L = [{k: "board", t: "📅 업무판"}, {k: "ext", t: "📞 내선번호"}], S = stars();
+    if(S.length) S.forEach(function(x){ L.push({k: "doc:" + x.id, t: "★ " + x.t}); });
+    else SUG.forEach(function(x){ L.push({k: "find:" + x[1], t: x[0]}); });
+    return L;
+  }
+  var cur = sessionStorage.getItem(TK) || "board";
+  function draw(){
+    var L = tabs(); if(!L.some(function(x){ return x.k === cur; })) cur = "board";
+    $("tabs").innerHTML = L.map(function(x){ return '<button type="button" data-k="' + esc(x.k) + '"' + (x.k === cur ? ' class="on" aria-pressed="true"' : "") + ">" + esc(x.t) + "</button>"; }).join("")
+      + '<a class="add" href="../lib/" title="자료실에서 ☆를 누르면 여기에 자주 보는 문서로 나와요">☆ 문서 고르기</a>';
+    var P = $("pane");
+    if(cur === "board"){
+      if(!boardOk()){ P.innerHTML = '<div class="msg"><b>학교 업무판이 아직 연결되지 않았어요.</b><br>설정 → 학교 업무판 연결에서 업무판 주소를 넣어 주세요.<br><br><a class="btn" href="../../#settings">설정 열기</a></div>'; return; }
+      var u = B().url;
+      P.innerHTML = '<iframe class="frame" src="' + esc(u) + '" title="학교 주간·월간 업무판" referrerpolicy="no-referrer"></iframe>'
+        + '<div class="note">업무판이 비어 보이면 → <a href="' + esc(u) + '" target="_blank" rel="noopener">새 창으로 열기</a></div>';
+      return;
+    }
+    if(cur === "ext"){ drawExt(P); return; }
+    var src = cur.indexOf("doc:") === 0 ? "../lib/?id=" + encodeURIComponent(cur.slice(4)) : "../lib/?find=" + encodeURIComponent(cur.slice(5));
+    P.innerHTML = '<iframe class="frame" src="' + esc(src) + '" title="자주 보는 문서"></iframe>'
+      + (stars().length ? "" : '<div class="note">자료실에서 문서의 ☆를 누르면 이 자리에 그 문서가 나와요 · <a href="../lib/">자료실 열기</a></div>');
+  }
+  /* 내선번호: 선생님 이름이 들어 있어, 업무판 공용 비밀번호를 넣어야 보임(이 창을 닫을 때까지) */
+  function drawExt(P){
+    var pw = B().pw || "";
+    if(pw && sessionStorage.getItem(OK) !== "1"){
+      P.innerHTML = '<form class="lock" id="lk" autocomplete="off"><b>📞 내선번호</b><input type="password" id="lkp" placeholder="업무판 비밀번호" aria-label="업무판 비밀번호"><span class="er" id="lke"></span><button type="submit" class="btn primary">보기</button></form>';
+      $("lkp").focus();
+      $("lk").onsubmit = function(e){ e.preventDefault(); if($("lkp").value === pw){ sessionStorage.setItem(OK, "1"); drawExt(P); } else $("lke").textContent = "비밀번호가 맞지 않아요."; };
+      return;
+    }
+    P.innerHTML = '<div class="ext"><input type="search" id="exq" placeholder="이름 · 부서 · 번호 찾기" aria-label="내선번호 찾기"><div class="exl" id="exl"></div><div class="note" id="exn"></div></div>';
+    var L = window.TT_LIBD ? TT_LIBD.extCached() : [];
+    function paint(){
+      var q = ($("exq").value || "").trim(), R = L.filter(function(x){ return !q || [x.t, x.n, x.d, x.m].join(" ").indexOf(q) >= 0; });
+      $("exl").innerHTML = R.length ? R.map(function(x){ return "<div><b>" + esc(x.t) + "</b><span>" + esc(x.n) + "<small>" + esc([x.d, x.m].filter(Boolean).join(" · ")) + "</small></span></div>"; }).join("") : '<div class="msg" style="grid-column:1/-1">' + (L.length ? "맞는 번호가 없어요." : "내선번호가 아직 없어요. 학기초 세팅 파일이나 업무판 '내선번호' 시트를 넣어 주세요.") + "</div>";
+    }
+    $("exq").oninput = paint; paint();
+    if(window.TT_LIBD && TT_LIBD.connected()){
+      $("exn").textContent = "업무판에서 새로 받는 중…";
+      TT_LIBD.ext(true).then(function(){ L = TT_LIBD.extCached(); paint(); $("exn").textContent = "🔒 이 창을 닫으면 다시 비밀번호를 물어요."; }, function(){ $("exn").textContent = "🔒 이 기기에 있는 번호를 보여 줍니다."; });
+    }else $("exn").textContent = "🔒 이 창을 닫으면 다시 비밀번호를 물어요.";
+  }
+  $("tabs").addEventListener("click", function(e){ var b = e.target.closest("[data-k]"); if(!b) return; cur = b.dataset.k; sessionStorage.setItem(TK, cur); draw(); });
+  window.addEventListener("storage", function(e){ if(e.key === "tt_lib_star_v1" || e.key === "tt_board_v1") draw(); });
+  draw();
+})();
+</script>
+</body>
+</html>

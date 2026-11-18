@@ -77,6 +77,8 @@
   .pvp.done::before{display:none}
   .pvmsg{color:#fff;text-align:center;margin-top:30vh;font-size:15px}
   @media (max-width:760px){ main{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} .bar{justify-content:flex-start} }
+  .btn.star{font-size:16px;color:#9aa5b1;padding-left:10px;padding-right:10px}.btn.star.on{color:#e0a526}
+  html.inframe header{display:none}
 </style>
 </head>
 <body>
@@ -99,6 +101,7 @@
   <span id="info">누구나 올리고 내려받습니다 · 내용까지 찾아 몇 쪽인지 보여 줍니다</span>
   <span class="priv">🔒 개인정보가 담긴 자료는 올리지 마세요 · 우리 학교 공용 비밀번호를 아는 구성원만</span>
 </footer>
+<script>if(window.top !== window) document.documentElement.classList.add("inframe");</script>
 <script src="../../shared/tt.js"></script>
 <script>
 (function(){
@@ -134,12 +137,22 @@
   function drawList(){
     var my = mine().mine, L = items.filter(function(x){ return (cat === "전체" || x.cat === cat) && (!onlyNew || x.latest); }).sort(function(a, b){ return a.at < b.at ? 1 : -1; });
     $("body").innerHTML = L.length ? '<div class="list">' + L.map(function(x){
-      return '<div class="it"><span class="ic">' + icon(x.name) + '</span><div class="mn"><div class="tt" title="' + esc(x.name) + '">' + esc(x.title) + '</div><div class="mt"><span class="chip">' + esc(x.cat) + "</span>" + (x.latest ? '<span class="chip new">최신</span>' : '<span class="chip old">보관</span>') + (x.pages ? '<span class="chip idx">내용 검색' + (/\.pdf$/i.test(x.name) ? " " + x.pages + "쪽" : "") + "</span>" : '<span class="chip">이름으로만 검색</span>') + "<span>" + esc(x.by || "") + "</span><span>" + esc(day(x.at)) + "</span><span>" + kb(x.size) + "</span>" + (x.desc ? "<span>" + esc(x.desc) + "</span>" : "") + '</div></div>' + (isPdf(x.name) ? '<button type="button" class="btn" data-view="' + x.id + '">👁 보기</button>' : "") + '<button type="button" class="btn" data-get="' + x.id + '">⬇ 내려받기</button>' + (my[x.id] || admin ? '<button type="button" class="btn" data-del="' + x.id + '" title="' + (my[x.id] ? "내가 올린 자료" : "관리자") + '">🗑</button>' : "") + "</div>";
+      return '<div class="it"><span class="ic">' + icon(x.name) + '</span><div class="mn"><div class="tt" title="' + esc(x.name) + '">' + esc(x.title) + '</div><div class="mt"><span class="chip">' + esc(x.cat) + "</span>" + (x.latest ? '<span class="chip new">최신</span>' : '<span class="chip old">보관</span>') + (x.pages ? '<span class="chip idx">내용 검색' + (/\.pdf$/i.test(x.name) ? " " + x.pages + "쪽" : "") + "</span>" : '<span class="chip">이름으로만 검색</span>') + "<span>" + esc(x.by || "") + "</span><span>" + esc(day(x.at)) + "</span><span>" + kb(x.size) + "</span>" + (x.desc ? "<span>" + esc(x.desc) + "</span>" : "") + '</div></div>' + (star()[x.id] ? '<button type="button" class="btn star on" data-star="' + x.id + '" title="학교 업무판의 자주 보는 문서에서 빼기" aria-pressed="true">★</button>' : '<button type="button" class="btn star" data-star="' + x.id + '" title="학교 업무판의 자주 보는 문서에 넣기 (학교 배치도·교육계획서·규정집 등)" aria-pressed="false">☆</button>') + (isPdf(x.name) ? '<button type="button" class="btn" data-view="' + x.id + '">👁 보기</button>' : "") + '<button type="button" class="btn" data-get="' + x.id + '">⬇ 내려받기</button>' + (my[x.id] || admin ? '<button type="button" class="btn" data-del="' + x.id + '" title="' + (my[x.id] ? "내가 올린 자료" : "관리자") + '">🗑</button>' : "") + "</div>";
     }).join("") + "</div>" : '<div class="empty"><div class="big">🔎</div><div><b>' + (items.length ? "이 갈래에 자료가 없습니다." : "아직 올라온 자료가 없습니다.") + '</b><br>규정집, 교육계획서, 생활기록부 기재요령, 자주 쓰는 서식처럼<br>구성원이 가끔 찾아보는 자료를 올려 주세요. PDF·HWPX·워드·엑셀은 내용까지 찾을 수 있어요.</div><button type="button" class="btn primary" id="up2">＋ 자료 올리기</button></div>';
     var u2 = $("up2"); if(u2) u2.onclick = upload;
     $("info").textContent = "자료 " + items.filter(function(x){ return x.latest; }).length + "개 (보관 " + items.filter(function(x){ return !x.latest; }).length + ") · 누구나 올리고 내려받습니다";
   }
+  /* v2.3: ★ = 학교 업무판(apps/school)의 '자주 보는 문서' — tt_lib_star_v1 {id: {t: 제목, at}} · 전체 백업에 들어감 */
+  function star(){ return (TT.store.get("tt_lib_star_v1", null) || {}).ids || {}; }
+  function toggleStar(id){
+    var o = TT.store.get("tt_lib_star_v1", null) || {}; o.ids = o.ids || {};
+    var x = items.filter(function(i){ return i.id === id; })[0] || {};
+    if(o.ids[id]) delete o.ids[id]; else o.ids[id] = {t: x.title || x.name || "문서", at: Date.now()};
+    TT.store.set("tt_lib_star_v1", o); drawList();
+    TT.ui.toast(o.ids[id] ? "★ 학교 업무판의 자주 보는 문서에 넣었습니다." : "자주 보는 문서에서 뺐습니다.");
+  }
   $("body").addEventListener("click", function(e){
+    var sb = e.target.closest("[data-star]"); if(sb){ toggleStar(sb.dataset.star); return; }
     var v = e.target.closest("[data-view]"); if(v){ view(v.dataset.view, +v.dataset.page || 1, v); return; }
     var g = e.target.closest("[data-get]"); if(g){ download(g.dataset.get, g); return; }
     var d = e.target.closest("[data-del]"); if(d){ del(d.dataset.del); }

@@ -7,6 +7,7 @@
 (function(){
   "use strict";
   if(!window.TT || window.TT_SBAR || TT.classroom) return;
+  if(window.top !== window){ document.documentElement.classList.add("sbReady"); return; }   // 다른 화면 안(학교 업무판의 문서 칸)에 열렸을 때는 쌤비·메뉴 없이
   var R = document.documentElement, ART = window.TT_SBART, BASE = TT.BASE || "./";
   var HOME = !/\/apps\//.test(location.pathname);
   if(!HOME && R.getAttribute("data-ui") !== "ssambi") return;          // 도구 화면은 쌤비 홈 디자인일 때만 (첫 화면은 바꾸는 즉시 보이도록 늘 만들어 둠)
@@ -56,7 +57,19 @@
   var owlState = null;
   function P(){ return owlState || basicPick(); }
   function owlSvg(size){ var p = P(); return ART ? ART.svg({item: p.item, deco: TT.joy && TT.joy.on && !TT.joy.on() ? "" : season(), open: !!p.open, sleep: !!p.sleep, listen: !!p.listen, size: size}) : "🦉"; }
-  function href(id){ return id === "home" ? BASE : BASE + "#" + (id === "lib" ? "school" : id); }
+  /* v2.3: 메뉴를 누르면 중메뉴 없이 대표 도구가 바로 (홈·설정은 메인 화면) */
+  var REP = {"class": "apps/book/", homeroom: "apps/tardy/", student: "apps/stucard/", school: "apps/school/", lib: "apps/lib/"};
+  function href(id){ return id === "home" ? BASE : REP[id] ? BASE + REP[id] : BASE + "#" + id; }
+  if(HOME){                                                             // 예전 주소(#class …)·단축키(Alt+2~5)로 와도 대표 도구로
+    var toRep = function(){
+      if(R.getAttribute("data-ui") !== "ssambi") return false;
+      var h = (location.hash || "").replace(/^#/, ""), k = h === "school" && sub() === "lib" ? "lib" : h;
+      if(REP[k]){ location.replace(BASE + REP[k]); return true; }
+      return false;
+    };
+    if(toRep()) return;
+    window.addEventListener("hashchange", toRep);
+  }
 
   /* ── ① 첫 화면·중메뉴 머리 ──
      쌤비를 누르거나 🎤를 누르면 따로 창을 띄우지 않고 쌤비 옆 말풍선이 그대로 쌤비 창이 됩니다(오늘 상황 · 말하기 · 듣는 중).
@@ -216,6 +229,7 @@
     if(t.hasAttribute("data-plus")){ if(window.TT_QUICK) TT_QUICK.open(); return; }
     var m = t.dataset.m; if(!m) return;
     setSub(m === "lib" ? "lib" : "");
+    if(REP[m]) return;                                                  // 대표 도구로 그대로 이동
     if(HOME){                                                           // 첫 화면 안에서는 다시 불러오지 않고 화면만 바꿈
       e.preventDefault();
       var h = m === "home" ? "" : m === "lib" ? "school" : m;

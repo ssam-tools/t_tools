@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.2.7";
+  var VERSION = "2.3.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -669,6 +669,7 @@ var TT = (function(){
     }
     function build(){
       try{ rename(); }catch(e){}
+      if(window.top !== window){ document.documentElement.classList.add("sbReady"); return; }   // v2.3: 학교 업무판의 문서 칸처럼 다른 화면 안에 열리면 메뉴 막대 없이
       var st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st);
       document.documentElement.classList.add("tt-hasnav");
       var rail = document.createElement("nav"); rail.className = "tt-rail"; rail.setAttribute("aria-label", "도구 이동");
