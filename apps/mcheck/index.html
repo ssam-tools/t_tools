@@ -197,13 +197,13 @@
     var pages = wrong.map(function(w){
       var L = [];
       w.w.forEach(function(i){ var it = q.items[i];
-        if(it.type && MG.type(it.type)){ for(var j = 0; j < 2; j++) L.push(MG.make(it.type, q.lv || 2, (q.seed || q.id) + "|fix|" + w.s.no + "|" + i + "|" + j)); }
+        if(it.type && MG.type(it.type)){ for(var j = 0; j < 2; j++) L.push(MG.make(it.type, it.lv || q.lv || 2, (q.seed || q.id) + "|fix|" + w.s.no + "|" + i + "|" + j)); }
         else L.push({q: "(다시 풀기) " + (it.q || (i + 1) + "번 문항"), a: it.a || ""});
       });
       return '<div class="page"><div class="hd"><div><h2>🔁 보충 학습지 · ' + esc(q.name) + "</h2>" + esc(sc.name || "") + "</div><div>" + esc(cls.name) + " " + w.s.no + "번 " + esc(w.s.name || "") + '</div></div><ol>' + L.map(function(o){ return "<li>" + o.q + "</li>"; }).join("") + "</ol></div>";
     }).join("");
     var key = '<div class="page"><div class="hd"><h2>보충 학습지 정답</h2><div>' + esc(cls.name) + "</div></div>" + wrong.map(function(w){
-      var A = []; w.w.forEach(function(i){ var it = q.items[i]; if(it.type && MG.type(it.type)){ for(var j = 0; j < 2; j++) A.push(MG.make(it.type, q.lv || 2, (q.seed || q.id) + "|fix|" + w.s.no + "|" + i + "|" + j).a); } else A.push(it.a || "-"); });
+      var A = []; w.w.forEach(function(i){ var it = q.items[i]; if(it.type && MG.type(it.type)){ for(var j = 0; j < 2; j++) A.push(MG.make(it.type, it.lv || q.lv || 2, (q.seed || q.id) + "|fix|" + w.s.no + "|" + i + "|" + j).a); } else A.push(it.a || "-"); });
       return "<div><b>" + w.s.no + "번</b> " + A.map(function(a, j){ return (j + 1) + ") " + a; }).join("  ") + "</div>";
     }).join("") + "</div>";
     var old = $("prt"); if(old) old.remove();
