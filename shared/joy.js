@@ -209,7 +209,7 @@
     if(!h || !on()){ if(old) old.remove(); return; }
     if(old && h.contains(old)) return; if(old) old.remove();
     var n = growth(), T = tree(n), b = document.createElement("button"); b.type = "button"; b.className = "joyChip tr";
-    b.innerHTML = T.ic + " 우리 반 " + T.nm + " <small style='font-weight:600'>칭찬 " + n + "</small>";
+    b.innerHTML = T.ic + " 우리 반 " + T.nm + " <small style='font-weight:600'>칭찬·청소 " + n + "</small>";
     b.title = "⚡ 빠른 지도의 '칭찬👍', 청소 당번 '완료'마다 자라요" + (T.next ? " · " + T.nnm + "까지 " + T.next + "번" : "");
     b.onclick = function(e){ e.preventDefault(); open("tree"); }; h.appendChild(b);
   }
@@ -283,7 +283,7 @@
     dlg.innerHTML = '<h2>🎈 도장판 · 배지<button type="button" class="x" data-x>닫기 Esc</button></h2>'
       + '<h3>✅ ' + (m + 1) + '월 퇴근 도장 <small>' + ms + "개" + (sk >= 2 ? " · 🔥 " + sk + "일 연속" : "") + (canStamp ? ' · <a href="#" data-stamp style="color:#c62828;font-weight:800">오늘 도장 찍기</a>' : "") + "</small></h3>"
       + '<div class="joyCal"><b>월</b><b>화</b><b>수</b><b>목</b><b>금</b>' + cells + "</div>"
-      + '<div class="joyRow" style="margin-top:10px"><div>⏱️ 이번 주 아낀 시간<b>' + (ws ? hm(ws) : "0분") + "</b></div><div>🚀 지금까지<b>" + (al ? hm(al) : "0분") + "</b></div><div" + (focus === "tree" ? ' style="outline:2px solid #2f6b1f"' : "") + ">" + T.ic + " 우리 반 나무<b>" + T.nm + " · 칭찬 " + n + "</b>" + (T.next ? T.nnm + "까지 " + T.next + "번" : "") + "</div></div>"
+      + '<div class="joyRow" style="margin-top:10px"><div>⏱️ 이번 주 아낀 시간<b>' + (ws ? hm(ws) : "0분") + "</b></div><div>🚀 지금까지<b>" + (al ? hm(al) : "0분") + "</b></div><div" + (focus === "tree" ? ' style="outline:2px solid #2f6b1f"' : "") + ">" + T.ic + " 우리 반 나무<b>" + T.nm + " · 칭찬·청소 " + n + "</b>" + (T.next ? T.nnm + "까지 " + T.next + "번" : "") + "</div></div>"
       + '<h3>🏅 배지 <small>' + Object.keys(J.badges).length + " / " + BADGES.length + " · 받기 전에는 숨겨져 있어요</small></h3>"
       + '<div class="joyBd">' + BADGES.map(function(b){ var g = J.badges[b[0]]; return '<div class="' + (g ? "got" : "") + '"' + (g ? ' title="' + new Date(g).toLocaleDateString("ko-KR") + '"' : "") + "><i>" + (g ? b[1] : "❔") + "</i>" + (g ? esc(b[2]) : "숨은 배지") + "</div>"; }).join("") + "</div>"
       + '<p style="font-size:12px;color:var(--t-sub,#5b6773);margin:8px 0 0;line-height:1.5">아낀 시간은 쌤 노트가 만든 파일 내려받기·인쇄 때마다 손으로 할 때 걸릴 시간을 대략 더한 값입니다. 모든 기록은 이 기기에만 있습니다.</p>'
