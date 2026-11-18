@@ -142,7 +142,7 @@ var TTAuto = (function(){
       when: function(c, days){ return firstOf(c, null, days, "exam").map(function(e){ return {key: e.d + "|" + e.t, due: e.d, n: "D-" + diff(e.d, c.td), ev: e}; }); },
       read: function(c, o){ var P = TT.store.get("tt_mpace_v1", null); return {ev: o.ev, short: P && P.short > 0 ? P.short : 0}; },
       make: function(d){
-        return {title: d.ev.t + " 준비 · " + md(d.ev.d), links: [{href: "apps/mblue/", label: TL("mblue", "🎯 분류표", 1)}, {href: "apps/mpace/", label: TL("mpace", "⏳ 진도·시수", 1)}],
+        return {title: d.ev.t + " 준비 · " + md(d.ev.d), links: [{href: "apps/mblue/", label: TL("mblue", "🎯 분류표", 1)}, {href: "apps/journal/?tab=progress", label: TL("mpace", "⏳ 진도·시수", 1)}],
           text: d.ev.t + " (" + md(d.ev.d) + ")까지 " + diff(d.ev.d, ymd(new Date())) + "일\n\n□ 이원목적분류표 만들기 (성취기준·난이도·배점)\n□ 시험 범위까지 반별 진도 점검" + (d.short ? " — 진도 부족 " + d.short + "반" : "") + "\n□ 출제·검토 일정 확인\n□ 수행평가 점수 정리"};
       },
       end: ["done", "copy"] },

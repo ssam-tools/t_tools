@@ -91,6 +91,23 @@ body.has-dock main{padding-bottom:calc(var(--tab-h) + 128px)}
 .meta{font:500 12px var(--f-mono);color:var(--fg-2)}
 .sum{font-size:13.5px;color:var(--fg-2);margin-bottom:12px}
 .stack{display:flex;flex-direction:column;gap:10px}
+.ampm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.ampm .half{display:flex;flex-direction:column;gap:8px;min-width:0}
+.ampm .hh{font-size:13px;font-weight:700;color:var(--sub);margin:0 2px}
+.ampm .half>*{margin:0!important}
+.slot-free{border:1px dashed var(--line);border-radius:12px;padding:8px 14px;color:var(--sub);font-size:13.5px}
+.slot-free b{font-size:15px;color:var(--ink);margin-right:2px}.slot-free span{font-variant-numeric:tabular-nums}
+@media (max-width:760px){.ampm{grid-template-columns:1fr}}
+.gfold{display:flex;width:100%;border:0;background:transparent;font:inherit;color:inherit;cursor:pointer;text-align:left;padding:0;align-items:baseline;justify-content:space-between}
+.gfold h2{margin:0}
+.exam{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;margin:0 0 10px}
+.exam input,.exam select{font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;background:var(--surface,#fff);color:inherit;max-width:320px}
+.exam .chip{font-size:12.5px}
+.empty.slim{padding:14px}
+.cgroups{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.cgrp{display:flex;align-items:center;gap:8px}
+.cgrp .gl{flex:none;width:46px;font-size:13px;font-weight:700;color:var(--sub)}
+.cgrp .cgrid{flex:1;grid-template-columns:repeat(6,minmax(0,1fr));margin:0}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px}
 .empty{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:22px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--fg-2)}
 .note{background:var(--surface-2);border:1px dashed var(--line);border-radius:10px;padding:12px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px;font-size:13.5px}
@@ -287,7 +304,7 @@ const COLS=5;
 /* 가르치는 반: 학급 명렬표(TT.roster)에 올라 있는 모든 반. 반 코드는 학년×100+반 (3학년 3반 = 303) */
 const ROSTER=(function(){try{return TT.roster.classes().filter(c=>c.grade!=null&&c.cls!=null&&c.students.length)}catch(e){return []}})();
 const CLS=ROSTER.length?ROSTER.map(c=>c.grade*100+c.cls):[301,302,303,304,305,306];
-const GRADES=Array.from(new Set(CLS.map(c=>Math.floor(c/100)))).sort((a,b)=>b-a);
+const GRADES=Array.from(new Set(CLS.map(c=>Math.floor(c/100)))).sort((a,b)=>a-b);
 const gradeOf=c=>Math.floor(c/100);
 const cs=c=>gradeOf(c)+'-'+(c%100);
 const cn=c=>gradeOf(c)+'학년 '+(c%100)+'반';
@@ -409,12 +426,12 @@ function toast(msg,undo){
 /* ---------- 화면: 공통 조각 ---------- */
 function classChips(withDot){
   const w=new Date().getDay();
-  return '<div class="cgrid" role="group" aria-label="반 선택">'+CLS.map(c=>{
+  return '<div class="cgroups" role="group" aria-label="반 선택">'+GRADES.map(g=>'<div class="cgrp"><span class="gl">'+g+'학년</span><div class="cgrid">'+CLS.filter(c=>gradeOf(c)===g).map(c=>{   /* 학년마다 한 줄 */
     const has=withDot&&w>=1&&w<=5&&PERIODS.some(p=>TWn()[w+'-'+p.n]===c);
     return '<button class="cchip '+(ui.cls===c?'on':'')+'" data-act="cls" data-c="'+c+'" aria-pressed="'+(ui.cls===c)+'">'+cs(c)+(has?'<span class="dot" aria-hidden="true"></span>':'')+'</button>';
-  }).join('')+'</div>';
+  }).join('')+'</div></div>').join('')+'</div>';
 }
-function emptyRoster(c){return '<div class="empty"><p>'+cn(c)+' 명단이 아직 없어요.</p><button class="btn primary" data-act="openRoster" data-c="'+c+'">명단 붙여넣기</button></div>';}
+function emptyRoster(c){return '<div class="empty"><p>'+cn(c)+' 명단이 아직 없어요.</p><a class="btn primary" href="../roster/">학급 명렬표에서 명단 넣기</a></div>';}
 function lessonLine(ls){return ls?'<em>'+esc(ls.unit)+'</em> '+esc(ls.title):'';}
 
 /* ---------- 화면: 오늘 ---------- */
@@ -462,31 +479,61 @@ function vToday(){
   const done=slots.filter(p=>S.taught[dk+'|'+p.n]).length;
   h+='<div class="sec-h"><h2>'+(dk===todayK?'오늘 · ':fmtMD(dk)+' · ')+DAY[w]+'요일</h2><span class="meta">'+(slots.length?'수업 '+slots.length+' · 체크 '+done:'')+'</span></div>';
   if(!slots.length)h+='<div class="empty"><p>이 날은 수업이 없어요.</p><button class="btn sm" data-act="openTT">시간표 편집</button></div>';
-  else h+='<div class="stack">'+slots.map(p=>slotCard(dk,p,TW[w+'-'+p.n])).join('')+'</div>';
+  else{                                                     /* 시간표처럼: 왼쪽 오전(1~4교시) · 오른쪽 오후(5교시~), 위에서 아래로 · 빈 교시는 얇은 줄 */
+    const cell=p=>TW[w+'-'+p.n]?slotCard(dk,p,TW[w+'-'+p.n]):'<div class="slot-free"><b>'+p.n+'</b>교시 <span>'+p.t+'</span> · 수업 없음</div>';
+    const am=PERIODS.filter(p=>p.n<=4),pm=PERIODS.filter(p=>p.n>4);
+    h+='<div class="ampm"><div class="half"><h3 class="hh">오전</h3>'+am.map(cell).join('')+'</div><div class="half"><h3 class="hh">오후</h3>'+pm.map(cell).join('')+'</div></div>';
+  }
   h+='<div class="row-end"><button class="btn" data-act="openTT">주간 시간표 보기·편집</button></div>';
   return h;
 }
 
 /* ---------- 화면: 진도 ---------- */
+/* 진도·시수(옛 apps/mpace)를 진도 탭으로: 목표일(시험)까지 남은 수업 × 시험 범위까지 남은 차시 — 저장은 예전 그대로 tt_mpace_v1 {to, end:{학년}, adj:{반}, short} */
+const PC=(function(){let o=null;try{o=JSON.parse(localStorage.getItem('tt_mpace_v1')||'null');}catch(e){}o=o||{};o.v=1;o.end=o.end||{};o.adj=o.adj||{};return o;})();
+function pcSave(){try{localStorage.setItem('tt_mpace_v1',JSON.stringify(PC));}catch(e){}}
+function calEv(){try{return (JSON.parse(localStorage.getItem('tt_calendar_v1')||'null')||{}).events||[];}catch(e){return [];}}
+function exams(){const t=dkey(new Date()),seen={},o=[];calEv().forEach(e=>{if(e.k==='exam'&&e.d>=t&&!seen[e.t]){seen[e.t]=1;o.push(e);}});return o.sort((a,b)=>a.d<b.d?-1:1);}
+function remainTo(c,to){
+  let T=null;try{T=JSON.parse(localStorage.getItem('tt_timetable_v1')||'null');}catch(e){}
+  if(!T||!T.slots||!to)return null;
+  const skip={};calEv().forEach(e=>{if(e.k==='off'||e.k==='exam')skip[e.d]=1;});
+  const perOf=S0=>{const o={};Object.keys(S0||{}).forEach(k=>{if(+(S0[k]||{}).cls===c){const w=+k.split('-')[0];(o[w]=o[w]||[]).push(+k.split('-')[1]);}});return o;};
+  const base=perOf(T.slots),wk={},now0=new Date(),now=now0.getHours()*60+now0.getMinutes(),end=parseKey(to);let d=new Date(now0.getFullYear(),now0.getMonth(),now0.getDate()),n=0,first=true,g=0;
+  while(d<end&&g++<400){
+    const w=d.getDay(),k=dkey(d),mon=mondayOf(k),per=T.weeks&&T.weeks[mon]?(wk[mon]=wk[mon]||perOf(T.weeks[mon].slots)):base;
+    if(w>=1&&w<=5&&!skip[k]&&per[w])per[w].forEach(p=>{if(first){const t=(T.periods||PERIODS).find(x=>+x.n===p);if(t){const a=t.t.split(':');if(+a[0]*60+ +a[1]+45<=now)return;}}n++;});
+    first=false;d.setDate(d.getDate()+1);
+  }
+  return n;
+}
+function pcDefault(){if((!PC.to||PC.to<dkey(new Date()))&&exams().length){PC.to=exams()[0].d;pcSave();}}
+function examShort(){let short=0;GRADES.forEach(g=>{const e=PC.end[g];if(e===''||e==null||!PC.to)return;CLS.filter(c=>gradeOf(c)===g).forEach(c=>{const r=remainTo(c,PC.to);if(r==null)return;const need=Math.max(0,+e+1-progN(c));if(r+(+PC.adj[c]||0)<need)short++;});});if(PC.short!==short){PC.short=short;pcSave();}}
+function pOpen(g){if(ui.pOpen&&ui.pOpen[g]!=null)return ui.pOpen[g];const w=new Date().getDay(),T=TWn();const today=GRADES.filter(x=>w>=1&&w<=5&&PERIODS.some(p=>gradeOf(T[w+'-'+p.n]||0)===x));return today.length?today.indexOf(g)>=0:g===GRADES[GRADES.length-1];}
 function gradeBlock(g){
-  const cl=CLS.filter(c=>gradeOf(c)===g),L=lessons(g),N=L.length,U=unitInfo(L);
-  let h='<div class="sec-h"><h2>'+g+'학년</h2><span class="meta">'+cl.map(cs).join(' · ')+'</span></div>';
-  if(!N)return h+'<div class="empty"><p>차시 목록이 비어 있어요.</p><button class="btn primary" data-act="editCur" data-g="'+g+'">차시 목록 입력</button></div>';
+  const cl=CLS.filter(c=>gradeOf(c)===g),L=lessons(g),N=L.length,U=unitInfo(L),open=pOpen(g);
+  let h='<button class="sec-h gfold" data-act="pFold" data-g="'+g+'" aria-expanded="'+open+'"><h2>'+(open?'▾ ':'▸ ')+g+'학년</h2><span class="meta">'+cl.length+'반'+(N?' · '+N+'차시':' · 차시 목록 없음')+(open?'':' · 눌러서 펼치기')+'</span></button>';
+  if(!open)return h;
+  if(!N)return h+'<div class="empty slim"><p>차시 목록이 비어 있어요.</p><button class="btn primary sm" data-act="editCur" data-g="'+g+'">'+g+'학년 차시 목록 넣기</button></div>';
+  const ex=exams(),endI=PC.end[g]===''||PC.end[g]==null?null:+PC.end[g];
+  h+='<div class="exam"><span>🗓 시험</span><input type="date" data-pc="to" value="'+esc(PC.to||'')+'" aria-label="목표일">'+ex.slice(0,3).map(e=>'<button class="chip '+(PC.to===e.d?'on':'')+'" data-act="pcToB" data-d="'+e.d+'">'+esc(e.t)+' '+fmtMD(e.d)+'</button>').join('')
+    +'<label>범위 끝 차시 <select data-pc="end" data-g="'+g+'"><option value="">고르세요</option>'+L.map((l,i)=>'<option value="'+i+'"'+(endI===i?' selected':'')+'>'+(i+1)+'. '+esc(l.title)+'</option>').join('')+'</select></label></div>';
   const ns=cl.map(c=>Math.min(progN(c),N)),mx=Math.max.apply(null,ns),mn=Math.min.apply(null,ns);
   const lead=cl.filter(c=>Math.min(progN(c),N)===mx),lag=cl.filter(c=>Math.min(progN(c),N)===mn);
   h+='<p class="sum">'+(mx===mn?'모든 반의 진도가 같아요.':'가장 앞선 반은 '+lead.map(cs).join('·')+', 가장 늦은 반은 '+lag.map(cs).join('·')+'이에요. 차이는 '+(mx-mn)+'차시예요.')+'</p>';
   h+='<div class="card chart" role="list">'+cl.map(c=>{
-    const n=Math.min(progN(c),N),d=mx-n,nx=L[n];
+    const n=Math.min(progN(c),N),d=mx-n,nx=L[n],rm=PC.to?remainTo(c,PC.to):null,left=rm==null?null:rm+(+PC.adj[c]||0),need=endI==null?null:Math.max(0,endI+1-n),mar=need==null||left==null?null:left-need;
+    const exl=left==null?'':' · 🗓 남은 수업 '+left+'시간'+(need==null?'':' · 범위까지 '+need+'차시 · '+(mar<0?'<b class="lag">'+(-mar)+'시간 부족</b>':'<b class="lead">여유 '+mar+'</b>'));
     return '<button class="prow" role="listitem" data-act="openClass" data-c="'+c+'" aria-label="'+cn(c)+' 진도 '+n+'/'+N+'">'
       +'<span class="pl">'+cs(c)+'</span>'
-      +'<span class="pm"><span class="track"><span class="fill" style="width:'+(n/N*100)+'%"></span>'+U.slice(1).map(u=>'<span class="tick" style="left:'+(u.start/N*100)+'%"></span>').join('')+'</span><span class="nx">'+(nx?'다음 · '+esc(nx.title):'모든 차시 완료')+bookTag(c)+'</span></span>'
+      +'<span class="pm"><span class="track"><span class="fill" style="width:'+(n/N*100)+'%"></span>'+U.slice(1).map(u=>'<span class="tick" style="left:'+(u.start/N*100)+'%"></span>').join('')+'</span><span class="nx">'+(nx?'다음 · '+esc(nx.title):'모든 차시 완료')+bookTag(c)+exl+'</span></span>'
       +'<span class="pv"><span><b>'+n+'</b>/'+N+'</span>'+(d>0?'<i class="lag">−'+d+'</i>':'<i class="lead">선두</i>')+'</span></button>';
   }).join('')+'</div>';
   h+='<p class="legend">'+U.map(u=>esc(u.name)+' '+u.count+'차시').join(' · ')+'<br>막대의 흰 칸막이는 단원 경계예요. 반을 누르면 차시별로 고칠 수 있어요.</p>';
   h+='<div class="row-end"><button class="btn" data-act="editCur" data-g="'+g+'">'+g+'학년 차시 목록 편집</button></div>';
   return h;
 }
-function vProgress(){return GRADES.map(gradeBlock).join('');}
+function vProgress(){pcDefault();examShort();return GRADES.map(gradeBlock).join('');}
 
 /* ---------- 화면: 기록 ---------- */
 function ctxLine(c){
@@ -677,11 +724,8 @@ function classChips0(sel){
 function sSettings(){
   const conf=ui.confirm==='clear';
   const b='<div class="srow-set"><span><b>이름 대신 번호 표시</b><br><span class="meta">교실 화면에 이름이 보이지 않게 해요</span></span><button class="sw" role="switch" aria-checked="'+!!S.hideNames+'" data-act="toggleHide" aria-label="이름 대신 번호 표시"></button></div>'
-   +'<button class="btn wide" data-act="openRoster" data-c="'+ui.cls+'">학급 명단 입력·수정</button>'
-   +GRADES.map(g=>'<button class="btn wide" data-act="editCur" data-g="'+g+'">'+g+'학년 차시 목록 편집</button>').join('')
    +'<div class="tg"><h4>내보내기 (엑셀에서 열 수 있는 CSV)</h4><div class="chips-wrap"><button class="btn sm" data-act="exportRec">학생 기록</button><button class="btn sm" data-act="exportProg">반별 진도</button></div></div>'
-   +'<div class="tg"><h4>초기화</h4><button class="btn wide '+(conf?'danger':'')+'" data-act="clearSample">'+(conf?'정말 지울까요? 한 번 더 누르면 지워져요':'기록·진도·메모 모두 지우기')+'</button><p class="hint">시간표, 명단, 차시 목록은 그대로 두고 기록과 진도, 메모만 비워요.</p></div>'
-   +'<p class="hint">기록은 이 기기의 브라우저에만 저장돼요. 브라우저 데이터를 지우면 함께 사라지니 CSV로 자주 백업하세요. 실제 학생 이름을 넣기 전에 학교의 개인정보 보호 기준을 확인하세요.</p>';
+   +'<p class="hint">명단은 학급 명렬표, 차시 목록은 진도 탭에서 고쳐요. 기록은 이 기기와 내 보관함(켠 경우)에만 저장되고, 지난 학년 정리는 쌤 노트 ⚙️ 설정 → 새 학년 시작에서 해요.</p>';
   return shell('설정','수업 기록장',b,false);
 }
 function renderSheet(){
@@ -751,6 +795,8 @@ function parseRoster(txt){
 function act(a,t){
   const d=t.dataset;
   switch(a){
+    case 'pFold':{const g=+d.g;ui.pOpen=ui.pOpen||{};ui.pOpen[g]=!pOpen(g);render();break;}
+    case 'pcToB':PC.to=d.d;pcSave();render();break;
     case 'tab':ui.tab=d.tab;ui.swap=false;ui.swapSel=null;window.scrollTo(0,0);render();break;
     case 'openSettings':openSheet({type:'settings'});break;
     case 'closeSheet':closeSheet();break;
@@ -862,6 +908,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-act]');if(!t)return;
   act(t.dataset.act,t);
 });
+document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.pc)return;if(t.dataset.pc==='to')PC.to=t.value;else PC.end[+t.dataset.g]=t.value;pcSave();render();});
 document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.draft)ui.draft[t.dataset.draft]=t.value;if(t&&t.id==='setuk'){const b=document.getElementById('sbytes'),n=neisBytes(t.value);if(b){b.textContent=n+' / 1500바이트';b.style.color=n>1500?'var(--bad)':'';b.style.fontWeight=n>1500?'700':'';}}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!ui.sheet&&ui.tab==='today')render();});

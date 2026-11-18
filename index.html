@@ -1088,7 +1088,7 @@ try{ var snQ = /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse
       var ym = Yr && Array.isArray(Yr.items) ? Yr.items.filter(function(it){ return it.m === cm && !(Yr.done || {})[ay + "|" + it.id]; }).length : 0;
       if(ym) h += '<a class="al mid" href="apps/year/" title="' + TN("year", "", "연간 업무") + ': 이번 달에 남은 일">📆 ' + TN("year", "", "연간 업무") + " " + ym + "건 남음</a>";
       var Pc = TT.store.get("tt_mpace_v1", null);                                         // 진도·시수: 목표일까지 진도가 모자란 반
-      if(Pc && Pc.short > 0 && Pc.to && Pc.to >= ymd) h += '<a class="al" href="apps/mpace/" title="시험 범위까지 남은 수업이 모자란 반">⏳ 진도 부족 ' + Pc.short + "반</a>";
+      if(Pc && Pc.short > 0 && Pc.to && Pc.to >= ymd) h += '<a class="al" href="apps/journal/?tab=progress" title="시험 범위까지 남은 수업이 모자란 반">⏳ 진도 부족 ' + Pc.short + "반</a>";
     }catch(err){}
     box.innerHTML = h;
     var t = $("alTodo"); if(t) t.onclick = function(){ var i = document.getElementById("tdText"); if(i) i.focus(); };

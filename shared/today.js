@@ -276,8 +276,8 @@
       if(ex){
         var dx = dayDiff(ex.d, td);
         out.push({ic: "📝", t: ex.t + (short ? " · 진도 부족 " + short + "반" : ""), n: dx ? "D-" + dx : "오늘",
-          href: short ? "apps/mpace/" : "", lv: short ? "hi" : "dd", tip: md(ex.d) + " " + ex.t + (short ? " — 시험 범위까지 남은 수업이 모자란 반이 있습니다" : "")});
-      }else if(short) out.push({ic: "⏳", t: "진도 부족", n: short + "반", href: "apps/mpace/", lv: "hi", tip: "시험 범위까지 남은 수업이 모자란 반"});
+          href: short ? "apps/journal/?tab=progress" : "", lv: short ? "hi" : "dd", tip: md(ex.d) + " " + ex.t + (short ? " — 시험 범위까지 남은 수업이 모자란 반이 있습니다" : "")});
+      }else if(short) out.push({ic: "⏳", t: "진도 부족", n: short + "반", href: "apps/journal/?tab=progress", lv: "hi", tip: "시험 범위까지 남은 수업이 모자란 반"});
       var vc = ev.filter(function(e){ return e.k === "off" && /방학/.test(e.t) && e.d >= td && dayDiff(e.d, td) <= 60; }).sort(function(a, b){ return a.d < b.d ? -1 : 1; })[0];
       if(vc){ var dv = dayDiff(vc.d, td); out.push({ic: "🏖️", t: vc.t, n: dv ? "D-" + dv : "오늘", href: "", lv: "dd", tip: md(vc.d) + " " + vc.t}); }
 
