@@ -5,7 +5,7 @@
 <!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다. 학교 업무판(AI 바로 묻기)만 허용합니다. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1D9E75">
+<meta name="theme-color" content="#2f6fb5">
 <link rel="manifest" href="../../manifest.webmanifest">
 <link rel="icon" href="../../assets/icon-192.png">
 <script src="../../shared/early.js"></script>
@@ -26,31 +26,32 @@
   header{align-items:center;flex-wrap:nowrap}
   header h1{font-size:20px;display:flex;align-items:center;gap:6px}
   .stp{display:flex;gap:4px;font-size:11.5px;font-weight:800;color:var(--sub)}
-  .stp span{border-radius:999px;padding:2px 7px;background:var(--t-chip,#eceff3)}.stp span.on{background:#1D9E75;color:#fff}
+  .stp span{border-radius:999px;padding:2px 7px;background:var(--t-chip,#eceff3)}.stp span.on{background:var(--accent,#2f6fb5);color:#fff}
   main{flex:1;min-height:0;display:flex;flex-direction:column}
   section{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
   .lb{font-size:12.5px;font-weight:800;color:var(--sub);margin-bottom:-3px}
   .kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
   .kinds button,.ways button{font:inherit;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:8px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:13.5px;font-weight:800;min-height:62px;justify-content:center}
-  .kinds button i,.ways button i{font-style:normal;font-size:22px;line-height:1.1}
+  .kinds button i,.ways button i{font-style:normal;font-size:22px;line-height:1;width:46px;height:46px;border-radius:50%;background:var(--t-chip,#eceff3);color:var(--t-sub,#5b6773);display:flex;align-items:center;justify-content:center}
   .kinds button small,.ways button small{font-size:11px;font-weight:600;color:var(--sub)}
-  .kinds button[aria-pressed=true],.ways button[aria-pressed=true]{border-color:#1D9E75;background:#E1F5EE;color:#04342C}
+  .kinds button[aria-pressed=true],.ways button[aria-pressed=true]{border-color:var(--accent,#2f6fb5);background:var(--card);color:var(--ink);box-shadow:0 0 0 2px var(--accent,#2f6fb5) inset}
+  .kinds button[aria-pressed=true] i,.ways button[aria-pressed=true] i{background:var(--accent-soft,#e9f2fc);color:var(--accent,#2f6fb5)}
   .ways{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
   .ways button{min-height:56px}
   .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.row>*{min-width:0}
   .row select,.row input[type=text],.row input[type=date]{flex:1;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:8px 9px;background:var(--card);color:var(--ink);max-width:none}
   .grow{flex:1}
-  .pkb{flex:1;font:inherit;font-size:15px;font-weight:800;border:1.5px solid #1D9E75;background:#E1F5EE;color:#04342C;border-radius:10px;padding:9px 10px;cursor:pointer;text-align:left}
+  .pkb{flex:1;font:inherit;font-size:15px;font-weight:800;border:1.5px solid var(--accent,#2f6fb5);background:var(--accent-soft,#e9f2fc);color:var(--ink);border-radius:10px;padding:9px 10px;cursor:pointer;text-align:left}
   .note{font-size:12px;color:var(--sub);line-height:1.45}
   .consent{border:1px solid #EF9F27;background:#FFF6E5;border-radius:12px;padding:8px 10px;font-size:13px;line-height:1.45;color:#5a3d00}
   .consent label{display:flex;gap:6px;align-items:center;font-weight:800;margin-top:4px}
   .consent button{font:inherit;font-size:11.5px;border:0;background:none;color:#8a5a00;text-decoration:underline;cursor:pointer;padding:0;margin-left:auto}
-  .draft{border:1px dashed #1D9E75;border-radius:12px;padding:7px 10px;font-size:13px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .draft{border:1px dashed var(--accent,#2f6fb5);border-radius:12px;padding:7px 10px;font-size:13px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .go{display:flex;gap:6px;margin-top:auto}.go .btn{flex:1;min-height:46px;font-size:15px}
-  .btn.p{background:#1D9E75;border-color:#1D9E75;color:#fff}
-  .chip{display:inline-flex;gap:4px;align-items:center;font-size:12.5px;font-weight:800;border-radius:999px;padding:3px 10px;background:#E1F5EE;color:#04342C;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .btn.p{background:var(--accent,#2f6fb5);border-color:var(--accent,#2f6fb5);color:#fff}
+  .chip{display:inline-flex;gap:4px;align-items:center;font-size:12.5px;font-weight:800;border-radius:999px;padding:3px 10px;background:var(--accent-soft,#e9f2fc);color:var(--ink);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mic{display:flex;align-items:center;gap:12px}
-  .mic button{flex:none;width:86px;height:86px;border-radius:50%;border:0;background:#1D9E75;color:#fff;font-size:36px;cursor:pointer;box-shadow:0 6px 16px rgba(15,110,86,.3)}
+  .mic button{flex:none;width:86px;height:86px;border-radius:50%;border:0;background:var(--accent,#2f6fb5);color:#fff;font-size:36px;cursor:pointer;box-shadow:0 6px 16px rgba(15,110,86,.3)}
   .mic button.on{background:#d9433b;animation:pulse 1.2s infinite}
   @keyframes pulse{50%{box-shadow:0 0 0 12px rgba(217,67,59,.18)}}
   .mic .st{flex:1;font-size:14px;font-weight:800;line-height:1.4}.mic .st small{display:block;font-weight:600;color:var(--sub);font-size:12px}
@@ -79,7 +80,7 @@
   header h1{font-size:clamp(19px,3.2vh,26px)}
   .stp{display:inline-flex;gap:0;padding:3px;background:var(--u-seg,#e4eaf0);border-radius:12px;font-size:clamp(12.5px,1.9vh,14.5px);font-weight:700}
   .stp span{background:transparent;border-radius:9px;padding:6px 13px;color:var(--sub);white-space:nowrap}
-  .stp span.on{background:var(--card);color:#0F6E56;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .stp span.on{background:var(--card);color:var(--accent,#2f6fb5);box-shadow:0 1px 3px rgba(0,0,0,.12)}
   .lb{font-size:14px;margin-bottom:-2px}
   .kinds button,.ways button{font-size:clamp(14.5px,2vh,17px);min-height:clamp(66px,10vh,92px);gap:3px;border-radius:14px}
   .kinds button i,.ways button i{font-size:clamp(24px,3.6vh,34px)}
@@ -101,7 +102,7 @@
 </head>
 <body>
 <header>
-  <div><a class="back" href="../../">← 쌤 노트</a><h1>🦉 말로 기록</h1></div>
+  <div><a class="back" href="../../">← 쌤 노트</a><h1>🎙️ 말로 기록</h1></div>
   <div class="stp seg" id="stp" aria-label="단계"><span>① 고르기</span><span>② 말하기</span><span>③ 정리</span><span>④ 저장</span></div>
 </header>
 <main id="m">
@@ -166,6 +167,7 @@
 </main>
 <script src="../../shared/tools.js"></script>
 <script src="../../shared/tt.js"></script>
+<script src="../../shared/sbart.js"></script>
 <script src="../../shared/voice.js"></script>
 <script src="../../shared/mask.js"></script>
 <script>
@@ -184,16 +186,16 @@
 
   /* ── 종류 · 방법 ── */
   var KINDS = [
-    {id: "stu", ic: "🧑‍🎓", n: "학생 상담", tg: "stu", consent: true, f: "counsel"},
-    {id: "par", ic: "👪", n: "학부모 상담", tg: "stu", consent: true, f: "counsel"},
-    {id: "mtg", ic: "🗂️", n: "회의", tg: "mtg", f: "minutes"},
-    {id: "obs", ic: "👀", n: "수업 관찰", tg: "cls", f: "obs"},
-    {id: "todo", ic: "📝", n: "할 일·종례", tg: "", f: "todo"}
+    {id: "stu", ic: "🧑‍🎓", li: "student", n: "학생 상담", tg: "stu", consent: true, f: "counsel"},
+    {id: "par", ic: "👪", li: "group", n: "학부모 상담", tg: "stu", consent: true, f: "counsel"},
+    {id: "mtg", ic: "🗂️", li: "doc", n: "회의", tg: "mtg", f: "minutes"},
+    {id: "obs", ic: "👀", li: "eye", n: "수업 관찰", tg: "cls", f: "obs"},
+    {id: "todo", ic: "📝", li: "pencil", n: "할 일·종례", tg: "", f: "todo"}
   ];
   var WAYS = [
-    {id: "sum", ic: "🗣️", n: "끝나고 요약", s: "내 목소리로"},
-    {id: "live", ic: "🎙️", n: "실시간 받아쓰기", s: "짧은 상담"},
-    {id: "paste", ic: "📋", n: "붙여넣기·공유", s: "녹음 앱 글"}
+    {id: "sum", ic: "🗣️", li: "chat", n: "끝나고 요약", s: "내 목소리로"},
+    {id: "live", ic: "🎙️", li: "mic", n: "실시간 받아쓰기", s: "짧은 상담"},
+    {id: "paste", ic: "📋", li: "clip", n: "붙여넣기·공유", s: "녹음 앱 글"}
   ];
   var KV = "tt_voice_v1", DK = "rec";
   var cfg = TT.store.get(KV, null) || {}; if(typeof cfg !== "object") cfg = {};
@@ -229,10 +231,12 @@
     if(n === 1) draw1(); if(n === 2) draw2(); if(n === 3) draw3(); if(n === 4) draw4();
   }
 
+  /* 심플 모드: 컬러 이모지 대신 홈과 같은 선 아이콘 (TT_SBART) */
+  function LI(n, e){ return window.TT_SBART && TT_SBART.ICONS && TT_SBART.ICONS[n] ? TT_SBART.icon(n, 24) : e; }
   /* ================= ① 고르기 ================= */
   function draw1(){
-    $("kinds").innerHTML = KINDS.map(function(k){ return '<button type="button" data-k="' + k.id + '" aria-pressed="' + (k.id === S.kind) + '"><i>' + k.ic + "</i>" + esc(k.n) + "</button>"; }).join("")
-      + '<button type="button" data-a="ssambi" style="border-style:dashed"><i>🦉</i>쌤비에게<small>한 마디 기록</small></button>';
+    $("kinds").innerHTML = KINDS.map(function(k){ return '<button type="button" data-k="' + k.id + '" aria-pressed="' + (k.id === S.kind) + '"><i>' + LI(k.li, k.ic) + "</i>" + esc(k.n) + "</button>"; }).join("")
+      + '<button type="button" data-a="ssambi" style="border-style:dashed"><i>' + LI("sparkle", "🦉") + '</i>쌤비에게<small>한 마디 기록</small></button>';
     var k = K(), h = "";
     $("tgtLb").hidden = !k.tg;
     if(k.tg === "stu" || k.tg === "cls"){
@@ -240,7 +244,7 @@
       if(k.tg === "stu"){ var sv = stu(); h += '<button type="button" class="pkb" id="nPick" aria-label="학생 고르기">' + (sv ? "👆 " + sv.no + "번 " + esc(sv.name) : "👆 학생 고르기") + "</button>"; }   // PLAN_다듬기 4단계: 공통 학생 고르기 창
     } else if(k.tg === "mtg") h += '<input type="text" id="mName" maxlength="40" placeholder="회의 이름 (예: 3학년 협의회)" value="' + esc(S.mtg) + '" autocomplete="off">';
     $("tgt").innerHTML = h;
-    $("ways").innerHTML = WAYS.map(function(w){ return '<button type="button" data-w="' + w.id + '" aria-pressed="' + (w.id === S.way) + '"><i>' + w.ic + "</i>" + esc(w.n) + "<small>" + esc(w.s) + "</small></button>"; }).join("");
+    $("ways").innerHTML = WAYS.map(function(w){ return '<button type="button" data-w="' + w.id + '" aria-pressed="' + (w.id === S.way) + '"><i>' + LI(w.li, w.ic) + "</i>" + esc(w.n) + "<small>" + esc(w.s) + "</small></button>"; }).join("");
     $("wayNote").innerHTML = S.way === "sum" ? "상담·회의가 <b>끝난 뒤</b> 선생님이 말로 요약합니다. 학생 목소리는 남지 않아요. (기본)"
       : S.way === "live" ? "말하는 그대로 글로 바뀝니다. <b>짧은 상담</b>에 쓰세요. 음성은 구글 서버로 전송되어 글로 바뀌고, 소리는 저장하지 않아요."
       : "휴대폰 녹음 앱에서 바꾼 글을 <b>공유 → 쌤 노트</b>로 보내거나, 복사해서 붙여 넣으세요. 긴 회의에 좋아요.";
