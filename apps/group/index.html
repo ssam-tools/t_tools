@@ -209,6 +209,8 @@ h1,h2,h3{font-weight:800}
 .ttback:hover{opacity:1}
 .top{padding-top:6px}
 .ttload{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px dashed rgba(0,0,0,.15)}
+.sc-row{margin-top:8px;flex-wrap:wrap}.sc-lb{font-weight:800}
+.sc-pick{margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--accent-soft,#eef4ff);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 </style>
 <script src="../../shared/early.js"></script>
 </head>
@@ -247,6 +249,14 @@ h1,h2,h3{font-weight:800}
         <button class="btn primary" id="ttLoad" type="button">👥 명렬표에서 가져오기</button>
         <span class="note">학급 명렬표에 올린 나이스 명단을 그대로 씁니다.</span>
       </div>
+      <div class="ttload sc-row">
+        <span class="sc-lb">📊 성적</span>
+        <label class="btn" style="cursor:pointer">나이스 성적일람표 불러오기 (.xlsx)<input type="file" id="scoreFile" accept=".xlsx,.csv,.txt" class="sr"></label>
+        <button class="btn ghost" type="button" data-act="scorePaste" title="엑셀에서 머리줄(번호·성명 …)까지 복사해 아래 칸에 붙인 뒤 누르세요">붙여 넣은 표에서 성적 읽기</button>
+        <button class="btn ghost" type="button" data-act="scoreClear">점수 지우기</button>
+        <span class="note">명단은 그대로 두고 번호(없으면 이름)로 맞춰 점수만 채웁니다.</span>
+      </div>
+      <div id="scorePick" class="sc-pick" hidden></div>
       <p class="sub">직접 넣으려면 엑셀·한글 표에서 복사해 붙여넣으세요. 한 줄에 한 명, 이름 · 성별(남/여) · 점수 순서이며 성별과 점수는 없어도 됩니다.</p>
       <label class="sr" for="paste">학생 명단</label>
       <textarea id="paste" class="in" rows="6" placeholder="강민준	남	88&#10;김서연	여	92&#10;박지호	남&#10;이하윤"></textarea>
@@ -255,7 +265,7 @@ h1,h2,h3{font-weight:800}
         <label class="btn ghost" style="cursor:pointer">파일에서 불러오기 (.csv .txt)<input type="file" id="rosterFile" accept=".csv,.txt,text/plain,text/csv" class="sr"></label>
         <button class="btn ghost" data-act="tableToText">아래 표를 글로 보기</button>
       </div>
-      <p class="note" style="margin-top:8px">점수는 성취도나 수준을 나타내는 숫자입니다. 이질·동질 편성에만 쓰이고, 투사 화면과 내보내기 파일에는 나오지 않습니다.</p>
+      <p class="note" style="margin-top:8px">점수는 이질·동질 편성에만 쓰이고, 투사 화면과 내보내기 파일에는 나오지 않습니다. 성적은 이 화면에서만 쓰고 저장·동기화하지 않습니다(새로 열면 다시 불러오기). 성취도 A~E는 5~1점으로 바꿔 씁니다.</p>
     </div>
 
     <div class="card">
@@ -557,7 +567,7 @@ const KEY='tt_group_v1',PK='tt_group_persist';
 try{ // 예전 저장 이름의 자료 이어받기
   if(!localStorage.getItem(PK)&&localStorage.getItem('mogum-persist-v1')==='1'){localStorage.setItem(PK,'1');const o=localStorage.getItem('mogum-data-v1');if(o)localStorage.setItem(KEY,o)}
 }catch(e){}
-function store(){if(!app.persist)return;try{localStorage.setItem(KEY,JSON.stringify({classes:app.classes,cur:app.cur}))}catch(e){}}
+function store(){if(!app.persist)return;try{localStorage.setItem(KEY,JSON.stringify({classes:app.classes,cur:app.cur},(k,v)=>k==='score'?undefined:v))}catch(e){}}   /* 성적(score)은 저장·동기화하지 않음 */
 function setPersist(on){app.persist=on;try{if(on){localStorage.setItem(PK,'1');store()}else{localStorage.removeItem(PK);localStorage.removeItem(KEY)}}catch(e){}}
 
 /* ---------- toast ---------- */
@@ -596,6 +606,40 @@ function applyRoster(text,silent){
   c.sample=false;c.res=null;c.seat.cells=[];const keepIds=new Set(c.rows.map(r=>r.id));Object.keys(c.seat.fixed).forEach(k=>{if(!keepIds.has(k))delete c.seat.fixed[k]});cleanPairs(c);commit();
   if(!silent)toast(parsed.length+'명을 반영했어요');
   renderAll();return true;
+}
+/* ---------- 성적 붙이기 (나이스 교과별 성적일람표 등) ----------
+   머리줄(번호·성명)을 찾아 그 아래 학생 줄을 읽고, 점수로 쓸 열을 고르게 합니다. 두 줄 머리(예: 지필평가 / 1회)는 이어 붙여 이름을 만듭니다. */
+const GRADE5={A:5,B:4,C:3,D:2,E:1};
+function cellNum(v){v=String(v==null?'':v).trim();if(/^[A-E]$/i.test(v))return GRADE5[v.toUpperCase()];const n=parseFloat(v.replace(/,/g,''));return /^-?\d+(\.\d+)?$/.test(v.replace(/,/g,''))?n:null}
+function scoreTable(rows){
+  rows=(rows||[]).map(r=>(r||[]).map(x=>String(x==null?'':x).replace(/\s+/g,' ').trim()));
+  let h=-1,ni=-1,noi=-1;
+  for(let i=0;i<Math.min(rows.length,25);i++){const r=rows[i];const a=r.findIndex(x=>/^(성\s*명|이\s*름|학생명)$/.test(x));if(a>=0){h=i;ni=a;noi=r.findIndex(x=>/^번\s*호$/.test(x));break}}
+  if(h<0)return {err:'머리줄(성명·번호)을 찾지 못했어요. 표의 머리줄까지 함께 복사해 주세요.'};
+  const up=h>0?rows[h-1]:[],lab=[];let carry='';
+  for(let j=0;j<Math.max(rows[h].length,up.length);j++){if(up[j])carry=up[j];const a=(up[j]||carry||''),b=rows[h][j]||'';lab.push((a&&a!==b&&!/^(성\s*명|번\s*호)$/.test(b)?a+' ':'')+b||('열'+(j+1)))}
+  const gi=rows[h].findIndex(x=>/^성\s*별$/.test(x)),data=[];
+  for(let i=h+1;i<rows.length;i++){const r=rows[i],nm=(r[ni]||'').trim();if(!nm||/^(성\s*명|합\s*계|평\s*균|계)$/.test(nm))continue;const no=noi>=0?parseInt(r[noi],10):null;if(noi>=0&&isNaN(no))continue;data.push({no:no,name:nm,g:gi>=0?r[gi]:'',r:r})}
+  if(!data.length)return {err:'학생 줄을 찾지 못했어요.'};
+  const cols=[];lab.forEach((l,j)=>{if(j===ni||j===noi||j===gi)return;const v=data.map(d=>cellNum(d.r[j])).filter(x=>x!=null);if(v.length>=Math.max(1,data.length*0.6))cols.push({j:j,l:l,ex:data.slice(0,3).map(d=>d.r[j]).join(', ')})});
+  if(!cols.length)return {err:'점수로 쓸 수 있는 열(숫자나 A~E)이 없어요.'};
+  const bad=/석차|등수|순위|학생\s*수|수강자|응시자|표준편차|평균/,good=/합\s*계|원\s*점수|총\s*점|환산|성취도|점수/;
+  const ok=cols.filter(c=>!bad.test(c.l)),pick=(ok.find(c=>good.test(c.l))||ok[ok.length-1]||cols[0]).j;
+  return {data:data,cols:cols,pick:pick};
+}
+let SC=null;
+function scoreOpen(rows){
+  const t=scoreTable(rows),box=$('#scorePick');
+  if(t.err){SC=null;box.hidden=true;toast(t.err);return}
+  SC=t;box.hidden=false;
+  box.innerHTML='<b>학생 '+t.data.length+'명을 읽었어요.</b> 점수로 쓸 열 <select id="scCol" class="in" style="width:auto">'+t.cols.map(c=>'<option value="'+c.j+'"'+(c.j===t.pick?' selected':'')+'>'+esc(c.l)+' (예: '+esc(c.ex)+')</option>').join('')+'</select> <button class="btn primary" data-act="scoreApply">점수 붙이기</button> <button class="btn ghost" data-act="scoreCancel">취소</button>';
+}
+function scoreApply(){
+  if(!SC)return;const j=+$('#scCol').value,c=cur();let hit=0,miss=0;
+  if(!c.rows.length||c.sample){c.rows=SC.data.map(d=>({id:nid(),no:d.no||0,name:d.name,gender:/^(남|M)/i.test(d.g)?'남':/^(여|F)/i.test(d.g)?'여':'',score:cellNum(d.r[j]),absent:false}));c.sample=false;hit=c.rows.length}
+  else c.rows.forEach(r=>{const d=SC.data.find(x=>x.no!=null&&+x.no===+r.no&&(!x.name||!r.name||x.name.replace(/\s/g,'')===r.name.replace(/\s/g,'')))||SC.data.find(x=>x.name.replace(/\s/g,'')===r.name.replace(/\s/g,''));if(d){r.score=cellNum(d.r[j]);if(!r.gender&&d.g)r.gender=/^(남|M)/i.test(d.g)?'남':/^(여|F)/i.test(d.g)?'여':'';hit++}else miss++});
+  c.res=null;SC=null;$('#scorePick').hidden=true;commit();renderAll();
+  toast(hit+'명 점수를 붙였어요'+(miss?' · 못 맞춘 학생 '+miss+'명':''));
 }
 function cleanPairs(c){const ids=new Set(c.rows.map(r=>r.id));c.sep=c.sep.filter(p=>ids.has(p[0])&&ids.has(p[1]));c.tog=c.tog.filter(p=>ids.has(p[0])&&ids.has(p[1]))}
 
@@ -1074,6 +1118,10 @@ async function makeSeatPng(c){
 /* ---------- actions ---------- */
 function touch(){const r=cur().res;if(r)r.confirmed=false;commit();renderResult();if(app.board.open)renderBoard()}
 const ACTS={
+  scorePaste(){const t=$('#paste').value;if(!t.trim()){toast('엑셀에서 머리줄까지 복사해 위 칸에 붙여 넣어 주세요');return}scoreOpen(t.replace(/\r/g,'').split('\n').map(l=>l.split('\t')))},
+  scoreApply(){scoreApply()},
+  scoreCancel(){SC=null;$('#scorePick').hidden=true},
+  scoreClear(){const c=cur();c.rows.forEach(r=>r.score=null);c.res=null;commit();renderAll();toast('점수를 모두 지웠어요')},
   tab(b){setTab(b.dataset.tab);if(b.dataset.tab==='setup')renderSetup()},
   apply(){applyRoster($('#paste').value)},
   tableToText(){const c=cur();$('#paste').value=c.rows.map(r=>[r.name,r.gender,r.score==null?'':r.score].join('\t')).join('\n')},
@@ -1206,6 +1254,7 @@ document.addEventListener('change',e=>{
   }
   if(el.id==='clsSel'){app.cur=+el.value;app.sel=null;renderAll();setTab(cur().res?'result':'roster');return}
   if(el.id==='persist'){setPersist(el.checked);toast(el.checked?'이 기기에 저장합니다':'저장된 데이터를 지웠어요');return}
+  if(el.id==='scoreFile'){const f=el.files[0];el.value='';if(!f)return;TT.file.toRows(f,{firstSheet:true}).then(scoreOpen).catch(e=>toast((e&&e.message)||'파일을 읽지 못했어요'));return}
   if(el.id==='rosterFile'){const f=el.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{$('#paste').value=String(rd.result||'');applyRoster($('#paste').value)};rd.readAsText(f);el.value='';return}
   if(el.id==='backupFile'){
     const f=el.files[0];if(!f)return;const rd=new FileReader();
