@@ -94,11 +94,21 @@
     hero.querySelector(".circ").innerHTML = circHTML();
     seatMore(); seatBox();
   }
-  function seatBox(){                                                   // 쌤비 창(#sbBox): 넓은 화면은 오른쪽 빈 공간에 고정(말풍선 크기는 그대로), 좁으면 쌤비 아래
+  function seatBox(){                                                   // 쌤비 창(#sbBox): 마이크 단추 바로 오른쪽(말풍선 높이에서) — 자리가 모자라면 마이크 아래에 띄움
     var box = document.getElementById("sbBox"); if(!box) return;
-    var on = R.getAttribute("data-ui") === "ssambi" && document.body.classList.contains("sbOn") && window.innerWidth >= 1280;
-    if(on && hero){ if(box.parentNode !== hero) hero.appendChild(box); }
-    else if(box.parentNode !== document.body) document.body.appendChild(box);
+    var on = R.getAttribute("data-ui") === "ssambi" && document.body.classList.contains("sbOn") && hero;
+    var mic = on && hero.querySelector(".srow [data-mic]"), bub = on && hero.querySelector(".bub");
+    var side = !!(mic && bub && mic.getBoundingClientRect().right + 14 + 244 <= window.innerWidth - 8);
+    if(side){
+      if(box.parentNode !== hero) hero.appendChild(box);
+      var hr = hero.getBoundingClientRect(), mr = mic.getBoundingClientRect(), br = bub.getBoundingClientRect();
+      box.style.setProperty("left", Math.round(mr.right - hr.left + 14) + "px", "important");
+      box.style.setProperty("top", Math.round(br.top - hr.top) + "px", "important");
+      box.classList.add("sbSide");
+    }else{
+      if(box.parentNode !== document.body) document.body.appendChild(box);
+      if(box.classList.contains("sbSide")){ box.classList.remove("sbSide"); box.style.removeProperty("left"); box.style.removeProperty("top"); }
+    }
   }
   window.addEventListener("resize", function(){ if(HOME && hero) seatBox(); });
   function seatMore(){                                                  // ⋯ (설정·백업 등)은 오른쪽 위에 그대로 — 업무판으로 돌아가면 제자리로
@@ -173,12 +183,14 @@
   function draw(){ if(HOME) drawHero(); else drawApp(); }
 
   /* ── 누르기 ── */
-  function owlEl(){ if(HOME && hero && document.body.classList.contains("sbOn")) return document.getElementById("sbBarOwl"); var a = document.getElementById("sbBarOwl"), b = document.getElementById("sbBarOwl2"); return a && a.offsetParent !== null ? a : b && b.offsetParent !== null ? b : a; }
+  function owlEl(){ if(HOME && hero && document.body.classList.contains("sbOn")) return hero.querySelector(".srow [data-mic]") || document.getElementById("sbBarOwl"); var a = document.getElementById("sbBarOwl"), b = document.getElementById("sbBarOwl2"); return a && a.offsetParent !== null ? a : b && b.offsetParent !== null ? b : a; }
   function openSsambi(listen){
     if(!window.TT_SSAMBI) return;
     var box = document.getElementById("sbBox");
     if(!listen && box && !box.hidden){ TT_SSAMBI.close(); return; }
+    if(HOME && hero) seatBox();
     TT_SSAMBI.open("menu", null, owlEl());
+    if(HOME && hero) seatBox();
     if(listen){ var b = document.querySelector('#sbBox [data-a="talk"],#sbBox [data-a="listen"]'); if(b) b.click(); }
   }
   function v2home(){ return HOME && R.getAttribute("data-ui") === "ssambi" && document.body.classList.contains("sbOn"); }

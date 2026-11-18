@@ -204,7 +204,7 @@
     if(window.TT_SBAR) TT_SBAR.setOwl({item: P.item, open: P.open, sleep: P.sleep, listen: P.listen, line: P.line, sub: P.sub, ev: H.events.join(" · ")});
     host.hidden = false;
     if(window.TT_SBAR && TT_SBAR.seatBox) TT_SBAR.seatBox();
-    if(Q.q){ host.innerHTML = '<div class="sbWrap mid">' + resHTML() + "</div>"; var on1 = host.querySelector(".rr.on"); if(on1 && on1.scrollIntoView) on1.scrollIntoView({block: "nearest"}); return; }
+    if(Q.q){ host.innerHTML = '<div class="sbWrap">' + resHTML() + "</div>"; var on1 = host.querySelector(".rr.on"); if(on1 && on1.scrollIntoView) on1.scrollIntoView({block: "nearest"}); return; }
     if(document.body.classList.contains("inmenu")){ host.innerHTML = '<div class="sbWrap mid">' + midHTML() + "</div>"; return; }
     host.innerHTML = '<div class="sbWrap">'
       + '<div class="sbNowWrap">' + nowCard(H.now) + "</div>"

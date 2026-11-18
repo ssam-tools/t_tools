@@ -67,11 +67,11 @@ html[data-ui="ssambi"] body.sbOn #sbHero{display:flex;flex-direction:column;alig
 #sbHero .top{position:relative;align-self:stretch;display:flex;justify-content:flex-end;align-items:center;min-height:clamp(32px,5vh,52px)}
 #sbHero .top details.more{position:relative}
 #sbHero .top details.more .menu{right:0;left:auto}
-#sbHero .hrow{display:flex;align-items:center;justify-content:center;gap:clamp(16px,2.4vw,28px);width:100%;max-width:780px}
+#sbHero .hrow{display:grid;grid-template-columns:auto minmax(0,460px);align-items:center;justify-content:center;gap:clamp(16px,2.4vw,28px);width:100%;max-width:780px}
 #sbHero .owl{flex:none;border:0;background:transparent;padding:0;cursor:pointer;border-radius:50%;width:clamp(104px,15vh,140px);height:clamp(104px,15vh,140px);transition:transform .2s}
 #sbHero .owl svg{width:100%;height:100%}
 #sbHero .owl:hover{transform:translateY(-3px) rotate(-3deg)}
-#sbHero .bub{position:relative;background:var(--t-card);border:1px solid var(--t-line);border-radius:18px;padding:clamp(12px,1.8vh,16px) 20px;width:min(440px,100%);min-height:clamp(84px,11vh,100px);box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;box-shadow:var(--sb-shadow)}
+#sbHero .bub{position:relative;background:var(--t-card);border:1px solid var(--t-line);border-radius:18px;padding:clamp(12px,1.8vh,16px) 20px;justify-self:start;width:auto;max-width:100%;min-height:clamp(84px,11vh,100px);box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;box-shadow:var(--sb-shadow)}
 #sbHero .bub::before{content:"";position:absolute;left:-8px;top:50%;width:14px;height:14px;background:var(--t-card);border-left:1px solid var(--t-line);border-bottom:1px solid var(--t-line);transform:translateY(-50%) rotate(45deg)}
 #sbHero .bub .when{font-size:13px;color:var(--t-sub);font-variant-numeric:tabular-nums}
 #sbHero .bub .ev{color:var(--t-accent)}
@@ -99,16 +99,13 @@ html[data-ui="ssambi"] body.sbOn #sbHero{display:flex;flex-direction:column;alig
 #sbHero .circ a.on .ci{background:var(--t-accent);color:#fff}
 #sbHero .circ a.on b{font-weight:700}
 
-/* 쌤비 창(#sbBox): 넓은 화면(1280 이상)은 오른쪽 빈 공간에 고정 — 말풍선·검색창·메뉴는 움직이지 않음 */
-@media (min-width:1280px){
-  #sbHero{position:relative}
-  #sbHero > #sbBox{position:absolute!important;top:clamp(48px,7vh,72px)!important;right:0!important;left:auto!important;bottom:auto!important;width:300px!important;zoom:.8;max-height:none!important;z-index:5}
-  #sbHero > #sbBox .hd .av{display:none}
-}
-@media (min-width:1680px){ #sbHero > #sbBox{zoom:.92} }
-body.sbOn > #sbBox{zoom:.88}   /* 좁은 화면: 쌤비 아래에 작게 */
+/* 쌤비 창(#sbBox): 마이크 단추 바로 오른쪽(말풍선 높이) — 작게. 자리가 모자라면 마이크 아래에 작게 */
+#sbHero{position:relative}
+#sbHero > #sbBox.sbSide{position:absolute!important;right:auto!important;bottom:auto!important;width:300px!important;max-height:none!important;z-index:5;transform:scale(.8);transform-origin:top left}
+#sbHero > #sbBox.sbSide .hd .av{display:none}
+body.sbOn > #sbBox{transform:scale(.88);transform-origin:top center}
 body.sbOn #prep{display:none!important}   /* 시작 준비는 쌤비 말풍선이 알려 줌 */
-#sbHero .bub:has(.b0){cursor:default}
+html[data-ui="ssambi"] body.sbOn{scrollbar-gutter:stable}   /* 결과가 길어져도 화면이 옆으로 밀리지 않게 */
 
 /* ② 도구 화면(넓은 화면): 왼쪽 막대 = 쌤비 + 한마디 / 찾기 / 메뉴(지금 메뉴는 펼쳐 도구 목록) */
 @media (min-width:900px) and (min-height:460px){
@@ -199,10 +196,15 @@ html[data-ui="ssambi"].tt-hasnav .cta,html[data-ui="ssambi"].tt-hasnav .tabs,htm
 .sbRes .rr .tx b b{font-weight:700}
 .sbRes .rr.on{background:var(--t-accent-soft)}
 .sbRes .rr .sbBtn{flex:none}
-.sbRes .sbList{max-height:none}
+.sbRes .sbList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.sbRes .rgh{grid-column:1/-1}
+.sbRes .rr{border-top:1px solid #EFECE6;min-height:48px}
+.sbRes .rr:nth-child(odd){border-right:0}
+.sbRes .rr .tx b,.sbRes .rr .tx small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:760px){.sbRes .sbList{grid-template-columns:1fr}}
 
 /* 중메뉴: 자주 쓰는 3개 크게 + 묶음별 작은 동그라미 */
-.sbWrap.mid{max-width:820px}
+.sbWrap.mid{max-width:780px}
 .sbMid{display:flex;flex-direction:column;gap:clamp(14px,2.2vh,22px)}
 .sbBig{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .sbBig .bc{position:relative;display:flex;align-items:center;gap:14px;min-height:clamp(72px,10vh,88px);padding:12px 16px;border:1px solid var(--t-line);border-radius:16px;background:var(--t-card);font:inherit;color:var(--t-ink);text-align:left;cursor:pointer;box-shadow:var(--sb-shadow)}
@@ -309,11 +311,11 @@ html[data-ui="ssambi"] .tdy,html[data-ui="ssambi"] .cat,html[data-ui="ssambi"] .
 @media (max-width:760px){
   body.sbOn{padding:4px 12px 14px!important}
   #sbHero .top{min-height:34px}
-  #sbHero .hrow{justify-content:flex-start;gap:10px}
+  #sbHero .hrow{grid-template-columns:auto minmax(0,1fr);justify-content:stretch;gap:10px}
   #sbHero .owl{width:84px;height:84px}
   #sbHero .bub{padding:9px 13px;border-radius:16px}
   #sbHero .bub .b0 p{font-size:15px}#sbHero .bub .b0 small{font-size:13px}
-  #sbHero .bub{width:auto;flex:1 1 0;min-height:0}
+  #sbHero .bub{min-height:0}
   #sbHero .q{height:46px;padding:0 12px 0 16px;font-size:15px}
   #sbHero .q kbd{display:none}
   #sbHero .ib{width:44px;height:44px}
