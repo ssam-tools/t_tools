@@ -180,6 +180,7 @@
     if(!rail){ rail = document.createElement("aside"); rail.id = "sbRail"; rail.setAttribute("aria-label", "쌤비와 메뉴"); document.body.appendChild(rail); document.body.classList.add("sbRailOn"); }
     if(!bar){ bar = document.createElement("div"); bar.id = "sbBar"; document.body.insertBefore(bar, document.body.firstChild); document.body.classList.add("sbBarOn"); }
     rail.innerHTML = railHTML(); bar.innerHTML = barHTML();
+    requestAnimationFrame(function(){ R.classList.add("sbReady"); });
   }
   function draw(){ if(HOME) drawHero(); else drawApp(); }
 

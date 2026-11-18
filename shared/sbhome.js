@@ -201,7 +201,7 @@
   function render(){
     var ok = on();
     document.body.classList.toggle("sbOn", ok);
-    if(!ok){ host.hidden = true; host.textContent = ""; return; }
+    if(!ok){ host.hidden = true; host.textContent = ""; R.classList.add("sbReady"); return; }
     var H; try{ H = TT_TODAY.home(); }catch(e){ console.warn("쌤비 홈:", e); return; }
     var P = lastP = pick(H);
     if(window.TT_SBAR) TT_SBAR.setOwl({item: P.item, open: P.open, sleep: P.sleep, listen: P.listen, line: P.line, sub: P.sub, ev: H.events.join(" · ")});
@@ -287,4 +287,5 @@
     move: function(d){ var n = picks().length; if(!n) return; Q.sel = (Q.sel + d + n) % n; render(); },
     run: function(){ var p = picks()[Q.sel]; if(!p) return; runRow(Q.rows.indexOf(p), null); }};
   render(); logo(); navIcons();
+  requestAnimationFrame(function(){ R.classList.add("sbReady"); });   // 첫 그림이 끝나면 보이기
 })();

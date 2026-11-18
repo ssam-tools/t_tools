@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.2.6";
+  var VERSION = "2.2.7";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -942,7 +942,11 @@ var TT = (function(){
       if(o.font === "basic") r.removeAttribute("data-font"); else r.setAttribute("data-font", o.font);
       if(o.size === "m") r.removeAttribute("data-size"); else r.setAttribute("data-size", o.size);
       if(o.mob === "new") r.removeAttribute("data-mob"); else r.setAttribute("data-mob", o.mob);
-      if(o.ui === "board") r.removeAttribute("data-ui"); else r.setAttribute("data-ui", o.ui);   // v2.0: 쌤비 홈 디자인(shared/v2.css)은 이 표시가 있을 때만
+      if(o.ui === "board") r.removeAttribute("data-ui"); else r.setAttribute("data-ui", o.ui);
+      if(o.ui === "ssambi" && !document.getElementById("sbHold")){        // 쌤비 홈 디자인: 새 화면이 준비될 때까지 감춤 (예전 화면이 잠깐 보이지 않게, 늦어도 2.5초 뒤에는 보임)
+        try{ var hs = document.createElement("style"); hs.id = "sbHold"; hs.textContent = 'html[data-ui="ssambi"]:not(.sbReady) body{visibility:hidden}html[data-ui="ssambi"] .tt-rail{display:none!important}'; (document.head || r).appendChild(hs); }catch(e){}
+        setTimeout(function(){ r.classList.add("sbReady"); }, 2500);
+      }   // v2.0: 쌤비 홈 디자인(shared/v2.css)은 이 표시가 있을 때만
       var mt = document.querySelector('meta[name="theme-color"]'), th = THEMES.filter(function(x){ return x.id === o.look; })[0]; if(mt && th) mt.setAttribute("content", th.c[1]);
     }
     function set(k, v){ var o = get(); o[k] = v; try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){} apply(o); }

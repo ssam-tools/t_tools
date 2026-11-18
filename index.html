@@ -12,11 +12,13 @@
 try{ var snQ = /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse(localStorage.getItem("snlook_v1") || "null");   /* 주소 끝 ?ui=ssambi · ?ui=board 로도 바꿈 */
   if(snQ){ snL = snL || {}; snL.ui = snQ[1]; localStorage.setItem("snlook_v1", JSON.stringify(snL)); history.replaceState(null, "", location.pathname + location.search.replace(/[?&]ui=(ssambi|board)\b/, "").replace(/^&/, "?") + location.hash); }
   if(snL && snL.ui === "ssambi" && localStorage.getItem("ttv_device") !== "classroom") document.documentElement.setAttribute("data-ui", "ssambi"); }catch(e){}</script>
+<style>html[data-ui="ssambi"]:not(.sbReady) body{visibility:hidden}</style><!-- 쌤비 홈이 다 그려질 때까지 감춤(업무판이 잠깐 보이지 않게) -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icon-192.png">
 <link rel="stylesheet" href="shared/look.css">
 <link rel="stylesheet" href="shared/tt.css">
+<link rel="stylesheet" href="shared/v2.css">
 <style>
   header{align-items:center;margin-bottom:clamp(2px,1vh,10px)}
   h1.ttl{display:flex;align-items:center;gap:10px;font-size:clamp(22px,3.6vh,30px)}
