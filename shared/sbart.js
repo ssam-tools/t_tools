@@ -63,6 +63,57 @@
     home: '<path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>',
     plus: '<path d="M12 5v14M5 12h14"/>'
   };
+  /* 도구마다 선 아이콘 (tools.js 의 id) · 도구가 아닌 칸(설정 카드 등)은 그림 글자로 찾음 */
+  var T = {
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    notebook: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M12 8h4M12 12h4"/>',
+    hourglass: '<path d="M6 3h12M6 21h12M7 3v2a5 5 0 0 0 10 0V3M7 21v-2a5 5 0 0 1 10 0v2"/>',
+    toolbox: '<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V5h6v3M3 13h18"/>',
+    group: '<circle cx="12" cy="8" r="3"/><circle cx="5" cy="10" r="2"/><circle cx="19" cy="10" r="2"/><path d="M7 20a5 5 0 0 1 10 0M2 19a3 3 0 0 1 4-3M22 19a3 3 0 0 0-4-3"/>',
+    chart: '<path d="M4 20V11M10 20V5M16 20v-7M2 20h20"/>',
+    target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+    camera: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7l2-3h4l2 3"/><circle cx="12" cy="13.5" r="3.5"/>',
+    compass: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+    mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+    box: '<path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/>',
+    list: '<path d="M10 6h10M10 12h10M10 18h10M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',
+    seats: '<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/>',
+    idcard: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.5"/><path d="M5.5 16.5a3.5 3.5 0 0 1 7 0M15 10h3M15 14h3"/>',
+    bolt: '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
+    doc: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h7M9 16h7"/>',
+    cap: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>',
+    medal: '<circle cx="12" cy="15" r="5"/><path d="M8.5 3l3.5 7 3.5-7"/>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    robot: '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 17h6"/><circle cx="9.5" cy="13" r="1"/><circle cx="14.5" cy="13" r="1"/>',
+    cert: '<rect x="5" y="3" width="14" height="14" rx="2"/><path d="M9 8h6M9 12h6M9 21l3-3 3 3"/>',
+    clip: '<path d="M15 7l-6.5 6.5a2.1 2.1 0 0 0 3 3L18 10a4.2 4.2 0 0 0-6-6L5.5 10.5a6.4 6.4 0 0 0 9 9L20 14"/>',
+    suitcase: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M3 12h18"/>',
+    map: '<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/>',
+    numbers: '<path d="M4 8h2v8M10 8h4v4h-4v4h4M17 8h3v8h-3M17 12h3"/>',
+    check: '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+    open: '<path d="M3 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3zM21 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/>',
+    qr: '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM18 14h2M14 18h2"/>',
+    game: '<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 12.5h4M9 10.5v4"/><circle cx="16" cy="11.5" r=".9"/><circle cx="18" cy="13.5" r=".9"/>',
+    teacher: '<circle cx="8" cy="7" r="3"/><path d="M3 20a5 5 0 0 1 10 0M14 5h7v8h-7M17 13v3"/>',
+    link: '<path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1"/>',
+    phone: '<path d="M5 4h4l2 5-3 2a11 11 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+    palette: '<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-1-2 0-3h3a4 4 0 0 0 4-4c0-5-4-9-9-9z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/>',
+    sparkle: '<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>',
+    cloud: '<path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9a4.5 4.5 0 0 0 1 9z"/>',
+    save: '<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/>',
+    help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.7M12 17h.01"/>',
+    sprout: '<path d="M12 21v-9M12 12C12 7 8 5 4 5c0 4 3 7 8 7zM12 10c0-4 3-6 7-6 0 4-3 6-7 6z"/>',
+    dots: '<circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/>'
+  };
+  var TOOL = {timetable: "clock", book: "class", journal: "notebook", mpace: "hourglass", "class": "toolbox", group: "group", assess: "chart", mblue: "target",
+    roster: "homeroom", photo: "camera", tardy: "compass", parent: "mail", submit: "box", duty: "list", seat: "seats",
+    stucard: "idcard", voice: "mic", gquick: "bolt", counsel: "chat", record: "doc", advisor: "cap", bonus: "medal",
+    year: "calendar", lib: "search", ai: "robot", train: "cert", merge: "clip", setup: "suitcase",
+    concept: "map", mgen: "numbers", mcheck: "check", mstudy: "open", mqr: "qr", play: "game", kread: "open", kreadt: "teacher"};
+  var EMO = {"📅": "calendar", "🔗": "link", "📞": "phone", "🏫": "school", "🎨": "palette", "✨": "sparkle", "☁️": "cloud", "💾": "save", "📂": "lib", "❓": "help", "🌱": "sprout", "🧳": "suitcase"};
+  Object.keys(T).forEach(function(k){ if(!ICONS[k]) ICONS[k] = T[k]; });
+  function toolIcon(id, emoji, size){ var k = TOOL[id] || EMO[String(emoji || "").trim()] || "dots"; return icon(k, size); }
   function icon(name, size){ var d = ICONS[name]; return d ? '<svg viewBox="0 0 24 24" width="' + (size || 22) + '" height="' + (size || 22) + '" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + d + "</svg>" : ""; }
   /* 도구 화면 왼쪽 막대(tt.js)의 메뉴 그림 글자도 같은 선 아이콘으로 (쌤비 홈 디자인일 때만) */
   function railIcons(){
@@ -112,5 +163,5 @@
     + ".sbArt.lis .sbWave{animation:sbArtWave 1s ease-in-out infinite}@keyframes sbArtWave{0%,100%{opacity:.35}50%{opacity:1}}"
     + "@media (prefers-reduced-motion:reduce){.sbArt *{animation:none!important}}";
   (function(){ var s = document.createElement("style"); s.textContent = CSS; (document.head || document.documentElement).appendChild(s); })();
-  window.TT_SBART = {svg: svg, logo: logo, icon: icon, ICONS: ICONS, railIcons: railIcons, items: Object.keys(ITEMS), decos: Object.keys(DECO)};
+  window.TT_SBART = {svg: svg, logo: logo, icon: icon, toolIcon: toolIcon, ICONS: ICONS, railIcons: railIcons, items: Object.keys(ITEMS), decos: Object.keys(DECO)};
 })();

@@ -247,6 +247,41 @@
       + '<p class="nt">말로도 돼요: "<b>결석신고서 열어</b>", "<b>시간표</b>"</p>';
   };
 
+  /* v2.1 쌤비 홈 디자인: 쌤비 창 = 오늘 상황(읽기만) + 말하기 단추 하나 [한마디 / 길게 기록]
+     찾기(→ 검색창)·바로 실행(→ 메뉴)·오늘 브리핑 단추(→ 창 맨 위에 바로)·말로 입력/말로 기록 두 단추(→ 하나)처럼 겹치던 것을 뺐습니다. */
+  function sbMode(){ try{ return sessionStorage.getItem("sbMode") === "long" ? "long" : "short"; }catch(e){ return "short"; } }
+  function briefLines(){
+    var L = [], d = new Date(), w = d.getDay(), m = d.getHours() * 60 + d.getMinutes(), T = TT.timetable;
+    function cls(x){ var c = +x.cls; return c > 100 ? Math.floor(c / 100) + "-" + (c % 100) : String(x.code || ""); }
+    try{
+      if(w < 1 || w > 5) L.push(["📅", "주말이에요 · 푹 쉬세요", ""]);
+      else if(!T.has()) L.push(["🕘", "시간표를 넣으면 오늘 수업이 나와요", "apps/timetable/"]);
+      else{ var cur = T.now(), nx = T.next(), all = T.day(d);
+        L.push(["🕘", cur ? "지금 " + cur.n + "교시 " + cls(cur) + " · 끝까지 " + (cur.end - m) + "분" : nx ? "다음 " + nx.n + "교시 " + cls(nx) + " · " + (nx.start - m <= 180 ? (nx.start - m) + "분 뒤" : nx.t) : "오늘 수업 " + all.length + "시간 · 모두 끝", "apps/journal/"]); }
+    }catch(e){}
+    var B = null; try{ B = window.TT_TODAY && TT_TODAY.brief ? TT_TODAY.brief() : null; }catch(e){}
+    if(B){
+      var hi = B.items.filter(function(x){ return x.lv === "hi"; }).length, n = B.items.length + B.bag.length + B.todoDue.length;
+      L.push(["✅", n ? "챙길 일 " + n + "개" + (hi ? " · 급한 일 " + hi + "개" : "") : "지금 챙길 일이 없어요", ""]);
+      if(B.att) L.push(["🌱", B.att.abs || B.att.late ? "우리 반 결석 " + B.att.abs + " · 지각 " + B.att.late : "우리 반 모두 출석", "apps/tardy/"]);
+    }
+    try{ var ml = window.TTMeal ? TTMeal.todayText() : ""; if(ml) L.push(["🍚", ml, ""]); }catch(e){}
+    return L;
+  }
+  if(V2){
+    V.menu = function(){
+      var hr = new Date().getHours(), hi = hr < 11 ? "좋은 아침이에요" : hr < 17 ? "무엇을 도와드릴까요?" : "오늘도 수고하셨어요", md = sbMode();
+      var L = briefLines();
+      return head("쌤비 <small style='font-weight:500;color:var(--sub,#5b6775)'>· " + hi + "</small>")
+        + '<ul class="v2b">' + L.map(function(x){ var in1 = '<span class="i">' + x[0] + "</span><span>" + esc(x[1]) + "</span>"; return "<li>" + (x[2] ? '<a href="' + esc(x[2]) + '">' + in1 + "</a>" : in1) + "</li>"; }).join("") + "</ul>"
+        + (window.TT_TODAY ? '<div class="v2r"><button type="button" class="lk" data-a="speak">🔊 읽어 주기</button><button type="button" class="lk" data-a="brief">자세히 보기 ›</button></div>' : "")
+        + '<button type="button" class="bt p v2talk" data-a="talk" autofocus><i>🎤</i><span>' + (md === "long" ? "눌러서 길게 기록" : "눌러서 말하기") + "<small>" + (md === "long" ? "상담 · 학부모 상담 · 회의 · 수업 관찰" : "“12번 지각” · “종례: 내일 체육복”") + "</small></span></button>"
+        + '<div class="v2m" role="group" aria-label="말하기 방식"><button type="button" data-a="m-short"' + (md === "short" ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + ">한마디</button>"
+        + '<button type="button" data-a="m-long"' + (md === "long" ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + ">길게 기록</button></div>"
+        + '<p class="nt">🔒 기록은 이 기기 안에만 저장돼요 · <b>Alt+B</b> 쌤비 · <b>/</b> 찾기</p>';
+    };
+  }
+
   /* ── 음성 인식 ── */
   var vo = null, listening = false;
   function stopListen(){ if(vo) vo.abort(); vo = null; listening = false; lis(false); }
@@ -446,6 +481,8 @@
     var b = e.target.closest("[data-a],[data-r]"); if(!b) return;
     if(b.dataset.r != null){ var x = runList()[+b.dataset.r]; if(!x) return; if(typeof x[3] === "function") x[3](); else { close(); if(TT.noteTool && x[4]) TT.noteTool(x[4]); go(x[3]); } return; }
     var a = b.dataset.a;
+    if(a === "talk"){ if(sbMode() === "long"){ close(); go("apps/voice/"); } else { show("listen"); startListen(); } return; }
+    if(a === "m-short" || a === "m-long"){ try{ sessionStorage.setItem("sbMode", a === "m-long" ? "long" : "short"); }catch(err){} show("menu"); return; }
     if(a === "close") close();
     else if(a === "menu"){ stopListen(); show("menu"); }
     else if(a === "listen" || a === "relisten"){ show("listen"); startListen(); }

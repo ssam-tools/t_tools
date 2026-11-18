@@ -120,19 +120,65 @@
   }
 
   /* ── 그리기: 쌤비·검색창·메뉴는 위쪽 고정 줄(shared/sbbar.js), 여기는 쌤비 한마디 · 지금 · 오늘 할 일 ── */
+  /* ── 중메뉴: 업무판 메뉴 화면(#mview, 숨김)이 그린 도구 칸을 그대로 읽어 다시 배치 ──
+     ① 지금 자주 쓰는 3개(쓴 횟수 → 시기 순)를 크게 + 상태 한 줄 ② 나머지는 묶음별 작은 동그라미 + 이름(설명은 마우스를 올리면)
+     ③ 내 교과가 아닌 교과 칸은 접어 둠. 누르면 원래 칸을 눌러 줍니다(같은 동작 — 도구 열기·설정 창·내려받기). */
+  var mid = [], openG = {};
+  function midData(){
+    var mv = document.getElementById("mview"); if(!mv || mv.hidden) return null;
+    var all = mv.querySelector('.mtabs [data-tab="all"]'); if(all && !all.classList.contains("on")){ all.click(); mv = document.getElementById("mview"); }
+    var box = mv.querySelector(".mtiles"); if(!box) return null;
+    var G = [], g = null;
+    Array.prototype.forEach.call(box.children, function(ch){
+      if(ch.classList.contains("mgh")){ g = {name: ch.textContent.trim(), items: []}; G.push(g); return; }
+      var t = ch.classList.contains("mtw") ? ch.querySelector(".mt") : null; if(!t) return;
+      if(!g){ g = {name: "", items: []}; G.push(g); }
+      var sm = t.querySelector("small");
+      g.items.push({el: t, id: t.dataset.tid || "", ic: (t.querySelector(".mi") || {}).textContent || "", name: (t.querySelector("b") || {}).textContent || "", st: sm ? sm.textContent : "", warn: !!(sm && sm.classList.contains("warn")), hot: t.classList.contains("hot"), dim: t.classList.contains("dim"), tip: t.title || ""});
+    });
+    return G;
+  }
+  function midHTML(){
+    var m = window.TT_SBAR ? TT_SBAR.cur() : "", G = midData() || [];
+    if(m === "lib") G = G.filter(function(g){ return /자료실/.test(g.name); });
+    else if(m === "school") G = G.filter(function(g){ return !/자료실/.test(g.name); });
+    var L = []; G.forEach(function(g){ g.items.forEach(function(it){ L.push(it); }); });
+    if(!L.length) return '<div class="sbMid"><p class="sbEmpty">이 메뉴에 보일 도구가 없어요.</p></div>';
+    var use = ((TT.store.get("tt_ui_v1", {}) || {}).tools || {}).use || {};
+    function n(it){ return it.id && use[it.id] ? +use[it.id].n || 0 : 0; }
+    var big = L.length > 4 ? L.map(function(it, i){ return {it: it, i: i}; }).filter(function(x){ return !x.it.dim; })
+      .sort(function(a, b){ return (n(b.it) - n(a.it)) || ((b.it.hot ? 1 : 0) - (a.it.hot ? 1 : 0)) || (a.i - b.i); }).slice(0, 3).map(function(x){ return x.it; }) : [];
+    mid = [];
+    function idx(it){ mid.push(it); return mid.length - 1; }
+    function ico(it, sz){ return ART && ART.toolIcon ? ART.toolIcon(it.id, it.ic, sz) : esc(it.ic); }
+    var pk = typeof ttPack === "function" ? ttPack() : null, my = pk ? pk.name : "";
+    var h = '<div class="sbMid">';
+    if(big.length) h += '<div class="sbBig">' + big.map(function(it){
+      return '<button type="button" class="bc' + (it.dim ? " dim" : "") + '" data-mid="' + idx(it) + '" title="' + esc(it.tip || it.st) + '"><span class="ci">' + ico(it, 24) + '</span><span class="tx"><b>' + esc(it.name) + "</b><small" + (it.warn ? ' class="warn"' : "") + ">" + esc(it.st) + "</small></span>" + (it.hot ? '<em>지금</em>' : "") + "</button>";
+    }).join("") + "</div>";
+    var rest = G.map(function(g){ return {name: g.name, items: g.items.filter(function(it){ return big.indexOf(it) < 0; })}; }).filter(function(g){ return g.items.length; });
+    if(rest.length) h += '<div class="sbGroups" style="--gc:' + Math.min(rest.length, 3) + '">' + rest.map(function(g){
+      var fold = /교과 칸/.test(g.name) && my && g.name.indexOf(my) < 0 && !openG[g.name];
+      return '<section class="gp' + (fold ? " fold" : "") + '"><h3>' + (fold ? '<button type="button" data-open="' + esc(g.name) + '">' + esc(g.name.replace(/^교과 칸\s*·\s*/, "")) + " (" + g.items.length + ") ▸</button>" : esc(g.name || "그 밖의 도구")) + "</h3>"
+        + (fold ? "" : '<div class="ic">' + g.items.map(function(it){
+            return '<button type="button" class="sc' + (it.dim ? " dim" : "") + '" data-mid="' + idx(it) + '" title="' + esc(it.name + (it.st ? " · " + it.st : "")) + '"><span class="ci">' + ico(it, 20) + "</span><b>" + esc(it.name) + "</b></button>";
+          }).join("") + "</div>") + "</section>";
+    }).join("") + "</div>";
+    return h + "</div>";
+  }
+
+  /* ── 그리기: 쌤비·말풍선·검색창·메뉴는 shared/sbbar.js(머리), 여기는 홈 = 지금 · 오늘 할 일 / 중메뉴 = 도구 ── */
+  var lastP = null;
   function render(){
     var ok = on();
     document.body.classList.toggle("sbOn", ok);
     if(!ok){ host.hidden = true; host.textContent = ""; return; }
-    if(document.body.classList.contains("inmenu")){ host.hidden = true; return; }
     var H; try{ H = TT_TODAY.home(); }catch(e){ console.warn("쌤비 홈:", e); return; }
-    var P = pick(H), d = new Date();
-    if(window.TT_SBAR) TT_SBAR.setOwl({item: P.item, open: P.open, sleep: P.sleep, listen: P.listen, title: "쌤비 · " + P.line});
-    var sch = (TT.school && TT.school.load ? TT.school.load() : {}) || {};
+    var P = lastP = pick(H);
+    if(window.TT_SBAR) TT_SBAR.setOwl({item: P.item, open: P.open, sleep: P.sleep, listen: P.listen, line: P.line, sub: P.sub, ev: H.events.join(" · ")});
     host.hidden = false;
+    if(document.body.classList.contains("inmenu")){ host.innerHTML = '<div class="sbWrap mid">' + midHTML() + "</div>"; return; }
     host.innerHTML = '<div class="sbWrap">'
-      + '<div class="sbBub" role="status"><div class="when">' + (sch.name ? esc(sch.name) + " · " : "") + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + DOW[d.getDay()] + "요일 · " + clockTxt(d) + (H.events.length ? ' · <span class="ev">📌 ' + esc(H.events.join(" · ")) + "</span>" : "") + "</div>"
-      + "<p>" + esc(P.line) + "</p>" + (P.sub ? "<small>" + esc(P.sub) + "</small>" : "") + "</div>"
       + '<div class="sbNowWrap">' + nowCard(H.now) + "</div>"
       + '<section class="sbTasks" aria-label="오늘 할 일">' + tasks(H.tasks) + "</section></div>";
     var shown = Math.min(MAX, cur.length);
@@ -142,6 +188,8 @@
   /* ── 누르기 ── */
   host.addEventListener("click", function(e){
     var t = e.target.closest("button,a"); if(!t) return;
+    if(t.hasAttribute("data-mid")){ var it = mid[+t.dataset.mid]; if(it && it.el) it.el.click(); return; }
+    if(t.hasAttribute("data-open")){ openG[t.dataset.open] = 1; render(); return; }
     if(t.hasAttribute("data-go")){ var x = cur[+t.dataset.go]; if(x && x.kind === "autos"){ if(window.TTAuto) TTAuto.list(); } else TT_TODAY.act(x, t); return; }
     if(t.hasAttribute("data-done")){ TT_TODAY.done(cur[+t.dataset.done]); return; }
     if(t.hasAttribute("data-more")){ st.more = !st.more; render(); return; }
@@ -197,6 +245,7 @@
   if(navEl) new MutationObserver(navIcons).observe(navEl, {childList: true});
   new MutationObserver(navIcons).observe(R, {attributes: true, attributeFilter: ["data-ui"]});
 
+  window.addEventListener("tt-menu-refresh", soon);
   window.TT_SBHOME = {render: render, pick: pick};
   render(); logo(); navIcons();
 })();

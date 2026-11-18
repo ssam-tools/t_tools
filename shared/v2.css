@@ -60,38 +60,108 @@ html[data-ui="ssambi"] header .lead{color:var(--t-sub)}
 html[data-ui="ssambi"] header .lead .tc,html[data-ui="ssambi"] .meal,html[data-ui="ssambi"] .joyChip{background:var(--t-chip)!important;color:var(--t-ink)!important;font-weight:500!important;border-radius:999px}
 html[data-ui="ssambi"] header .lead a{color:var(--t-ink)}
 
-/* ---------- 4. 위쪽 고정 줄 (shared/sbbar.js): 쌤비 · 검색창 · 메뉴 — 모든 화면 같은 자리 ---------- */
-#sbBar{display:none}
-html[data-ui="ssambi"] #sbBar{display:block;flex:none;border-bottom:1px solid var(--t-line);margin-bottom:clamp(8px,1.4vh,14px);font-family:var(--t-font)}
-#sbBar .in{display:flex;align-items:center;justify-content:center;gap:12px;max-width:820px;margin:0 auto}
-#sbBar .owl{flex:none;width:56px;height:56px;border:0;background:transparent;padding:0;cursor:pointer;border-radius:50%;transition:transform .2s}
+/* ---------- 4. 쌤비와 메뉴 (shared/sbbar.js) — 쌤비는 어디에나 ---------- */
+#sbHero,#sbRail,#sbBar{display:none}
+/* ① 첫 화면·중메뉴 머리: 빈칸 + ⋯ / 큰 쌤비 + 말풍선 / 검색창 / 동그라미 메뉴 */
+html[data-ui="ssambi"] body.sbOn #sbHero{display:flex;flex-direction:column;align-items:center;flex:none;font-family:var(--t-font);gap:clamp(8px,1.4vh,14px);margin-bottom:clamp(8px,1.6vh,16px)}
+#sbHero .top{position:relative;align-self:stretch;display:flex;justify-content:flex-end;align-items:center;min-height:clamp(32px,5vh,52px)}
+#sbHero .top details.more{position:relative}
+#sbHero .top details.more .menu{right:0;left:auto}
+#sbHero .hrow{display:flex;align-items:center;justify-content:center;gap:clamp(12px,2vw,22px);width:100%;max-width:780px}
+#sbHero .owl{flex:none;border:0;background:transparent;padding:0;cursor:pointer;border-radius:50%;width:clamp(104px,15vh,140px);height:clamp(104px,15vh,140px);transition:transform .2s}
+#sbHero .owl svg{width:100%;height:100%}
+#sbHero .owl:hover{transform:translateY(-3px) rotate(-3deg)}
+#sbHero .bub{position:relative;background:var(--t-card);border:1px solid var(--t-line);border-radius:18px;padding:clamp(10px,1.6vh,14px) 18px;max-width:460px;box-shadow:var(--sb-shadow)}
+#sbHero .bub::before{content:"";position:absolute;left:-8px;top:50%;width:14px;height:14px;background:var(--t-card);border-left:1px solid var(--t-line);border-bottom:1px solid var(--t-line);transform:translateY(-50%) rotate(45deg)}
+#sbHero .bub .when{font-size:13px;color:var(--t-sub);font-variant-numeric:tabular-nums}
+#sbHero .bub .ev{color:var(--t-accent)}
+#sbHero .bub p{font-size:clamp(16px,2.2vh,18px);font-weight:700;line-height:1.5;margin-top:2px;word-break:keep-all}
+#sbHero .bub small{display:block;font-size:14px;color:var(--t-sub);margin-top:2px;word-break:keep-all}
+#sbHero .srow{display:flex;align-items:center;gap:10px;width:100%;max-width:780px}
+#sbHero .q{flex:1;min-width:0;display:flex;align-items:center;gap:12px;height:clamp(50px,6.6vh,58px);border:1px solid #DAD6CD;border-radius:999px;background:var(--t-card);padding:0 16px 0 22px;color:var(--t-faint);font:inherit;font-size:17px;cursor:text;text-align:left;box-shadow:var(--sb-shadow)}
+#sbHero .q:hover{border-color:var(--t-accent)}
+#sbHero .q span{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#sbHero .q kbd,#sbRail .q kbd{font:inherit;font-size:13px;color:var(--t-faint);border:1px solid var(--t-line);border-radius:6px;padding:0 8px}
+#sbHero .ib,#sbBar .ib{flex:none;width:48px;height:48px;border-radius:50%;border:0;background:var(--t-accent-soft);color:var(--t-accent);display:flex;align-items:center;justify-content:center;cursor:pointer}
+#sbHero .ib:hover,#sbBar .ib:hover{background:var(--t-accent);color:#fff}
+#sbHero .ib.plus{display:none;background:var(--t-accent);color:#fff}
+#sbHero .circ{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;width:100%;max-width:780px;padding-bottom:clamp(6px,1vh,10px);border-bottom:1px solid var(--t-line)}
+#sbHero .circ a{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 2px;border-radius:14px;text-decoration:none;color:var(--t-ink);min-height:44px}
+#sbHero .circ .ci{width:clamp(44px,6vh,54px);height:clamp(44px,6vh,54px);border-radius:50%;background:var(--t-chip);color:var(--t-accent);display:flex;align-items:center;justify-content:center;transition:background .15s}
+#sbHero .circ b{font-size:14px;font-weight:500}
+#sbHero .circ a:hover .ci{background:var(--t-accent-soft)}
+#sbHero .circ a.on .ci{background:var(--t-accent);color:#fff}
+#sbHero .circ a.on b{font-weight:700}
+
+/* ② 도구 화면(넓은 화면): 왼쪽 막대 = 쌤비 + 한마디 / 찾기 / 메뉴(지금 메뉴는 펼쳐 도구 목록) */
+@media (min-width:900px) and (min-height:460px){
+  html[data-ui="ssambi"] #sbRail{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:208px;z-index:15;background:var(--t-card);border-right:1px solid var(--t-line);padding:14px 12px 10px;box-sizing:border-box;gap:8px;overflow-y:auto;font-family:var(--t-font)}
+  html[data-ui="ssambi"] body.sbRailOn{margin-left:208px!important}
+  html[data-ui="ssambi"].tt-hasnav body.sbRailOn{margin-left:208px!important}
+  html[data-ui="ssambi"] body.sbRailOn .cta,html[data-ui="ssambi"] body.sbRailOn .dock,html[data-ui="ssambi"].tt-hasnav body.sbRailOn .tabs{left:208px!important}
+}
+#sbRail .owl{align-self:center;border:0;background:transparent;padding:0;cursor:pointer;width:76px;height:76px;border-radius:50%;flex:none}
+#sbRail .owl svg{width:100%;height:100%}
+#sbRail .owl:hover{transform:translateY(-2px) rotate(-4deg)}
+#sbRail .say{text-align:center;background:var(--t-chip);border-radius:12px;padding:6px 8px;line-height:1.35}
+#sbRail .say b{display:block;font-size:13px;font-weight:700;color:var(--t-ink);word-break:keep-all}
+#sbRail .say small{display:block;font-size:12px;color:var(--t-sub)}
+#sbRail .q{display:flex;align-items:center;gap:8px;height:38px;border:1px solid #DAD6CD;border-radius:999px;background:var(--t-card);padding:0 10px 0 12px;color:var(--t-faint);font:inherit;font-size:14px;cursor:text;flex:none}
+#sbRail .q span{flex:1;text-align:left}
+#sbRail .q:hover{border-color:var(--t-accent)}
+#sbRail .ml{display:flex;flex-direction:column;gap:2px;margin-top:2px}
+#sbRail .mi{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 10px;border-radius:10px;color:var(--t-sub);text-decoration:none;font-size:15px;font-weight:500}
+#sbRail .mi:hover{background:var(--t-chip);color:var(--t-ink)}
+#sbRail .mi.on{background:var(--t-accent);color:#fff;font-weight:700}
+#sbRail .tl{display:flex;flex-direction:column;gap:1px;padding:4px 0 6px 12px;margin-left:10px;border-left:2px solid var(--t-accent-soft)}
+#sbRail .ti{display:flex;align-items:center;gap:8px;min-height:32px;padding:0 8px;border-radius:8px;color:var(--t-sub);text-decoration:none;font-size:13.5px}
+#sbRail .ti svg{flex:none;color:var(--t-faint)}
+#sbRail .ti span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sbRail .ti:hover{background:var(--t-chip);color:var(--t-ink)}
+#sbRail .ti.on{background:var(--t-accent-soft);color:var(--t-accent);font-weight:700}
+#sbRail .ti.on svg{color:var(--t-accent)}
+
+/* ③ 도구 화면(좁은 화면): 위쪽 줄 */
+@media (max-width:899px),(max-height:459px){
+  html[data-ui="ssambi"] body.sbBarOn #sbBar{display:block;flex:none;border-bottom:1px solid var(--t-line);margin-bottom:8px;font-family:var(--t-font)}
+  html[data-ui="ssambi"] body.sbBarOn{display:flex!important;flex-direction:column}
+  html[data-ui="ssambi"] body.sbBarOn > .app,html[data-ui="ssambi"] body.sbBarOn > #app{height:auto!important;flex:1 1 0;min-height:0;width:100%}
+}
+#sbBar .in{display:flex;align-items:center;gap:8px}
+#sbBar .owl{flex:none;width:46px;height:46px;border:0;background:transparent;padding:0;cursor:pointer}
 #sbBar .owl svg{width:100%;height:100%}
-#sbBar .owl:hover{transform:translateY(-2px) rotate(-4deg)}
-#sbBar .q{flex:1;min-width:0;max-width:640px;display:flex;align-items:center;gap:10px;height:48px;border:1px solid #DAD6CD;border-radius:999px;background:var(--t-card);padding:0 14px 0 18px;color:var(--t-faint);font:inherit;font-size:15px;cursor:text;text-align:left;box-shadow:var(--sb-shadow)}
-#sbBar .q:hover{border-color:var(--t-accent)}
-#sbBar .q span{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-#sbBar .q kbd{font:inherit;font-size:13px;color:var(--t-faint);border:1px solid var(--t-line);border-radius:6px;padding:0 8px}
-#sbBar .ib{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--t-accent-soft);color:var(--t-accent);display:flex;align-items:center;justify-content:center;cursor:pointer}
-#sbBar .ib:hover{background:var(--t-accent);color:#fff}
-#sbBar .ib.plus{display:none;background:var(--t-accent);color:#fff}
-#sbBar .sbTabs{display:flex;justify-content:center;gap:2px;margin-top:4px}
-#sbBar .sbTabs a{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;color:var(--t-sub);text-decoration:none;font-size:15px;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
-#sbBar .sbTabs a:hover{color:var(--t-ink)}
-#sbBar .sbTabs a.on{color:var(--t-ink);border-bottom-color:var(--t-accent)}
+#sbBar .q{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:42px;border:1px solid #DAD6CD;border-radius:999px;background:var(--t-card);padding:0 12px;color:var(--t-faint);font:inherit;font-size:14px;text-align:left}
+#sbBar .q span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#sbBar .ib{width:40px;height:40px}
+#sbBar .sbTabs{display:flex;justify-content:space-between}
+#sbBar .sbTabs a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:48px;color:var(--t-sub);text-decoration:none;font-size:11.5px;border-bottom:2px solid transparent;margin-bottom:-1px}
+#sbBar .sbTabs a.on{color:var(--t-ink);border-bottom-color:var(--t-accent);font-weight:700}
 #sbBar .sbTabs a.on svg{color:var(--t-accent)}
 
-/* 첫 화면(index): 예전 머리글·메뉴 막대·바닥글 대신 고정 줄 */
-body.sbOn:not(.inmenu) #today,body.sbOn:not(.inmenu) .toprow,body.sbOn:not(.inmenu) #tbar,body.sbOn #joyBub,
-body.sbOn > header,body.sbOn #mnav,body.sbOn > footer,body.sbOn .mfh .back,body.sbOn .msea,body.sbOn #sbBtn,body.sbOn #sbTip{display:none!important}
-body.sbOn{padding-left:clamp(12px,3vw,28px)!important;padding-bottom:clamp(10px,2vh,20px)!important}
-body.sbOn:not(.inmenu){overflow:auto}
-/* 도구 화면(apps): 왼쪽 막대·☰ 도구·← 쌤 노트·떠 있는 쌤비 대신 고정 줄 */
+/* 첫 화면(index): 예전 머리글·메뉴 막대·바닥글·메뉴 화면 대신 */
+body.sbOn:not(.inmenu) #today,body.sbOn:not(.inmenu) .toprow,body.sbOn:not(.inmenu) #tbar,body.sbOn #joyBub,body.sbOn #mview,
+body.sbOn > header,body.sbOn #mnav,body.sbOn > footer,body.sbOn #sbBtn,body.sbOn #sbTip{display:none!important}
+body.sbOn{padding-left:clamp(12px,3vw,28px)!important;padding-top:4px!important;padding-bottom:clamp(10px,2vh,20px)!important;overflow:auto!important}
+/* 도구 화면(apps): 예전 왼쪽 막대·☰ 도구·← 쌤 노트·떠 있는 쌤비 대신 */
 html[data-ui="ssambi"] .tt-rail,html[data-ui="ssambi"] .tt-navbtn,html[data-ui="ssambi"] .tt-sheet,html[data-ui="ssambi"] #sbBtn,html[data-ui="ssambi"] #sbTip,
 html[data-ui="ssambi"] a.back,html[data-ui="ssambi"] a.ttback{display:none!important}
 html[data-ui="ssambi"].tt-hasnav body{margin-left:0!important}
-html[data-ui="ssambi"] body.sbBarOn{display:flex!important;flex-direction:column}
-html[data-ui="ssambi"] body.sbBarOn > .app,html[data-ui="ssambi"] body.sbBarOn > #app{height:auto!important;flex:1 1 0;min-height:0;width:100%}
 html[data-ui="ssambi"].tt-hasnav .cta,html[data-ui="ssambi"].tt-hasnav .tabs,html[data-ui="ssambi"].tt-hasnav .dock{left:0!important}
+
+/* 쌤비 창 (v2.1): 오늘 상황 + 말하기 하나 */
+#sbBox .v2b{list-style:none;margin:2px 0 6px;padding:10px 12px;background:var(--t-chip,#f2f0eb);border-radius:12px;display:flex;flex-direction:column;gap:4px}
+#sbBox .v2b li{font-size:14px;line-height:1.45}
+#sbBox .v2b li a,#sbBox .v2b li > span{display:flex;gap:8px;color:inherit;text-decoration:none}
+#sbBox .v2b li a:hover span:last-child{text-decoration:underline}
+#sbBox .v2b .i{flex:none;width:20px;text-align:center}
+#sbBox .v2r{display:flex;justify-content:space-between;margin:0 2px 10px}
+#sbBox .v2r .lk{border:0;background:transparent;font:inherit;font-size:13px;color:var(--t-sub,#5b6775);cursor:pointer;padding:2px 4px;border-radius:6px}
+#sbBox .v2r .lk:hover{background:var(--t-chip,#f2f0eb);color:var(--t-ink,#1f2328)}
+#sbBox .v2talk{width:100%;min-height:58px;font-size:16px}
+#sbBox .v2talk i{font-size:22px}
+#sbBox .v2m{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+#sbBox .v2m button{font:inherit;font-size:13.5px;min-height:36px;border:1px solid var(--t-line,#e6e3dc);border-radius:10px;background:var(--t-card,#fff);color:var(--t-sub,#5b6775);cursor:pointer}
+#sbBox .v2m button.on{border-color:var(--t-accent,#2f6fb5);color:var(--t-accent,#2f6fb5);font-weight:700;background:var(--t-accent-soft,#e8f0f9)}
 
 /* ---------- 5. 쌤비 홈 본문: 쌤비 한마디 · 지금 · 오늘 할 일 ---------- */
 .sbhome{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;font-family:var(--t-font)}
@@ -101,6 +171,31 @@ html[data-ui="ssambi"].tt-hasnav .cta,html[data-ui="ssambi"].tt-hasnav .tabs,htm
 .sbBub .when .ev{color:var(--t-accent)}
 .sbBub p{font-size:clamp(16px,2.2vh,18px);font-weight:700;line-height:1.5;margin-top:2px;word-break:keep-all}
 .sbBub small{display:block;font-size:14px;color:var(--t-sub);margin-top:2px;word-break:keep-all}
+
+/* 중메뉴: 자주 쓰는 3개 크게 + 묶음별 작은 동그라미 */
+.sbWrap.mid{max-width:820px}
+.sbMid{display:flex;flex-direction:column;gap:clamp(14px,2.2vh,22px)}
+.sbBig{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.sbBig .bc{position:relative;display:flex;align-items:center;gap:14px;min-height:clamp(72px,10vh,88px);padding:12px 16px;border:1px solid var(--t-line);border-radius:16px;background:var(--t-card);font:inherit;color:var(--t-ink);text-align:left;cursor:pointer;box-shadow:var(--sb-shadow)}
+.sbBig .bc:hover{border-color:var(--t-accent)}
+.sbBig .ci{flex:none;width:52px;height:52px;border-radius:50%;background:var(--t-accent-soft);color:var(--t-accent);display:flex;align-items:center;justify-content:center}
+.sbBig .tx{display:flex;flex-direction:column;min-width:0}
+.sbBig b{color:var(--t-ink);font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbBig small{font-size:13px;color:var(--t-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbBig small.warn{color:var(--t-danger,#b3261e)}
+.sbBig em{position:absolute;top:8px;right:10px;font-style:normal;font-size:12px;font-weight:700;color:var(--t-accent);background:var(--t-accent-soft);border-radius:999px;padding:0 8px}
+.sbGroups{display:grid;grid-template-columns:repeat(var(--gc,3),minmax(0,1fr));gap:12px 18px;align-items:start}
+.sbGroups .gp h3{font-size:13px;font-weight:700;color:var(--t-sub);margin:0 0 8px 4px}
+.sbGroups .gp h3 button{border:0;background:transparent;font:inherit;color:var(--t-sub);cursor:pointer;padding:4px 8px;border-radius:8px;margin-left:-8px}
+.sbGroups .gp h3 button:hover{background:var(--t-chip);color:var(--t-ink)}
+.sbGroups .ic{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px 4px}
+.sbGroups .sc{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 2px;border:0;border-radius:14px;background:transparent;font:inherit;color:var(--t-ink);cursor:pointer;min-height:44px}
+.sbGroups .sc .ci{width:44px;height:44px;border-radius:50%;background:var(--t-chip);color:var(--t-sub);display:flex;align-items:center;justify-content:center}
+.sbGroups .sc b{color:var(--t-ink);font-size:13px;font-weight:500;text-align:center;line-height:1.3;word-break:keep-all}
+.sbGroups .sc:hover .ci{background:var(--t-accent-soft);color:var(--t-accent)}
+.sbGroups .sc:hover b{color:var(--t-accent)}
+.sbMid .dim{opacity:.5}
+.sbEmpty{text-align:center;color:var(--t-sub);padding:30px 0}
 
 /* 지금 카드 */
 .sbNowWrap{display:flex;flex-direction:column;gap:6px}
@@ -155,7 +250,7 @@ html[data-ui="ssambi"].tt-hasnav .cta,html[data-ui="ssambi"].tt-hasnav .tabs,htm
 .sbDone small{display:block;font-size:14px;color:var(--t-sub)}
 
 @media (min-width:761px) and (max-height:820px){
-  #sbBar .owl{width:48px;height:48px}#sbBar .q{height:44px}#sbBar .sbTabs a{min-height:40px}
+  #sbHero{gap:8px!important}#sbHero .owl{width:96px;height:96px}#sbHero .top{min-height:28px}
   .sbWrap{gap:10px}.sbRow{min-height:46px}
 }
 
@@ -181,20 +276,24 @@ html[data-ui="ssambi"] .mt b{font-weight:500;color:var(--t-ink)}
 html[data-ui="ssambi"] .mt .mh{background:var(--t-accent-soft);color:var(--t-accent);font-weight:700}
 html[data-ui="ssambi"] .tdy,html[data-ui="ssambi"] .cat,html[data-ui="ssambi"] .card{border-radius:16px;border-color:var(--t-line)}
 
-/* ---------- 7. 휴대폰: 위쪽 고정 줄은 같고, 메뉴는 아이콘 + 짧은 이름, ＋ 빠른 입력 ---------- */
+/* ---------- 7. 휴대폰 ---------- */
 @media (max-width:760px){
-  body.sbOn{padding:10px 12px 14px!important}
-  #sbBar .in{gap:8px}
-  #sbBar .owl{width:46px;height:46px}
-  #sbBar .q{height:44px;padding:0 12px;font-size:14px}
-  #sbBar .q kbd{display:none}
-  #sbBar .ib{width:40px;height:40px}
-  #sbBar .ib.plus{display:flex}
-  #sbBar .sbTabs{justify-content:space-between;gap:0}
-  #sbBar .sbTabs a{flex:1;flex-direction:column;justify-content:center;gap:2px;padding:4px 0;font-size:12px;min-height:50px}
-  .sbWrap{gap:12px;padding-top:0}
-  .sbBub{padding:10px 14px}
-  .sbBub p{font-size:15px}.sbBub small{font-size:13px}
+  body.sbOn{padding:4px 12px 14px!important}
+  #sbHero .top{min-height:34px}
+  #sbHero .hrow{justify-content:flex-start;gap:10px}
+  #sbHero .owl{width:84px;height:84px}
+  #sbHero .bub{padding:9px 13px;border-radius:16px}
+  #sbHero .bub p{font-size:15px}#sbHero .bub small{font-size:13px}
+  #sbHero .q{height:46px;padding:0 12px 0 16px;font-size:15px}
+  #sbHero .q kbd{display:none}
+  #sbHero .ib{width:44px;height:44px}
+  #sbHero .ib.plus{display:flex}
+  #sbHero .circ{gap:0}
+  #sbHero .circ .ci{width:40px;height:40px}
+  #sbHero .circ b{font-size:11.5px}
+  .sbBig{grid-template-columns:1fr}
+  .sbGroups{grid-template-columns:1fr}
+  .sbGroups .ic{grid-template-columns:repeat(4,minmax(0,1fr))}
   .sbNow{padding:12px 14px;gap:10px}
   .sbNow .tt{font-size:18px}
   .sbNow .acts{width:100%}.sbNow .acts .sbBtn{flex:1}
