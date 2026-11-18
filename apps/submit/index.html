@@ -30,14 +30,15 @@
   .new{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:8px}
   .new input{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:6px 9px;width:100%}
   .new .row{display:flex;gap:6px}
-  .grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));grid-auto-rows:minmax(40px,1fr);gap:6px;overflow:auto;align-content:start}
-  .st{font:inherit;font-size:15px;font-weight:700;border:1.5px solid var(--line);background:#fff;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:6px;padding:4px 9px;color:var(--ink);min-height:40px}
-  .st i{font-style:normal;color:var(--sub);font-size:12px;width:20px;text-align:right}
-  .st b{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .st .mk{font-size:13px}
-  .st.y{background:var(--ok-soft);border-color:#9fd3b4;color:var(--ok)}
+  /* 학생 칸: 출결 입력 화면과 같은 모양 (5칸 격자 · 번호 왼쪽 위 · 이름 가운데 · 누르면 제출) */
+  .grid{flex:1;min-height:0;display:grid!important;grid-template-columns:repeat(var(--gc,5),minmax(0,1fr))!important;grid-auto-rows:minmax(44px,1fr)!important;gap:6px;overflow:auto;align-content:stretch!important}
+  .st{position:relative;font:inherit;border:1px solid var(--line);background:var(--card,#fff);border-radius:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px;color:var(--ink);min-height:44px;min-width:0}
+  .st i{position:absolute;top:3px;left:6px;font-style:normal;color:var(--sub);font-size:10.5px}
+  .st b{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .st .mk{font-size:11px;font-weight:700;min-height:14px;line-height:14px}
+  .st.y{background:var(--ok);border-color:var(--ok);color:#fff}.st.y i{color:inherit;opacity:.8}
   .st.x{background:#f3f4f6;border-style:dashed;color:#9aa5b1}
-  .st.n{border-color:#f0b4ae}
+  .st.n{border-color:var(--line)}
   .head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .head h2{font-size:16px;font-weight:800}
   .head .sp{flex:1}
@@ -112,7 +113,7 @@
     R.innerHTML = '<div class="head"><h2>' + esc(it.title) + '</h2><span class="muted">' + (it.due ? "마감 " + md(it.due) + " · " : "") + "제출 " + yes + " · 미제출 <b class=\"miss\">" + miss.length + "</b></span><span class=\"sp\"></span>"
       + '<div class="seg"><button type="button" data-v="all" aria-pressed="' + (view === "all") + '">모두</button><button type="button" data-v="miss" aria-pressed="' + (view === "miss") + '">미제출만</button></div>'
       + '<button type="button" class="btn" data-a="copy">미제출 번호 복사</button><button type="button" class="btn" data-a="allY">남은 학생 모두 제출</button><button type="button" class="btn" data-a="edit">✎</button><button type="button" class="btn" data-a="del">🗑</button></div>'
-      + '<div class="grid">' + list.map(function(s){ var v = mk[s.no] || "n"; return '<button type="button" class="st ' + v + '" data-no="' + s.no + '"><i>' + s.no + "</i><b>" + esc(s.name || "") + '</b><span class="mk">' + (v === "y" ? "✔" : v === "x" ? "—" : "") + "</span></button>"; }).join("") + "</div>"
+      + '<div class="grid" style="--gc:' + (list.length <= 16 ? 4 : list.length <= 40 ? 5 : 6) + '">' + list.map(function(s){ var v = mk[s.no] || "n"; return '<button type="button" class="st ' + v + '" data-no="' + s.no + '"><i>' + s.no + "</i><b>" + esc(s.name || "") + '</b><span class="mk">' + (v === "y" ? "✔ 냄" : v === "x" ? "해당 없음" : "") + "</span></button>"; }).join("") + "</div>"
       + (miss.length ? '<div class="muted">미제출 학생 안내 문자: ' + miss.slice(0, 12).map(function(s){ return '<a class="btn" style="padding:2px 8px;font-size:12px" href="../parent/?' + new URLSearchParams({k: "sub", no: String(s.no), d: it.due || ymd(), x: it.title, c: cls.id}).toString() + '">✉️ ' + s.no + "</a>"; }).join(" ") + (miss.length > 12 ? " …" : "") + "</div>" : "");
     R.querySelector(".seg").onclick = function(e){ var b = e.target.closest("button"); if(b){ view = b.dataset.v; drawRight(); } };
     R.querySelector(".grid").onclick = function(e){
