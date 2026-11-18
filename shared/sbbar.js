@@ -50,6 +50,7 @@
     if(cur) return {item: "shh", line: cur.n + "교시 " + cls(cur) + " 수업 중", sub: "끝까지 " + (cur.end - m) + "분"};
     if(nx && nx.start - m <= 15) return {item: "book", line: nx.n + "교시 " + cls(nx) + (nx.subj ? " " + nx.subj : ""), sub: (nx.start - m) + "분 뒤 시작"};
     if(!wk || m >= 18 * 60) return {item: "night", sleep: true, line: "오늘도 수고하셨어요", sub: "푹 쉬세요"};
+    if(m < 300) return {item: "night", sleep: true, line: "늦은 시간이에요", sub: "푹 쉬세요"};
     if(m < 540) return {item: "coffee", line: "좋은 아침이에요", sub: nx ? "첫 수업 " + nx.n + "교시 " + cls(nx) : ""};
     if(m >= 720 && m < 780) return {item: "spoon", line: "점심시간이에요", sub: "맛있게 드세요"};
     return {item: "", line: nx ? "다음 " + nx.n + "교시 " + cls(nx) : "무엇을 도와드릴까요?", sub: nx ? nx.t + " 시작" : ""};
@@ -78,8 +79,11 @@
   function hrowHTML(){
     var p = P(), d = new Date(), s = (TT.school && TT.school.load ? TT.school.load() : {}) || {};
     return '<button type="button" class="owl" id="sbBarOwl" title="쌤비 — 오늘 상황 · 말로 기록 (Alt+B)" aria-label="쌤비 열기 (Alt+B)">' + owlSvg(132) + "</button>"
-      + '<div class="bub" role="status"><div class="b0"><div class="when">' + (s.name ? esc(s.name) + " · " : "") + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + DOW[d.getDay()] + "요일 · " + (d.getHours() < 12 ? "오전 " : "오후 ") + ((d.getHours() % 12) || 12) + ":" + pad(d.getMinutes())
-      + (p.ev ? ' · <span class="ev">📌 ' + esc(p.ev) + "</span>" : "") + "</div><p>" + esc(p.line || "") + "</p>" + (p.sub ? "<small>" + esc(p.sub) + "</small>" : "") + "</div></div>";
+      + '<div class="bub" role="status"><div class="b0">' + (p.ev ? '<div class="when"><span class="ev">📌 ' + esc(p.ev) + "</span></div>" : "") + "<p>" + esc(p.line || "") + "</p>" + (p.sub ? "<small>" + esc(p.sub) + "</small>" : "") + "</div></div>";
+  }
+  function dateHTML(){                                                  // 학교 · 날짜 · 시간은 맨 위 ⋯ 줄 왼쪽에 (휴대폰은 짧게)
+    var d = new Date(), s = (TT.school && TT.school.load ? TT.school.load() : {}) || {}, t = (d.getHours() < 12 ? "오전 " : "오후 ") + ((d.getHours() % 12) || 12) + ":" + pad(d.getMinutes());
+    return '<span class="lg">' + (s.name ? esc(s.name) + " · " : "") + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + DOW[d.getDay()] + "요일 · " + t + '</span><span class="st">' + (d.getMonth() + 1) + "/" + d.getDate() + "(" + DOW[d.getDay()] + ") " + t + "</span>";
   }
   function srowHTML(){
     return '<div class="q">' + icon("search", 20) + '<label for="sbQ2" class="sr">찾기 또는 한 줄 입력</label><input id="sbQ2" type="text" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="찾기 · 할 일 적기">'
@@ -103,7 +107,7 @@
       wireSearch();
     }
     var box = document.getElementById("sbBox"); if(box && hero.contains(box)) document.body.appendChild(box);   // 다시 그리는 동안 쌤비 창을 잠깐 비켜 둠
-    hero.querySelector(".hrow").innerHTML = hrowHTML();
+    hero.querySelector(".hrow").innerHTML = hrowHTML(); hero.querySelector(".top .sp").innerHTML = dateHTML();
     hero.querySelector(".circ").innerHTML = circHTML();
     seatMore(); seatBox();
   }

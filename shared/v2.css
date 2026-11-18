@@ -64,7 +64,9 @@ html[data-ui="ssambi"] header .lead a{color:var(--t-ink)}
 #sbHero,#sbRail,#sbBar{display:none}
 /* ① 첫 화면·중메뉴 머리: 빈칸 + ⋯ / 큰 쌤비 + 말풍선 / 검색창 / 동그라미 메뉴 */
 html[data-ui="ssambi"] body.sbOn #sbHero{display:flex;flex-direction:column;align-items:center;flex:none;font-family:var(--t-font);gap:clamp(14px,2.6vh,26px);margin-bottom:clamp(8px,1.5vh,15px)}
-#sbHero .top{position:relative;align-self:stretch;display:flex;justify-content:flex-end;align-items:center;min-height:clamp(32px,5vh,52px)}
+#sbHero .top{position:relative;align-self:stretch;display:flex;justify-content:flex-end;align-items:center;gap:12px;min-height:clamp(32px,5vh,52px)}
+#sbHero .top .sp{flex:1;min-width:0;font-size:14px;color:var(--t-sub);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sbHero .top .sp .st{display:none}
 #sbHero .top details.more{position:relative}
 #sbHero .top details.more .menu{right:0;left:auto}
 #sbHero .hrow{display:grid;grid-template-columns:auto minmax(0,460px);align-items:center;justify-content:center;gap:clamp(16px,2.4vw,28px);width:100%;max-width:780px}
@@ -318,6 +320,7 @@ html[data-ui="ssambi"] .tdy,html[data-ui="ssambi"] .cat,html[data-ui="ssambi"] .
 @media (max-width:760px){
   body.sbOn{padding:4px 12px 14px!important}
   #sbHero .top{min-height:34px}
+  #sbHero .top .sp{font-size:13px}#sbHero .top .sp .lg{display:none}#sbHero .top .sp .st{display:inline}
   #sbHero .hrow{grid-template-columns:auto minmax(0,1fr);justify-content:stretch;gap:10px}
   #sbHero .owl{width:84px;height:84px}
   #sbHero .bub{padding:9px 13px;border-radius:16px}

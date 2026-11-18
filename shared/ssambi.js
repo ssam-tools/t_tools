@@ -173,7 +173,7 @@
   /* ── 화면들 ── */
   var V = {};
   V.menu = function(){
-    var hr = new Date().getHours(), hi = hr < 11 ? "좋은 아침이에요!" : hr < 17 ? "무엇을 도와드릴까요?" : "오늘도 수고하셨어요.";
+    var hr = new Date().getHours(), hi = hr < 5 ? "늦은 시간이에요. 푹 쉬세요." : hr < 11 ? "좋은 아침이에요!" : hr < 17 ? "무엇을 도와드릴까요?" : "오늘도 수고하셨어요.";
     return head("쌤비 <small style='font-weight:500;color:var(--sub,#5b6775)'>· " + hi + "</small>")
       + '<div class="g2">'
       + '<button type="button" class="bt p" data-a="listen" autofocus><i>🎤</i><span>말로 입력<small>"12번 지각"</small></span></button>'
@@ -271,7 +271,7 @@
   }
   if(V2){
     V.menu = function(){
-      var hr = new Date().getHours(), hi = hr < 11 ? "좋은 아침이에요" : hr < 17 ? "무엇을 도와드릴까요?" : "오늘도 수고하셨어요", md = sbMode();
+      var hr = new Date().getHours(), hi = hr < 5 ? "늦은 시간이에요" : hr < 11 ? "좋은 아침이에요" : hr < 17 ? "무엇을 도와드릴까요?" : "오늘도 수고하셨어요", md = sbMode();
       var L = briefLines();
       return head("쌤비 <small style='font-weight:500;color:var(--sub,#5b6775)'>· " + hi + "</small>")
         + '<ul class="v2b">' + L.map(function(x){ var in1 = '<span class="i">' + x[0] + "</span><span>" + esc(x[1]) + "</span>"; return "<li>" + (x[2] ? '<a href="' + esc(x[2]) + '">' + in1 + "</a>" : in1) + "</li>"; }).join("") + "</ul>"

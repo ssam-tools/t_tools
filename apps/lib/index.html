@@ -23,7 +23,11 @@
 <style>
   header{align-items:center}
   .bar{flex-wrap:wrap;flex:1;justify-content:flex-end}
-  .sbox{display:flex;gap:6px;flex:1;max-width:620px}
+  .sbox{display:flex;align-items:center;gap:6px;flex:1;max-width:620px;margin:0}
+  header .bar{align-items:center}
+  /* 검색칸 · 찾기 · 물어보기 · 자료 올리기를 같은 높이 · 같은 줄에 (글자 크기를 바꿔도 맞게) */
+  #q,.sbox .btn,#upBtn{box-sizing:border-box;height:42px;margin:0;align-self:center;display:inline-flex;align-items:center;justify-content:center;line-height:1;vertical-align:middle;font-size:15px}
+  #q{font-size:16px}
   .sbox input{flex:1;font:inherit;font-size:16px;border:2px solid #b9c9dc;border-radius:12px;padding:8px 12px;min-width:0}
   .sbox input:focus{outline:none;border-color:var(--accent)}
   main{display:grid!important;grid-template-columns:minmax(170px,200px) minmax(0,1fr);gap:10px;padding:10px!important}

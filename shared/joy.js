@@ -119,12 +119,13 @@
   }
   function greet(){
     if(!on() || !HOME || document.documentElement.getAttribute("data-ui") === "ssambi") return;   // v2.0 쌤비 홈은 쌤비 말풍선이 첫 화면에 늘 있음
-    var d = new Date(), h = d.getHours() + d.getMinutes() / 60, w = d.getDay(), slot = h < 9 ? "am0" : h < 12 ? "am" : h < 13.2 ? "lunch" : h < 16.5 ? "pm" : "eve", k = ymd() + "|" + slot;
+    var d = new Date(), h = d.getHours() + d.getMinutes() / 60, w = d.getDay(), slot = h < 5 ? "late" : h < 9 ? "am0" : h < 12 ? "am" : h < 13.2 ? "lunch" : h < 16.5 ? "pm" : "eve", k = ymd() + "|" + slot;
     J = load(); if(J.seen.greet === k) return;
     var msg = "", sub = "", dd = dday(), tt = null;
     try{ tt = TT.timetable && TT.timetable.day ? TT.timetable.day(d) : null; }catch(e){}
     var mins = d.getHours() * 60 + d.getMinutes(), next = (tt || []).filter(function(x){ return x.start > mins; })[0], cnt = (tt || []).length;
     if(w === 0 || w === 6) msg = "주말에도 오셨네요! 오늘은 조금만 하고 푹 쉬어요 🌿";
+    else if(slot === "late") msg = "늦은 시간까지 고생 많으세요. 푹 쉬세요 🌙";
     else if(slot === "am0") msg = (w === 1 ? "새로운 한 주예요! " : w === 5 ? "드디어 금요일! " : "좋은 아침이에요! ") + (cnt ? "오늘 수업 " + cnt + "시간" + (next ? ", 첫 수업은 " + next.n + "교시 " + (next.code || "") + "예요." : "이에요.") : "오늘도 함께해요.");
     else if(slot === "am") msg = next ? "다음은 " + next.n + "교시 " + (next.code || "") + " 수업이에요. 화이팅!" : "오전 잘 보내고 계시죠? 물 한 잔 마셔요 💧";
     else if(slot === "lunch") msg = "점심시간이에요! 맛있게 드세요 🍚";

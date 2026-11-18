@@ -53,6 +53,7 @@
     if(N.cur) return r("shh", N.n + "교시 " + N.cls + " 수업 중이에요.", "끝까지 " + N.left + "분");
     if(nxt && nxt.left <= 15) return r("book", nxt.left + "분 뒤 " + nxt.n + "교시 " + nxt.cls + (nxt.subj ? " " + nxt.subj : "") + " 수업이에요.", nxt.prog && nxt.prog.now ? "이번 차시: " + nxt.prog.now : (nxt.unit ? "단원: " + nxt.unit : ""));
     if(wk && m >= 720 && m < 780){ var ml = ""; try{ ml = window.TTMeal ? TTMeal.todayText() : ""; }catch(e){} return r("spoon", "점심시간이에요. 맛있게 드세요!", ml || (cnt ? "오후에 챙길 일 " + cnt + "개" : "")); }
+    if(m < 300) return r("night", "늦은 시간이에요." + (wk && N.count ? " 오늘 수업 " + N.count + "시간" : ""), cnt ? "챙길 일 " + cnt + "개는 아침에 봐요. 푹 쉬세요." : "푹 쉬세요.", {sleep: true});   // 자정~새벽 5시
     if(wk && m < 540) return r("coffee", "좋은 아침이에요!" + (N.count ? " 오늘 수업 " + N.count + "시간" : ""), cnt ? "오늘 챙길 일 " + cnt + "개예요." : "오늘 챙길 일은 아직 없어요.");
     if(J && J.examNear && J.examNear()) return r("redpen", "시험 기간이에요. 조금만 힘내요!", cnt ? "챙길 일 " + cnt + "개" : "");
     var mo = d.getMonth() + 1, dt = d.getDate();
