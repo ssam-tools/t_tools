@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<title>학생 QR · 쌤 노트</title>
+<link rel="manifest" href="../../manifest.webmanifest">
+<style>
+  /* 쌤 노트 · 학생에게 주소 보여 주기 (교과 공통)
+     apps/qr/?u=<주소>&n=<이름>&d=<한 줄 설명>
+     u 는 https://… 또는 쌤 노트 안의 주소(apps/mstudy/ 처럼 앞에 / 없이). QR은 이 기기 안에서 만들고(shared/qr.js), 주소를 밖으로 보내지 않습니다. */
+  :root{--ac:#2563c9;--ac2:#e8effb;--ink:#1d2433;--sub:#667085;--line:#e3e7ee;--bg:#f5f7fb}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink);background:var(--bg)}
+  #app{height:100dvh;display:grid;grid-template-rows:auto 1fr}
+  header{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line)}
+  header h1{font-size:19px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .sp{flex:1}
+  .back{font-size:14px;font-weight:800;color:var(--ac);text-decoration:none;white-space:nowrap;border:1px solid var(--line);border-radius:10px;padding:7px 11px}.back:hover{background:var(--ac2)}
+  .btn{border:0;border-radius:12px;background:var(--ac);color:#fff;font:inherit;font-size:16px;font-weight:800;padding:11px 18px;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
+  .btn.sub{background:#fff;color:var(--ac);border:1.5px solid var(--ac)}.btn.gray{background:#eef1f6;color:var(--ink)}
+  main{min-height:0;overflow:hidden;padding:18px;display:grid;grid-template-columns:auto 1fr;gap:34px;align-items:center;justify-content:center}
+  .qr{height:min(74dvh,58vw);aspect-ratio:1;background:#fff;border-radius:20px;padding:12px;border:1px solid var(--line)}
+  .qr svg{width:100%;height:100%;display:block}
+  h2{font-size:36px;font-weight:900;margin-bottom:6px;word-break:keep-all}
+  .d{font-size:20px;color:var(--sub);margin-bottom:14px;word-break:keep-all}
+  ol{font-size:22px;line-height:1.8;padding-left:28px;margin:6px 0 16px}
+  .addr{font-size:15px;color:var(--sub);background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:12px;word-break:break-all;max-width:560px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .err{grid-column:1/-1;text-align:center;font-size:18px;color:var(--sub)}
+  @media (max-width:800px){main{grid-template-columns:1fr;justify-items:center;text-align:center;gap:16px;overflow:auto}.qr{height:min(48dvh,84vw)}h2{font-size:26px}ol{font-size:17px;text-align:left}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <a class="back" href="../../#class" title="쌤 노트로 돌아가기">← 쌤 노트</a>
+    <h1 id="ttl">📱 학생 QR</h1>
+    <span class="sp"></span>
+    <button class="btn gray" onclick="fullScr()" title="전체 화면 (F11)">⛶ 전체 화면</button>
+  </header>
+  <main id="view"></main>
+</div>
+<script src="../../shared/qr.js"></script>
+<script>
+"use strict";
+var Q = new URLSearchParams(location.search), ROOT = new URL("../../", location.href);
+function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function target(){
+  var u = (Q.get("u") || "").trim(); if(!u) return null;
+  try{ var x = /^https?:\/\//i.test(u) ? new URL(u) : new URL(u.replace(/^\/+/, ""), ROOT); return /^https?:$/.test(x.protocol) ? x.href : null; }catch(e){ return null; }
+}
+var U = target(), N = (Q.get("n") || "").slice(0, 40) || "학생용 사이트", D = (Q.get("d") || "").slice(0, 80);
+function fullScr(){ try{ if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }catch(e){} }
+function copyTxt(b){ (navigator.clipboard ? navigator.clipboard.writeText(U) : Promise.reject()).then(function(){ b.textContent = "복사했어요 ✓"; }, function(){ prompt("복사하세요", U); }); }
+function printQR(){
+  var q = TTQR.svg(U).replace("<svg ", '<svg width="150" height="150" ');
+  var cell = '<div style="border:1px dashed #bbb;padding:10px;text-align:center;font-family:sans-serif"><div style="width:150px;height:150px;margin:0 auto">' + q + '</div><b style="font-size:15px">' + esc(N) + '</b>' + (D ? '<div style="font-size:11px;color:#555">' + esc(D) + '</div>' : "") + '</div>';
+  var w = window.open("", "_blank"); if(!w) return;
+  w.document.write('<html><head><meta charset="utf-8"><title>' + esc(N) + ' QR</title></head><body style="margin:12mm"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">' + new Array(16).fill(cell).join("") + "</div><script>setTimeout(function(){print()},300)<\/script></body></html>");
+  w.document.close();
+}
+(function(){
+  var v = document.getElementById("view");
+  if(!U){ v.innerHTML = '<p class="err">보여 줄 주소가 없어요. 쌤 노트 → 수업 → 교과 칸의 <b>📱 QR</b> 단추로 열어 주세요.</p>'; return; }
+  document.getElementById("ttl").textContent = "📱 " + N;
+  var q = ""; try{ q = TTQR.svg(U); }catch(e){ q = '<p class="err">QR을 만들지 못했어요.</p>'; }
+  v.innerHTML = '<div class="qr">' + q + '</div><div>' +
+    '<h2>' + esc(N) + '</h2>' + (D ? '<p class="d">' + esc(D) + '</p>' : "") +
+    '<ol><li>휴대폰 카메라로 QR 코드를 비춰요 📷</li><li>뜨는 주소를 눌러 열어요.</li><li>공유 → <b>홈 화면에 추가</b>하면 앱처럼 쓸 수 있어요.</li></ol>' +
+    '<div class="addr">' + esc(U) + '</div>' +
+    '<div class="row"><button class="btn" onclick="copyTxt(this)">주소 복사</button><button class="btn sub" onclick="printQR()">🖨 인쇄용 (한 장에 16개)</button><a class="btn gray" href="' + esc(U) + '" target="_blank" rel="noopener">열어 보기</a></div></div>';
+})();
+</script>
+</body>
+</html>
