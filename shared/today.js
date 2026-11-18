@@ -256,6 +256,7 @@
         (G.gd || []).forEach(function(g){ if(g.date >= s30 && String(g.kind).indexOf("칭찬") < 0){ var k = g.sid + "|" + g.kind; gc[k] = (gc[k] || 0) + 1; if(gc[k] >= 3) gw[g.sid] = 1; } });
         var gn = Object.keys(gw).length;
         if(gn) out.push({ic: "⚡", t: "반복 지도 · 상담 권장", n: gn + "명", href: "apps/tardy/?tab=guide", lv: "mid", tip: "30일 안에 같은 지도를 3번 이상 받은 학생"});
+        try{ var cn = window.TT_CLEAN ? TT_CLEAN.count() : 0; if(cn) out.push({ic: "🧹", t: "청소 당번", n: cn + "명", href: "apps/duty/", lv: "mid", tip: "무단지각·고른 지도·마감 지난 미제출로 쌓인 청소 당번 (1인 1역에서 완료)"}); }catch(e){}
         if(reps) out.push({ic: "📄", t: "결석신고서", n: reps + "건", href: "apps/tardy/", lv: "mid", tip: "아직 만들지 않은 결석신고서"});
       }
       /* 제출물: 마감이 지났는데 미제출이 남은 것 (담임 반 학생은 따로 표시) */

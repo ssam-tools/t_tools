@@ -44,6 +44,17 @@
   .muted{color:var(--sub);font-size:12.5px}
   html.room .side{display:none}
   html.room main{grid-template-columns:1fr}
+  .jb{display:flex;align-items:center;gap:10px;background:var(--accent-soft,#eef4ff);border-radius:14px;padding:6px 14px;font-size:clamp(16px,2.6vh,22px);font-weight:800}
+  .jb b{color:var(--accent);font-size:.8em}
+  .clean{display:flex;align-items:center;gap:6px;flex-wrap:wrap;border:1.5px dashed #e8b4ad;background:#fff7f5;border-radius:14px;padding:6px 10px;min-height:44px}
+  .clean .ch{font-weight:800;color:#b3261e;margin-right:4px}
+  .clean .cs{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #f0c4be;border-radius:12px;padding:3px 4px 3px 10px;font-size:14px}
+  .clean .cs b{font-size:16px}.clean .cs small{color:var(--sub);font-size:12px}
+  .clean .cs button{border:0;border-radius:9px;background:#2d8a5b;color:#fff;font:inherit;font-size:12.5px;font-weight:800;padding:4px 9px;cursor:pointer}
+  .clean .none{color:var(--sub);font-size:13.5px}
+  .role .who.m2{font-size:clamp(17px,3.2vh,28px)}.role .who.m{font-size:clamp(14px,2.5vh,22px)}
+  .who.spin{opacity:.55;filter:blur(.5px)}
+  .side .ck{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13px}
   @media print{ .side,.bh .btn{display:none!important} main{grid-template-columns:1fr} }
   @media (max-width:760px){ main{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} }
 </style>
@@ -56,13 +67,15 @@
   </div>
   <div class="bar">
     <select id="clsSel" aria-label="학급 선택"></select>
-    <a class="btn" href="../group/" title="모둠 편성의 ④ 좌석 탭에서 자리를 바꿉니다">🪑 자리 바꾸기</a>
+    <a class="btn" href="../seat/" title="자리 배치">🪑 자리 바꾸기</a>
     <button type="button" class="btn" id="setBtn" aria-pressed="true">⚙ 역할 정하기</button>
   </div>
 </header>
 <main class="panel" id="m">
   <section class="board">
-    <div class="bh"><button type="button" class="btn" id="prev">◀</button><h2 id="title"></h2><button type="button" class="btn" id="next">▶</button><button type="button" class="btn" id="now">이번 주</button><span class="sp"></span><button type="button" class="btn" id="print">🖨 인쇄</button></div>
+    <div class="bh"><button type="button" class="btn" id="prev">◀</button><h2 id="title"></h2><button type="button" class="btn" id="next">▶</button><button type="button" class="btn" id="now">이번 주</button><span class="sp"></span><button type="button" class="btn" id="rnd" title="역할을 무작위로 다시 정해요 (다음 주부터는 차례로 돌아감)">🎲 무작위 배정</button><button type="button" class="btn" id="print">🖨 인쇄</button></div>
+    <div class="jb" id="jb"></div>
+    <div class="clean" id="clean"></div>
     <div class="roles" id="roles"></div>
   </section>
   <aside class="side" id="side"></aside>
@@ -72,12 +85,13 @@
   <span class="priv">🔒 학급 명렬표의 이름만 씁니다</span>
 </footer>
 <script src="../../shared/tt.js"></script>
+<script src="../../shared/clean.js"></script>
 <script>
 (function(){
   "use strict";
   var $ = function(id){ return document.getElementById(id); };
   var KEY = "tt_duty_v1", S = TT.store.get(KEY, null) || {}; S.v = 1; S.c = S.c || {};
-  function save(){ S.updatedAt = Date.now(); TT.store.set(KEY, S); }
+  function save(){ var cur = TT.store.get(KEY, null) || {}; Object.keys((cur.c || {})).forEach(function(id){ if(cur.c[id] && cur.c[id].cl){ S.c[id] = S.c[id] || {}; S.c[id].cl = cur.c[id].cl; } }); S.updatedAt = Date.now(); TT.store.set(KEY, S); }   /* 청소 당번 설정·완료(cl)는 shared/clean.js 가 따로 저장 → 덮어쓰지 않게 합침 */
   var cls = null, off = 0;
   var DEF = [["칠판 정리", 1], ["교실 바닥 쓸기", 4], ["분리수거", 2], ["창문·전등", 1], ["우유·급식 정리", 2], ["사물함 정리 확인", 1], ["교탁·게시판", 1], ["화분 물 주기", 1], ["학습지 나누기", 2], ["복도 정리", 2]];
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -90,7 +104,7 @@
   function school(d){ var w = d.getDay(); return w !== 0 && w !== 6 && !OFF[key(d)]; }
   function conf(){
     var c = S.c[cls.id];
-    if(!c){ c = S.c[cls.id] = {roles: DEF.map(function(x){ return {name: x[0], n: x[1]}; }), per: "week", start: key(monday(new Date())), skip: {}}; save(); }
+    if(!c || !c.roles){ c = S.c[cls.id] = Object.assign(c || {}, {roles: DEF.map(function(x){ return {name: x[0], n: x[1]}; }), per: "week", start: key(monday(new Date())), skip: {}}); save(); }
     return c;
   }
   /* 지금 몇 번째 차례인지: 시작일부터 지난 주 수(또는 수업일 수, 주말 뺌) */
@@ -111,18 +125,50 @@
   }
   /* 배정: 학생 순서(번호순, 뺀 학생 제외)를 차례마다 밀어서 역할 칸에 채움 */
   function assign(c, i){
-    var st = cls.students.filter(function(s){ return !c.skip[s.no]; }), slots = c.roles.reduce(function(a, r){ return a + (+r.n || 0); }, 0);
+    var st = ordered(c).filter(function(s){ return !c.skip[s.no]; }), slots = c.roles.reduce(function(a, r){ return a + (+r.n || 0); }, 0);
     if(!st.length || !slots) return c.roles.map(function(){ return []; });
     var step = slots < st.length ? slots : 1, k = (i * step) % st.length, out = [];
     c.roles.forEach(function(r){ var g = []; for(var j = 0; j < (+r.n || 0); j++){ g.push(st[k % st.length]); k++; } out.push(g); });
     return out;
+  }
+  /* 🎲 무작위 배정: 학생 순서를 섞어 c.order 에 저장 (없으면 번호순) */
+  function ordered(c){
+    if(!c.order || !c.order.length) return cls.students.slice();
+    var by = {}; cls.students.forEach(function(s){ by[s.no] = s; });
+    var out = c.order.map(function(n){ return by[n]; }).filter(Boolean);
+    cls.students.forEach(function(s){ if(c.order.indexOf(s.no) < 0) out.push(s); });
+    return out;
+  }
+  function shuffle(a){ a = a.slice(); for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function rnd(){
+    var c = conf(); c.order = shuffle(cls.students.map(function(s){ return s.no; })); c.start = key(monday(new Date())); off = 0; save();
+    var ws = Array.prototype.slice.call($("roles").querySelectorAll(".who")), n = 0;
+    var t = setInterval(function(){ ws.forEach(function(w){ w.classList.add("spin"); var s = cls.students[Math.floor(Math.random() * cls.students.length)]; w.textContent = s.name || s.no + "번"; }); if(++n > 14){ clearInterval(t); draw(); if(TT.ui && TT.ui.toast) TT.ui.toast("🎲 역할을 새로 정했어요"); } }, 90);
+  }
+  /* 주번: 번호순으로 정한 인원만큼, 매주 다음 학생들 (빼는 학생 제외) */
+  function weekIdx(c){ var t = new Date(); t = new Date(t.getFullYear(), t.getMonth(), t.getDate()); return Math.max(0, Math.floor((monday(t) - monday(parse(c.start))) / (7 * 864e5))) + (c.per === "week" ? off : 0); }
+  function jubeon(c){
+    var n = c.jb == null ? 2 : +c.jb; if(!n) return [];
+    var st = cls.students.filter(function(s){ return !c.skip[s.no]; }).sort(function(a, b){ return a.no - b.no; }); if(!st.length) return [];
+    var k = (weekIdx(c) * n) % st.length, out = []; for(var j = 0; j < Math.min(n, st.length); j++) out.push(st[(k + j) % st.length]); return out;
+  }
+  function drawClean(){
+    var el = $("clean"), home = TT.roster.home();
+    if(!window.TT_CLEAN || !home || home.id !== cls.id){ el.hidden = true; return; }
+    el.hidden = false;
+    var P = TT_CLEAN.pending(cls.id);
+    el.innerHTML = '<span class="ch">🧹 청소 당번 ' + P.length + "명</span>" + (P.length ? P.map(function(p){
+      return '<span class="cs" title="' + esc(p.items.map(function(x){ return TT_CLEAN.md(x.d) + " " + x.why; }).join("\n")) + '"><b>' + p.no + " " + esc(p.name) + "</b><small>" + esc(p.items.map(function(x){ return x.why + " " + TT_CLEAN.md(x.d); }).slice(0, 2).join(", ")) + (p.items.length > 2 ? " 외 " + (p.items.length - 2) : "") + (p.items.length > 1 ? " · " + p.items.length + "회" : "") + '</small><button type="button" data-cl="' + p.no + '" title="청소 1회 완료 (가장 오래된 것부터)">✔ 완료</button></span>';
+    }).join("") : '<span class="none">청소할 학생이 없어요 · 무단지각·고른 지도·마감 지난 미제출이 생기면 여기에 쌓여요</span>');
   }
   function draw(){
     if(!cls){ TT.ui.needRoster($("m")); return; }
     var c = conf(), i = Math.max(0, idxNow(c) + off), A = assign(c, i);
     $("title").textContent = (c.per === "week" ? (off === 0 ? "이번 주 " : off === 1 ? "다음 주 " : "") : (off === 0 ? "오늘 " : off === 1 ? "다음 수업일 " : "")) + label(c, i);
     $("now").textContent = c.per === "week" ? "이번 주" : "오늘";
-    $("roles").innerHTML = c.roles.map(function(r, j){ return '<div class="role"><div class="rn">' + esc(r.name) + '</div><div class="who">' + (A[j] || []).map(function(s){ return esc(s.name || s.no + "번"); }).join(", ") + "</div></div>"; }).join("");
+    var J = jubeon(c); $("jb").hidden = !J.length; $("jb").innerHTML = "🙋 " + (off === 0 || c.per !== "week" ? "이번 주" : "그 주") + " 주번 <b>(" + J.length + "명 · 번호순)</b> " + J.map(function(s){ return s.no + "번 " + esc(s.name || ""); }).join(", ");
+    drawClean();
+    $("roles").innerHTML = c.roles.map(function(r, j){ return '<div class="role"><div class="rn">' + esc(r.name) + '</div><div class="who' + ((A[j] || []).length >= 3 ? " m" : (A[j] || []).length === 2 ? " m2" : "") + '">' + (A[j] || []).map(function(s){ return esc(s.name || s.no + "번"); }).join(", ") + "</div></div>"; }).join("");
     var slots = c.roles.reduce(function(a, r){ return a + (+r.n || 0); }, 0), n = cls.students.length - Object.keys(c.skip).length;
     $("info").textContent = "역할 " + c.roles.length + "개 · " + slots + "자리 / 학생 " + n + "명 · " + (slots < n ? "당번처럼 다음 학생들로 넘어갑니다" : "1인 1역처럼 한 칸씩 돌아갑니다") + " (" + (c.per === "week" ? "매주" : "수업일마다") + ")";
     drawSide(c);
@@ -133,6 +179,11 @@
       + '<button type="button" class="btn" id="addR" style="padding:5px 10px;font-size:13px">＋ 역할 더하기</button>'
       + '<label class="f">돌아가는 단위</label><select id="per"><option value="week"' + (c.per === "week" ? " selected" : "") + '>매주 (월요일마다)</option><option value="day"' + (c.per === "day" ? " selected" : "") + ">수업일마다</option></select>"
       + '<label class="f">시작일 (이날이 첫 차례)</label><input type="date" id="start" value="' + c.start + '">'
+      + '<label class="f">주번 인원 (매주 번호순)</label><input type="number" id="jbN" min="0" max="10" value="' + (c.jb == null ? 2 : +c.jb) + '" style="width:70px">'
+      + (c.order && c.order.length ? '<button type="button" class="btn" id="ordReset" style="padding:4px 10px;font-size:12.5px">역할 순서를 번호순으로 되돌리기</button>' : "")
+      + (window.TT_CLEAN && TT.roster.home() && TT.roster.home().id === cls.id ? (function(){ var k = TT_CLEAN.cfg(cls.id), GK = ((TT.store.get("tt_guide_v1", null) || {}).settings || {}).gkinds || ["생활", "학습", "복장", "휴대폰", "교우관계", "진로", "칭찬👍", "기타"];
+          return '<label class="f">🧹 청소 당번으로 올릴 것</label><div class="ck"><label><input type="checkbox" data-con="L"' + (k.on.L ? " checked" : "") + '> 무단지각</label><label><input type="checkbox" data-con="S"' + (k.on.S ? " checked" : "") + '> 마감 지난 미제출</label><label><input type="checkbox" data-con="G"' + (k.on.G ? " checked" : "") + '> 지도 (아래 종류만)</label></div>'
+            + '<div class="sk">' + GK.map(function(g){ var b = String(g).replace("👍", ""); return '<button type="button" data-gk="' + esc(b) + '" aria-pressed="' + (k.kinds.indexOf(b) < 0) + '">' + esc(g) + "</button>"; }).join("") + '</div><div class="muted">눌러서 켜고 끔 (줄 그어진 종류는 올라오지 않음) · ' + esc(k.since || "오늘") + "부터 모음</div>"; })() : "")
       + '<label class="f">빼는 학생 (전학·장기 결석 등)</label><div class="sk">' + cls.students.map(function(s){ return '<button type="button" data-sk="' + s.no + '" aria-pressed="' + !!c.skip[s.no] + '">' + s.no + "</button>"; }).join("") + "</div>";
     sd.oninput = sd.onchange = function(e){
       var t = e.target;
@@ -140,14 +191,21 @@
       if(t.dataset.n != null) c.roles[+t.dataset.n].n = Math.max(0, Math.min(20, +t.value || 0));
       if(t.id === "per"){ c.per = t.value; off = 0; }
       if(t.id === "start" && t.value) c.start = t.value;
+      if(t.id === "jbN") c.jb = Math.max(0, Math.min(10, +t.value || 0));
+      if(t.dataset.con){ var k0 = TT_CLEAN.cfg(cls.id); k0.on[t.dataset.con] = t.checked; TT_CLEAN.setCfg(cls.id, {on: k0.on}); drawClean(); return; }
       save(); if(e.type === "change") draw(); else { var A = assign(c, Math.max(0, idxNow(c) + off)); var boxes = $("roles").children; c.roles.forEach(function(r, j){ if(boxes[j]){ boxes[j].querySelector(".rn").textContent = r.name; } }); }
     };
     sd.onclick = function(e){
       var d = e.target.closest("[data-del]"); if(d){ c.roles.splice(+d.dataset.del, 1); save(); draw(); return; }
       var k = e.target.closest("[data-sk]"); if(k){ if(c.skip[k.dataset.sk]) delete c.skip[k.dataset.sk]; else c.skip[k.dataset.sk] = 1; save(); draw(); return; }
+      var gk = e.target.closest("[data-gk]"); if(gk){ var k1 = TT_CLEAN.cfg(cls.id), i1 = k1.kinds.indexOf(gk.dataset.gk); if(i1 >= 0) k1.kinds.splice(i1, 1); else k1.kinds.push(gk.dataset.gk); TT_CLEAN.setCfg(cls.id, {kinds: k1.kinds}); draw(); return; }
+      if(e.target.id === "ordReset"){ delete c.order; save(); draw(); return; }
       if(e.target.id === "addR"){ c.roles.push({name: "새 역할", n: 1}); save(); draw(); }
     };
   }
+  $("rnd").onclick = rnd;
+  $("clean").onclick = function(e){ var b = e.target.closest("[data-cl]"); if(!b) return; var p = TT_CLEAN.pending(cls.id).filter(function(x){ return x.no === +b.dataset.cl; })[0]; if(!p) return; TT_CLEAN.markDone(cls.id, [p.items[0].key]); drawClean(); if(TT.ui && TT.ui.toast) TT.ui.toast(p.no + "번 청소 완료 ✔"); };
+  window.addEventListener("storage", function(e){ if(e.key && /^tt_(guide|submit)_v1$/.test(e.key) && cls) drawClean(); });
   $("prev").onclick = function(){ off--; draw(); };
   $("next").onclick = function(){ off++; draw(); };
   $("now").onclick = function(){ off = 0; draw(); };

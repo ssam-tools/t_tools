@@ -88,6 +88,7 @@
 <footer><span class="priv">🔒 이 기기 안의 기록만 모아 보여 줍니다. 밖으로 보내지 않습니다.</span><span>읽기 전용 · 고치기는 각 도구에서</span></footer>
 <script src="../../shared/tools.js"></script>
 <script src="../../shared/tt.js"></script>
+<script src="../../shared/clean.js"></script>
 <script>
 (function(){
   "use strict";
@@ -127,6 +128,7 @@
     var S = TT.store.get("tt_submit_v1", null), I = S && S.items ? S.items.filter(function(it){ return it.cls === cls.id; }) : [];
     var now = new Date(), mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay() + 6) % 7)); var w0 = ymd(mon);
     var JS = null, code = cls.grade != null && cls.cls != null ? cls.grade * 100 + cls.cls : null; try{ JS = TT.store.get("tt_journal_v1", null); }catch(e){}
+    var CLQ = {}; try{ if(window.TT_CLEAN && isHome) TT_CLEAN.pending(cls.id).forEach(function(p){ CLQ[p.no] = p.items.length; }); }catch(e){}
     var L = cls.students.map(function(s){
       var k = N.key(cls, s), no = String(s.no), x = {s: s, rec: 0, att: 0, wk: 0, cns: 0, miss: 0};
       D.recs.forEach(function(r){ if(r.k === k) x.rec++; });
@@ -148,7 +150,8 @@
       var b = document.createElement("div"); b.tabIndex = 0; b.setAttribute("role", "button");
       b.className = "tc" + (!x.rec ? " f0" : "") + (x.wk ? " fl" : "") + (F[flt][1](x) ? "" : " off");
       b.title = x.s.no + "번 " + x.s.name + (x.rec ? "" : " · 아직 기록 없음") + (x.wk ? " · 이번 주 지각·결석 " + x.wk : "");
-      var bd = (x.rec ? "<span>✍ " + x.rec + "</span>" : "") + (x.att ? '<span class="' + (x.wk ? "bad" : "") + '">🧭 ' + x.att + "</span>" : "") + (x.cns ? "<span>🗣 " + x.cns + "</span>" : "") + (x.miss ? '<span class="bad">📦 ' + x.miss + "</span>" : "");
+      var cl = CLQ[x.s.no];
+      var bd = (cl ? '<span class="bad" title="청소 당번 대기">🧹 ' + cl + "</span>" : "") + (x.rec ? "<span>✍ " + x.rec + "</span>" : "") + (x.att ? '<span class="' + (x.wk ? "bad" : "") + '">🧭 ' + x.att + "</span>" : "") + (x.cns ? "<span>🗣 " + x.cns + "</span>" : "") + (x.miss ? '<span class="bad">📦 ' + x.miss + "</span>" : "");
       b.innerHTML = '<span class="nm2"><small>' + esc(x.s.no) + "</small>" + esc(x.s.name) + '</span><span class="bd">' + bd + '</span><button type="button" class="qa" title="한 줄 기록">✍</button>';
       function open(){ st = x.s; $("stuSel").value = st.no; draw(); }
       b.onclick = function(ev){ if(ev.target.classList.contains("qa")){ TT.notes.quick({cls: cls.id, nos: [x.s.no], src: "학생 카드"}); return; } open(); };
