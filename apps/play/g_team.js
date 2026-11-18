@@ -74,7 +74,7 @@
     var ts = h("select"); [["mix1", "중1 섞어서"], ["mix2", "중2 섞어서"], ["mix3", "중3 섞어서"]].forEach(function(o){ var x = h("option", "", o[1]); x.value = o[0]; ts.appendChild(x); });
     MG.T.forEach(function(t){ var x = h("option", "", "중" + t.g + " · " + t.n); x.value = t.id; ts.appendChild(x); }); ts.value = K.pref("quizType") || QS.type; QS.type = ts.value;
     ts.onchange = function(){ QS.type = ts.value; K.pref("quizType", ts.value); next(); };
-    var lv = seg([[1, "기초"], [2, "보통"], [3, "심화"]], QS.lv, function(v){ QS.lv = v; next(); });
+    var lv = seg([[1, "기초"], [2, "보통"], [3, "심화"], [0, "⬆ 올라가기"]], QS.lv, function(v){ QS.lv = v; QS.base = QS.n; next(); });   /* 올라가기: 4문제마다 기초→보통→심화 */
     var sec = h("select"); [[0, "시간 없음"], [20, "20초"], [30, "30초"], [60, "1분"], [120, "2분"]].forEach(function(o){ var x = h("option", "", "⏱ " + o[1]); x.value = o[0]; sec.appendChild(x); }); sec.value = QS.sec; sec.onchange = function(){ QS.sec = +sec.value; };
     var aw = awardSel("quizAward"); ctl.appendChild(ts); ctl.appendChild(lv); ctl.appendChild(sec); ctl.appendChild(aw);
     var w = h("div", "gwrap"), box = h("div", "qbox"), no = h("div", "qno"), q = h("div", "q"), an = h("div", "ans"), row = h("div", "qrow"), tm = h("div", "tmr");
@@ -82,10 +82,10 @@
     var show = h("button", "bigbtn k", "👀 정답 보기"), okb = h("button", "bigbtn g", "✅ 맞힌 모둠"), nx = h("button", "bigbtn", "⏭ 다음 문제"); show.type = okb.type = nx.type = "button";
     row.appendChild(show); row.appendChild(okb); row.appendChild(nx); w.appendChild(row); el.appendChild(w);
     var T = null;
-    function draw(){ var c = QS.cur; no.textContent = "문제 " + QS.n; q.innerHTML = c.q; an.innerHTML = c.shown ? "정답: " + c.a : ""; an.hidden = !c.shown; }
+    function draw(){ var c = QS.cur; no.textContent = "문제 " + QS.n + (QS.lv ? "" : " · " + ["", "기초", "보통", "심화"][c.lv || 2]); q.innerHTML = c.q; an.innerHTML = c.shown ? "정답: " + c.a : ""; an.hidden = !c.shown; }
     function next(){
       var pool = /^mix/.test(QS.type) ? MG.T.filter(function(t){ return t.g === +QS.type.slice(3); }) : [MG.type(QS.type)];
-      QS.n++; QS.cur = K.fresh("quiz", function(){ var t = pick(pool); return MG.make(t.id, QS.lv, QS.seed + "|" + QS.n + "|" + K.rnd(1e9)); }, function(x){ return x.q; }, 80); QS.cur.shown = false;   /* 최근 80문제와 겹치지 않게 */
+      QS.n++; QS.cur = K.fresh("quiz", function(){ var t = pick(pool); return MG.make(t.id, QS.lv || Math.min(3, 1 + Math.floor((QS.n - 1 - (QS.base || 0)) / 4)), QS.seed + "|" + QS.n + "|" + K.rnd(1e9)); }, function(x){ return x.q; }, 80); QS.cur.shown = false;   /* 최근 80문제와 겹치지 않게 */
       draw(); box.style.animation = "none"; void box.offsetWidth; box.style.animation = "dealin .45s"; K.S.whoosh();
       if(T) T.stop(); tm.innerHTML = ""; tm.classList.remove("over"); if(QS.sec) T = K.timer(tm, QS.sec, function(){ K.big("⏰ 시간 끝!", "정답을 확인해요", "#d64545", 1300); });
     }

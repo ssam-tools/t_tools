@@ -24,10 +24,15 @@
   .left{min-height:0;display:flex;flex-direction:column;gap:6px}
   .mix{background:var(--accent-soft);border-radius:12px;padding:7px 8px;display:flex;flex-direction:column;gap:5px}
   .mix .mh{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:800;color:var(--accent)}
-  .mix .mr{display:flex;gap:5px;align-items:center}
-  .mix label{display:flex;align-items:center;gap:3px;font-size:13px;font-weight:700}
-  .mix input{width:42px;font:inherit;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:3px 2px;text-align:center;background:#fff}
-  .mix .btn{padding:5px 9px;font-size:13px;margin-left:auto}
+  .mix .mg{display:grid;grid-template-columns:auto 44px minmax(0,1fr) auto;gap:4px 5px;align-items:center}
+  .mix .mg b{font-size:13px}
+  .mix input,.mix select{font:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:7px;padding:3px 2px;background:#fff;min-width:0}
+  .mix input{text-align:center}
+  .mix #mixGo{grid-column:4;grid-row:1/4;height:100%;padding:0 10px;font-size:14px}
+  .mix .ps{display:flex;gap:4px}
+  .mix .ps button{flex:1;font:inherit;font-size:12px;font-weight:800;border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 0;cursor:pointer;color:var(--ink,#1d2733);white-space:nowrap}
+  .mix .ps button:hover{border-color:var(--accent);color:var(--accent)}
+  .ty{padding:2px 4px!important}
   .gt{display:flex;gap:4px}
   .gt button{flex:1;font:inherit;font-size:13px;font-weight:800;border:1px solid var(--line);background:#fff;border-radius:9px;padding:5px 0;cursor:pointer;color:var(--sub)}
   .gt button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -61,6 +66,13 @@
   .page ol{columns:2;column-gap:30px;padding-left:22px;font-size:15px;line-height:1.75}
   .page ol.c1{columns:1}
   .page li{break-inside:avoid;margin-bottom:34px}
+  ol.bx li{margin-bottom:9px!important}
+  .page ol.ak li{margin-bottom:10px}
+  .bxr{display:flex;align-items:flex-start;gap:8px}.bxr>span:first-child{flex:1}
+  .abox{flex:none;width:86px;height:26px;border:1.5px solid #888;border-radius:6px;font-size:10.5px;color:#999;padding:1px 4px}
+  .page ol.bx{line-height:1.5}
+  .qrc{display:flex;align-items:center;gap:5px;font-size:10px;color:#555;line-height:1.25}.qrc svg{width:58px;height:58px}
+  .tmbox{font-size:12px;color:#333}
   .page table{border-collapse:collapse;width:100%;font-size:12px}.page td,.page th{border:1px solid #888;padding:3px 5px;text-align:center}
   @media print{ body > *:not(#prt){display:none!important} #prt{position:static;padding:0} #prt .pb{display:none} @page{size:A4;margin:12mm} }
   @media (max-width:760px){ main{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} }
@@ -74,7 +86,9 @@
   </div>
   <div class="bar">
     <div class="seg" id="lv" role="group" aria-label="난이도"><button type="button" data-v="1">기초</button><button type="button" data-v="2">보통</button><button type="button" data-v="3">심화</button><button type="button" data-v="0" title="문항마다 기초·보통·심화를 섞어 냅니다">섞기</button></div>
+    <div class="seg" id="fmt" role="group" aria-label="학습지 모양"><button type="button" data-v="">풀이형</button><button type="button" data-v="bx" title="풀이 칸을 줄이고 오른쪽에 답 칸 — 빠른 계산 연습·1분 계산 대회">답칸형</button></div>
     <button type="button" class="btn" id="reseed" title="숫자를 모두 새로 뽑습니다">🎲 새 숫자</button>
+    <label class="chk" title="학습지 머리에 QR — 학생이 휴대폰으로 찍어 스스로 채점 (이름 등 개인정보는 담기지 않음)"><input type="checkbox" id="qr"> QR 정답</label>
     <label class="chk"><input type="checkbox" id="c1"> 한 줄로</label>
     <label class="chk"><input type="checkbox" id="showA" checked> 정답 보기</label>
   </div>
@@ -83,7 +97,13 @@
   <section class="left">
     <div class="mix" aria-label="학년별 섞어 내기">
       <div class="mh">🔀 학년별로 섞어 내기 <button type="button" class="btn" id="clr" style="margin:0;padding:2px 8px;font-size:12px" title="고른 유형을 모두 0으로">비우기</button></div>
-      <div class="mr"><label>중1 <input type="number" min="0" max="40" id="m1"></label><label>중2 <input type="number" min="0" max="40" id="m2"></label><label>중3 <input type="number" min="0" max="40" id="m3"></label><button type="button" class="btn primary" id="mixGo" title="학년별 개수만큼 여러 영역에서 고르게 뽑습니다">섞기</button></div>
+      <div class="mg">
+        <b>중1</b><input type="number" min="0" max="40" id="m1" aria-label="중1 문항 수"><select id="u1" aria-label="중1 범위"></select>
+        <button type="button" class="btn primary" id="mixGo" title="학년별 개수만큼, 고른 범위의 여러 영역에서 고르게 뽑습니다">섞기</button>
+        <b>중2</b><input type="number" min="0" max="40" id="m2" aria-label="중2 문항 수"><select id="u2" aria-label="중2 범위"></select>
+        <b>중3</b><input type="number" min="0" max="40" id="m3" aria-label="중3 문항 수"><select id="u3" aria-label="중3 범위"></select>
+      </div>
+      <div class="ps"><button type="button" id="pProg" title="수업 기록장 진도표에서 배운 단원까지로 범위를 맞춥니다">📚 진도까지</button><button type="button" id="pWrong" title="최근 형성평가에서 많이 틀린 영역으로 복습지">📉 오답 복습</button><button type="button" id="pHS" title="고1 3월 모의고사에 이어지는 중학교 핵심 15영역">🎓 고교 준비</button></div>
     </div>
     <div class="gt" id="gt" role="group" aria-label="학년"></div>
     <section class="types" id="types" aria-label="문항 유형"></section>
@@ -107,6 +127,7 @@
 </footer>
 <script src="../../shared/tt.js"></script>
 <script src="../../shared/mathgen.js"></script>
+<script src="../../shared/qr.js"></script>
 <script>
 (function(){
   "use strict";
@@ -133,10 +154,56 @@
     });
     $("types").innerHTML = h; drawTabs();
   }
-  [1, 2, 3].forEach(function(g){ $("m" + g).value = S.mix[g] || ""; $("m" + g).oninput = function(){ S.mix[g] = Math.max(0, Math.min(40, +this.value || 0)); save(); }; });
+  S.upto = S.upto || {};
+  [1, 2, 3].forEach(function(g){
+    $("m" + g).value = S.mix[g] || ""; $("m" + g).oninput = function(){ S.mix[g] = Math.max(0, Math.min(40, +this.value || 0)); save(); };
+    $("u" + g).innerHTML = '<option value="">전체 단원</option>' + MG.units(g).map(function(u, i){ return '<option value="' + i + '">~ ' + esc(u.k) + "</option>"; }).join("");
+    $("u" + g).onchange = function(){ S.upto[g] = this.value === "" ? null : +this.value; save(); };
+  });
+  function uptoUI(){ [1, 2, 3].forEach(function(g){ $("u" + g).value = S.upto[g] == null ? "" : S.upto[g]; }); }
+  uptoUI();
+  /* 📚 진도까지: 수업 기록장(tt_journal_v1) 진도표에서 학년마다 가장 많이 나간 반의 '지난 차시' 단원 */
+  $("pProg").onclick = function(){
+    var J = TT.store.get("tt_journal_v1", null), msg = [];
+    if(!J || !J.cur || !J.prog){ TT.ui.toast("수업 기록장 진도표가 아직 없어요. 범위는 직접 골라 주세요."); return; }
+    [1, 2, 3].forEach(function(g){
+      var raw = String(J.cur[g] || ""), L = [], unit = "";
+      raw.split("\n").forEach(function(l){ l = l.trim(); if(!l) return; if(l[0] === "#"){ unit = l.replace(/^#+\s*/, ""); return; } L.push(unit + " " + l); });
+      var n = 0; Object.keys(J.prog).forEach(function(c){ if(Math.floor(+c / 100) === g && J.prog[c]) n = Math.max(n, +J.prog[c].n || 0); });
+      if(!L.length || !n) return;
+      var best = -1; for(var i = 0; i < Math.min(n, L.length); i++) best = Math.max(best, MG.unitIndex(g, L[i]));
+      if(best < 0) return;
+      S.upto[g] = best; msg.push("중" + g + " ~" + MG.units(g)[best].k);
+    });
+    save(); uptoUI();
+    TT.ui.toast(msg.length ? "범위: " + msg.join(" · ") + " — 개수를 넣고 [섞기]" : "진도표 단원 이름을 알아보지 못했어요. 범위를 직접 골라 주세요.");
+  };
+  /* 📉 오답 복습: 결과가 들어간 가장 최근 형성평가에서 틀린 비율이 높은 영역 4개 × 2문항 */
+  $("pWrong").onclick = function(){
+    var Q = TT.store.get("tt_mcheck_v1", null); if(!Q || !Q.list || !Q.list.length){ TT.ui.toast("형성평가 결과가 아직 없어요."); return; }
+    for(var k = Q.list.length - 1; k >= 0; k--){
+      var q = Q.list[k], R0 = (Q.res || {})[q.id], st = {};
+      if(!R0) continue;
+      Object.keys(R0).forEach(function(c){ Object.keys(R0[c]).forEach(function(no){ var r = R0[c][no]; if(!r || r.ab || !r.r) return;
+        Object.keys(r.r).forEach(function(i){ var it = q.items[+i]; if(!it || !it.type || !MG.type(it.type)) return; var x = st[it.type] = st[it.type] || {w: 0, t: 0}; x.t++; if(r.r[i] === 0) x.w++; }); }); });
+      var L = Object.keys(st).filter(function(id){ return st[id].w > 0; }).sort(function(a, b){ return st[b].w / st[b].t - st[a].w / st[a].t; }).slice(0, 4);
+      if(!Object.keys(st).length) continue;
+      if(!L.length){ TT.ui.toast("‘" + q.name + "’ — 틀린 문항이 없어요! 👏"); return; }
+      S.spec = L.map(function(id){ return {id: id, n: 2}; }); S.lv = q.lv == null ? 2 : q.lv; S.seed = Math.random().toString(36).slice(2, 8); S.title = (q.name + " 복습").slice(0, 40);
+      $("title").value = S.title; S.g = MG.type(L[0]).g; save(); lvUI(); drawTypes(); draw();
+      TT.ui.toast("‘" + q.name + "’에서 많이 틀린 " + L.map(function(id){ return MG.type(id).n + " " + Math.round(st[id].w / st[id].t * 100) + "%"; }).join(", "));
+      return;
+    }
+    TT.ui.toast("채점 결과가 들어간 형성평가가 아직 없어요.");
+  };
+  /* 🎓 고교 준비 */
+  $("pHS").onclick = function(){
+    S.spec = MG.HS.map(function(x){ return {id: x.id, n: x.n}; }); S.lv = 0; S.seed = Math.random().toString(36).slice(2, 8); S.title = "고교 입학 준비 수학"; $("title").value = S.title; S.g = 3;
+    save(); lvUI(); drawTypes(); draw(); TT.ui.toast("중학교 핵심 15영역 · 단계 섞기로 만들었어요.");
+  };
   $("mixGo").onclick = function(){
     var tot = (S.mix[1] || 0) + (S.mix[2] || 0) + (S.mix[3] || 0); if(!tot){ TT.ui.toast("학년별 문항 수를 넣어 주세요."); return; }
-    S.seed = Math.random().toString(36).slice(2, 8); S.spec = MG.mix(S.mix, S.seed);
+    S.seed = Math.random().toString(36).slice(2, 8); S.spec = MG.mix(S.mix, S.seed, S.upto);
     if(!S.mix[S.g]) S.g = S.mix[3] ? 3 : S.mix[2] ? 2 : 1;
     save(); drawTypes(); draw(); TT.ui.toast(tot + "문항을 " + S.spec.length + "개 영역에서 골랐어요. 다시 누르면 다른 조합!");
   };
@@ -152,10 +219,26 @@
   $("reseed").onclick = function(){ S.seed = Math.random().toString(36).slice(2, 8); save(); draw(); };
   $("c1").checked = !!S.c1; $("c1").onchange = function(){ S.c1 = this.checked; save(); draw(); };
   $("showA").onchange = draw;
+  function fmtUI(){ $("fmt").querySelectorAll("button").forEach(function(b){ b.setAttribute("aria-pressed", (b.dataset.v || "") === (S.fmt || "")); }); }
+  $("fmt").onclick = function(e){ var b = e.target.closest("button"); if(!b) return; S.fmt = b.dataset.v || ""; save(); fmtUI(); draw(); };
+  fmtUI();
+  $("qr").checked = !!S.qr; $("qr").onchange = function(){ S.qr = this.checked; save(); };
   $("title").value = S.title || ""; $("title").oninput = function(){ S.title = this.value; save(); };
   $("names").checked = !!S.names; $("names").onchange = function(){ S.names = this.checked; save(); };
 
-  function list(L, ans, tag){ return '<ol class="' + (S.c1 ? "c1" : "") + '">' + L.map(function(o){ return "<li>" + o.q + (tag && !S.lv ? '<span class="lvt l' + o.lv + '">' + ["", "기초", "보통", "심화"][o.lv] + "</span>" : "") + (ans ? '<div class="ans">답: ' + o.a + "</div>" : "") + "</li>"; }).join("") + "</ol>"; }
+  function list(L, ans, tag){
+    var bx = S.fmt === "bx" && !ans;
+    return '<ol class="' + (S.c1 ? "c1" : "") + (bx ? " bx" : "") + (ans ? " ak" : "") + '">' + L.map(function(o){
+      var q = o.q + (tag && !S.lv ? '<span class="lvt l' + o.lv + '">' + ["", "기초", "보통", "심화"][o.lv] + "</span>" : "");
+      return "<li>" + (bx ? '<div class="bxr"><span>' + q + '</span><span class="abox">답</span></div>' : q) + (ans ? '<div class="ans">답: ' + o.a + "</div>" : "") + "</li>";
+    }).join("") + "</ol>";
+  }
+  /* QR 정답: 문제 종류·단계·숫자 번호·학생 번호만 주소에 (이름 없음) */
+  function qrBox(who){
+    if(!S.qr || !window.TTQR) return "";
+    var u = new URL("ans.html", location.href).href.split("?")[0] + "?d=" + spec().map(function(x){ return x.id + "." + x.n; }).join(",") + "&l=" + S.lv + "&s=" + encodeURIComponent(S.seed) + (who ? "&w=" + who : "");
+    return '<div class="qrc">' + TTQR.svg(u, {size: 116}) + "<span>다 풀면<br>찍어서<br>스스로 채점</span></div>";
+  }
   function draw(){
     var L = items(0);
     $("pv").innerHTML = L.length ? list(L, $("showA").checked, true) : '<div class="muted">왼쪽에서 유형과 개수를 고르세요.</div>';
@@ -168,14 +251,14 @@
     var p = document.createElement("div"); p.id = "prt"; p.innerHTML = '<div class="pb"><button type="button" class="btn primary" id="pp">🖨 인쇄</button><button type="button" class="btn" id="pc">닫기</button></div>' + html;
     document.body.appendChild(p); $("pc").onclick = function(){ p.remove(); }; $("pp").onclick = function(){ window.print(); };
   }
-  function head(sub){ var sc = TT.school.load(); return '<div class="hd"><div><h2>' + esc(S.title || "수학 학습지") + "</h2>" + esc(sc.name || "") + '</div><div>' + sub + "</div></div>"; }
+  function head(sub, who, stu){ var sc = TT.school.load(); return '<div class="hd"><div><h2>' + esc(S.title || "수학 학습지") + "</h2>" + esc(sc.name || "") + (stu && S.fmt === "bx" ? ' <span class="tmbox">⏱ 걸린 시간 ____분 ____초 · 맞힌 개수 ____</span>' : "") + '</div><div style="display:flex;gap:12px;align-items:flex-end">' + (stu ? qrBox(who) : "") + "<div>" + sub + "</div></div></div>"; }
   $("pAll").onclick = function(){
     var L = items(0); if(!L.length) return;
-    overlay('<div class="page">' + head("____학년 ____반 ____번 이름 ________") + list(L, false) + '</div><div class="page">' + head("정답") + list(L, true) + "</div>");
+    overlay('<div class="page">' + head("____학년 ____반 ____번 이름 ________", 0, true) + list(L, false) + '</div><div class="page">' + head("정답") + list(L, true) + "</div>");
   };
   $("pEach").onclick = function(){
     if(!cls){ TT.ui.toast("반을 골라 주세요."); return; } if(!spec().length) return;
-    var pages = cls.students.map(function(s){ return '<div class="page">' + head(esc(cls.name) + " " + s.no + "번 " + (S.names ? esc(s.name || "") : "이름 ________")) + list(items(s.no), false) + "</div>"; }).join("");
+    var pages = cls.students.map(function(s){ return '<div class="page">' + head(esc(cls.name) + " " + s.no + "번 " + (S.names ? esc(s.name || "") : "이름 ________"), s.no, true) + list(items(s.no), false) + "</div>"; }).join("");
     var L0 = items(0), key = '<div class="page">' + head("정답표 · " + esc(cls.name)) + "<table><tr><th>번호</th>" + L0.map(function(o, i){ return "<th>" + (i + 1) + "</th>"; }).join("") + "</tr>"
       + cls.students.map(function(s){ return "<tr><td>" + s.no + "</td>" + items(s.no).map(function(o){ return "<td>" + o.a + "</td>"; }).join("") + "</tr>"; }).join("") + "</table></div>";
     overlay(pages + key);

@@ -93,12 +93,13 @@ var MG = (function(){
       if(lv === 3){ if(R() < .5){ var p = ri(R, 2, 9), q = ri(R, 1, 9); while(gcd(p, q) > 1) q = ri(R, 1, 9); return {q: poly([p * p, 0, -q * q], "x") + " 을(를) 인수분해하시오.", a: "(" + poly([p, q], "x") + ")(" + poly([p, -q], "x") + ")", t: "(" + poly([p, q], "x", true) + ")(" + poly([p, -q], "x", true) + ")"}; }
         var k = ri(R, 2, 4), s1 = nz(R, -6, 6), s2 = nz(R, -6, 6); return {q: poly([k, k * (s1 + s2), k * s1 * s2], "x") + " 을(를) 인수분해하시오.", a: k + "(" + poly([1, s1], "x") + ")(" + poly([1, s2], "x") + ")", t: k + "(" + poly([1, s1], "x", true) + ")(" + poly([1, s2], "x", true) + ")"}; }
       var r1 = lv === 1 ? ri(R, 1, 6) : nz(R, -9, 9), r2 = lv === 1 ? ri(R, 1, 6) : nz(R, -9, 9);
+      if(r1 === r2) return {q: poly([1, 2 * r1, r1 * r1], "x") + " 을(를) 인수분해하시오.", a: "(" + poly([1, r1], "x") + ")<sup>2</sup>", t: "(" + poly([1, r1], "x", true) + ")^2"};
       return {q: poly([1, r1 + r2, r1 * r2], "x") + " 을(를) 인수분해하시오.", a: "(" + poly([1, r1], "x") + ")(" + poly([1, r2], "x") + ")", t: "(" + poly([1, r1], "x", true) + ")(" + poly([1, r2], "x", true) + ")"};
     }},
     {id: "sqrt", g: 3, unit: "제곱근과 실수", n: "근호 간단히·덧셈·뺄셈", f: function(R, lv){
       var m = pick(R, [2, 3, 5, 6, 7]), k = ri(R, 2, lv === 1 ? 4 : 7);
       if(lv === 1) return {q: rt(k * k * m) + " 을(를) a√b 꼴로 나타내시오.", a: k + rt(m), t: k + "√" + m};
-      var k2 = ri(R, 2, 5);
+      var k2 = ri(R, 2, 5), g9 = 0; while(k2 === k && g9++ < 9) k2 = ri(R, 2, 5);
       if(lv === 2){ var s = k + k2; return {q: rt(k * k * m) + " + " + rt(k2 * k2 * m) + " 을(를) 간단히 하시오.", a: s + rt(m), t: s + "√" + m}; }
       var k3 = ri(R, 2, 6), c = ri(R, 2, 3), v = k - c * k2 + k3, A = v === 0 ? "0" : (v === 1 ? "" : v === -1 ? "−" : sg(v)) + rt(m);
       return {q: rt(k * k * m) + " − " + c + rt(k2 * k2 * m) + " + " + rt(k3 * k3 * m) + " 을(를) 간단히 하시오.", a: A, t: A.replace(/<[^>]+>/g, "")};
@@ -192,7 +193,7 @@ var MG = (function(){
     }},
     /* ── 중2 ── */
     {id: "rep", g: 2, unit: "유리수와 순환소수", n: "순환소수를 분수로", f: function(R, lv){
-      function dot(s){ return s.split("").map(function(c){ return c + "̇"; }).join(""); }
+      function dot(s){ var d = s.split(""); return d.map(function(c, i){ return (i === 0 || i === d.length - 1) ? '<span style="position:relative;display:inline-block">' + c + '<span style="position:absolute;left:0;right:0;top:-.62em;text-align:center;font-weight:900">·</span></span>' : c; }).join(""); }   /* 순환마디 처음·끝 숫자 위에 점 */
       if(lv === 1){ var a = ri(R, 1, 8); return {q: "0." + dot(String(a)) + " 을(를) 기약분수로 나타내시오.", a: frac(a, 9), t: frac(a, 9)}; }
       if(lv === 2){ var ab = ri(R, 10, 98); while(ab % 11 === 0) ab = ri(R, 10, 98); return {q: "0." + dot(String(ab)) + " 을(를) 기약분수로 나타내시오.", a: frac(ab, 99), t: frac(ab, 99)}; }
       var p = ri(R, 1, 9), q = ri(R, 1, 9), g0 = 0; while(p === q && g0++ < 9) q = ri(R, 1, 9);
@@ -316,10 +317,42 @@ var MG = (function(){
       var s = simp(V); return {q: "자료 " + vals.join(", ") + " 의 표준편차를 구하시오.", a: rtk(s), t: rtkT(s)};
     }}
   ];
-  T.sort(function(a, b){ return a.g - b.g; });   /* 학년순 (같은 학년 안에서는 넣은 순서) */
+  /* 단원 순서 (교과서 차례 기준) — 진도까지 섞기·목록 정렬에 씀. kw: 진도표 단원 이름과 맞춰 볼 낱말 */
+  var U = [
+    {g: 1, k: "소인수분해", kw: /소인수|약수|배수|공약|공배/, ids: ["prime", "gcd"]},
+    {g: 1, k: "정수·유리수", kw: /정수|유리수|사칙|거듭/, ids: ["int", "frac", "pow", "divmul", "fracmd"]},
+    {g: 1, k: "문자와 식", kw: /문자|식의 값|일차식/, ids: ["subst", "linsimp"]},
+    {g: 1, k: "일차방정식", kw: /방정식/, ids: ["lin", "lin2"]},
+    {g: 1, k: "좌표·그래프", kw: /좌표|그래프|비례/, ids: ["prop"]},
+    {g: 1, k: "평면도형", kw: /기본 ?도형|평면|다각형|작도|합동/, ids: ["polyang"]},
+    {g: 1, k: "원·부채꼴", kw: /원과|부채꼴|입체/, ids: ["sector"]},
+    {g: 1, k: "자료", kw: /자료|통계|대푯값|도수/, ids: ["mean"]},
+    {g: 2, k: "순환소수", kw: /순환|유리수와|소수/, ids: ["rep"]},
+    {g: 2, k: "식의 계산", kw: /식의 계산|지수|단항|다항/, ids: ["expo", "mono", "polyadd"]},
+    {g: 2, k: "부등식", kw: /부등식/, ids: ["ineq"]},
+    {g: 2, k: "연립방정식", kw: /연립/, ids: ["sys"]},
+    {g: 2, k: "일차함수", kw: /함수/, ids: ["lfint", "slope"]},
+    {g: 2, k: "닮음", kw: /닮음|삼각형의 성질|사각형/, ids: ["simil"]},
+    {g: 2, k: "피타고라스", kw: /피타고라스/, ids: ["pyth"]},
+    {g: 2, k: "경우의 수", kw: /경우의 수/, ids: ["case"]},
+    {g: 2, k: "확률", kw: /확률/, ids: ["prob"]},
+    {g: 3, k: "제곱근", kw: /제곱근|실수|근호/, ids: ["sqrt", "sqrtmd"]},
+    {g: 3, k: "다항식의 곱셈", kw: /곱셈|전개/, ids: ["expand"]},
+    {g: 3, k: "인수분해", kw: /인수분해/, ids: ["factor", "fact2"]},
+    {g: 3, k: "이차방정식", kw: /이차방정식/, ids: ["quad", "qformula"]},
+    {g: 3, k: "이차함수", kw: /이차함수/, ids: ["vertex", "qmax"]},
+    {g: 3, k: "삼각비", kw: /삼각비/, ids: ["trig", "trigsp"]},
+    {g: 3, k: "원의 성질", kw: /원의 성질|원주각|접선/, ids: ["inscr"]},
+    {g: 3, k: "통계", kw: /통계|대푯값|산포|상관/, ids: ["disp"]}
+  ];
+  var UO = {}; U.forEach(function(u, i){ u.ids.forEach(function(id, j){ UO[id] = i * 10 + j; }); });
+  T.sort(function(a, b){ return a.g - b.g || (UO[a.id] == null ? 999 : UO[a.id]) - (UO[b.id] == null ? 999 : UO[b.id]); });   /* 학년순 → 단원 차례순 */
+  function units(g){ return U.filter(function(u){ return u.g === g; }); }
+  /* 진도표 단원 이름 → 이 학년 단원 차례 번호 (못 찾으면 -1) */
+  function unitIndex(g, name){ var L = units(g), r = -1; L.forEach(function(u, i){ if(u.kw.test(name || "")) r = i; }); return r; }
   function type(id){ return T.filter(function(t){ return t.id === id; })[0] || null; }
   /* 문항 하나: 유형·난이도·씨앗(+번호) */
-  function make(id, lv, seed){ var t = type(id); if(!t) return null; var o = t.f(rng(seed), lv || 2); o.type = id; return o; }
+  function make(id, lv, seed){ var t = type(id); if(!t) return null; var o = t.f(rng(seed), lv || 2); o.type = id; o.lv = lv || 2; return o; }
   /* 학습지: spec = [{id, n}], lv, seed, who(학생 번호 또는 0=공통) → 문항 목록 */
   function sheet(spec, lv, seed, who){
     var out = [];
@@ -335,14 +368,20 @@ var MG = (function(){
     return out;
   }
   /* 학년별 개수 → 영역별로 고르게 섞은 spec: mix({1: 4, 2: 3, 3: 5}, seed) */
-  function mix(cnt, seed){
+  function mix(cnt, seed, upto){
     var R = rng("mix|" + seed), out = {};
     [1, 2, 3].forEach(function(g){
-      var n = +cnt[g] || 0, L = T.filter(function(t){ return t.g === g; }).map(function(t){ return t.id; });
+      var lim = upto && upto[g] != null && upto[g] >= 0 ? upto[g] : 99, ok = {};
+      units(g).forEach(function(u, i){ if(i <= lim) u.ids.forEach(function(id){ ok[id] = 1; }); });
+      var n = +cnt[g] || 0, L = T.filter(function(t){ return t.g === g && ok[t.id]; }).map(function(t){ return t.id; });
+      if(!L.length) return;
       for(var i = L.length - 1; i > 0; i--){ var j = Math.floor(R() * (i + 1)), x = L[i]; L[i] = L[j]; L[j] = x; }
       for(var k = 0; k < n; k++){ var id = L[k % L.length]; out[id] = (out[id] || 0) + 1; }
     });
     return T.filter(function(t){ return out[t.id]; }).map(function(t){ return {id: t.id, n: out[t.id]}; });
   }
-  return {T: T, type: type, make: make, sheet: sheet, mix: mix, rng: rng};
+  /* 고교 입학 준비: 고1 3월 모의고사에 바로 이어지는 중학교 핵심 영역 */
+  var HS = [{id: "rep", n: 1}, {id: "expo", n: 1}, {id: "ineq", n: 1}, {id: "sys", n: 1}, {id: "lfint", n: 1}, {id: "sqrt", n: 1}, {id: "sqrtmd", n: 1}, {id: "expand", n: 1},
+            {id: "factor", n: 1}, {id: "fact2", n: 1}, {id: "quad", n: 1}, {id: "qformula", n: 1}, {id: "vertex", n: 1}, {id: "qmax", n: 1}, {id: "trigsp", n: 1}];
+  return {T: T, U: U, units: units, unitIndex: unitIndex, type: type, make: make, sheet: sheet, mix: mix, HS: HS, rng: rng};
 })();
