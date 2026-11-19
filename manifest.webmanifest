@@ -11,19 +11,19 @@
   "theme_color": "#2f6fb5",
   "icons": [
     {
-      "src": "assets/ssambi2-192.png",
+      "src": "assets/ssambi3-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/ssambi2-512.png",
+      "src": "assets/ssambi3-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/ssambi2-maskable-512.png",
+      "src": "assets/ssambi3-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
