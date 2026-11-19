@@ -397,3 +397,14 @@ html[data-ui="ssambi"] .tpd .on,html[data-ui="ssambi"] .tpd b.on{border-radius:1
 #sbHero .circ .ci{position:relative}
 #sbHero .circ .ci .sbTree{position:absolute;right:-4px;bottom:-2px;font-size:15px;margin:0}
 #sbBar .sbTree{display:none}
+/* v2.8.1 왼쪽 막대: 화면보다 길면 줄이기 (sbbar.js fitRail) */
+#sbRail.tight{gap:6px;padding-top:8px}
+#sbRail.tight .owl svg{width:56px;height:56px}
+#sbRail.tight .say small{display:none}
+#sbRail.tight .mi{min-height:34px;font-size:14.5px}
+#sbRail.tight .ti{min-height:27px;font-size:13px}
+#sbRail.tight .tl{padding:2px 0 4px 10px}
+#sbRail.tighter .say{display:none}
+#sbRail.tighter .owl svg{width:44px;height:44px}
+#sbRail.tighter .mi{min-height:31px}
+#sbRail.tighter .ti{min-height:24px}

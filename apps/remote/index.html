@@ -39,6 +39,15 @@
   .msg{border-radius:14px;background:var(--danger-soft,#fdeceb);color:var(--danger,#b3261e);padding:12px 14px;font-size:15px;line-height:1.6}
   .msg a{color:inherit;font-weight:800}
   .sent{font-size:13px;color:var(--sub);text-align:center;min-height:18px}
+  .colA,.colB{display:flex;flex-direction:column;gap:10px;min-width:0}
+  /* v2.8.1: PC(넓은 화면)에서는 두 칸으로 나눠 스크롤 없이 한 화면에 — 휴대폰은 그대로 한 줄 */
+  @media (min-width:900px){
+    main.rm{max-width:1080px;display:grid!important;grid-template-columns:1fr 1fr;column-gap:16px;row-gap:10px;align-items:start}
+    main.rm > #warn,main.rm > .sent{grid-column:1 / -1}
+    .pg button{height:min(18vh,130px);font-size:38px}
+    .rm button{min-height:48px}
+    .msg{padding:9px 12px;font-size:14px;line-height:1.5}
+  }
 </style>
 </head>
 <body>
@@ -50,9 +59,11 @@
 </header>
 <main class="panel rm" id="m">
   <div id="warn"></div>
+  <div class="colA">
   <div class="now"><div class="k"><i id="dot"></i><span id="kk">교실 화면 찾는 중…</span></div><div class="t" id="nt">—</div><div class="s" id="ns"></div></div>
   <div class="pg"><button data-a="prev" aria-label="앞쪽">◀</button><button data-a="next" class="p" aria-label="뒤쪽">▶</button></div>
   <div class="g4"><button data-a="zo">－<small>작게</small></button><button data-a="zi">＋<small>크게</small></button><button data-a="pen">✏️<small>판서</small></button><button data-a="pick">🎲<small>번호 뽑기</small></button></div>
+  </div><div class="colB">
   <h2>수업 단계</h2>
   <div class="g4"><button data-a="mode" data-m="1">①<small>교과서</small></button><button data-a="mode" data-m="2">②<small>개념</small></button><button data-a="mode" data-m="3">③<small>문제</small></button><button data-a="mode" data-m="4">④<small>도전</small></button></div>
   <h2>타이머</h2>
@@ -62,6 +73,7 @@
   <h2>반 바꾸기 · 쪽으로 가기</h2>
   <div class="cls" id="cls"></div>
   <div class="gl"><input id="pT" inputmode="numeric" placeholder="교과서 쪽 번호"><button id="pB" style="padding:0 16px">가기</button><button id="rB" style="padding:0 16px" title="학생 활동 한 줄 기록">✍️ 기록</button></div>
+  </div>
   <div class="sent" id="sent"></div>
   <p class="sent">🔒 명령은 내 보관함 비밀 문구로 잠가 주고받습니다 · 학생 이름은 보내지 않습니다<br>교실 컴퓨터: 같은 ID로 보관함 열기 → 교과서 수업 모드</p>
 </main>

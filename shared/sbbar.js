@@ -165,7 +165,7 @@
   function tools(mid){
     if(typeof TT_TOOLS === "undefined") return [];
     return TT_TOOLS.filter(function(t){
-      if(!t.ready || !t.href) return false;
+      if(!t.ready || !t.href || t.noRail) return false;   // v2.8.1: 리모컨은 교과서 화면 위 [📱 리모컨] 단추로 (왼쪽 목록이 길어 스크롤 생기지 않게)
       if(typeof ttToolShown === "function" && !ttToolShown(t)) return false;
       if(mid === "lib") return t.menu === "school" && t.group === "lib";
       if(mid === "school") return t.menu === "school" && t.group !== "lib";
@@ -198,6 +198,14 @@
     if(!TT.joy || !TT.joy.treeNow || (TT.joy.on && !TT.joy.on())) return "";
     var t = TT.joy.treeNow(); return '<i class="sbTree" data-tree title="우리 반 ' + esc(t.nm) + " · 칭찬·청소 당번 완료 " + t.n + "번" + (t.next ? " · " + t.nnm + "까지 " + t.next + "번" : "") + '">' + t.ic + "</i>";
   }
+  /* v2.8.1 왼쪽 막대가 화면보다 길면 조금씩 줄여 스크롤 없이: ① 칸 높이·쌤비 크기 ② 쌤비 한마디 숨김 */
+  function fitRail(){
+    if(!rail || !rail.offsetHeight) return;
+    rail.classList.remove("tight", "tighter");
+    if(rail.scrollHeight > rail.clientHeight + 2) rail.classList.add("tight");
+    if(rail.scrollHeight > rail.clientHeight + 2) rail.classList.add("tighter");
+  }
+  window.addEventListener("resize", function(){ clearTimeout(fitRail.t); fitRail.t = setTimeout(fitRail, 150); });
   function barTabs(){
     var cur = curMenu();
     return MENUS.filter(function(m){ return shown(m[0]); }).map(function(m){
@@ -219,8 +227,8 @@
     rail.querySelector(".rt").innerHTML = railTop(); rail.querySelector(".rn").innerHTML = railHTML();
     bar.querySelector(".bo").innerHTML = '<button type="button" class="owl" id="sbBarOwl2" title="쌤비 (Alt+B)" aria-label="쌤비 열기">' + owlSvg(46) + "</button>";
     bar.querySelector(".sbTabs").innerHTML = barTabs();
-    F.ph(); headIcon();
-    requestAnimationFrame(function(){ R.classList.add("sbReady"); }); setTimeout(function(){ R.classList.add("sbReady"); }, 120);   // v2.8.1: 창이 뒤에 있어 그림 신호가 늦어도 보이게
+    F.ph(); headIcon(); fitRail();
+    requestAnimationFrame(function(){ R.classList.add("sbReady"); fitRail(); }); setTimeout(function(){ R.classList.add("sbReady"); }, 120);   // v2.8.1: 창이 뒤에 있어 그림 신호가 늦어도 보이게
   }
 
   /* ── v2.7 도구 화면 검색창: 오른쪽 화면이 무엇이냐에 따라 찾는 곳이 바뀝니다 ──
