@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
 <!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -100,7 +101,7 @@
   .cmpres{margin-top:10px}
   .cmpscroll{max-height:36vh;overflow:auto;margin-top:8px}
   .cmpscroll td.da{background:#fff4f2}.cmpscroll td.db{background:#f1f8ff}
-  .cmpscroll td.v{word-break:break-all}
+  .cmpscroll td.v{word-break:keep-all;overflow-wrap:anywhere}
   .cmpscroll th,.cmpscroll td{border:1px solid var(--line);padding:4px 6px;font-size:12.5px}
   .cmpscroll table{border-collapse:collapse;width:100%}
   .cmpscroll th{background:#f0f3f7}
