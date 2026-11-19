@@ -136,7 +136,7 @@
   function dialog(html){
     if(dlg) dlg.remove();
     dlg = document.createElement("dialog"); dlg.className = "ttv-dlg"; dlg.innerHTML = html;
-    document.body.appendChild(dlg); dlg.addEventListener("close", function(){ dlg.remove(); dlg = null; });
+    var d = dlg; document.body.appendChild(d); d.addEventListener("close", function(){ d.remove(); if(dlg === d) dlg = null; });   // 닫기 신호가 늦게 와도 새로 연 창은 지우지 않게
     dlg.showModal(); return dlg;
   }
   function q(s){ return dlg.querySelector(s); }
