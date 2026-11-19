@@ -158,7 +158,7 @@
   #goalBn{position:absolute;left:50%;transform:translateX(-50%);top:10px;z-index:7;display:none;max-width:86%;background:#fff8d6;border:3px solid #c99a00;border-radius:16px;padding:8px 22px;font-size:clamp(22px,2.8vw,44px);font-weight:900;color:#3a2a00;box-shadow:0 6px 20px rgba(0,0,0,.18);cursor:pointer;text-align:center;word-break:keep-all}
   #goalBn.on{display:block}
   .sw{position:relative}
-  .ltop .rmc{font-size:20px;opacity:.25;filter:grayscale(1)}.ltop .rmc[data-s="on"]{opacity:1;filter:none}.ltop .rmc[data-s="err"]{opacity:.6}
+  .ltop .rmc{font-size:20px;opacity:.25;filter:grayscale(1)}.ltop .rmc[data-s="on"]{opacity:1;filter:none}.ltop .rmc[data-s="err"]{opacity:.6}.ltop .rmc[data-s="rtc"]{opacity:1;filter:none;text-shadow:0 0 8px #2d8a5b}
   .ltop #lres.has{background:#e9f2fc;border-color:#2f6fb5;color:#2f6fb5}
   .ctl #bRes.has{background:var(--accent-soft,#e9f2fc);border-color:var(--accent,#2f6fb5);color:var(--accent,#2f6fb5)}
   .ltop #lgoal:disabled{opacity:1}
@@ -892,12 +892,33 @@
   /* ── 4단계: 휴대폰 리모컨 (교실 화면 쪽) — 보관함이 열린 교실 기기에서 수업 모드일 때 2초마다 명령을 확인 ── */
   var RM = {ver: 0, seq: 0, on: false, busy: false, fail: 0, t: null, first: true};
   function vlt(){ return window.TT_VAULT ? window.TT_VAULT() : Promise.reject(new Error("보관함 없음")); }
+  function rObj(){ var u = curUnit(); return {at: Date.now(), c: st.c, cn: st.c ? cname(st.c) : "", p: bookP(), u: u ? u.name : "", mode: st.mode, lesson: st.lesson, pen: !!st.pen, goal: st.c ? goalOf(st.c) : "", seq: RM.seq, n: st.c ? studentNos(st.c).length : 0}; }
   function rState(){
     if(!RM.on) return; clearTimeout(RM.st);
+    if(rtcOpen()){ RM.st = setTimeout(function(){ try{ RT.dc.send(JSON.stringify({st: rObj()})); }catch(e){} }, 30); return; }   /* 직접 연결: 바로 보냄 */
     RM.st = setTimeout(function(){
-      var u = curUnit();
-      vlt().then(function(V){ return V.rsend("tt_rstate_v1", {at: Date.now(), c: st.c, cn: st.c ? cname(st.c) : "", p: bookP(), u: u ? u.name : "", mode: st.mode, lesson: st.lesson, pen: !!st.pen, goal: st.c ? goalOf(st.c) : "", seq: RM.seq, n: st.c ? studentNos(st.c).length : 0}); }).catch(function(){});
+      var o = rObj(); if(RT.ans) o.rtc = RT.ans;
+      vlt().then(function(V){ return V.rsend("tt_rstate_v1", o); }).catch(function(){});
     }, 150);
+  }
+  /* v2.11.0 직접 연결(WebRTC): 휴대폰이 보관함으로 연결 요청(잠근 글자)을 보내면 교실 화면이 답하고, 그다음부터는 둘이 바로 주고받음(0.1초 안팎).
+     연결이 안 되는 망이면 지금처럼 업무판을 거쳐 주고받습니다. 주고받는 내용은 기기끼리 암호화(DTLS)됩니다. */
+  var RT = {pc: null, dc: null, id: "", ans: null};
+  var ICE = {iceServers: [{urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"]}]};
+  function rtcOpen(){ return RT.dc && RT.dc.readyState === "open"; }
+  function iceDone(pc){ return new Promise(function(res){ if(pc.iceGatheringState === "complete") return res(); var t = setTimeout(res, 2500); pc.addEventListener("icegatheringstatechange", function(){ if(pc.iceGatheringState === "complete"){ clearTimeout(t); res(); } }); }); }
+  function rtcAnswer(cmd){
+    if(!window.RTCPeerConnection || !cmd.id || !cmd.sdp || RT.id === cmd.id) return;
+    try{ if(RT.pc) RT.pc.close(); }catch(e){}
+    var pc = new RTCPeerConnection(ICE), me = {pc: pc, dc: null, id: cmd.id, ans: null}; RT = me;
+    pc.ondatachannel = function(e){
+      var dc = e.channel; me.dc = dc;
+      dc.onopen = function(){ if(RT === me){ rChip("rtc"); RT.ans = null; rState(); } };
+      dc.onclose = function(){ if(RT === me){ RT.dc = null; rChip("on"); } };
+      dc.onmessage = function(ev){ var x; try{ x = JSON.parse(ev.data); }catch(er){ return; } if(x && x.a && x.s > RM.seq){ RM.seq = x.s; RM.hot = Date.now(); try{ rRun(x); }catch(er){} rState(); } else if(x && x.ping) rState(); };
+    };
+    pc.setRemoteDescription({type: "offer", sdp: String(cmd.sdp)}).then(function(){ return pc.createAnswer(); }).then(function(a){ return pc.setLocalDescription(a); })
+      .then(function(){ return iceDone(pc); }).then(function(){ if(RT === me){ me.ans = {id: cmd.id, sdp: pc.localDescription.sdp}; rState(); } }).catch(function(){});
   }
   function rRun(cmd){
     var a = cmd.a;
@@ -911,6 +932,7 @@
     else if(a === "pick"){ var N = studentNos(st.c), n = +cmd.n > 0 ? +cmd.n : (N.length ? N[Math.floor(Math.random() * N.length)] : 0); if(n) pickShow(n); else toast("반 명렬표가 없어 번호를 뽑지 못했어요"); }
     else if(a === "class" && CLS.indexOf(+cmd.c) >= 0){ pick(+cmd.c); if(!st.lesson) setLesson(true); }
     else if(a === "page" && st.c && +cmd.p > 0){ st.pdfPage = toPdf(gOf(st.c), +cmd.p); show(); }
+    else if(a === "rtc") rtcAnswer(cmd);
   }
   function pickShow(n){
     var o = document.createElement("div"); o.className = "qrbig pk"; o.innerHTML = '<div class="in"><small>🎲 오늘의 주인공</small><b class="n">' + n + "번</b></div>"; o.onclick = function(){ o.remove(); };
@@ -922,7 +944,7 @@
     vlt().then(function(V){ return V.rget("tt_remote_v1", RM.ver); }).then(function(r){
       if(r.off){ rChip("off"); RM.t = setTimeout(rPoll, 15000); return; }
       if(r.error){ RM.fail++; rChip("err"); RM.t = setTimeout(rPoll, Math.min(15000, 2000 * RM.fail)); return; }
-      RM.fail = 0; rChip("on");
+      RM.fail = 0; rChip(rtcOpen() ? "rtc" : "on");
       if(r.obj && r.ver > RM.ver){ RM.hot = Date.now();
         RM.ver = r.ver;
         var Q = (r.obj.q || []).filter(function(x){ return x.s > RM.seq && Date.now() - (x.t || 0) < 90000; });
@@ -930,10 +952,10 @@
         Q.forEach(function(x){ RM.seq = Math.max(RM.seq, x.s); try{ rRun(x); }catch(e){} });
         if(Q.length) rState();
       }else if(RM.first) RM.first = false;
-      RM.t = setTimeout(rPoll, Date.now() - (RM.hot || 0) < 10 * 60 * 1000 ? 250 : 1200);   /* v2.10.5: 리모컨을 쓰는 동안(10분)은 쉬지 않고 바로 다시 확인 */
+      RM.t = setTimeout(rPoll, rtcOpen() ? 4000 : Date.now() - (RM.hot || 0) < 10 * 60 * 1000 ? 250 : 1200);   /* v2.10.5: 리모컨을 쓰는 동안(10분)은 쉬지 않고 바로 다시 확인 */
     }).catch(function(){ RM.t = setTimeout(rPoll, 10000); });
   }
-  function rChip(s){ var b = $("lrm"); if(!b) return; b.dataset.s = s; b.title = s === "on" ? "📱 휴대폰 리모컨 연결됨 (수업 메뉴 → 수업 리모컨)" : s === "err" ? "리모컨 연결이 잠깐 끊겼어요" : "보관함을 열면 휴대폰 리모컨을 쓸 수 있어요"; }
+  function rChip(s){ var b = $("lrm"); if(!b) return; b.dataset.s = s; b.title = s === "rtc" ? "📱 휴대폰 리모컨 직접 연결됨 (바로 반응)" : s === "on" ? "📱 휴대폰 리모컨 연결됨 (수업 메뉴 → 수업 리모컨)" : s === "err" ? "리모컨 연결이 잠깐 끊겼어요" : "보관함을 열면 휴대폰 리모컨을 쓸 수 있어요"; }
   function rStart(){ if(RM.on) return; RM.on = true; RM.first = true; RM.hot = Date.now(); rPoll(); rState(); }
 
   /* ── 단추·키 ── */
