@@ -30,6 +30,10 @@
   .nav button{font:inherit;font-size:13.5px;text-align:left;border:0;background:transparent;border-radius:9px;padding:4px 8px;cursor:pointer;color:var(--ink)}
   .nav button:hover{background:#f3f6f9}
   .nav button[aria-current=true]{background:var(--accent);color:#fff}
+  .nav button.gh{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:800;color:var(--sub);padding:6px 8px;margin-top:3px;border-top:1px solid var(--line,#e5e9ee);border-radius:0}
+  .nav button.gh span{font-weight:600;font-size:11.5px}
+  .nav button.gh[aria-expanded=true]{color:var(--ink)}
+  .nav button.gh.box{margin-top:auto;color:var(--ink);font-weight:700}
   .col{min-height:0;display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;overflow:hidden}
   .col h2{font-size:15px;font-weight:800;display:flex;gap:6px;align-items:center}
   .col h2 .sp{flex:1}
@@ -169,17 +173,34 @@
   }
   function build(){ $("prompt").value = mask(PRE + cur.b(vals)); }
 
+  /* v2.10.2 왼쪽 목록: 자주 쓰는 4개 + 묶음은 하나만 펼침(나머지는 접어 제목만) → 스크롤 없이 한 화면 */
+  var USEK = "snai_use", openG = null;
+  function uses(){ try{ return JSON.parse(localStorage.getItem(USEK)) || {}; }catch(e){ return {}; } }
+  function used(k){ var u = uses(); u[k] = (u[k] || 0) + 1; try{ localStorage.setItem(USEK, JSON.stringify(u)); }catch(e){} }
+  function navBtn(k, label, on){ var p = k.split(":"); return '<button type="button" data-' + p[0] + '="' + esc(p.slice(1).join(":")) + '" aria-current="' + on + '">' + label + "</button>"; }
   function drawNav(){
-    var g = "", h = "";
-    T.forEach(function(t){ if(t.g !== g){ g = t.g; h += "<h4>" + esc(g) + "</h4>"; } h += '<button type="button" data-t="' + t.id + '" aria-current="' + (mode !== "fill" && t === cur) + '">' + t.ic + " " + esc(t.n) + "</button>"; });
-    h += "<h4>🧾 자동 채움 (빈칸만 쓰기)</h4>" + TTFill.all().map(function(t){ return '<button type="button" data-f="' + esc(t.id) + '" aria-current="' + (mode === "fill" && F.t && F.t.id === t.id) + '">' + esc(t.ic || "📄") + " " + esc(t.n) + (t.mine ? " ✎" : "") + "</button>"; }).join("")
-      + '<button type="button" data-mk="1">＋ 내 틀 만들기</button><h4>보관함</h4><button type="button" data-box="1">🗄️ 보관함 (' + docs().length + ")</button>";
+    var G = [], g = null;
+    T.forEach(function(t){ if(!g || g.name !== t.g){ g = {name: t.g, items: []}; G.push(g); } g.items.push({k: "t:" + t.id, label: t.ic + " " + esc(t.n), on: mode !== "fill" && t === cur}); });
+    G.push({name: "🧾 자동 채움", items: TTFill.all().map(function(t){ return {k: "f:" + t.id, label: esc(t.ic || "📄") + " " + esc(t.n) + (t.mine ? " ✎" : ""), on: mode === "fill" && !!F.t && F.t.id === t.id}; })
+      .concat([{k: "mk:1", label: "＋ 내 틀 만들기", on: false}])});
+    var all = []; G.forEach(function(x){ x.items.forEach(function(it){ all.push(it); if(it.on && openG === null) openG = x.name; }); });
+    var u = uses(), top = all.filter(function(it){ return u[it.k] && it.k !== "mk:1"; }).sort(function(a, b){ return u[b.k] - u[a.k]; }).slice(0, 4);
+    if(top.length < 2) top = all.slice(0, 1).concat(all.filter(function(it){ return /^f:/.test(it.k); }).slice(0, 2));   // 처음: 학습지 + 자동 채움 둘
+    if(openG === null) openG = G[0].name;
+    var h = '<h4>⭐ 자주 쓰는 것</h4>' + top.map(function(it){ return navBtn(it.k, it.label, it.on); }).join("");
+    G.forEach(function(x){
+      var op = x.name === openG;
+      h += '<button type="button" class="gh" data-g="' + esc(x.name) + '" aria-expanded="' + op + '">' + esc(x.name) + ' <span>' + (op ? "▾" : x.items.length + " ▸") + "</span></button>";
+      if(op) h += x.items.map(function(it){ return navBtn(it.k, it.label, it.on); }).join("");
+    });
+    h += '<button type="button" class="gh box" data-box="1">🗄️ 보관함 (' + docs().length + ")</button>";
     $("nav").innerHTML = h;
   }
   $("nav").onclick = function(e){
     var b = e.target.closest("button"); if(!b) return;
-    if(b.dataset.t){ setMode("ai"); cur = T.filter(function(t){ return t.id === b.dataset.t; })[0]; vals = {}; docId = null; handoff = null; drawAll(); $("result").value = ""; }
-    if(b.dataset.f) openFill(b.dataset.f);
+    if(b.dataset.g){ openG = openG === b.dataset.g ? "" : b.dataset.g; drawNav(); return; }
+    if(b.dataset.t){ used("t:" + b.dataset.t); setMode("ai"); cur = T.filter(function(t){ return t.id === b.dataset.t; })[0]; vals = {}; docId = null; handoff = null; drawAll(); $("result").value = ""; }
+    if(b.dataset.f){ used("f:" + b.dataset.f); openFill(b.dataset.f); }
     if(b.dataset.mk) editMine(null);
     if(b.dataset.box) box();
   };

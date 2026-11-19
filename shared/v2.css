@@ -268,7 +268,7 @@ html[data-ui="ssambi"].tt-hasnav .cta,html[data-ui="ssambi"].tt-hasnav .tabs,htm
 .sbMid.flat .sc b{font-size:13.5px}
 .sbMid.flat .gp h3{margin-bottom:4px}
 #sbCredit{display:none}
-body.sbOn #sbCredit{display:block;position:fixed;left:0;right:0;bottom:6px;text-align:center;font-size:11px;color:#9aa1a9;letter-spacing:.2px;pointer-events:none;z-index:1}
+body.sbOn #sbCredit{display:block;position:fixed;left:0;right:0;bottom:clamp(14px,2.4vh,24px);text-align:center;font-size:13px;color:var(--t-sub);opacity:.85;pointer-events:none;z-index:1}
 @media print{#sbCredit{display:none!important}}
 .sbMid .dim{opacity:.5}
 .sbEmpty{text-align:center;color:var(--t-sub);padding:30px 0}
@@ -373,7 +373,7 @@ html[data-ui="ssambi"] .tdy,html[data-ui="ssambi"] .cat,html[data-ui="ssambi"] .
   .sbBig{grid-template-columns:1fr}
   .sbMid.flat .sbGroups{grid-template-columns:1fr}
   .sbMid.flat .ic{grid-template-columns:repeat(4,minmax(0,1fr))}
-  body.sbOn #sbCredit{position:static;padding:14px 0 10px}
+  body.sbOn #sbCredit{position:static;padding:18px 0 16px}
   .sbGroups{grid-template-columns:1fr}
   .sbGroups .ic{grid-template-columns:repeat(4,minmax(0,1fr))}
   .sbNow{padding:12px 14px;gap:10px}
