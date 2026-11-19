@@ -55,7 +55,7 @@
     if(nxt && nxt.left <= 15) return r("book", nxt.left + "분 뒤 " + nxt.n + "교시 " + nxt.cls + (nxt.subj ? " " + nxt.subj : "") + " 수업이에요.", nxt.prog && nxt.prog.now ? "이번 차시: " + nxt.prog.now : (nxt.unit ? "단원: " + nxt.unit : ""));
     if(wk && m >= 720 && m < 780){ var ml = ""; try{ ml = window.TTMeal ? TTMeal.todayText() : ""; }catch(e){} return r("spoon", "점심시간이에요. 맛있게 드세요!", ml || (cnt ? "오후에 챙길 일 " + cnt + "개" : "")); }
     /* v2.8: 새로 바뀐 점(업데이트 후 첫날) · 금요일 한 주 결산 · 백업 30일 */
-    var NEWS = {"2.8.0": ["새 기능: 퇴근 도장은 급한 일만 없으면!", "쌤비 소품 · 연속 도장 · 우리 반 나무 · 앱 설치하기(쌤비 아이콘) — ⋯ 메뉴에서"], "2.10.0": ["새 기능: 교실 전자칠판을 이름 + 숫자 6자리로 열어요", "⋯ → 기기 연결·동기화 → 교실 전자칠판에서 열기에서 번호를 정하세요"]}, nv = NEWS[TT.VERSION];
+    var NEWS = {"2.8.0": ["새 기능: 퇴근 도장은 급한 일만 없으면!", "쌤비 소품 · 연속 도장 · 우리 반 나무 · 앱 설치하기(쌤비 아이콘) — ⋯ 메뉴에서"], "2.10.1": ["새 기능: 교실 전자칠판을 이름 + 숫자 6자리로 열어요", "⋯ → 기기 연결·동기화 → 교실 전자칠판에서 열기에서 번호를 정하세요"], "2.10.0": ["새 기능: 교실 전자칠판을 이름 + 숫자 6자리로 열어요", "⋯ → 기기 연결·동기화 → 교실 전자칠판에서 열기에서 번호를 정하세요"]}, nv = NEWS[TT.VERSION];
     if(nv && m >= 300){ var sk = "sn_news_seen", sv0 = ""; try{ sv0 = localStorage.getItem(sk) || ""; }catch(e){}
       var td = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
       if(sv0.indexOf(TT.VERSION + "|") !== 0){ try{ localStorage.setItem(sk, TT.VERSION + "|" + td); }catch(e){} sv0 = TT.VERSION + "|" + td; }
@@ -217,6 +217,10 @@
   function render(){
     var ok = on();
     document.body.classList.toggle("sbOn", ok);
+    if(ok && !document.getElementById("sbCredit")){                  // 배포판 표기 (맨 아래 작은 회색 한 줄)
+      var cr = document.createElement("div"); cr.id = "sbCredit";
+      cr.textContent = "쌤 노트 v" + TT.VERSION + " · 제작 jidangmath × Claude · 2026.11"; document.body.appendChild(cr);
+    }
     if(!ok){ host.hidden = true; host.textContent = ""; R.classList.add("sbReady"); return; }
     var H; try{ H = TT_TODAY.home(); }catch(e){ console.warn("쌤비 홈:", e); return; }
     var P = lastP = pick(H);

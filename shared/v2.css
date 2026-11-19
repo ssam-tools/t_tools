@@ -259,11 +259,17 @@ html[data-ui="ssambi"].tt-hasnav .cta,html[data-ui="ssambi"].tt-hasnav .tabs,htm
 .sbGroups .sc b{color:var(--t-ink);font-size:13px;font-weight:500;text-align:center;line-height:1.3;word-break:keep-all}
 .sbGroups .sc:hover .ci{background:var(--t-accent-soft);color:var(--t-accent)}
 .sbGroups .sc:hover b{color:var(--t-accent)}
-.sbMid.flat .sbGroups{grid-template-columns:1fr;gap:18px}
-.sbMid.flat .ic{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
-.sbMid.flat .sc{padding:10px 4px;gap:8px}
-.sbMid.flat .sc .ci{width:56px;height:56px;background:var(--t-accent-soft);color:var(--t-accent)}
-.sbMid.flat .sc b{font-size:14px}
+/* 설정 화면: 안내 | 설정 / 백업 | 새 학년 두 칸으로 나란히, 동그라미를 줄여 스크롤 없이 (v2.10.1) */
+.sbWrap.mid:has(.sbMid.flat){max-width:960px}
+.sbMid.flat .sbGroups{grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:clamp(8px,1.6vh,16px) 28px}
+.sbMid.flat .ic{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:2px 4px}
+.sbMid.flat .sc{padding:4px 2px;gap:5px}
+.sbMid.flat .sc .ci{width:clamp(40px,5.2vh,48px);height:clamp(40px,5.2vh,48px);background:var(--t-accent-soft);color:var(--t-accent)}
+.sbMid.flat .sc b{font-size:13.5px}
+.sbMid.flat .gp h3{margin-bottom:4px}
+#sbCredit{display:none}
+body.sbOn #sbCredit{display:block;position:fixed;left:0;right:0;bottom:6px;text-align:center;font-size:11px;color:#9aa1a9;letter-spacing:.2px;pointer-events:none;z-index:1}
+@media print{#sbCredit{display:none!important}}
 .sbMid .dim{opacity:.5}
 .sbEmpty{text-align:center;color:var(--t-sub);padding:30px 0}
 
@@ -366,7 +372,8 @@ html[data-ui="ssambi"] .tdy,html[data-ui="ssambi"] .cat,html[data-ui="ssambi"] .
   #sbHero .circ b{font-size:11.5px}
   .sbBig{grid-template-columns:1fr}
   .sbMid.flat .sbGroups{grid-template-columns:1fr}
-  .sbMid.flat .ic{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sbMid.flat .ic{grid-template-columns:repeat(4,minmax(0,1fr))}
+  body.sbOn #sbCredit{position:static;padding:14px 0 10px}
   .sbGroups{grid-template-columns:1fr}
   .sbGroups .ic{grid-template-columns:repeat(4,minmax(0,1fr))}
   .sbNow{padding:12px 14px;gap:10px}
