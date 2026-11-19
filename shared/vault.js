@@ -97,6 +97,10 @@
     if (m === 'NOVAULT') return '업무판에 보관함 기능이 아직 없어요. 업무판 Code.gs를 새 버전으로 바꿔 주세요.';
     if (m.indexOf('VAUTH') >= 0) return '비밀 문구가 맞지 않아요.';
     if (m.indexOf('VNOUSER') >= 0) return '보관함에 없는 ID예요.';
+    if (m.indexOf('RLOCKED') >= 0) return '번호가 5번 틀려 잠겼어요. 선생님 휴대폰이나 교무실 PC의 쌤 노트에서 번호를 다시 정하면 풀려요.';
+    if (m.indexOf('RPIN:') >= 0) return '번호가 맞지 않아요. (남은 기회 ' + m.split('RPIN:')[1].replace(/\D.*$/, '') + '번)';
+    if (m.indexOf('RNOUSER') >= 0) return '교실 열기를 설정하지 않은 선생님이에요.';
+    if (m.indexOf('OperationError') >= 0 || (e && e.name === 'OperationError')) return '열쇠를 풀지 못했어요. 내 기기에서 번호를 다시 정해 주세요.';
     if (m.indexOf('AUTH') >= 0) return '학교 비밀번호가 맞지 않아요.';
     if (e instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(m)) return '인터넷이나 업무판에 연결할 수 없어요.';
     return m;
@@ -205,6 +209,45 @@
     }
     return { id: id, salt: salt, k: d.k, auth: d.auth, created: !info.exists };
   }
+  /* ---------- 교실 기기 열기 도우미 ---------- */
+  var asks = {};
+  async function pinKey(pin, saltB64, s) {
+    var base = await crypto.subtle.importKey('raw', enc.encode(String(pin)), 'PBKDF2', false, ['deriveBits']);
+    var bits = new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: unb64(saltB64), iterations: ITER }, base, 512));
+    var o = { raw: bits.slice(0, 32), v: hex(bits.slice(32)) };
+    if (s) o.key = await envKey(o.raw, s);
+    return o;
+  }
+  async function envKey(raw, s) {
+    var m = new Uint8Array(raw.length + s.length); m.set(raw); m.set(s, raw.length);
+    return crypto.subtle.importKey('raw', await crypto.subtle.digest('SHA-256', m), 'AES-GCM', false, ['encrypt', 'decrypt']);
+  }
+  async function ecdhKey(priv, pubB64) {
+    var pub = await crypto.subtle.importKey('raw', unb64(pubB64), { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+    var bits = await crypto.subtle.deriveBits({ name: 'ECDH', public: pub }, priv, 256);
+    return crypto.subtle.importKey('raw', await crypto.subtle.digest('SHA-256', bits), 'AES-GCM', false, ['encrypt', 'decrypt']);
+  }
+  async function envSeal(key, text) {
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    var ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv, additionalData: enc.encode('ttroom') }, key, enc.encode(text)));
+    return 'v1.' + b64(iv) + '.' + b64(ct);
+  }
+  async function envOpen(key, data) {
+    var p = String(data).split('.');
+    if (p[0] !== 'v1' || p.length !== 3) throw new Error('알 수 없는 형식');
+    return dec.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(p[1]), additionalData: enc.encode('ttroom') }, key, unb64(p[2])));
+  }
+  async function matchCode(pubB64) { var h = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(pubB64))); return String(10 + ((h[0] << 8 | h[1]) % 90)); }
+  async function startRoom(cr, name, mask) {
+    if (!cr || !cr.id || !cr.k || !cr.auth) throw new Error('열쇠가 올바르지 않아요.');
+    SS.set(SES, JSON.stringify({ id: cr.id, k: cr.k, auth: cr.auth, last: Date.now(), name: name || cr.id, mask: mask !== false }));
+    keyCache = {};
+    await sync();
+    if (st.error) { var er = st.error; wipeLocal(); return { error: er }; }
+    startLoop();
+    return { ok: true, name: name };
+  }
+
   var Vault = {
     status: status,
     /* 내 기기 연결. 처음이면 o.create=true 로 다시 부름. 이미 있는 보관함이면 보관함 내용이 우선(이 기기에만 있던 자료는 올림) */
@@ -279,6 +322,86 @@
         if (!it || it.ver <= (since || 0)) return { ok: true, ver: since || 0 };
         var o = J(await unseal(c, key, it.data));
         return { ok: true, ver: it.ver, obj: o && o.v ? J(o.v) : null };
+      } catch (e) { return { error: errText(e) }; }
+    },
+    /* ---------- v2.10.0 교실 기기 열기: 이름 + 숫자 6자리 / 휴대폰으로 열기 ----------
+       봉투 열쇠 = SHA-256(번호에서 만든 값 ‖ 서버의 임의 값 s). 번호 확인값(v)은 서버에 해시로만 남고, 5번 틀리면 잠김.
+       봉투 안에는 보관함 열쇠(id·k·auth)만 있습니다. 번호·열쇠는 어디에도 그대로 저장하지 않습니다. */
+    pinStatus: async function () {
+      var c = active(); if (!c || mode() === 'classroom') return { off: true };
+      try { return await call('rstat', { id: c.id, auth: c.auth }); } catch (e) { return { error: errText(e) }; }
+    },
+    pinSet: async function (o) {
+      var c = active(); if (!c || mode() === 'classroom') return { error: '먼저 이 기기를 보관함과 연결해 주세요.' };
+      var pin = String(o.pin || ''), name = String(o.name || '').trim();
+      if (!/^\d{6}$/.test(pin)) return { error: '숫자 6자리로 정해 주세요.' };
+      if (/^(\d)\1{5}$/.test(pin) || '0123456789'.indexOf(pin) >= 0 || '9876543210'.indexOf(pin) >= 0) return { error: '같은 숫자나 이어지는 숫자(111111, 123456)는 쓸 수 없어요.' };
+      if (!name) return { error: '칠판에 보일 이름을 넣어 주세요.' };
+      try {
+        var salt = b64(crypto.getRandomValues(new Uint8Array(16))), s = crypto.getRandomValues(new Uint8Array(32));
+        var d = await pinKey(pin, salt, s);
+        var env = await envSeal(d.key, JSON.stringify({ id: c.id, k: c.k, auth: c.auth }));
+        return await call('rset', { id: c.id, auth: c.auth, name: name, salt: salt, v: d.v, s: b64(s), env: env });
+      } catch (e) { return { error: errText(e) }; }
+    },
+    pinOff: async function () {
+      var c = active(); if (!c) return { error: '연결되어 있지 않아요.' };
+      try { await call('rdel', { id: c.id, auth: c.auth }); return { ok: true }; } catch (e) { return { error: errText(e) }; }
+    },
+    roomList: async function () { try { return await call('rlist', {}); } catch (e) { return { error: errText(e) }; } },
+    /* 칠판: 이름(h·salt) + 번호로 열기 */
+    roomOpen: async function (o) {
+      try {
+        wipeLocal();
+        var d = await pinKey(String(o.pin || ''), o.salt, null);
+        var j = await call('ropen', { h: o.h, v: d.v, salt: o.salt });
+        if (j.stale) { d = await pinKey(String(o.pin || ''), j.salt, null); j = await call('ropen', { h: o.h, v: d.v, salt: j.salt }); }
+        var key = await envKey(d.raw, unb64(j.s));
+        return await startRoom(JSON.parse(await envOpen(key, j.env)), j.name, o.mask);
+      } catch (e) { wipeLocal(); return { error: errText(e) }; }
+    },
+    /* 칠판: 휴대폰으로 열기 요청 → {r, code} */
+    roomAsk: async function (o) {
+      try {
+        var kp = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveBits']);
+        var pub = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));
+        var r = hex(crypto.getRandomValues(new Uint8Array(16)));
+        await call('rreq', { h: o.h, r: r, pub: b64(pub), room: o.room || '' });
+        asks[r] = kp.privateKey;
+        return { r: r, code: await matchCode(b64(pub)) };
+      } catch (e) { return { error: errText(e) }; }
+    },
+    roomWait: async function (o) {
+      var priv = asks[o.r]; if (!priv) return { error: '요청이 없어요.' };
+      try {
+        var j = await call('rget', { r: o.r });
+        if (j.wait) return { wait: true };
+        delete asks[o.r];
+        if (j.no) return { error: '휴대폰에서 거절했어요.' };
+        wipeLocal();
+        var key = await ecdhKey(priv, j.pub);
+        return await startRoom(JSON.parse(await envOpen(key, j.env)), j.name, o.mask);
+      } catch (e) { wipeLocal(); return { error: errText(e) }; }
+    },
+    /* 내 기기: 칠판에서 온 열기 요청 보기 · 허락/거절 */
+    roomPending: async function () {
+      var c = active(); if (!c || mode() === 'classroom') return { items: [] };
+      try {
+        var j = await call('rpend', { id: c.id, auth: c.auth });
+        for (var it of j.items || []) it.code = await matchCode(it.pub);
+        return j;
+      } catch (e) { return { items: [], error: errText(e) }; }
+    },
+    roomApprove: async function (o) {
+      var c = active(); if (!c || mode() === 'classroom') return { error: '연결되어 있지 않아요.' };
+      try {
+        if (o.no) { await call('rans', { id: c.id, auth: c.auth, r: o.r, no: true }); return { ok: true }; }
+        var kp = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveBits']);
+        var pub = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));
+        var key = await ecdhKey(kp.privateKey, o.pub);
+        var env = await envSeal(key, JSON.stringify({ id: c.id, k: c.k, auth: c.auth }));
+        await call('rans', { id: c.id, auth: c.auth, r: o.r, pub: b64(pub), env: env });
+        return { ok: true };
       } catch (e) { return { error: errText(e) }; }
     },
     server: function () { var s = server(); return { url: s.url || '', hasPw: !!s.pw }; },

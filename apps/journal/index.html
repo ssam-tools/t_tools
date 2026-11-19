@@ -373,7 +373,8 @@ function load(){
   try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);if(o&&o.v===2&&o.prog&&o.students&&o.tt&&o.cur)return o;}}catch(e){}
   const s=seed();try{localStorage.setItem(KEY,JSON.stringify(s));}catch(e){}return s;
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const CRM=TT.classroom&&!TT.classroom.locked?TT.classroom:null;let HIDE0=null;   /* v2.10.0 교실 기기: 이름 가리기는 이번 수업에만(기본 켬) */
+function save(){try{localStorage.setItem(KEY,JSON.stringify(CRM&&HIDE0!==null?Object.assign({},S,{hideNames:HIDE0}):S));}catch(e){}}
 
 /* ---------- 도메인 헬퍼 ---------- */
 const _lc={};
@@ -890,7 +891,7 @@ function act(a,t){
       if(list.map(x=>x.no).join(',')!==oldNos||!S.seats[c]||!S.seats[c].length)S.seats[c]=buildSeats(list.map(x=>x.no));
       save();closeSheet();render();toast(cn(c)+' 명단 '+list.length+'명을 저장했어요');break;
     }
-    case 'toggleHide':S.hideNames=!S.hideNames;save();try{const C0=TT.store.get('tt_class_v1',{})||{};C0.mask=S.hideNames;TT.store.set('tt_class_v1',C0);}catch(e){}renderSheet();render();break;
+    case 'toggleHide':S.hideNames=!S.hideNames;if(CRM){CRM.setMask(S.hideNames);save();renderSheet();render();break;}save();try{const C0=TT.store.get('tt_class_v1',{})||{};C0.mask=S.hideNames;TT.store.set('tt_class_v1',C0);}catch(e){}renderSheet();render();break;
     case 'exportRec':exportRecords();break;
     case 'exportProg':exportProgress();break;
     case 'clearSample':{
@@ -918,6 +919,7 @@ function ttWeek(mon){try{const T=JSON.parse(localStorage.getItem('tt_timetable_v
 const TWn=()=>ttWeek(mondayOf(dkey(new Date())));
 /* ---------- 시작 ---------- */
 S=load();try{const C0=TT.store.get("tt_class_v1",null);if(C0&&typeof C0.mask==="boolean"&&C0.mask!==!!S.hideNames){S.hideNames=C0.mask;save();}}catch(e){}
+if(CRM){HIDE0=!!S.hideNames;S.hideNames=CRM.mask;}
 /* 내 시간표(tt_timetable_v1, "내 시간표" 도구)가 있으면 교시 시각과 시간표를 그대로 씁니다.
    내 시간표가 바뀌었을 때만 덮어쓰므로, 그 사이 여기서 고친 내용은 다음 변경 전까지 유지됩니다. */
 (function(){try{

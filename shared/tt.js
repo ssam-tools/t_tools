@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.9.0";
+  var VERSION = "2.10.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -20,9 +20,10 @@ var TT = (function(){
     var dev = null; try{ dev = localStorage.getItem("ttv_device"); }catch(e){}
     if(dev !== "classroom") return null;
     var ses = null; try{ ses = JSON.parse(sessionStorage.getItem("ttv_session")); }catch(e){}
-    if(ses && ses.k && Date.now() - (ses.last || 0) < 20 * 60 * 1000){
+    if(ses && ses.k && Date.now() - (ses.last || 0) < 20 * 60 * 1000 && !(ses.until && Date.now() > ses.until)){   // v2.10.0: 교시가 끝나도(until) 잠김
       ses.last = Date.now(); try{ sessionStorage.setItem("ttv_session", JSON.stringify(ses)); }catch(e){}
-      return {locked:false, id:ses.id};
+      return {locked:false, id:ses.id, name:ses.name || ses.id, mask:ses.mask !== false, until:ses.until || 0,
+        setMask:function(on){ this.mask = !!on; try{ var x = JSON.parse(sessionStorage.getItem("ttv_session")); if(x){ x.mask = !!on; sessionStorage.setItem("ttv_session", JSON.stringify(x)); } }catch(e){} }};
     }
     try{
       var del = [];

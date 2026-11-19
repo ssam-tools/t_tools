@@ -151,7 +151,9 @@
   var KEY = "tt_class_v1";
   var C = TT.store.get(KEY, null) || {};
   C.v = 1; C.picks = C.picks || {}; C.scores = C.scores || {}; if(C.sound == null) C.sound = true;
-  function saveC(){ TT.store.set(KEY, C); }
+  var CRM = TT.classroom && !TT.classroom.locked ? TT.classroom : null, MASK0 = !!C.mask;   // v2.10.0 교실 기기: 이름 가리기는 이번 수업에만(기본 켬), 내 기기 설정은 그대로
+  if(CRM) C.mask = CRM.mask;
+  function saveC(){ TT.store.set(KEY, CRM ? Object.assign({}, C, {mask: MASK0}) : C); }
   var cls = null, tab = "pick";
   function code(c){ return c && c.grade && c.cls ? c.grade * 100 + c.cls : (c ? c.id : ""); }
   function h(tag, cls, text){ var e = document.createElement(tag); if(cls) e.className = cls; if(text != null) e.textContent = text; return e; }
@@ -188,7 +190,8 @@
   }
   function maskUI(){ $("maskBtn").setAttribute("aria-pressed", !!C.mask); document.body.classList.toggle("mask", !!C.mask); }
   $("maskBtn").onclick = function(){
-    C.mask = !C.mask; saveC(); maskUI(); render();
+    C.mask = !C.mask; if(CRM) CRM.setMask(C.mask); saveC(); maskUI(); render();
+    if(CRM) return;
     var J = TT.store.get("tt_journal_v1", null); if(J && J.v === 2){ J.hideNames = !!C.mask; TT.store.set("tt_journal_v1", J); }   // 수업 기록장의 "이름 가리기"와 같이 움직임
   };
   function sndUI(){ $("sndBtn").textContent = C.sound ? "🔊" : "🔇"; $("sndBtn").setAttribute("aria-pressed", !!C.sound); }
