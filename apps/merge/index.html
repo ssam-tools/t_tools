@@ -113,20 +113,21 @@
   drop.addEventListener("drop", function(e){ e.preventDefault(); drop.classList.remove("on"); add(e.dataTransfer.files); });
   function okFile(f){ return KIND === "x" ? /\.(xlsx|xls|csv|txt)$/i.test(f.name) : KIND === "p" ? /\.pdf$/i.test(f.name) : /\.hwpx$/i.test(f.name); }
   function add(list){
-    var bad = 0, hwp = 0;
+    var bad = 0, hwp = 0, hwp2 = 0;   // hwp2: PDF 칸에 넣은 한글 파일 (v2.10.3 안내)
     Array.prototype.forEach.call(list || [], function(f){
-      if(!okFile(f)){ bad++; if(/\.hwp$/i.test(f.name)) hwp++; return; }
+      if(!okFile(f)){ bad++; if(/\.hwp$/i.test(f.name)) hwp++; if(/\.hwpx?$/i.test(f.name)) hwp2++; return; }
       if(FILES.some(function(x){ return x.file.name === f.name && x.file.size === f.size; })) return;
       FILES.push({file: f});
     });
     FILES.sort(function(a, b){ return a.file.name.localeCompare(b.file.name, "ko", {numeric: true}); });
-    if(hwp) TT.ui.toast("예전 .hwp 파일은 한글에서 '다른 이름으로 저장 → HWPX'로 바꾼 뒤 넣어 주세요.");
+    if(KIND === "p" && hwp2) TT.ui.toast("한글 파일은 한글에서 [파일 → PDF로 저장하기](또는 인쇄 → 'Microsoft Print to PDF')로 PDF를 만든 뒤 넣어 주세요. 여러 개를 PDF로 바꿔 여기서 한 번에 합칠 수 있어요.", null, null, 12000);
+    else if(hwp) TT.ui.toast("예전 .hwp 파일은 한글에서 '다른 이름으로 저장 → HWPX'로 바꾼 뒤 넣어 주세요.");
     else if(bad) TT.ui.toast(bad + "개는 " + (KIND === "x" ? "엑셀" : KIND === "p" ? "PDF" : "한글(hwpx)") + " 파일이 아니라서 뺐어요. 위에서 종류를 바꿔 보세요.");
     draw();
   }
   function draw(){
     Array.prototype.forEach.call(document.querySelectorAll("#kind button"), function(b){ b.setAttribute("aria-pressed", String(b.dataset.k === KIND)); });
-    $("dropSub").textContent = KIND === "x" ? "엑셀 .xlsx · .csv · 나이스 .xls(표)" : KIND === "p" ? "PDF 파일 (한 개도 됨 — 쪽 정리·나누기·뽑기)" : "한글 .hwpx (예전 .hwp는 HWPX로 저장해서)";
+    $("dropSub").textContent = KIND === "x" ? "엑셀 .xlsx · .csv · 나이스 .xls(표)" : KIND === "p" ? "PDF 파일 (한 개도 됨 — 쪽 정리·나누기·뽑기) · 한글은 'PDF로 저장하기' 후" : "한글 .hwpx (예전 .hwp는 HWPX로 저장해서)";
     $("f").accept = KIND === "x" ? ".xlsx,.xls,.csv,.txt" : KIND === "p" ? ".pdf" : ".hwpx";
     $("list").innerHTML = FILES.map(function(x, i){
       return '<div class="it"><span title="' + esc(x.file.name) + '">' + esc(x.file.name) + '</span><small>' + Math.max(1, Math.round(x.file.size / 1024)) + 'KB</small>'

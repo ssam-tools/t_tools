@@ -85,7 +85,11 @@
   .pvp .dfm{position:absolute;display:block;background:rgba(255,214,0,.42);mix-blend-mode:multiply;border-radius:2px;pointer-events:none}
   .pvp .dfm.cur{background:rgba(255,128,0,.55);box-shadow:0 0 0 2px rgba(255,110,0,.9)}
   .pvf{position:relative;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 12px;background:#fff}
-  .pvf:focus-within{border-color:var(--accent,#2f6fb5)}
+  .pvf:focus-within{border-color:var(--accent,#2f6fb5);box-shadow:0 0 0 2px var(--t-focus,#7fb0e6)}
+  /* v2.10.3 테두리 겹침 없애기: 칸 안 입력·단추는 자기 테두리(포커스 고리)를 그리지 않고 바깥 둥근 틀만 표시 */
+  html .pvh .pvf input,html .pvh .pvf input:focus,html .pvh .pvf input:focus-visible{outline:none!important;box-shadow:none!important;border:0!important;background:transparent}
+  html .pvh .pvf .btn:focus-visible{outline:2px solid var(--t-focus,#7fb0e6)!important;outline-offset:-2px!important}
+  .pvh .pvf input::-webkit-search-cancel-button{cursor:pointer}
   .pvh .pvf input{width:170px;border:0;outline:0;font:inherit;font-size:13px;text-align:left;padding:4px 0}
   .pvf #pvQc{font-size:12px;color:var(--sub);min-width:40px;text-align:right;white-space:nowrap}
   .pvh .pvf .btn{padding:3px 8px;font-size:11px;border-radius:999px}
@@ -155,7 +159,7 @@
   function drawList(){
     var my = mine().mine, L = items.filter(function(x){ return (cat === "전체" || x.cat === cat) && (!onlyNew || x.latest); }).sort(function(a, b){ return a.at < b.at ? 1 : -1; });
     $("body").innerHTML = L.length ? '<div class="list">' + L.map(function(x){
-      return '<div class="it"><span class="ic">' + icon(x.name) + '</span><div class="mn"><div class="tt" title="' + esc(x.name) + '">' + esc(x.title) + '</div><div class="mt"><span class="chip">' + esc(x.cat) + "</span>" + (x.latest ? '<span class="chip new">최신</span>' : '<span class="chip old">보관</span>') + (x.pages ? '<span class="chip idx">내용 검색' + (/\.pdf$/i.test(x.name) ? " " + x.pages + "쪽" : "") + "</span>" : '<span class="chip">이름으로만 검색</span>') + "<span>" + esc(x.by || "") + "</span><span>" + esc(day(x.at)) + "</span><span>" + kb(x.size) + "</span>" + (x.desc ? "<span>" + esc(x.desc) + "</span>" : "") + '</div></div>' + (star()[x.id] ? '<button type="button" class="btn star on" data-star="' + x.id + '" title="학교 업무판의 자주 보는 문서에서 빼기" aria-pressed="true">★</button>' : '<button type="button" class="btn star" data-star="' + x.id + '" title="학교 업무판의 자주 보는 문서에 넣기 (학교 배치도·교육계획서·규정집 등)" aria-pressed="false">☆</button>') + (isPdf(x.name) ? '<button type="button" class="btn" data-view="' + x.id + '">👁 보기</button>' : "") + '<button type="button" class="btn" data-get="' + x.id + '">⬇ 내려받기</button>' + (my[x.id] || admin ? '<button type="button" class="btn" data-del="' + x.id + '" title="' + (my[x.id] ? "내가 올린 자료" : "관리자") + '">🗑</button>' : "") + "</div>";
+      return '<div class="it"><span class="ic">' + icon(x.name) + '</span><div class="mn"><div class="tt" title="' + esc(x.name) + '">' + esc(x.title) + '</div><div class="mt"><span class="chip">' + esc(x.cat) + "</span>" + (x.latest ? '<span class="chip new">최신</span>' : '<span class="chip old">보관</span>') + (x.pages ? '<span class="chip idx">내용 검색' + (/\.pdf$/i.test(x.name) ? " " + x.pages + "쪽" : "") + "</span>" : '<span class="chip">이름으로만 검색</span>') + "<span>" + esc(x.by || "") + "</span><span>" + esc(day(x.at)) + "</span><span>" + kb(x.size) + "</span>" + (x.desc ? "<span>" + esc(x.desc) + "</span>" : "") + '</div></div>' + (star()[x.id] ? '<button type="button" class="btn star on" data-star="' + x.id + '" title="학교 업무판의 자주 보는 문서에서 빼기" aria-pressed="true">★</button>' : '<button type="button" class="btn star" data-star="' + x.id + '" title="학교 업무판의 자주 보는 문서에 넣기 (학교 배치도·교육계획서·규정집 등)" aria-pressed="false">☆</button>') + (isPdf(x.name) ? '<button type="button" class="btn" data-view="' + x.id + '">👁 보기</button>' : "") + '<button type="button" class="btn" data-get="' + x.id + '">⬇ 내려받기</button>' + (my[x.id] || admin ? '<button type="button" class="btn" data-edit="' + x.id + '" title="자료 이름·갈래·설명 고치기">✏️ 고치기</button>' : "") + (my[x.id] || admin ? '<button type="button" class="btn" data-del="' + x.id + '" title="' + (my[x.id] ? "내가 올린 자료" : "관리자") + '">🗑</button>' : "") + "</div>";
     }).join("") + "</div>" : '<div class="empty"><div class="big">🔎</div><div><b>' + (items.length ? "이 갈래에 자료가 없습니다." : "아직 올라온 자료가 없습니다.") + '</b><br>규정집, 교육계획서, 생활기록부 기재요령, 자주 쓰는 서식처럼<br>구성원이 가끔 찾아보는 자료를 올려 주세요. PDF·HWPX·워드·엑셀은 내용까지 찾을 수 있어요.</div><button type="button" class="btn primary" id="up2">＋ 자료 올리기</button></div>';
     var u2 = $("up2"); if(u2) u2.onclick = upload;
     $("info").textContent = "자료 " + items.filter(function(x){ return x.latest; }).length + "개 (보관 " + items.filter(function(x){ return !x.latest; }).length + ") · 누구나 올리고 내려받습니다";
@@ -174,6 +178,7 @@
     var v = e.target.closest("[data-view]"); if(v){ view(v.dataset.view, +v.dataset.page || 1, v); return; }
     var g = e.target.closest("[data-get]"); if(g){ download(g.dataset.get, g); return; }
     var d = e.target.closest("[data-del]"); if(d){ del(d.dataset.del); }
+    var ed = e.target.closest("[data-edit]"); if(ed){ edit(ed.dataset.edit); }
   });
   /* 받은 파일은 마지막 하나만 기억해 둡니다(보기 → 내려받기 때 다시 받지 않도록) */
   var last = null;
@@ -353,13 +358,23 @@
      쪽마다 글자를 이 기기에서 읽어(pdf.js getTextContent) 찾은 자리를 노랗게 칠합니다. 띄어쓰기는 무시하고 찾습니다. */
   var DF = {q: "", raw: "", hits: [], i: -1, pages: [], doc: null, task: 0, done: 0, want: ""};
   function dfReset(){ DF.pages = []; DF.doc = PV && PV.doc; DF.done = 0; DF.hits = []; DF.i = -1; }
+  /* v2.10.3 글자 자리 정확히: 한 덩어리 안 글자 폭을 실제 글꼴로 재서(한글·영문·띄어쓰기 폭이 다름) 나눔 */
+  var MC = null;
+  function cuts(s, fam){                                                 // s의 글자 경계 → 0~1 비율 [0, …, 1]
+    if(!MC) MC = document.createElement("canvas").getContext("2d");
+    MC.font = "100px " + (fam || "sans-serif");
+    var out = [0], acc = 0, ws = [], tot = 0;
+    for(var i = 0; i < s.length; i++){ var w = MC.measureText(s.charAt(i)).width; if(!(w > 0)) w = /\s/.test(s.charAt(i)) ? 30 : 100; ws.push(w); tot += w; }
+    ws.forEach(function(w){ acc += w; out.push(tot ? acc / tot : 0); });
+    return out;
+  }
   async function dfIndex(n){                                             // n쪽 글자와 자리 읽기
-    var page = await PV.doc.getPage(n), vp = page.getViewport({scale: 1}), tc = await page.getTextContent();
+    var page = await PV.doc.getPage(n), vp = page.getViewport({scale: 1}), tc = await page.getTextContent(), sty = tc.styles || {};
     var its = [], str = "", map = [], raw = "", rawAt = [];
     tc.items.forEach(function(it){
       var s = it.str || ""; if(!s && !it.hasEOL) return;
       var k = its.length, t = it.transform || [1, 0, 0, 1, 0, 0], h = Math.hypot(t[2], t[3]) || it.height || 10;
-      its.push({s: s, x: t[4], y: t[5], w: it.width || 0, h: h});
+      its.push({s: s, x: t[4], y: t[5], w: it.width || 0, h: h, f: (sty[it.fontName] || {}).fontFamily || ""});
       for(var c = 0; c < s.length; c++){ raw += s.charAt(c); if(/\s/.test(s.charAt(c))) continue; str += s.charAt(c).toLowerCase(); map.push([k, c]); rawAt.push(raw.length - 1); }
       if(it.hasEOL) raw += " ";
     });
@@ -378,7 +393,7 @@
     var P = DF.pages[h.p], seg = {}, out = [];
     for(var c = h.a; c < h.b; c++){ var m = P.map[c], g = seg[m[0]] || (seg[m[0]] = [m[1], m[1]]); g[0] = Math.min(g[0], m[1]); g[1] = Math.max(g[1], m[1]); }
     Object.keys(seg).forEach(function(k){
-      var it = P.its[k], L = Math.max(1, it.s.length), x0 = it.x + it.w * seg[k][0] / L, x1 = it.x + it.w * (seg[k][1] + 1) / L;
+      var it = P.its[k], cx = it.cx || (it.cx = cuts(it.s, it.f)), x0 = it.x + it.w * cx[seg[k][0]], x1 = it.x + it.w * cx[seg[k][1] + 1];
       var a = P.vp.convertToViewportPoint(x0, it.y - it.h * 0.25), b = P.vp.convertToViewportPoint(x1, it.y + it.h * 0.95);
       out.push({l: Math.min(a[0], b[0]) / P.vp.width * 100, t: Math.min(a[1], b[1]) / P.vp.height * 100, w: Math.abs(b[0] - a[0]) / P.vp.width * 100, h: Math.abs(b[1] - a[1]) / P.vp.height * 100});
     });
@@ -474,6 +489,49 @@
     TT.ui.confirm("자료 지우기", "'" + x.title + "'을(를) 자료실에서 지웁니다. 드라이브 휴지통으로 옮겨집니다.", "지우기", function(){
       var o = mine(); post({action: "libdel", id: id, tok: o.mine[id] || "", admin: admin}).then(function(){ delete o.mine[id]; TT.store.set("tt_lib_v1", o); TT.ui.toast("지웠습니다."); load(); }).catch(function(e){ TT.ui.toast(err(e)); });
     });
+  }
+
+  /* v2.10.3 ✏️ 고치기 (관리자 · 올린 사람): 자료 이름 · 갈래 · 올린 사람 · 설명
+     업무판 Code.gs를 고치지 않도록, 같은 파일을 새 정보로 다시 올리고(내용 검색 글자도 다시 뽑음) 옛 자료를 지웁니다.
+     옛 자료를 지울 권한이 없으면 방금 올린 것을 되돌려 지우므로 겹치는 자료가 남지 않습니다. ★ 자주 보는 문서도 새 자료로 옮김. */
+  function edit(id){
+    var x = items.filter(function(i){ return i.id === id; })[0]; if(!x) return;
+    var d = document.createElement("dialog"); d.className = "up"; var f = document.createElement("form"); d.appendChild(f); document.body.appendChild(d);
+    d.addEventListener("close", function(){ d.remove(); });
+    f.innerHTML = '<h2>✏️ 자료 고치기</h2><p>파일은 그대로 두고 이름·갈래·설명만 바꿉니다. <small class="muted">(' + esc(x.name) + ")</small></p>"
+      + '<label class="f">자료 이름<input type="text" id="eT" maxlength="80"></label>'
+      + '<div class="g2"><label class="f">갈래<select id="eC">' + CATS.map(function(c){ return "<option>" + esc(c) + "</option>"; }).join("") + '</select></label><label class="f">올린 사람<input type="text" id="eB" maxlength="30"></label></div>'
+      + '<label class="f">한 줄 설명 (선택)<input type="text" id="eD" maxlength="200"></label>'
+      + '<div class="st" id="eS" hidden></div>'
+      + '<div class="acts"><span class="muted">' + (admin && !mine().mine[id] ? "관리자로 고칩니다" : "내가 올린 자료") + '</span><div class="r"><button type="button" class="btn" id="eX">취소</button><button type="submit" class="btn primary" id="eGo">저장</button></div></div>';
+    var T = f.querySelector("#eT"), C = f.querySelector("#eC"), By = f.querySelector("#eB"), De = f.querySelector("#eD"), S = f.querySelector("#eS"), go = f.querySelector("#eGo");
+    T.value = x.title || ""; By.value = x.by || ""; De.value = x.desc || "";
+    if(CATS.indexOf(x.cat) < 0) C.insertAdjacentHTML("afterbegin", "<option>" + esc(x.cat || "기타") + "</option>"); C.value = x.cat || "기타";
+    function say(t, cls){ S.hidden = false; S.className = "st" + (cls ? " " + cls : ""); S.textContent = t; }
+    f.querySelector("#eX").onclick = function(){ d.close(); };
+    f.onsubmit = async function(e){
+      e.preventDefault(); if(go.disabled) return;
+      var nt = T.value.trim(), nc = C.value, nb = By.value.trim(), nd = De.value.trim();
+      if(!nt){ say("자료 이름을 넣어 주세요.", "warn"); T.focus(); return; }
+      if(nt === x.title && nc === x.cat && nb === (x.by || "") && nd === (x.desc || "")){ d.close(); return; }
+      go.disabled = true;
+      try{
+        say("파일을 가져오는 중…");
+        var F = await fetchFile(id), pages = [];
+        try{ var fl = new File([F.u8], F.name || x.name, {type: F.mime || ""}); pages = await extract(fl, F.u8.buffer.slice(0), function(t){ say(t); }); }catch(ex){ pages = []; }
+        say("새 정보로 저장하는 중…");
+        var b64 = await new Promise(function(ok, no){ var fr = new FileReader(); fr.onload = function(){ ok(String(fr.result).split(",")[1]); }; fr.onerror = no; fr.readAsDataURL(new Blob([F.u8])); });
+        var tok = Array.prototype.map.call(crypto.getRandomValues(new Uint8Array(16)), function(b){ return ("0" + b.toString(16)).slice(-2); }).join("");
+        var r = await post({action: "libup", name: F.name || x.name, mime: F.mime || "application/octet-stream", data: b64, title: nt, cat: nc, by: nb, desc: nd, replace: "", tok: tok, pages: pages});
+        var o = mine();
+        try{ await post({action: "libdel", id: id, tok: o.mine[id] || "", admin: admin}); }
+        catch(de){ try{ await post({action: "libdel", id: r.id, tok: tok, admin: ""}); }catch(z){} throw new Error("이 자료를 고칠 권한이 없어요 (⋯ → 관리자 모드에서 비밀번호를 확인해 주세요). " + err(de)); }
+        delete o.mine[id]; o.mine[r.id] = tok; TT.store.set("tt_lib_v1", o);
+        var st = TT.store.get("tt_lib_star_v1", null) || {}; if(st.ids && st.ids[id]){ st.ids[r.id] = {t: nt, at: st.ids[id].at || Date.now()}; delete st.ids[id]; TT.store.set("tt_lib_star_v1", st); }
+        last = null; d.close(); TT.ui.toast("✏️ 고쳤습니다: " + nt); load();
+      }catch(ex){ say("고치지 못했습니다: " + (ex && ex.message ? ex.message : ex), "warn"); go.disabled = false; }
+    };
+    d.showModal(); T.focus(); T.select();
   }
 
   /* ---------- 찾기 · 물어보기 ---------- */
@@ -612,7 +670,7 @@
   function closeMenu(){ $("more").open = false; }
   document.addEventListener("click", function(e){ if(!$("more").contains(e.target)) closeMenu(); });
   $("mReload").onclick = function(){ closeMenu(); load(); };
-  $("mAdmin").onclick = function(){ closeMenu(); TT.ui.prompt("관리자 비밀번호 (업무판 스크립트 속성 LIB_ADMIN)", "", "브라우저 창을 닫으면 잊습니다", function(v){ admin = v; sessionStorage.setItem("tt_lib_admin", v); drawList(); TT.ui.toast("관리자 모드: 모든 자료에 🗑이 보입니다. 맞는 비밀번호일 때만 지워집니다."); }); };
+  $("mAdmin").onclick = function(){ closeMenu(); TT.ui.prompt("관리자 비밀번호 (업무판 스크립트 속성 LIB_ADMIN)", "", "브라우저 창을 닫으면 잊습니다", function(v){ admin = v; sessionStorage.setItem("tt_lib_admin", v); drawList(); TT.ui.toast("관리자 모드: 모든 자료에 ✏️ 고치기 · 🗑이 보입니다. 맞는 비밀번호일 때만 지워집니다."); }); };
 
   if(!B.url || !/^https:\/\/script\.google\.com\//.test(B.url)){
     $("body").innerHTML = '<div class="empty"><div class="big">📅</div><div><b>학교 업무판을 먼저 연결해 주세요.</b><br>자료실 파일은 학교 업무판 계정의 구글 드라이브에 저장됩니다.<br>⚙️ 설정 → 학교 업무판 연결에서 주소와 공용 비밀번호를 넣으세요.</div><a class="btn primary" href="../../#settings">설정 열기</a></div>';
