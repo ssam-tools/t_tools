@@ -413,7 +413,7 @@
           vault().then(function(V){ return V.pinOff(); }).then(function(x){ if(x.error){ q(".ttv-err").textContent = x.error; return; } try{ localStorage.removeItem("ttv_pin"); }catch(e){} show({set: false}); }); };
         if(r.locked) row.hidden = false;
       } else {
-        try{ localStorage.removeItem("ttv_pin"); }catch(e){}
+        try{ localStorage.removeItem("ttv_pin"); localStorage.setItem("ttv_pinchk", String(Date.now())); }catch(e){}
         st.innerHTML = '전자칠판에서 <b>이름을 누르고 숫자 6자리</b>로 내 수업 환경을 열 수 있어요. 번호는 이 기기에서만 정하고, 5번 틀리면 잠겨요.'; row.hidden = false;
       }
     }
@@ -448,7 +448,13 @@
     }); });
   }
   function roomWatch(){                                                            // 화면을 켠 뒤 3분 동안만 20초마다 확인(서버 부담 줄이기)
-    if(!personal || LS("ttv_pin") !== "1") return;
+    if(!personal) return;
+    if(LS("ttv_pin") !== "1"){                                                     // 다른 기기에서 번호를 정했을 수도 있으니 한 시간에 한 번 확인
+      var last = +(LS("ttv_pinchk") || 0); if(Date.now() - last < 36e5) return;
+      try{ localStorage.setItem("ttv_pinchk", String(Date.now())); }catch(e){}
+      vault().then(function(V){ return V.pinStatus(); }).then(function(r){ if(r && r.set){ try{ localStorage.setItem("ttv_pin", "1"); }catch(e){} roomWatch(); } });
+      return;
+    }
     roomUntil = Date.now() + 3 * 60000; clearInterval(roomT);
     setTimeout(roomCheck, 1500);
     roomT = setInterval(function(){ if(Date.now() > roomUntil){ clearInterval(roomT); return; } roomCheck(); }, 20000);
