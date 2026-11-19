@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://script.google.com https://script.googleusercontent.com; img-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>이동 중… · 쌤 노트 짧은 주소</title>
+<link rel="icon" href="../assets/ssambi3-192.png">
+<style>
+  html,body{height:100%;margin:0}
+  body{display:flex;align-items:center;justify-content:center;font:16px/1.6 'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif;background:#faf8f3;color:#1d2733;text-align:center;padding:20px;box-sizing:border-box}
+  .c{max-width:420px}.c img{width:72px;height:72px}.c b{display:block;font-size:19px;margin:8px 0 4px}.c small{color:#5b6773}
+  a{color:#2f6fb5;font-weight:700}
+</style>
+</head>
+<body>
+<div class="c"><img src="../assets/ssambi3-192.png" alt=""><b id="t">이동 중…</b><small id="s">잠깐만 기다려 주세요.</small></div>
+<script src="schools.js"></script>
+<script>
+(function(){
+  var t = document.getElementById("t"), s = document.getElementById("s");
+  function fail(a, b){ t.textContent = a; s.innerHTML = b || ""; document.title = a + " · 쌤 노트 짧은 주소"; }
+  var q = location.search.slice(1), url = "", code = "";
+  try{ q = decodeURIComponent(q.replace(/\+/g, " ")); }catch(e){}
+  var m = /(?:^|&)b=([A-Za-z0-9_-]{20,120})&c=(.+)$/.exec(q), S = window.TT_GO_SCHOOLS || {};
+  if(m){ url = "https://script.google.com/macros/s/" + m[1] + "/exec"; code = m[2]; }
+  else if(q.indexOf("/") > 0){ var k = q.split("/")[0]; url = S[k] || ""; code = q.slice(k.length + 1); }
+  else { url = S[""] || ""; code = q; }
+  code = code.trim();
+  if(!code){ fail("짧은 주소가 비어 있어요.", '쌤 노트 → 자료실 → 짧은 주소에서 만들 수 있어요.'); return; }
+  if(!url){ fail("어느 학교 주소인지 모르겠어요.", "주소를 다시 확인해 주세요."); return; }
+  fetch(url, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify({action: "go", code: code})})
+    .then(function(r){ return r.json(); })
+    .then(function(r){
+      if(r && r.ok && /^https?:\/\//i.test(r.url)){ t.textContent = "이동 중…"; location.replace(r.url); return; }
+      fail("없는 짧은 주소예요.", "‘" + code.replace(/[<>&"]/g, "") + "’ — 지워졌거나 이름이 달라요.");
+    })
+    .catch(function(){ fail("지금 열 수 없어요.", "인터넷 연결을 확인하고 <a href=\"\">다시 시도</a>해 주세요."); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 외부로 자료를 보내는 통로를 막습니다. 예외: 학교 업무판(구글 앱스 스크립트) — 짧은 이름과 원래 주소만 '짧은주소' 시트에 저장됩니다. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/ssambi3-192.png">
+<script src="../../shared/early.js"></script>
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>짧은 주소 · 쌤 노트</title>
+<!--
+  🔗 짧은 주소 (v2.10.2): 긴 주소 → https://ssam-tools.github.io/t_tools/g/?수학1  (도메인 구입 없이 GitHub Pages + 학교 업무판)
+  · 만들기·목록: 학교 업무판 비밀번호(설정 → 학교 업무판 연결). 열기(g/)는 비밀번호 없이 원래 주소만 받아 이동.
+  · 지우기: 만든 이 기기(tt_short_v1.mine 에 표 보관) 또는 자료실 관리자 비밀번호.
+  · 어느 학교 업무판인지는 g/schools.js 표. 없는 학교는 g/?b=배포ID&c=이름 꼴로 자동.
+-->
+<style>
+  header{align-items:center}
+  main{display:flex;flex-direction:column!important;gap:10px;padding:12px!important}
+  .two{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);gap:12px}
+  .box{background:var(--card,#fff);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;min-height:0}
+  .box h2{font-size:15px;font-weight:900}
+  .box label{display:flex;flex-direction:column;gap:3px;font-size:13px;font-weight:700;color:var(--sub)}
+  .box input{font:inherit;font-size:15px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%;box-sizing:border-box;color:var(--ink);background:var(--t-field,#fff)}
+  .pre{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;background:var(--t-field,#fff);overflow:hidden}
+  .pre span{padding:0 0 0 10px;color:var(--sub);font-size:13px;white-space:nowrap}
+  .pre input{border:0;padding-left:2px}
+  .hint{font-size:12.5px;color:var(--sub);font-weight:400}
+  .go{display:flex;gap:8px;justify-content:flex-end}
+  .err{color:var(--danger);font-size:13.5px;min-height:1em}
+  .res{border-radius:12px;background:var(--accent-soft);padding:10px 12px;display:flex;gap:12px;align-items:center}
+  .res .qr{flex:none;width:112px;height:112px;background:#fff;border-radius:8px;padding:4px}
+  .res .qr svg{width:100%;height:100%}
+  .res .l{min-width:0;display:flex;flex-direction:column;gap:6px}
+  .res b{font-size:16px;color:var(--accent);word-break:break-all}
+  .res .bt{display:flex;gap:6px;flex-wrap:wrap}
+  .top{display:flex;gap:8px;align-items:center}
+  .top input{flex:1}
+  .tbl{flex:1;min-height:0;overflow:auto;border:1px solid var(--line);border-radius:12px}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th{position:sticky;top:0;background:#f3f6f9;font-size:12.5px;color:var(--sub);text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+  td{padding:6px 10px;border-bottom:1px solid #eef2f6;vertical-align:middle}
+  td.c b{color:var(--accent)}
+  td.u{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--sub);font-size:12.5px}
+  td.n{color:var(--sub);font-size:12.5px;white-space:nowrap}
+  td .btn{padding:3px 9px;font-size:12.5px}
+  td.a{white-space:nowrap;text-align:right}
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--sub);text-align:center}
+  .empty .big{font-size:44px}
+  dialog.qrd{border:0;border-radius:16px;padding:18px;text-align:center}
+  dialog.qrd svg{width:min(70vmin,420px);height:min(70vmin,420px)}
+  dialog.qrd b{display:block;font-size:20px;margin-top:6px;word-break:break-all}
+  @media (max-width:760px){ .two{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} .tbl{max-height:none} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>🔗 짧은 주소</h1>
+  </div>
+</header>
+<main class="panel" id="m"></main>
+<footer>
+  <span>학생에게 알려 줄 긴 주소를 짧게 · QR로 띄우기</span>
+  <span class="priv">🔒 짧은 이름과 원래 주소만 학교 업무판에 저장돼요 · 학생 개인정보가 든 주소는 만들지 마세요</span>
+</footer>
+<dialog class="qrd" id="qd"><div id="qbox"></div><b id="qtx"></b><p><button class="btn" type="button" id="qclose">닫기</button></p></dialog>
+<script src="../../shared/tt.js"></script>
+<script src="../../shared/qr.js"></script>
+<script src="../../g/schools.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); }, m = $("m");
+  var B = TT.store.get("tt_board_v1", null) || {}, L = [], last = null, filt = "";
+  var ME = TT.store.get("tt_short_v1", null) || {mine: {}};
+  var ROOT = new URL("../../", location.href).href;                          // https://ssam-tools.github.io/t_tools/
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function post(o){
+    return fetch(B.url, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(Object.assign({pw: B.pw}, o))})
+      .then(function(r){ return r.json(); }).then(function(r){ if(!r || !r.ok) throw new Error((r && r.error) || "오류"); return r; });
+  }
+  function err(e){ var s = String(e && e.message || e); return s === "AUTH" ? "업무판 비밀번호가 맞지 않아요." : /지원하지 않는 요청/.test(s) ? "업무판 Code.gs가 예전 것이에요 (관리자: 새 Code.gs로 바꾸고 새 버전으로 배포)." : s; }
+  /* 이 학교 짧은 주소의 앞부분: g/schools.js 에 있으면 g/?(학교키/)이름, 없으면 g/?b=배포ID&c=이름 */
+  function prefix(){
+    var S = window.TT_GO_SCHOOLS || {}, k = Object.keys(S).filter(function(x){ return S[x] === B.url; })[0];
+    if(k !== undefined) return ROOT + "g/?" + (k ? k + "/" : "");
+    var id = (/\/s\/([A-Za-z0-9_-]+)\/exec/.exec(B.url || "") || [])[1] || "";
+    return ROOT + "g/?b=" + id + "&c=";
+  }
+  function link(code){ return prefix() + code; }
+  function shown(u){ return u.replace(/^https:\/\//, ""); }
+  function copy(t){
+    function fb(){ var a = document.createElement("textarea"); a.value = t; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); try{ document.execCommand("copy"); }catch(e){} a.remove(); }
+    try{ navigator.clipboard.writeText(t).catch(fb); }catch(e){ fb(); }
+    TT.ui.toast("복사했어요: " + shown(t));
+  }
+  function qrSvg(t, n){ try{ return TTQR.svg(encodeURI(t), {size: n || 112}); }catch(e){ return ""; } }
+  function bigQR(code){ var u = link(code); $("qbox").innerHTML = qrSvg(u, 420); $("qtx").textContent = shown(u); $("qd").showModal(); }
+  $("qclose").onclick = function(){ $("qd").close(); };
+
+  function draw(){
+    if(!B.url || !B.pw){
+      m.innerHTML = '<div class="empty"><div class="big">🔗</div><div>먼저 학교 업무판을 연결해 주세요.<br><small>설정 → 학교 업무판 연결 (짧은 주소 목록은 업무판에 저장돼요)</small></div><a class="btn primary" href="../../#settings">설정 열기</a></div>';
+      return;
+    }
+    var P = prefix();
+    m.innerHTML = '<div class="two"><section class="box"><h2>새 짧은 주소</h2>'
+      + '<label>긴 주소<input id="url" type="url" placeholder="https://… (구글 설문, 패들렛, 유튜브 등)" autocomplete="off"></label>'
+      + '<label>짧은 이름 <span class="hint">비워 두면 4글자로 정해 줘요</span><div class="pre"><span>' + esc(shown(P).replace(/^ssam-tools\.github\.io/, "…")) + '</span><input id="code" maxlength="24" placeholder="수학1" autocomplete="off"></div></label>'
+      + '<label>무엇인지 <span class="hint">목록에서 알아보기 쉽게</span><input id="title" maxlength="40" placeholder="예: 3학년 수학 수행평가 설문"></label>'
+      + '<div class="err" id="err"></div><div class="go"><button class="btn primary" type="button" id="mk">만들기</button></div>'
+      + '<div id="res"></div></section>'
+      + '<section class="box"><div class="top"><h2>우리 학교 짧은 주소</h2><input id="q" type="search" placeholder="찾기 (이름·설명·만든 사람)" value="' + esc(filt) + '"></div><div class="tbl" id="tbl"><div class="empty">불러오는 중…</div></div></section></div>';
+    $("mk").onclick = make;
+    ["url", "code", "title"].forEach(function(id){ $(id).onkeydown = function(e){ if(e.key === "Enter") make(); }; });
+    $("q").oninput = function(){ filt = this.value; table(); };
+    if(last) result(last);
+    load();
+  }
+  function result(code){
+    var u = link(code);
+    $("res").innerHTML = '<div class="res"><div class="qr">' + qrSvg(u) + '</div><div class="l"><small>만들었어요</small><b>' + esc(shown(u)) + '</b><div class="bt"><button class="btn primary" type="button" data-cp="' + esc(code) + '">복사</button><button class="btn" type="button" data-qr="' + esc(code) + '">QR 크게</button><a class="btn" href="' + esc(u) + '" target="_blank" rel="noopener">열어 보기</a></div></div></div>';
+  }
+  function make(){
+    var u = $("url").value.trim(), c = $("code").value.trim(), t = $("title").value.trim(), e = $("err");
+    e.textContent = "";
+    if(!/^https?:\/\//i.test(u)){ e.textContent = "http:// 또는 https:// 로 시작하는 주소를 넣어 주세요."; return; }
+    if(c && !/^[0-9A-Za-z가-힣_-]{2,24}$/.test(c)){ e.textContent = "짧은 이름은 한글·영문·숫자·-·_ 2~24자예요 (띄어쓰기 없이)."; return; }
+    var b = $("mk"); b.disabled = true; b.textContent = "만드는 중…";
+    var by = ((TT.school && TT.school.load()) || {}).teacher || "";
+    post({action: "gonew", url: u, code: c, title: t, by: by}).then(function(r){
+      ME.mine[r.code.toLowerCase()] = r.tok; TT.store.set("tt_short_v1", ME);
+      last = r.code; $("url").value = $("code").value = $("title").value = ""; result(r.code); load();
+    }).catch(function(x){ e.textContent = err(x); }).then(function(){ b.disabled = false; b.textContent = "만들기"; });
+  }
+  function load(){ post({action: "golist"}).then(function(r){ L = r.items || []; table(); }).catch(function(x){ var t = $("tbl"); if(t) t.innerHTML = '<div class="empty">' + esc(err(x)) + "</div>"; }); }
+  function table(){
+    var t = $("tbl"); if(!t) return;
+    var q = filt.trim().toLowerCase(), R = L.filter(function(x){ return !q || (x.code + " " + x.title + " " + x.by).toLowerCase().indexOf(q) >= 0; });
+    if(!R.length){ t.innerHTML = '<div class="empty">' + (L.length ? "맞는 짧은 주소가 없어요." : "아직 만든 짧은 주소가 없어요.<br><small>왼쪽에서 처음 만들어 보세요.</small>") + "</div>"; return; }
+    t.innerHTML = "<table><thead><tr><th>짧은 이름</th><th>무엇인지 · 원래 주소</th><th>만든 사람</th><th>열린 수</th><th></th></tr></thead><tbody>" + R.map(function(x){
+      var mine = !!ME.mine[x.code.toLowerCase()];
+      return '<tr><td class="c"><b>' + esc(x.code) + '</b></td><td><div>' + esc(x.title || "") + '</div><div class="u" title="' + esc(x.url) + '">' + esc(x.url) + '</div></td><td class="n">' + esc(x.by || "") + "<br>" + esc(x.at || "") + '</td><td class="n">' + x.hits + '</td><td class="a"><button class="btn" type="button" data-cp="' + esc(x.code) + '">복사</button> <button class="btn" type="button" data-qr="' + esc(x.code) + '">QR</button>' + (mine ? ' <button class="btn" type="button" data-del="' + esc(x.code) + '">지우기</button>' : "") + "</td></tr>";
+    }).join("") + "</tbody></table>";
+  }
+  m.addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    if(b.dataset.cp) copy(link(b.dataset.cp));
+    if(b.dataset.qr) bigQR(b.dataset.qr);
+    if(b.dataset.del){
+      if(b.dataset.sure !== "1"){ b.dataset.sure = "1"; b.textContent = "정말 지우기"; return; }
+      post({action: "godel", code: b.dataset.del, tok: ME.mine[b.dataset.del.toLowerCase()]}).then(function(){ delete ME.mine[b.dataset.del.toLowerCase()]; TT.store.set("tt_short_v1", ME); if(last && last.toLowerCase() === b.dataset.del.toLowerCase()){ last = null; $("res").innerHTML = ""; } load(); }).catch(function(x){ TT.ui.toast(err(x)); });
+    }
+  });
+  draw();
+})();
+</script>
+</body>
+</html>
