@@ -84,7 +84,7 @@
   }
   function dateHTML(){                                                  // 학교 · 날짜 · 시간은 맨 위 ⋯ 줄 왼쪽에 (휴대폰은 짧게)
     var d = new Date(), s = (TT.school && TT.school.load ? TT.school.load() : {}) || {}, t = (d.getHours() < 12 ? "오전 " : "오후 ") + ((d.getHours() % 12) || 12) + ":" + pad(d.getMinutes());
-    return '<span class="lg">' + (s.name ? esc(s.name) + " · " : "") + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + DOW[d.getDay()] + "요일 · " + t + '</span><span class="st">' + (d.getMonth() + 1) + "/" + d.getDate() + "(" + DOW[d.getDay()] + ") " + t + "</span>";
+    return '<span class="lg">' + (s.name ? esc(s.name) + " · " : "") + '<span data-hid="meal">' + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + DOW[d.getDay()] + '요일</span> · <span data-hid="time">' + t + '</span></span><span class="st"><span data-hid="meal">' + (d.getMonth() + 1) + "/" + d.getDate() + "(" + DOW[d.getDay()] + ')</span> <span data-hid="time">' + t + "</span></span>";   // v2.9 숨은 정보: 날짜 → 급식, 시각 → 교시
   }
   function srowHTML(){
     return '<div class="q">' + icon("search", 20) + '<label for="sbQ2" class="sr">찾기 또는 한 줄 입력</label><input id="sbQ2" type="text" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="찾기 · 할 일 적기">'

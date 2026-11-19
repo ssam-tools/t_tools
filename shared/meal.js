@@ -185,6 +185,7 @@
   }
   /* 쌤비 브리핑용: 저장된 오늘 점심 한 줄 (없으면 "") */
   function todayText(){ var t = target(), o = opt(), c = o.w && o.w[ymd(monday(t.d))]; var x = c && c.days[ymd(t.d)]; return x ? t.lab + ": " + dishes(x.raw, false).slice(0, 4).join(", ") : ""; }
-  window.TTMeal = {open: openDlg, todayText: todayText, dishes: dishes};
+  window.TTMeal = {open: openDlg, todayText: todayText, dishes: dishes,
+    day: function(d, cb){ var k = ymd(d); try{ week(monday(d), function(days){ cb(days ? days[k] : null); }); }catch(e){ cb(null); } }};   // v2.9 숨은 정보(날짜 → 급식)
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 })();

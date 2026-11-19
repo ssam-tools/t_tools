@@ -243,8 +243,10 @@
     ["voice1", "🎙️", "첫 말로 기록", function(o){ return o.saved.some(function(x){ return x.k === "voice"; }) || (o.cnt.voice || 0) >= 1; }],
     ["backup3", "💾", "백업 3번", function(o){ return (o.cnt.backup || 0) >= 3; }],
     ["duty4", "🧹", "1인 1역 4주 운영", function(){ var D = TT.store.get("tt_duty_v1", null), ok = false; try{ Object.keys((D && D.c) || {}).forEach(function(k){ var c = D.c[k]; if(c.start && c.roles && c.roles.length && (Date.now() - new Date(c.start + "T00:00:00")) >= 28 * 864e5) ok = true; }); }catch(e){} return ok; }],
-    ["tree15", "🌳", "우리 반 나무가 '나무'로", function(){ return growth() >= 15; }]
+    ["tree15", "🌳", "우리 반 나무가 '나무'로", function(){ return growth() >= 15; }],
+    ["explore", "🧭", "숨은 정보 5가지 찾기", function(o){ return Object.keys(o.cnt.hid || {}).length >= 5; }]
   ];
+  function found(k){ J = load(); J.cnt.hid = J.cnt.hid || {}; if(J.cnt.hid[k]) return; J.cnt.hid[k] = Date.now(); save(J); badges(); }   // v2.9 숨은 정보를 처음 찾을 때
   /* v2.8 쌤비 소품: 배지를 받을수록 하나씩 열림 → ⋯ 화면 꾸미기 · 도장판에서 골라 씌우기 (계절 = 철마다 저절로) */
   var ACCS = [["season", "🍂", "계절 소품", 0], ["bow", "🎀", "나비넥타이", 1], ["flower", "🌼", "꽃 핀", 3], ["hat", "🥳", "고깔모자", 5], ["grad", "🎓", "학사모", 8], ["crown", "👑", "왕관", 12]];
   function nBadge(){ return Object.keys(load().badges).length; }
@@ -270,7 +272,7 @@
     J = load();
     if(!dlg){ dlg = document.createElement("dialog"); dlg.className = "joyDlg"; dlg.setAttribute("aria-label", "도장판·배지"); document.body.appendChild(dlg);
       dlg.addEventListener("click", function(e){ if(e.target === dlg || (e.target.closest && e.target.closest("[data-x]"))) dlg.close(); });
-      dlg.addEventListener("change", function(e){ if(e.target.id === "joyOn"){ J = load(); J.off = !e.target.checked; save(J); refresh(); open(); } });
+      dlg.addEventListener("change", function(e){ if(e.target.id === "hidOn"){ var u = TT.store.get("tt_ui_v1", {}) || {}; if(e.target.checked) delete u.hidOff; else u.hidOff = true; TT.store.set("tt_ui_v1", u); return; } if(e.target.id === "joyOn"){ J = load(); J.off = !e.target.checked; save(J); refresh(); open(); } });
       dlg.addEventListener("click", function(e){ var s = e.target.closest && e.target.closest("[data-stamp]"); if(s){ e.preventDefault(); dlg.close(); stamp(); } });
       dlg.addEventListener("click", function(e){ var a = e.target.closest && e.target.closest("[data-acc]"); if(a && !a.disabled){ setAcc(a.dataset.acc); open(); } });
     }
@@ -289,6 +291,8 @@
       + '<p style="font-size:12px;color:var(--t-sub,#5b6773);margin:8px 0 0;line-height:1.5">아낀 시간은 쌤 노트가 만든 파일 내려받기·인쇄 때마다 손으로 할 때 걸릴 시간을 대략 더한 값입니다. 모든 기록은 이 기기에만 있습니다.</p>'
       + '<h3>🦉 쌤비 소품 <small>배지를 받을수록 하나씩 열려요 · 눌러서 씌우기</small></h3><div class="joyAcc2">' + ACCS.map(function(a){ var op = a[3] <= nb;
           return '<button type="button" data-acc="' + a[0] + '"' + (op ? "" : " disabled") + ' class="' + (ca === a[0] ? "on" : "") + '" title="' + (op ? a[2] : "배지 " + a[3] + "개를 받으면 열려요") + '"><i>' + (op ? a[1] : "🔒") + "</i>" + (op ? esc(a[2]) : "배지 " + a[3] + "개") + "</button>"; }).join("") + "</div>"
+      + '<p style="font-size:12.5px;margin:10px 0 0;color:var(--t-sub,#5b6773)">🧭 숨은 정보 <b>' + Object.keys(J.cnt.hid || {}).length + "</b>가지 찾음 · 쌤 노트 곳곳에 마우스를 올려 보세요(휴대폰은 길게 누르기)</p>"
+      + '<label class="joyOff"><input type="checkbox" id="hidOn"' + (((TT.store.get("tt_ui_v1", {}) || {}).hidOff) ? "" : " checked") + "> 숨은 정보 보기 (마우스를 올리면 나오는 작은 말풍선)</label>"
       + '<label class="joyOff"><input type="checkbox" id="joyOn"' + (on() ? " checked" : "") + "> 재미 요소 켜기 (쌤비 소품·한마디·도장·배지·D-day 칩)</label>";
     if(!dlg.open){ if(dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", ""); }
   }
@@ -327,5 +331,5 @@
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
   TT.joy = {saved: saved, count: count, open: open, stamp: stamp, on: on, weekSaved: weekSaved, dday: dday, examNear: examNear, season: season,
             stamped: function(){ return !!load().stamps[ymd()]; }, stampable: stampable, monthStamps: monthStamps,
-            streak: streak, acc: acc, setAcc: setAcc, yearCard: yearCard, treeNow: function(){ var n = growth(); var t = tree(n); t.n = n; return t; }, bubble: bubble, allSaved: allSaved};   // v2.8   // v2.0 쌤비 홈도 함께 씀
+            found: found, streak: streak, acc: acc, setAcc: setAcc, yearCard: yearCard, treeNow: function(){ var n = growth(); var t = tree(n); t.n = n; return t; }, bubble: bubble, allSaved: allSaved};   // v2.8   // v2.0 쌤비 홈도 함께 씀
 })();

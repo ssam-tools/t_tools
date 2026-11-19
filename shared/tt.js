@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.8.2";
+  var VERSION = "2.9.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -505,7 +505,7 @@ var TT = (function(){
   };
 
   /* ================= 단축키 (PLAN_통일 3단계, shared/keys.js) ================= */
-  (function(){ ["keys", "joy"].forEach(function(n){ var s = document.createElement("script"); s.src = BASE + "shared/" + n + ".js?v=" + VERSION; (document.head || document.documentElement).appendChild(s); }); })();   // joy = 재미 요소(PLAN_통일 6단계)
+  (function(){ ["keys", "joy", "hidden"].forEach(function(n){ var s = document.createElement("script"); s.src = BASE + "shared/" + n + ".js?v=" + VERSION; (document.head || document.documentElement).appendChild(s); }); })();   // joy = 재미 요소(PLAN_통일 6단계)
 
   /* ================= 설치·오프라인 ================= */
   if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
@@ -773,7 +773,7 @@ var TT = (function(){
       var name = String(o.name || "").trim();
       if(!name){ var b = store.get("tt_board_v1", null) || {}; name = String(b.school || "").trim(); }
       var logo = /^data:image\/(png|jpeg|webp);base64,/.test(o.logo || "") && o.logo.length < 200000 ? o.logo : "";
-      var out = {name: name, teacher: String(o.teacher || "").trim(), logo: logo};
+      var out = {name: name, teacher: String(o.teacher || "").trim(), logo: logo, hid: o.hid && typeof o.hid === "object" ? o.hid : null};
       Object.keys(SCH_TXT).forEach(function(k){ out[k] = String(o[k] || "").trim(); });
       return out;
     },
@@ -783,7 +783,8 @@ var TT = (function(){
       if(o.teacher != null) c.teacher = String(o.teacher).trim().slice(0, 10);
       if(o.logo != null) c.logo = /^data:image\/(png|jpeg|webp);base64,/.test(o.logo) && o.logo.length < 200000 ? o.logo : "";   // 학교 로고(선택, 작게 줄인 그림)
       Object.keys(SCH_TXT).forEach(function(k){ if(o[k] != null) c[k] = String(o[k]).trim().slice(0, SCH_TXT[k]); });
-      if(o.packOnly != null) c.packOnly = !!o.packOnly;   // PLAN_다듬기 5단계: 교과 칸에 내 교과만
+      if(o.packOnly != null) c.packOnly = !!o.packOnly;
+      if(o.hid != null && typeof o.hid === "object"){ c.hid = {}; Object.keys(o.hid).slice(0, 20).forEach(function(k){ if(/^[a-z]{2,8}$/.test(k)) c.hid[k] = !!o.hid[k]; }); }   // v2.9 숨은 정보: 담당자가 세팅 파일로 켜고 끔   // PLAN_다듬기 5단계: 교과 칸에 내 교과만
       c.updatedAt = Date.now(); store.set("tt_school_v1", c);
     },
     short: function(){ return school.load().name.replace(/\s+/g, "").replace(/학교$/, ""); },   // 마산서중학교 → 마산서중
