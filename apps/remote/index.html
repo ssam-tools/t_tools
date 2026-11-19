@@ -135,11 +135,24 @@
   }
   /* v2.10.5: 번호 뽑기는 휴대폰에서 바로 뽑아 크게 보여 주고, 뽑은 번호를 교실 화면에 보냄 (교실 기기에 명렬표가 없어도 됨) */
   var lastPick = 0;
+  window.TT_ON_CHANGED = function(){ drawCls(); };   /* 교실 화면이 진도를 저장해도 이 화면은 다시 불러오지 않음 */
+  function nosOf(c){
+    var N = [];
+    try{ var Jo = TT.store.get("tt_journal_v1", null), js = Jo && Jo.students && Jo.students[c]; if(js && js.length) N = js.map(function(x){ return +x.no; }); }catch(e){}
+    if(!N.length) try{ var R = TT.roster.classes().filter(function(x){ return x.grade * 100 + x.cls === c; })[0]; if(R) N = R.students.map(function(x){ return +x.no; }); }catch(e){}
+    N = N.filter(function(n){ return n > 0; });
+    if(!N.length && last && +last.c === c && +last.n > 0) for(var i = 1; i <= +last.n; i++) N.push(i);
+    if(!N.length){   /* 명렬표가 없는 반: 학생 수만 한 번 물어 이 휴대폰에 기억 */
+      var M = {}; try{ M = JSON.parse(localStorage.getItem("ttrm_count") || "{}"); }catch(e){}
+      var k = +M[c] || 0;
+      if(!k){ k = parseInt(prompt(Math.floor(c / 100) + "-" + (c % 100) + "반 명렬표가 없어요. 학생 수를 넣어 주세요 (한 번만)", "28"), 10) || 0; if(k > 0 && k < 60){ M[c] = k; try{ localStorage.setItem("ttrm_count", JSON.stringify(M)); }catch(e){} } }
+      for(var j = 1; j <= k && j < 60; j++) N.push(j);
+    }
+    return N;
+  }
   function pickNo(){
-    var c = last && +last.c, N = [];
-    try{ var R = TT.roster.classes().filter(function(x){ return x.grade * 100 + x.cls === c; })[0]; if(R) N = R.students.map(function(x){ return +x.no; }).filter(function(n){ return n > 0; }); }catch(e){}
-    if(!N.length && last && +last.n > 0) for(var i = 1; i <= +last.n; i++) N.push(i);
-    if(!N.length) return 0;
+    var c = last && +last.c; if(!c) return 0;
+    var N = nosOf(c); if(!N.length) return 0;
     if(N.length > 1) N = N.filter(function(n){ return n !== lastPick; });
     return (lastPick = N[Math.floor(Math.random() * N.length)]);
   }
@@ -150,7 +163,7 @@
   }
   [].forEach.call(document.querySelectorAll("[data-a]"), function(b){ b.onclick = function(){
     var c = {a: b.dataset.a}; if(b.dataset.m) c.m = +b.dataset.m;
-    if(c.a === "pick"){ var n = pickNo(); if(!n){ $("sent").textContent = "반을 먼저 골라 주세요 (아래 반 단추)"; return; } c.n = n; pickShow(n); }
+    if(c.a === "pick"){ var n = pickNo(); if(!n){ $("sent").textContent = last && last.c ? "학생 수를 몰라 번호를 뽑지 못했어요" : "반을 먼저 골라 주세요 (아래 반 단추)"; return; } c.n = n; pickShow(n); }
     send(c);
   }; });
   $("gB").onclick = function(){ var t = $("gT").value.trim(); send(t ? {a: "goal", t: t, on: true} : {a: "goal"}); $("gT").value = ""; };

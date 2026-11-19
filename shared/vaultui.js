@@ -91,6 +91,7 @@
   });
   ["pointerdown", "keydown"].forEach(function(ev){ document.addEventListener(ev, function(){ touched = true; }, true); });
   function onChanged(keys){
+    if(typeof window.TT_ON_CHANGED === "function"){ try{ window.TT_ON_CHANGED(keys); }catch(e){} return; }   /* v2.11.1: 수업 리모컨처럼 다시 불러올 필요 없는 화면은 조용히 처리 */
     var busy = document.querySelector("dialog[open]") || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName));
     if(!busy && (!touched || Date.now() - LOADED < 4000)){ location.reload(); return; }
     note("다른 기기에서 바뀐 내용을 받았어요.", "새로 보기", function(){ location.reload(); });
