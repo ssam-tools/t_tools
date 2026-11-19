@@ -2,7 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
+<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}  .pkbig{position:fixed;inset:0;z-index:900;background:rgba(10,15,25,.86);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;cursor:pointer}
+  .pkbig small{font-size:18px;opacity:.85}.pkbig b{font-size:min(38vw,200px);line-height:1;font-weight:900}.pkbig span{font-size:14px;opacity:.7;margin-top:10px}
+</style>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="theme-color" content="#2f6fb5">
@@ -102,11 +104,30 @@
     sending = true; again = false;
     V().then(function(v){ return v.rsend("tt_remote_v1", {q: Q}); }).then(function(r){
       sending = false;
-      $("sent").textContent = r && r.ok ? "보냄 · 교실 화면에 2~4초 뒤 바뀌어요" : "보내지 못했어요: " + ((r && r.error) || "");
+      $("sent").textContent = r && r.ok ? "보냄 ✓ · 교실 화면에 곧 바뀌어요" : "보내지 못했어요: " + ((r && r.error) || "");
       if(again) flush();
     }, function(e){ sending = false; $("sent").textContent = "보내지 못했어요: " + (e && e.message || e); });
   }
-  [].forEach.call(document.querySelectorAll("[data-a]"), function(b){ b.onclick = function(){ var c = {a: b.dataset.a}; if(b.dataset.m) c.m = +b.dataset.m; send(c); }; });
+  /* v2.10.5: 번호 뽑기는 휴대폰에서 바로 뽑아 크게 보여 주고, 뽑은 번호를 교실 화면에 보냄 (교실 기기에 명렬표가 없어도 됨) */
+  var lastPick = 0;
+  function pickNo(){
+    var c = last && +last.c, N = [];
+    try{ var R = TT.roster.classes().filter(function(x){ return x.grade * 100 + x.cls === c; })[0]; if(R) N = R.students.map(function(x){ return +x.no; }).filter(function(n){ return n > 0; }); }catch(e){}
+    if(!N.length && last && +last.n > 0) for(var i = 1; i <= +last.n; i++) N.push(i);
+    if(!N.length) return 0;
+    if(N.length > 1) N = N.filter(function(n){ return n !== lastPick; });
+    return (lastPick = N[Math.floor(Math.random() * N.length)]);
+  }
+  function pickShow(n){
+    var o = document.createElement("div"); o.className = "pkbig";
+    o.innerHTML = "<small>🎲 오늘의 주인공</small><b>" + n + "번</b><span>교실 화면에도 띄웠어요 · 누르면 닫힘</span>";
+    o.onclick = function(){ o.remove(); }; document.body.appendChild(o); setTimeout(function(){ o.remove(); }, 5000);
+  }
+  [].forEach.call(document.querySelectorAll("[data-a]"), function(b){ b.onclick = function(){
+    var c = {a: b.dataset.a}; if(b.dataset.m) c.m = +b.dataset.m;
+    if(c.a === "pick"){ var n = pickNo(); if(!n){ $("sent").textContent = "반을 먼저 골라 주세요 (아래 반 단추)"; return; } c.n = n; pickShow(n); }
+    send(c);
+  }; });
   $("gB").onclick = function(){ var t = $("gT").value.trim(); send(t ? {a: "goal", t: t, on: true} : {a: "goal"}); $("gT").value = ""; };
   $("pB").onclick = function(){ var p = parseInt($("pT").value, 10); if(p > 0) send({a: "page", p: p}); $("pT").value = ""; };
   $("rB").onclick = function(){ if(last && last.c && TT.notes && TT.notes.quick){ var R = (TT.roster.classes() || []).filter(function(x){ return x.grade * 100 + x.cls === +last.c; })[0]; TT.notes.quick(R ? {cls: R.id, src: "수업 리모컨"} : {src: "수업 리모컨"}); } else if(TT.notes && TT.notes.quick) TT.notes.quick({src: "수업 리모컨"}); };
@@ -134,7 +155,7 @@
       $("kk").textContent = fresh ? "교실 화면 · " + new Date(last.at).toLocaleTimeString().replace(/:\d\d$/, "") + " 기준" : "교실 화면을 아직 찾지 못했어요";
       $("nt").textContent = fresh ? (last.cn || "") + " · p." + last.p + (last.u ? " · " + last.u : "") : "교실 컴퓨터에서 교과서 수업 모드를 켜 주세요";
       $("ns").textContent = fresh ? (last.lesson ? MN[last.mode] || "" : "수업 모드 아님") + (last.goal ? " · 🎯 " + last.goal : "") : "같은 보관함 ID로 교실 기기 보관함을 열어야 해요";
-      setTimeout(poll, 3000);
+      setTimeout(poll, 1500);
     }).catch(function(){ setTimeout(poll, 10000); });
   }
   drawCls();
