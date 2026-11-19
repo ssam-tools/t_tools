@@ -47,19 +47,19 @@
     + ".ttv-chip.err{background:var(--t-danger-soft,#fdeceb);color:var(--t-danger,#b3261e)}.ttv-chip.off{background:var(--t-chip,#eceff3);color:var(--t-sub,#5b6773)}"
     + ".tt-rail > .ttv-ri b{font-size:9.5px!important}"
     /* v2.10.0 교실 기기 잠금 화면: 왼쪽 시계·급식(공개 정보) / 오른쪽 이름 → 숫자 6자리 */
-    + ".ttv-room{position:fixed;inset:0;z-index:2000;display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,520px);gap:24px;align-items:center;padding:24px 4vw;background:linear-gradient(135deg,#1f3b63,var(--t-accent,#2f6fb5));color:#fff;font:15px/1.5 'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif;overflow:hidden}"
-    + "@media(max-width:760px){.ttv-room{grid-template-columns:1fr;align-content:center;padding:14px}.ttv-pub .clk{font-size:56px!important}.ttv-pub .meal{display:none}}"
-    + ".ttv-pub .clk{font-size:min(15vw,150px);font-weight:800;letter-spacing:-2px;line-height:1}.ttv-pub .dt{font-size:22px;opacity:.9;margin-top:6px}.ttv-pub .sc{font-size:15px;opacity:.75;margin-top:2px}"
-    + ".ttv-pub .meal{margin-top:22px;background:rgba(255,255,255,.12);border-radius:16px;padding:12px 16px;max-width:460px;font-size:15px}.ttv-pub .meal b{display:block;font-size:13px;opacity:.8;margin-bottom:2px}"
-    + ".ttv-room .ttv-card{width:auto;max-height:calc(100vh - 48px);display:flex;flex-direction:column;padding:20px 20px 16px}"
-    + ".ttv-room h1{font-size:21px;margin:0 0 2px}.ttv-room .sub{color:var(--t-sub,#5b6773);font-size:13px;margin:0 0 12px}"
-    + ".ttv-names{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;overflow:auto;min-height:0;padding:2px}"
-    + ".ttv-names button{font:inherit;font-size:17px;font-weight:700;border:2px solid var(--t-line,#dde3ea);background:var(--t-card,#fff);color:var(--t-ink,#1d2733);border-radius:14px;padding:12px 6px;cursor:pointer}"
+    + ".ttv-room{position:fixed;inset:0;z-index:2000;display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,600px);gap:24px;align-items:center;padding:24px 4vw;background:linear-gradient(135deg,#1f3b63,var(--t-accent,#2f6fb5));color:#fff;font:15px/1.5 'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif;overflow:hidden}"
+    + "@media(max-width:760px){.ttv-room{grid-template-columns:1fr;align-content:center;padding:14px}.ttv-pub .ttv-clk{font-size:56px!important}.ttv-pub .ttv-meal{display:none}}"
+    + ".ttv-pub .ttv-clk{font-size:min(15vw,150px);font-weight:800;letter-spacing:-2px;line-height:1}.ttv-pub .ttv-dt{font-size:22px;opacity:.9;margin-top:6px}.ttv-pub .ttv-sc{font-size:15px;opacity:.75;margin-top:2px}"
+    + ".ttv-pub .ttv-meal{margin-top:22px;background:rgba(255,255,255,.12);border-radius:16px;padding:12px 16px;max-width:460px;font-size:15px}.ttv-pub .ttv-meal b{display:block;font-size:13px;opacity:.8;margin-bottom:2px}"
+    + ".ttv-room .ttv-err{font-size:15px}.ttv-room .ttv-card{width:auto;max-height:calc(100vh - 48px);display:flex;flex-direction:column;padding:20px 20px 16px}"
+    + ".ttv-room h1{font-size:24px;margin:0 0 2px}.ttv-room .sub{color:var(--t-sub,#5b6773);font-size:15px;margin:0 0 12px}"
+    + ".ttv-names{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;overflow:auto;min-height:0;padding:2px}"
+    + ".ttv-names button{font:inherit;font-size:19px;font-weight:700;border:2px solid var(--t-line,#dde3ea);background:var(--t-card,#fff);color:var(--t-ink,#1d2733);border-radius:14px;padding:12px 6px;cursor:pointer}"
     + ".ttv-names button:hover{border-color:var(--t-accent,#2f6fb5);background:var(--t-accent-soft,#e6f0fa)}.ttv-names button.lk{opacity:.5}"
     + ".ttv-dots{display:flex;gap:12px;justify-content:center;margin:6px 0 12px}.ttv-dots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--t-accent,#2f6fb5)}.ttv-dots i.on{background:var(--t-accent,#2f6fb5)}"
-    + ".ttv-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:330px;margin:0 auto;width:100%}"
-    + ".ttv-keys button{font:inherit;font-size:26px;font-weight:700;border:0;background:var(--t-bg,#f3f6f9);color:var(--t-ink,#1d2733);border-radius:14px;height:min(9vh,64px);cursor:pointer}.ttv-keys button:active{background:var(--t-accent-soft,#e6f0fa)}.ttv-keys button.s{font-size:15px}"
-    + ".ttv-room .lnk{display:flex;justify-content:space-between;gap:8px;margin-top:12px;font-size:13px}.ttv-room .lnk a{color:var(--t-accent,#2f6fb5);font-weight:700;text-decoration:none;cursor:pointer}"
+    + ".ttv-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:380px;margin:0 auto;width:100%}"
+    + ".ttv-keys button{font:inherit;font-size:26px;font-weight:700;border:0;background:var(--t-bg,#f3f6f9);color:var(--t-ink,#1d2733);border-radius:14px;height:min(9.5vh,72px);cursor:pointer}.ttv-keys button:active{background:var(--t-accent-soft,#e6f0fa)}.ttv-keys button.s{font-size:15px}"
+    + ".ttv-room .lnk{display:flex;justify-content:space-between;gap:8px;margin-top:14px;font-size:15px}.ttv-room .lnk a{color:var(--t-accent,#2f6fb5);font-weight:700;text-decoration:none;cursor:pointer}"
     + ".ttv-code{font-size:64px;font-weight:800;letter-spacing:6px;color:var(--t-accent,#2f6fb5);margin:6px 0}"
     + ".ttv-old input{width:100%;box-sizing:border-box;font:inherit;font-size:17px;border:2px solid var(--t-line,#dde3ea);border-radius:12px;padding:10px;margin-bottom:8px;text-align:center}"
     + ".ttv-pin{border:1px solid var(--t-line,#dde3ea);border-radius:12px;padding:8px 12px;margin-top:10px}.ttv-pin h3{font-size:14.5px;margin:0 0 2px}"
@@ -277,13 +277,13 @@
   function lockScreen(){
     var srv = J(LS("ttv_server")) || {}, P = pub();
     var box = document.createElement("div"); box.className = "ttv-room"; box.setAttribute("role", "dialog"); box.setAttribute("aria-label", "수업 시작");
-    box.innerHTML = '<div class="ttv-pub"><div class="clk"></div><div class="dt"></div><div class="sc">' + esc(P.school || "") + '</div><div class="meal" hidden></div></div>'
+    box.innerHTML = '<div class="ttv-pub"><div class="ttv-clk"></div><div class="ttv-dt"></div><div class="ttv-sc">' + esc(P.school || "") + '</div><div class="ttv-meal" hidden></div></div>'
       + '<div class="ttv-card"></div>';
     document.body.appendChild(box);
     var card = box.querySelector(".ttv-card"), list = null, cur = null, pin = "", waitT = null, busy = false;
-    function tick(){ var d = new Date(); box.querySelector(".clk").textContent = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
-      box.querySelector(".dt").textContent = (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + "일월화수목금토"[d.getDay()] + "요일"; }
-    tick(); setInterval(tick, 10000); mealLine(box.querySelector(".meal"));
+    function tick(){ var d = new Date(); box.querySelector(".ttv-clk").textContent = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+      box.querySelector(".ttv-dt").textContent = (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + "일월화수목금토"[d.getDay()] + "요일"; }
+    tick(); setInterval(tick, 10000); mealLine(box.querySelector(".ttv-meal"));
     function foot(back){ return '<div class="lnk">' + (back ? '<a data-a="back">← 다른 선생님</a>' : '<a data-a="old">ID로 열기</a>') + '<a data-a="cfg">기기 설정</a></div>'; }
     function wire(){
       var x;
@@ -299,7 +299,7 @@
       var paint = function(j){
         var g = card.querySelector(".ttv-names"); if(!g) return;
         if(j.error){ g.innerHTML = '<p class="sub" style="color:var(--t-danger,#b3261e)">' + esc(j.error) + '</p>'; return; }
-        if(j.school && j.school !== P.school){ savePub({school: j.school}); P.school = j.school; box.querySelector(".sc").textContent = j.school; }
+        if(j.school && j.school !== P.school){ savePub({school: j.school}); P.school = j.school; box.querySelector(".ttv-sc").textContent = j.school; }
         list = j.items || [];
         if(!list.length){ g.innerHTML = '<p class="sub">아직 교실 열기를 정한 선생님이 없어요.<br>내 휴대폰이나 교무실 PC의 쌤 노트에서 <b>⋯ → 기기 연결·동기화 → 교실 전자칠판에서 열기</b>로 번호를 정하면 여기에 이름이 나와요.</p>'; return; }
         g.innerHTML = list.map(function(t, i){ return '<button type="button" data-i="' + i + '"' + (t.locked ? ' class="lk" title="번호가 여러 번 틀려 잠겼어요"' : "") + '>' + (t.locked ? "🔒 " : "") + esc(t.name) + '</button>'; }).join("");
