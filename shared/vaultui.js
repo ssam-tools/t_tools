@@ -54,7 +54,7 @@
     + ".ttv-room .ttv-err{font-size:15px}.ttv-room .ttv-card{width:auto;max-height:calc(100vh - 48px);display:flex;flex-direction:column;padding:20px 20px 16px}"
     + ".ttv-room h1{font-size:24px;margin:0 0 2px}.ttv-room .sub{color:var(--t-sub,#5b6773);font-size:15px;margin:0 0 12px}"
     + ".ttv-names{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;overflow:auto;min-height:0;padding:2px}"
-    + ".ttv-names button{font:inherit;font-size:19px;font-weight:700;border:2px solid var(--t-line,#dde3ea);background:var(--t-card,#fff);color:var(--t-ink,#1d2733);border-radius:14px;padding:12px 6px;cursor:pointer}"
+    + ".ttv-names>p{grid-column:1/-1;margin:4px 0}.ttv-names button{font:inherit;font-size:19px;font-weight:700;border:2px solid var(--t-line,#dde3ea);background:var(--t-card,#fff);color:var(--t-ink,#1d2733);border-radius:14px;padding:12px 6px;cursor:pointer}"
     + ".ttv-names button:hover{border-color:var(--t-accent,#2f6fb5);background:var(--t-accent-soft,#e6f0fa)}.ttv-names button.lk{opacity:.5}"
     + ".ttv-dots{display:flex;gap:12px;justify-content:center;margin:6px 0 12px}.ttv-dots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--t-accent,#2f6fb5)}.ttv-dots i.on{background:var(--t-accent,#2f6fb5)}"
     + ".ttv-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:380px;margin:0 auto;width:100%}"
@@ -63,7 +63,7 @@
     + ".ttv-code{font-size:64px;font-weight:800;letter-spacing:6px;color:var(--t-accent,#2f6fb5);margin:6px 0}"
     + ".ttv-old input{width:100%;box-sizing:border-box;font:inherit;font-size:17px;border:2px solid var(--t-line,#dde3ea);border-radius:12px;padding:10px;margin-bottom:8px;text-align:center}"
     + ".ttv-pin{border:1px solid var(--t-line,#dde3ea);border-radius:12px;padding:8px 12px;margin-top:10px}.ttv-pin h3{font-size:14.5px;margin:0 0 2px}"
-    + ".ttv-pin input.pin{letter-spacing:6px;text-align:center}.ttv-pin .row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end}@media(max-width:520px){.ttv-pin .row{grid-template-columns:1fr 1fr}}"
+    + ".ttv-pin input.ttv-pinin{letter-spacing:6px;text-align:center;display:block;width:100%;position:static}.ttv-pin .row{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end}@media(max-width:520px){.ttv-pin .row{grid-template-columns:1fr 1fr}}"
     + ".ttv-big{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.ttv-big button{font:inherit;text-align:left;border:2px solid var(--t-line,#dde3ea);background:var(--t-card,#fff);border-radius:14px;padding:12px;cursor:pointer;color:var(--t-sub,#5b6773);font-size:13px}"
     + ".ttv-big button b{display:block;font-size:16px;color:var(--t-ink,#1d2733);margin-bottom:4px}.ttv-big button:hover{border-color:var(--t-accent,#2f6fb5);background:var(--t-accent-soft,#e6f0fa)}@media(max-width:520px){.ttv-big{grid-template-columns:1fr}}"
     + ".ttv-band .warn{background:#ffd36b;color:#3a2a00;border-radius:8px;padding:0 8px}"
@@ -159,8 +159,8 @@
         + '<div class="ttv-box">마지막 동기화: <b class="ttv-last">' + (s.last ? new Date(s.last).toLocaleString("ko-KR") : "—") + '</b>' + (s.error ? '<br><span style="color:var(--t-danger,#b3261e)">' + esc(s.error) + '</span>' : '') + '</div>'
         + '<div class="ttv-pin"><h3>🏫 교실 전자칠판에서 열기</h3><div class="pst" style="font-size:13px;color:var(--t-sub,#5b6773)">확인 중…</div>'
         + '<div class="row" hidden><div><label class="f">칠판에 보일 이름</label><input type="text" name="pname" maxlength="20" value="' + esc((TT.school.load() || {}).teacher || "") + '" placeholder="예: 김수학"></div>'
-        + '<div><label class="f">숫자 6자리</label><input type="password" class="pin" name="pin" inputmode="numeric" maxlength="6" autocomplete="new-password"></div>'
-        + '<div><label class="f">한 번 더</label><input type="password" class="pin" name="pin2" inputmode="numeric" maxlength="6" autocomplete="new-password"></div>'
+        + '<div><label class="f">숫자 6자리</label><input type="password" class="ttv-pinin" name="pin" inputmode="numeric" maxlength="6" autocomplete="new-password"></div>'
+        + '<div><label class="f">한 번 더</label><input type="password" class="ttv-pinin" name="pin2" inputmode="numeric" maxlength="6" autocomplete="new-password"></div>'
         + '<button class="ttv-btn p" data-a="pinset">정하기</button></div></div>'
         + '<p>다른 기기 연결: 그 기기에서 <b>⋯ → 기기 연결·동기화</b>를 열고 같은 ID와 비밀 문구를 넣으세요. 전자칠판은 “여러 선생님이 쓰는 기기”로 정하세요.</p>'
         + '<div class="ttv-err"></div><div class="acts"><button class="ttv-btn d" data-a="off">이 기기 연결 끊기</button><div class="r"><button class="ttv-btn" data-a="close">닫기</button><button class="ttv-btn p" data-a="now">지금 동기화</button></div></div>'
