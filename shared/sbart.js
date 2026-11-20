@@ -44,7 +44,7 @@
     umbrella: '<g class="sbIt"><path d="M84 62 a16 13 0 0 1 32 0 q-4 -3 -8 0 q-4 -3 -8 0 q-4 -3 -8 0 q-4 -3 -8 0 z" fill="#378ADD" stroke="' + INK + '" stroke-width="1.5" stroke-linejoin="round"/>'
       + '<path d="M100 49 v-3" stroke="' + INK + '" stroke-width="1.6" stroke-linecap="round"/><path d="M100 62 v24 q0 5 -5 5 q-4 0 -4 -4" fill="none" stroke="' + INK + '" stroke-width="2" stroke-linecap="round"/>'
       + '<path class="sbDrop" d="M88 74 v4 M112 70 v4 M107 80 v4" stroke="#85B7EB" stroke-width="1.8" stroke-linecap="round"/></g>',
-    mask: '<g class="sbIt"><path d="M47 53 q13 -5 26 0 v9 q-13 9 -26 0 z" fill="#fff" stroke="' + INK + '" stroke-width="1.5" stroke-linejoin="round"/>'
+    mask: '<g class="sbIt" transform="translate(0 3)"><path d="M47 53 q13 -5 26 0 v9 q-13 9 -26 0 z" fill="#fff" stroke="' + INK + '" stroke-width="1.5" stroke-linejoin="round"/>'
       + '<path d="M51 56 h18 M51 60 h18" stroke="#c3cad2" stroke-width="1.2"/><path d="M47 54 q-7 -6 -6 -14 M73 54 q7 -6 6 -14" fill="none" stroke="#c3cad2" stroke-width="1.2"/></g>',
     scarf: '<g class="sbIt"><path d="M30 68 Q60 77 90 68 L90 76 Q60 85 30 76 Z" fill="#378ADD"/><path d="M40 72 v7 M50 74 v7 M60 75 v7 M70 74 v7 M80 72 v7" stroke="#fff" stroke-width="1.3" opacity=".7"/>'
       + '<path d="M76 75 l3 18 l8 -2 l-3 -17 z" fill="#378ADD"/><path d="M78 92 l1 4 M81 91 l1 4 M84 90 l1 4" stroke="#378ADD" stroke-width="1.4" stroke-linecap="round"/></g>',
