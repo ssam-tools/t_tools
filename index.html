@@ -14,8 +14,10 @@ try{ var snG = /[?&]legacy=(on|off)\b/.exec(location.search);   /* v2.8: 쌤비 
   if(snG){ if(snG[1] === "on") localStorage.setItem("sn_legacy_ui", "1"); else localStorage.removeItem("sn_legacy_ui"); history.replaceState(null, "", location.pathname + location.search.replace(/[?&]legacy=(on|off)\b/, "").replace(/^&/, "?") + location.hash); }
   var snLeg = localStorage.getItem("sn_legacy_ui") === "1", snQ = snLeg && /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse(localStorage.getItem("snlook_v1") || "null");
   if(snQ){ snL = snL || {}; snL.ui = snQ[1]; localStorage.setItem("snlook_v1", JSON.stringify(snL)); history.replaceState(null, "", location.pathname + location.search.replace(/[?&]ui=(ssambi|board)\b/, "").replace(/^&/, "?") + location.hash); }
-  if((!snLeg || (snL && snL.ui === "ssambi")) && localStorage.getItem("ttv_device") !== "classroom") document.documentElement.setAttribute("data-ui", "ssambi"); }catch(e){}</script>
-<style id="sbHold">html[data-ui="ssambi"]:not(.sbReady) body{visibility:hidden}
+  var r = document.documentElement;
+  if(localStorage.getItem("ttv_device") === "classroom"){ var rmS = null; try{ rmS = JSON.parse(sessionStorage.getItem("ttv_session")); }catch(e){} r.setAttribute("data-room", rmS && rmS.k && Date.now() - (rmS.last || 0) < 12e5 && !(rmS.until && Date.now() > rmS.until) ? "on" : "lock"); }   /* v2.11.4 교실 기기도 쌤비 홈 (잠긴 동안은 '수업 시작' 화면만 보이게) */
+  if(!snLeg || (snL && snL.ui === "ssambi")) r.setAttribute("data-ui", "ssambi"); }catch(e){}</script>
+<style id="sbHold">html[data-room="lock"] body>*:not(.ttv-room):not(.ttv-lock){visibility:hidden!important}html[data-ui="ssambi"]:not(.sbReady) body{visibility:hidden}
 /* v2.8.1: 쌤비 홈이 준비되기 전에는 예전 업무판 부분을 아예 그리지 않음(잠깐 보였다 바뀌지 않게) */
 html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #today,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) .toprow,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #tbar,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #mview,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #mnav,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > footer,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #sbBtn{display:none!important}</style>
 <script>setTimeout(function(){ document.documentElement.classList.add("sbLate", "sbReady"); }, 8000);   /* 혹시 쌤비 홈이 못 뜨면 8초 뒤 예전 화면이라도 보이게 */</script><!-- 쌤비 홈이 다 그려질 때까지 감춤(업무판이 잠깐 보이지 않게) -->

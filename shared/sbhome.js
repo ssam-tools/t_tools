@@ -15,7 +15,7 @@
   fitMax(); window.addEventListener("resize", function(){ soon(); });
   var DOW = "일월화수목금토";
 
-  function on(){ return R.getAttribute("data-ui") === "ssambi" && !TT.classroom && !!window.TT_TODAY && !!TT_TODAY.home; }
+  function on(){ return R.getAttribute("data-ui") === "ssambi" && !(TT.classroom && TT.classroom.locked) && !!window.TT_TODAY && !!TT_TODAY.home; }   // v2.11.4 교실 기기도 (할 일 없이)
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function pad(n){ return (n < 10 ? "0" : "") + n; }
   function hm(min){ return Math.floor(min / 60) + ":" + pad(min % 60); }
@@ -43,6 +43,11 @@
     var urgent = T.filter(function(x){ return x.lv === "hi" && /^(오늘|지남|종례|지금|D-[01])$/.test(String(x.n)); });
     var nxt = N.has && !N.cur && N.n ? N : null, cnt = T.length, deco = J ? season() : "";
     function r(item, line, sub, o){ o = o || {}; return {item: item, deco: deco, open: !!o.open, sleep: !!o.sleep, listen: !!o.listen, line: line, sub: sub || ""}; }
+    if(TT.classroom){                                                   // 교실 기기: 내 할 일·퇴근 도장 없이 수업 안내만
+      var who = TT.classroom.name || "";
+      if(N.cur) return r("shh", N.n + "교시 " + N.cls + " 수업 중이에요.", "끝까지 " + N.left + "분");
+      return r("book", (who ? who + " 선생님, " : "") + "수업을 시작해요.", "수업 메뉴에서 교과서를 열어요. 끝나면 위쪽 띠에서 잠가요.");
+    }
     var pr = prepStep(); if(pr) return r("paper", "시작 준비: " + pr, "말풍선을 누르면 바로 해요.");   // 예전 "시작 준비" 줄 대신
     if(st.listen) return r("listen", "듣고 있어요.", "말하면 오른쪽에 적혀요.", {listen: true});
     if(!urgent.length && wk && d.getHours() >= 12 && J){                 // v2.8: 급한 일만 없으면 퇴근 도장 (남은 일은 내일 해도 됨)
@@ -77,6 +82,11 @@
 
   /* ── 지금 카드 ── */
   function nowCard(N){
+    if(TT.classroom){                                                   // v2.11.4 교실 기기: 교과서 열기 한 단추만 (개인 기록·시간표 넣기 없이)
+      var bk = '<div class="acts"><a class="sbBtn p" href="apps/book/">📘 교과서 열기</a></div>';
+      if(!N.has || !N.n) return '<div class="sbNow none"><div class="nb"><div class="k">수업</div><div class="tt">교과서를 열어 수업을 시작해요</div></div>' + bk + "</div>";
+      return '<div class="sbNow' + (N.cur ? " cur" : "") + '"><div class="nb"><div class="k">' + esc(N.cur ? "지금 수업 · 끝까지 " + N.left + "분" : "다음 수업 · " + N.left + "분 뒤") + '</div><div class="tt">' + N.n + "교시 " + esc(N.cls) + (N.subj ? " " + esc(N.subj) : "") + "</div></div>" + bk + "</div>";
+    }
     if(!N.has && prepStep()) return "";                                  // 시작 준비 중에는 말풍선이 안내하므로 숨김
     if(!N.has) return '<div class="sbNow none"><div class="nb"><div class="k">지금</div><div class="tt">내 시간표를 넣으면 다음 수업이 여기에 나와요</div></div>'
       + '<div class="acts"><a class="sbBtn p" href="apps/timetable/">시간표 넣기</a></div></div>';
@@ -231,7 +241,7 @@
     if(document.body.classList.contains("inmenu")){ host.innerHTML = '<div class="sbWrap mid">' + midHTML() + "</div>"; return; }
     host.innerHTML = '<div class="sbWrap">'
       + '<div class="sbNowWrap">' + nowCard(H.now) + "</div>"
-      + '<section class="sbTasks" aria-label="오늘 할 일">' + tasks(H.tasks) + "</section></div>";
+      + (TT.classroom ? "" : '<section class="sbTasks" aria-label="오늘 할 일">' + tasks(H.tasks) + "</section>") + "</div>";
     var shown = Math.min(MAX, cur.length);
     if(!st.more && window.innerWidth > 760 && shown > 2 && document.documentElement.scrollHeight > window.innerHeight + 2){ MAX = shown - 1; render(); }   // 넘치면 한 줄씩 줄여 스크롤 없이
   }

@@ -417,3 +417,6 @@ html[data-ui="ssambi"] .tpd .on,html[data-ui="ssambi"] .tpd b.on{border-radius:1
 #sbRail.tighter .owl svg{width:44px;height:44px}
 #sbRail.tighter .mi{min-height:31px}
 #sbRail.tighter .ti{min-height:24px}
+
+/* v2.11.4 교실 기기(전자칠판): 첫 화면 검색·말로 기록·빠른 입력 없음 (수업용 메뉴만) */
+html[data-room="on"] #sbHero .srow,html[data-room="on"] #sbBar [data-mic]{display:none!important}

@@ -67,6 +67,7 @@
     + ".ttv-big{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.ttv-big button{font:inherit;text-align:left;border:2px solid var(--t-line,#dde3ea);background:var(--t-card,#fff);border-radius:14px;padding:12px;cursor:pointer;color:var(--t-sub,#5b6773);font-size:13px}"
     + ".ttv-big button b{display:block;font-size:16px;color:var(--t-ink,#1d2733);margin-bottom:4px}.ttv-big button:hover{border-color:var(--t-accent,#2f6fb5);background:var(--t-accent-soft,#e6f0fa)}@media(max-width:520px){.ttv-big{grid-template-columns:1fr}}"
     + ".ttv-band .warn{background:#ffd36b;color:#3a2a00;border-radius:8px;padding:0 8px}"
+    + ".ttv-room,.ttv-lock{visibility:visible!important}"   // v2.11.4 쌤비 디자인이 몸통을 잠깐 감춰도 수업 시작 화면은 바로 보이게
     + "@media print{.ttv-band,.ttv-note,.ttv-lock,.ttv-room{display:none!important}}";
   var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
 

@@ -312,12 +312,18 @@
     var m = path.match(/([123])\s*학년/) || path.match(/grade\s*_?([123])/i) || path.match(/(?:^|[\/_\-\s])g([123])(?=[^0-9]|$)/i) || path.match(/(?:^|\/)([123])(?=[^0-9\/][^\/]*$)/);
     return m ? +m[1] : 0;
   }
-  function loadFolder(done){
+  function pickDir(cb){                                                 // 폴더 고르기 → [{f, path}]
     var inp = document.createElement("input"); inp.type = "file"; inp.multiple = true; inp.setAttribute("webkitdirectory", "");
-    inp.onchange = function(){
-      var fs = [].slice.call(inp.files || []), rep = {pdf: [], map: [], img: 0, fix: 0, skip: []}, jobs = [];
-      fs.forEach(function(f){
-        var path = (f.webkitRelativePath || f.name).replace(/\\/g, "/"), low = path.toLowerCase(), g = gradeIn(path);
+    inp.onchange = function(){ cb([].slice.call(inp.files || []).map(function(f){ return {f: f, path: (f.webkitRelativePath || f.name).replace(/\\/g, "/")}; })); };
+    inp.click();
+  }
+  function loadFolder(done){ pickDir(function(items){ processFiles(items, true, function(){ done && done(); }); }); }
+  /* 폴더 안 파일들을 이 기기에 넣기 (폴더 고르기 · v2.11.4 학교 드라이브에서 한 번에 받기 공통) — rep(결과)를 돌려줌 */
+  function processFiles(items, tell, done){
+    (function(){
+      var fs = items.map(function(x){ return x.f; }), rep = {pdf: [], map: [], img: 0, fix: 0, skip: []}, jobs = [];
+      items.forEach(function(it){
+        var f = it.f, path = it.path, low = path.toLowerCase(), g = gradeIn(path);
         if(/\.pdf$/i.test(f.name)){
           if(g) jobs.push(new Promise(function(r){ putPdf(g, f, function(ok){ if(ok) rep.pdf.push(g); r(); }); })); else rep.skip.push(f.name);
         }else if(/\.txt$/i.test(f.name) && !/readme|읽어/i.test(f.name)){
@@ -331,16 +337,15 @@
         }
       });
       jobs.push(new Promise(function(r){ CH.storeImages(fs, function(n){ rep.img = n; r(); }); }));
-      toast("수업 자료를 불러오는 중…");
+      if(tell) toast("수업 자료를 불러오는 중…");
       Promise.all(jobs).then(function(){
         save();
         var u = function(a){ return a.length ? a.sort().map(function(g){ return g + "학년"; }).join("·") : "없음"; };
-        alert("수업 자료 폴더를 불러왔습니다.\n\n📘 교과서 PDF: " + u(rep.pdf) + "\n📑 쪽-단원표: " + u(rep.map) + "\n🔥 기출 그림: " + rep.img + "장" + (rep.fix ? "\n🛠 고친 단원: " + rep.fix + "개" : "")
+        if(tell) alert("수업 자료 폴더를 불러왔습니다.\n\n📘 교과서 PDF: " + u(rep.pdf) + "\n📑 쪽-단원표: " + u(rep.map) + "\n🔥 기출 그림: " + rep.img + "장" + (rep.fix ? "\n🛠 고친 단원: " + rep.fix + "개" : "")
           + (rep.skip.length ? "\n\n⚠ 학년을 알 수 없는 PDF: " + rep.skip.join(", ") + "\n   파일 이름에 1학년·2학년·3학년 (또는 grade1) 을 넣어 주세요." : ""));
-        done && done();
+        done && done(rep);
       });
-    };
-    inp.click();
+    })();
   }
 
   /* ── 상태 ── */
@@ -388,9 +393,9 @@
   var renderTask = null;
   function emptyMsg(g){
     $("stage").innerHTML = '<div class="msg">' + g + '학년 교과서 PDF가 이 기기에 없습니다.<br>처음 한 번만 불러오면 다음부터 자동으로 열립니다.<br><br>'
-      + '<button class="btn primary" id="bCloud">☁ 학교 드라이브에서 ' + g + '학년 교과서 받기</button><br>'
+      + '<button class="btn primary" id="bCloud">☁ 학교 드라이브에서 수업 자료 한 번에 받기</button><br>'
       + '<button class="btn" id="bAll">📂 수업 자료 폴더 불러오기 (lesson_files)</button><br><button class="btn" id="bLoad">📘 ' + g + '학년 교과서 PDF만 불러오기</button></div>';
-    $("bCloud").onclick = function(){ cloudRun("down", g, show); };
+    $("bCloud").onclick = function(){ folderDown(show); };   // v2.11.4 교과서(모든 학년) + 쪽-단원표 + 기출 그림
     $("bLoad").onclick = function(){ loadBook(g); }; $("bAll").onclick = function(){ loadFolder(reopen); };
   }
   function show(){
@@ -712,7 +717,8 @@
     dlgOpen = "set"; g = g || (st.c ? gOf(st.c) : GRADES[0]);
     var tabs = '<div class="gtabs chips">' + GRADES.map(function(x){ return '<button data-g="' + x + '" class="' + (x === g ? "on" : "") + '">' + x + "학년</button>"; }).join("") + "</div>";
     var L = parseMap(g);
-    var h = '<div class="box all"><h3>📂 수업 자료 폴더 한 번에 불러오기</h3><div class="row"><button class="btn primary" id="sAll">lesson_files 폴더 고르기</button><span class="muted">교과서 PDF(학년별) · 쪽-단원표 · 기출 그림 · 고친 단원을 한꺼번에. 학기초 한 번이면 끝</span></div></div>'
+    var h = '<div class="box all"><h3>📂 수업 자료 폴더 한 번에 불러오기</h3><div class="row"><button class="btn primary" id="sAll">lesson_files 폴더 고르기</button><span class="muted">교과서 PDF(학년별) · 쪽-단원표 · 기출 그림 · 고친 단원을 한꺼번에. 학기초 한 번이면 끝</span></div>'
+      + '<div class="row" style="margin-top:6px"><button class="btn" id="sAllUp">☁ 폴더째 학교 드라이브에 올리기</button><button class="btn primary" id="sAllDown">☁ 학교 드라이브에서 한 번에 받기</button><span class="muted" id="pkinfo"></span></div></div>'
       + tabs + '<div class="grid2"><div>'
       + '<div class="box"><h3>📘 ' + g + '학년 교과서 PDF</h3><div id="pinfo" class="muted">확인 중…</div><div class="row" style="margin-top:6px"><button class="btn" id="sLoad">불러오기 (바꾸기)</button></div><div class="row" style="margin-top:6px"><button class="btn" id="sUp">☁ 학교 드라이브에 올리기</button><button class="btn" id="sDown">☁ 학교 드라이브에서 받기</button></div><p class="muted" id="cinfo">학교 드라이브: 확인 중…</p><p class="muted">한 번 올려 두면 다른 교실 컴퓨터·전자칠판에서는 [받기]만 누르면 됩니다(학교 업무판 공용 비밀번호를 아는 구성원만). GitHub에는 올리지 마세요.</p></div>'
       + '<div class="box"><h3>🔢 쪽 번호 맞추기</h3><div class="row">지금 화면(PDF ' + (st.c && gOf(st.c) === g ? st.pdfPage : "?") + '쪽)이 교과서 <input id="sOff" inputmode="numeric" value="' + (st.c && gOf(st.c) === g ? bookP() : "") + '">쪽 <button class="btn" id="sOffB">맞추기</button></div><p class="muted">PDF 앞쪽에 표지·차례가 있어 쪽 번호가 다를 때 한 번만. 지금 차이: ' + offText(g) + "</p></div>"
@@ -725,6 +731,9 @@
     getPdf(g, function(r){ $("pinfo").textContent = r ? r.name + " · " + Math.round(r.size / 1048576) + "MB 저장됨" : "아직 없음"; });
     CH.stored(function(n){ $("iinfo").textContent = n ? n + "장 저장됨" : "아직 없음"; });
     $("sAll").onclick = function(){ loadFolder(function(){ reopen(); setDlg(g); }); };
+    $("sAllUp").onclick = folderUp;
+    $("sAllDown").onclick = function(){ folderDown(function(){ reopen(); setDlg(g); }); };
+    if(hasBoard()) packSets().then(function(P){ var e = $("pkinfo"); if(e) e.textContent = P.length ? "학교 드라이브 묶음: " + new Date(+P[0].set).toLocaleDateString() + " 올림" + (S.got.pack === P[0].set ? " · 받음" : " · 새 자료 있음") : "학교 드라이브 묶음: 아직 없음"; }, function(){});
     $("sLoad").onclick = function(){ loadBook(g); };
     $("sUp").onclick = function(){ if(confirm(g + "학년 교과서를 학교 드라이브에 올릴까요?\n(같은 교과 선생님들이 함께 씁니다. 전에 내가 올린 것은 바뀝니다)")) cloudRun("up", g, function(){ setDlg(g); }); };
     $("sDown").onclick = function(){ cloudRun("down", g, function(){ setDlg(g); show(); }); };
@@ -807,6 +816,117 @@
         return new Promise(function(res, rej){ putPdf(g, f, function(ok){ ok ? res(f.size) : rej(new Error("이 기기 저장 공간이 모자랍니다")); }); });
       });
     });
+  }
+  /* ── v2.11.4 수업 자료 폴더 통째로: 교과서 PDF는 학년별 조각(위와 같음), 나머지(쪽-단원표·기출 그림·고친 단원)는 묶음 하나 ──
+     묶음 조각 이름: ttpack__교과__올린시각__k of n.bin — 학교 드라이브 자료실 폴더 안에서 이름 앞부분(ttpack__수학…)으로 한데 모임, 자료실 목록에는 안 보임.
+     묶음 모양: "TTP1" + 머리 길이(4바이트) + 머리 JSON [{p: 폴더 안 경로, s: 크기}] + 파일 내용을 차례로.
+     S.up[학년] = "파일이름|크기" (같으면 다시 올리지 않음) · S.got = {학년: 조각세트, pack: 조각세트} (받은 것은 다시 받지 않음) */
+  S.up = S.up || {};
+  var GOTK = "ttbook_got";   // 받은 조각세트 표시는 tt_ 밖에 둠 — 교실 기기에서 수업이 끝나 자료가 지워져도 이 기기에 남은 교과서·그림을 다시 받지 않게
+  S.got = (function(){ try{ return JSON.parse(localStorage.getItem(GOTK)) || {}; }catch(e){ return {}; } })();
+  var save0 = save; save = function(){ var g = S.got; delete S.got; save0(); S.got = g; try{ localStorage.setItem(GOTK, JSON.stringify(g)); }catch(e){} };
+  function packSets(){
+    return bpost({action: "liblist"}).then(function(r){
+      var by = {};
+      (r.items || []).forEach(function(x){
+        var m = String(x.name || "").match(/^ttpack__([a-z0-9]+)__(\d+)__(\d+)of(\d+)\.bin$/i); if(!m || m[1].toLowerCase() !== SUBJ) return;
+        var s = by[m[2]] = by[m[2]] || {set: m[2], n: +m[4], parts: {}}; s.parts[+m[3]] = x.id;
+      });
+      return Object.keys(by).map(function(k){ return by[k]; }).filter(function(s){ return Object.keys(s.parts).length === s.n; }).sort(function(a, b){ return +b.set - +a.set; });
+    });
+  }
+  function packMake(items){
+    var head = [], bufs = [];
+    return items.reduce(function(pr, it){ return pr.then(function(){ return it.f.arrayBuffer().then(function(b){ head.push({p: it.path, s: b.byteLength}); bufs.push(b); }); }); }, Promise.resolve()).then(function(){
+      var hj = new TextEncoder().encode(JSON.stringify(head)), len = new Uint8Array(4); new DataView(len.buffer).setUint32(0, hj.length);
+      return new Blob([new TextEncoder().encode("TTP1"), len, hj].concat(bufs));
+    });
+  }
+  function packRead(u8){
+    if(String.fromCharCode(u8[0], u8[1], u8[2], u8[3]) !== "TTP1") throw new Error("묶음 파일 모양이 달라요");
+    var hl = new DataView(u8.buffer, u8.byteOffset + 4, 4).getUint32(0), head = JSON.parse(new TextDecoder().decode(u8.subarray(8, 8 + hl))), at = 8 + hl;
+    return head.map(function(h){ var nm = h.p.split("/").pop(), f = new File([u8.slice(at, at + h.s)], nm, {type: /\.png$/i.test(nm) ? "image/png" : ""}); at += h.s; return {f: f, path: h.p}; });
+  }
+  function packUp(items, say){
+    var sc = TT.store.get("tt_school_v1", null) || {}, old = [];
+    function lm(){ var o = TT.store.get("tt_lib_v1", null) || {}; o.mine = o.mine || {}; return o; }
+    return packSets().then(function(L){ old = L; }, function(){}).then(function(){ return packMake(items); }).then(function(blob){
+      var n = Math.max(1, Math.ceil(blob.size / PART)), set = String(Date.now()), k = 0;
+      function next(){
+        if(k >= n) return Promise.resolve();
+        var i = k++, tok = rtok(); say("☁ 쪽-단원표·기출 그림 올리는 중… " + (i + 1) + " / " + n + " 조각");
+        return b64of(blob.slice(i * PART, (i + 1) * PART)).then(function(data){
+          return bpost({action: "libup", name: "ttpack__" + SUBJ + "__" + set + "__" + (i + 1) + "of" + n + ".bin", mime: "application/octet-stream", data: data,
+            title: "수업 자료 묶음 (" + (i + 1) + "/" + n + ")", cat: "기타", by: sc.teacher || "", desc: "쌤 노트 교과서 띄우기용 수업 자료(쪽-단원표·기출 그림) 묶음입니다. 지우지 마세요.", replace: "", tok: tok, pages: []});
+        }).then(function(r){ var o = lm(); o.mine[r.id] = tok; TT.store.set("tt_lib_v1", o); return next(); });
+      }
+      return next().then(function(){
+        S.got.pack = set; save();
+        var o = lm(), jobs = [];
+        old.forEach(function(s){ Object.keys(s.parts).forEach(function(p){ var id = s.parts[p]; if(o.mine[id]) jobs.push(bpost({action: "libdel", id: id, tok: o.mine[id]}).then(function(){ delete o.mine[id]; }, function(){})); }); });
+        return Promise.all(jobs).then(function(){ TT.store.set("tt_lib_v1", o); return blob.size; });
+      });
+    });
+  }
+  function packDown(s, say){
+    var parts = [], k = 1;
+    function next(){
+      if(k > s.n) return Promise.resolve();
+      var i = k++; say("☁ 쪽-단원표·기출 그림 받는 중… " + i + " / " + s.n + " 조각");
+      return bpost({action: "libget", id: s.parts[i]}).then(function(r){ var bin = atob(r.data), u8 = new Uint8Array(bin.length); for(var j = 0; j < bin.length; j++) u8[j] = bin.charCodeAt(j); parts.push(u8); return next(); });
+    }
+    return next().then(function(){ return new Blob(parts).arrayBuffer(); }).then(function(b){ return packRead(new Uint8Array(b)); });
+  }
+  /* 올리기: lesson_files 폴더를 고르면 이 기기에도 넣고, 바뀐 교과서 PDF + 나머지 묶음을 학교 드라이브에 */
+  function folderUp(){
+    if(!hasBoard()){ alert("학교 업무판이 연결되어 있지 않습니다.\n쌤 노트 ⚙️ 설정 → 학교 업무판 연결에서 주소와 공용 비밀번호를 넣어 주세요."); return; }
+    pickDir(function(items){
+      if(!items.length) return;
+      var pdfs = items.filter(function(x){ return /\.pdf$/i.test(x.f.name) && gradeIn(x.path); }), rest = items.filter(function(x){ return !/\.pdf$/i.test(x.f.name) && (CH.isImg(x.f) || /\.txt$/i.test(x.f.name) || /exam-unit-fix.*\.json$/i.test(x.f.name)); });
+      if(!confirm("수업 자료 폴더를 학교 드라이브에 올릴까요?\n\n📘 교과서 PDF " + pdfs.length + "개 (바뀐 것만) · 📑🔥 쪽-단원표·기출 그림 등 " + rest.length + "개\n같은 교과 선생님들이 어느 기기에서나 한 번에 받습니다. 학생 개인정보가 든 파일은 넣지 마세요.")) return;
+      busyRun(function(say){
+        say("이 기기에 넣는 중…");
+        return new Promise(function(res){ processFiles(items, false, res); }).then(function(rep){
+          var ups = [], gs = rep.pdf.filter(function(g, i, a){ return a.indexOf(g) === i; }).sort();
+          return gs.reduce(function(pr, g){ return pr.then(function(){
+            var f = pdfs.filter(function(x){ return gradeIn(x.path) === g; }).pop().f, sig = f.name + "|" + f.size;
+            if(S.up[g] === sig) return;
+            return cloudUp(g, say).then(function(){ return cSets(g).catch(function(){ return []; }); }).then(function(L){ S.up[g] = sig; if(L[0]) S.got[g] = L[0].set; save(); ups.push(g + "학년"); });
+          }); }, Promise.resolve()).then(function(){ return rest.length ? packUp(rest, say) : 0; }).then(function(sz){
+            return "학교 드라이브에 올렸습니다. 교과서: " + (ups.length ? ups.join("·") : "바뀐 것 없음") + (rest.length ? " · 쪽-단원표·기출 그림 " + rest.length + "개" : "");
+          });
+        });
+      }, "up", function(){ reopen(); if(dlgOpen === "set") setDlg(); });
+    });
+  }
+  /* 받기: 학교 드라이브의 교과서(학년마다)와 묶음을 한 번에 — 이미 받은 것은 건너뜀 */
+  function folderDown(after){
+    if(!hasBoard()){ alert("학교 업무판이 연결되어 있지 않습니다.\n쌤 노트 ⚙️ 설정 → 학교 업무판 연결에서 주소와 공용 비밀번호를 넣어 주세요."); return; }
+    busyRun(function(say){
+      var got = [], have = {};
+      return [1, 2, 3].reduce(function(pr, g){ return pr.then(function(){
+        return cSets(g).then(function(L){
+          if(!L.length) return;
+          return new Promise(function(r){ getPdf(g, r); }).then(function(rec){
+            if(rec && S.got[g] === L[0].set) return;
+            return cloudDown(g, say).then(function(){ S.got[g] = L[0].set; save(); got.push(g + "학년"); });
+          });
+        });
+      }); }, Promise.resolve()).then(function(){ return packSets(); }).then(function(P){
+        if(!P.length || S.got.pack === P[0].set) return 0;
+        var cnt = 0;
+        return packDown(P[0], say).then(function(items){ cnt = items.length; say("이 기기에 넣는 중…"); return new Promise(function(res){ processFiles(items, false, res); }); })
+          .then(function(){ S.got.pack = P[0].set; save(); return cnt; });
+      }).then(function(n){
+        if(!got.length && !n) return "이미 최신이에요. 받을 새 자료가 없습니다.";
+        return "학교 드라이브에서 받았습니다. 교과서: " + (got.length ? got.join("·") : "그대로") + (n ? " · 쪽-단원표·기출 그림 등 " + n + "개" : "");
+      });
+    }, "down", after);
+  }
+  function busyRun(job, kind, after){
+    var bx = document.createElement("div"); bx.className = "cbusy"; bx.innerHTML = '<div><b>☁ 학교 드라이브</b><span>준비 중…</span><small>창을 닫지 마세요. 큰 교과서는 몇 분 걸릴 수 있어요.</small></div>'; document.body.appendChild(bx);
+    var say = function(t){ bx.querySelector("span").textContent = t; };
+    job(say).then(function(msg){ bx.remove(); alert(msg); after && after(); }, function(e){ bx.remove(); alert((kind === "up" ? "올리지 못했습니다.\n" : "받지 못했습니다.\n") + berr(e)); });
   }
   function cloudRun(kind, g, after){
     if(!hasBoard()){ alert("학교 업무판이 연결되어 있지 않습니다.\n쌤 노트 ⚙️ 설정 → 학교 업무판 연결에서 주소와 공용 비밀번호를 넣어 주세요."); return; }

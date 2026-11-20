@@ -6,7 +6,7 @@
    - 업무판 화면에서는 보이지 않습니다(shared/v2.css 가 html[data-ui="ssambi"] 일 때만 보여 줌). */
 (function(){
   "use strict";
-  if(!window.TT || window.TT_SBAR || TT.classroom) return;
+  if(!window.TT || window.TT_SBAR || (TT.classroom && TT.classroom.locked)) return;   // v2.11.4 교실 기기도 (수업 시작 뒤) 쌤비 메뉴 — 수업용 도구만
   if(window.top !== window){ document.documentElement.classList.add("sbReady"); return; }   // 다른 화면 안(학교 업무판의 문서 칸)에 열렸을 때는 쌤비·메뉴 없이
   var R = document.documentElement, ART = window.TT_SBART, BASE = TT.BASE || "./";
   var HOME = !/\/apps\//.test(location.pathname);
@@ -17,7 +17,9 @@
   var DOW = "일월화수목금토";
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function icon(n, s){ return ART && ART.icon ? ART.icon(n, s) : ""; }
-  function shown(id){ return id === "home" || id === "settings" || id === "lib" || typeof ttMenuShown !== "function" || ttMenuShown(id); }
+  var CRM = !!TT.classroom;                                             // 교실 기기: 수업용(room) 도구가 있는 메뉴만, 검색·말로 기록·쌤비 창·나무 없음
+  function shown(id){ if(CRM) return id === "home" || tools(id).length > 0; return id === "home" || id === "settings" || id === "lib" || typeof ttMenuShown !== "function" || ttMenuShown(id); }
+  if(CRM) R.setAttribute("data-room", "on");
   function pad(n){ return (n < 10 ? "0" : "") + n; }
   function sub(){ try{ return sessionStorage.getItem(SUBK) || ""; }catch(e){ return ""; } }
   function setSub(v){ try{ if(v) sessionStorage.setItem(SUBK, v); else sessionStorage.removeItem(SUBK); }catch(e){} }
@@ -165,7 +167,7 @@
   function tools(mid){
     if(typeof TT_TOOLS === "undefined") return [];
     return TT_TOOLS.filter(function(t){
-      if(!t.ready || !t.href || t.noRail) return false;   // v2.8.1: 리모컨은 교과서 화면 위 [📱 리모컨] 단추로 (왼쪽 목록이 길어 스크롤 생기지 않게)
+      if(!t.ready || !t.href || t.noRail || (CRM && !t.room)) return false;   // v2.8.1: 리모컨은 교과서 화면 위 [📱 리모컨] 단추로 (왼쪽 목록이 길어 스크롤 생기지 않게)
       if(typeof ttToolShown === "function" && !ttToolShown(t)) return false;
       if(mid === "lib") return t.menu === "school" && t.group === "lib";
       if(mid === "school") return t.menu === "school" && t.group !== "lib";
@@ -195,7 +197,7 @@
   }
   /* v2.8 우리 반 나무: 메뉴 '우리 반' 옆 작은 나무 (칭찬·청소 당번 완료로 자람) — 누르면 도장판 */
   function treeTag(){
-    if(!TT.joy || !TT.joy.treeNow || (TT.joy.on && !TT.joy.on())) return "";
+    if(CRM || !TT.joy || !TT.joy.treeNow || (TT.joy.on && !TT.joy.on())) return "";
     var t = TT.joy.treeNow(); return '<i class="sbTree" data-tree title="우리 반 ' + esc(t.nm) + " · 칭찬·청소 당번 완료 " + t.n + "번" + (t.next ? " · " + t.nnm + "까지 " + t.next + "번" : "") + '">' + t.ic + "</i>";
   }
   /* v2.8.1 왼쪽 막대가 화면보다 길면 조금씩 줄여 스크롤 없이: ① 칸 높이·쌤비 크기 ② 쌤비 한마디 숨김 */
@@ -375,7 +377,7 @@
   /* ── 누르기 ── */
   function owlEl(){ if(HOME && hero && document.body.classList.contains("sbOn")) return hero.querySelector(".srow [data-mic]") || document.getElementById("sbBarOwl"); var a = document.getElementById("sbBarOwl"), b = document.getElementById("sbBarOwl2"); return a && a.offsetParent !== null ? a : b && b.offsetParent !== null ? b : a; }
   function openSsambi(listen){
-    if(!window.TT_SSAMBI) return;
+    if(CRM || !window.TT_SSAMBI) return;
     var box = document.getElementById("sbBox");
     if(!listen && box && !box.hidden){ TT_SSAMBI.close(); return; }
     if(HOME && hero) seatBox();
