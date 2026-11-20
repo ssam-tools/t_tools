@@ -8,7 +8,17 @@ window.TT_SCHOOL_SITES = [
   {id: "d-school",   t: "마산서중학교",   u: "https://masanseo-m.gne.go.kr/masanseo-m/main.do",         c: "work", pin: true},
   {id: "d-bell",     t: "학교종이",       u: "https://schoolbell-e.com/",                               c: "work", pin: true},
   {id: "d-gneti",    t: "경남교육연수포털", u: "https://www.gneti.or.kr/",                              c: "work", pin: true},
-  {id: "d-highsch",  t: "경남고입포털",   u: "https://highschool.gne.go.kr/s10/hsa/user/main.do",       c: "work", pin: true}
+  {id: "d-highsch",  t: "경남고입포털",   u: "https://highschool.gne.go.kr/s10/hsa/user/main.do",       c: "work", pin: true},
+  /* v2.11.7 수업용 — 교과서 출판사 교사 지원 사이트(중등). 출판사가 학교마다 달라 📌 고정은 하지 않음 → 각자 쓰는 곳만 📌 */
+  {id: "c-douclass", t: "두클래스 중등",   u: "https://mh.douclass.com/",                                c: "class"},
+  {id: "c-tsherpa",  t: "티셀파 중등",     u: "https://mh.tsherpa.co.kr/",                               c: "class"},
+  {id: "c-vivasam",  t: "비바샘 중등",     u: "https://v.vivasam.com/",                                  c: "class"},
+  {id: "c-ycloud",   t: "Y클라우드 중등",  u: "https://www.ybmcloud.com/",                               c: "class"},
+  {id: "c-tsol",     t: "티솔루션 중등",   u: "https://tsol.jihak.co.kr/main.ez?schoolTypeSeq=SUBJECT_SCHOOLTYPE_MIDDLE", c: "class"},
+  {id: "c-mteacher", t: "엠티처 중등",     u: "https://m.m-teacher.co.kr/pages/mid/Main.mrn",            c: "class"},
+  {id: "c-thub",     t: "티칭허브 중등",   u: "https://thub.kumsung.co.kr/main.do",                      c: "class"},
+  {id: "c-neteacher",t: "능률엔이 중등",   u: "https://www.neteacher.co.kr/",                            c: "class"},
+  {id: "c-didimdol", t: "디딤돌 중등",     u: "https://tclass.didimdol.co.kr/",                          c: "class"}
 ];
 window.TT_SITES_SEED = function(){
   try{
