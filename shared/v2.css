@@ -267,6 +267,19 @@ html[data-ui="ssambi"].tt-hasnav .cta,html[data-ui="ssambi"].tt-hasnav .tabs,htm
 .sbMid.flat .sc .ci{width:clamp(40px,5.2vh,48px);height:clamp(40px,5.2vh,48px);background:var(--t-accent-soft);color:var(--t-accent)}
 .sbMid.flat .sc b{font-size:13.5px}
 .sbMid.flat .gp h3{margin-bottom:4px}
+/* v2.12.1 설정 화면: 왼쪽 4칸(안내 · 백업) | 오른쪽 4칸(설정 2줄 + 새 학년) — 줄이 길어지지 않게, 칸 넉넉히 */
+.sbWrap.mid:has(.sbFlat){max-width:1040px}
+.sbFlat{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 40px repeat(4,minmax(0,1fr));column-gap:clamp(6px,1.2vw,14px);row-gap:clamp(6px,1.4vh,12px);align-items:start;padding-top:4px}
+.sbFlat .fh{font-size:13px;font-weight:700;color:var(--t-sub);margin:0 0 0 6px}
+.sbFlat .fh.r3{margin-top:clamp(6px,2vh,18px)}
+.sbFlat .fh.ny{text-align:center;margin-left:0}
+.sbFlat .fsep{grid-column:5;grid-row:1 / span 4;justify-self:center;align-self:stretch;width:1px;background:var(--t-line)}
+.sbFlat .sc{display:flex;flex-direction:column;align-items:center;gap:7px;padding:8px 2px;border:0;border-radius:14px;background:transparent;font:inherit;color:var(--t-ink);cursor:pointer;min-height:44px}
+.sbFlat .sc .ci{width:clamp(44px,5.6vh,52px);height:clamp(44px,5.6vh,52px);border-radius:50%;background:var(--t-accent-soft);color:var(--t-accent);display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.sbFlat .sc b{font-size:13.5px;font-weight:500;line-height:1.3;text-align:center;word-break:keep-all;color:var(--t-ink)}
+.sbFlat .sc:hover .ci,.sbFlat .sc:focus-visible .ci{transform:translateY(-2px);background:var(--t-accent);color:#fff}
+.sbFlat .sc:hover b{color:var(--t-accent)}
+.sbFlat .sc.dim{opacity:.5}
 #sbCredit{display:none}
 /* v2.11.2: 화면에 떠 있지 않고 내용 맨 아래 줄에 놓임 — 오늘 할 일이 많아져도 겹치지 않음 (내용이 적으면 화면 바닥, 많으면 내용 뒤) */
 body.sbOn #sbCredit{display:block;position:static;flex:none;margin-top:auto;padding:14px 0 4px;text-align:center;font-size:13px;color:var(--t-sub);opacity:.85;pointer-events:none}
@@ -375,6 +388,12 @@ html[data-ui="ssambi"] .tdy,html[data-ui="ssambi"] .cat,html[data-ui="ssambi"] .
   .sbBig{grid-template-columns:1fr}
   .sbMid.flat .sbGroups{grid-template-columns:1fr}
   .sbMid.flat .ic{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .sbFlat{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .sbFlat > *{grid-column:auto!important;grid-row:auto!important}
+  .sbFlat .fh{grid-column:1 / -1!important}
+  .sbFlat .fh.r3{margin-top:8px}
+  .sbFlat .fh.ny{text-align:left;margin-left:6px}
+  .sbFlat .fsep{display:none}
   body.sbOn #sbCredit{position:static;padding:18px 0 16px}
   .sbGroups{grid-template-columns:1fr}
   .sbGroups .ic{grid-template-columns:repeat(4,minmax(0,1fr))}

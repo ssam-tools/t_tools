@@ -195,6 +195,22 @@
             return '<button type="button" class="sc' + (it.dim ? " dim" : "") + '" data-mid="' + idx(it) + '" title="' + esc(it.name + (it.st ? " · " + it.st : "")) + '"><span class="ci">' + ico(it, 20) + "</span><b>" + esc(it.name) + "</b></button>";
           }).join("") + "</div>") + "</section>";
     }
+    /* v2.12.1 설정: 왼쪽 4칸(안내 / 백업) · 오른쪽 4칸(설정 4개 / 나머지 설정 + 새 학년) — 한 줄이 길어지지 않게 두 줄로 */
+    if(flat){
+      var GN = {}; rest.forEach(function(g){ GN[g.name] = g; });
+      var A = GN["안내"], S = GN["설정"], D = GN["백업"], Y = GN["새 학년"];
+      if(A && S && A.items.length <= 4 && (!D || D.items.length <= 4) && S.items.length <= (Y ? 7 : 8) && rest.length === [A, S, D, Y].filter(Boolean).length){
+        var cells = "";
+        function hd(t, c, r, span, cls){ return '<h3 class="fh' + (r > 1 ? " r3" : "") + (cls ? " " + cls : "") + '" style="grid-column:' + c + " / span " + span + ";grid-row:" + r + '">' + esc(t) + "</h3>"; }
+        function bt(it, c, r, cls){ return '<button type="button" class="sc' + (it.dim ? " dim" : "") + (cls ? " " + cls : "") + '" data-mid="' + idx(it) + '" style="grid-column:' + c + ";grid-row:" + r + '" title="' + esc(it.name + (it.st ? " · " + it.st : "")) + '"><span class="ci">' + ico(it, 20) + "</span><b>" + esc(it.name) + "</b></button>"; }
+        cells += hd("안내", 1, 1, 4); A.items.forEach(function(it, i){ cells += bt(it, 1 + i, 2); });
+        if(D){ cells += hd("백업", 1, 3, 4); D.items.forEach(function(it, i){ cells += bt(it, 1 + i, 4); }); }
+        cells += hd("설정", 6, 1, 4);
+        S.items.forEach(function(it, i){ cells += bt(it, 6 + (i % 4), i < 4 ? 2 : 4); });
+        if(Y){ var yc = 6 + Math.max(0, S.items.length - 4); cells += hd("새 학년", yc, 3, 1, "ny"); Y.items.forEach(function(it){ cells += bt(it, yc, 4, "ny"); }); }
+        return h + '<div class="sbFlat">' + cells + '<i class="fsep" aria-hidden="true"></i></div></div>';
+      }
+    }
     if(cols.length) h += '<div class="sbGroups" style="--gc:' + Math.min(cols.length, 4) + '">' + cols.map(function(c){ return '<div class="col">' + c.map(sec).join("") + "</div>"; }).join("") + "</div>";
     return h + "</div>";
   }
