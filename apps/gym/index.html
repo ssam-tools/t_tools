@@ -312,6 +312,7 @@
 </div>
 <script src="../kread/data.js"></script>
 <script src="math.js"></script>
+<script src="math2.js"></script>
 <script src="kor.js"></script>
 <script src="eng.js"></script>
 <script src="warm.js"></script>
@@ -428,6 +429,12 @@
   /* 어휘 줄(국어): 섞은 순서대로, 한 바퀴 돈 뒤에는 '완전히 내 것'이 아닌 것부터 */
   function nextVocab(room){
     var v = R[room].vocab, k = room + "v"; if(!S.ord) S.ord = {};
+    if(v.some(function(x){ return x.lv > 1; })){   // 단계가 있는 낱말(영어): 이번 주차 단계까지, 안 본 낱말을 낮은 단계부터
+      var sn = stageNow(), un = v.filter(function(x){ return (x.lv || 1) <= sn && !S.cards[x.id]; });
+      if(un.length){ var lo = Math.min.apply(null, un.map(function(x){ return x.lv || 1; })); return pick(un.filter(function(x){ return (x.lv || 1) === lo; })); }
+      var nm2 = v.filter(function(x){ var c = S.cards[x.id]; return (x.lv || 1) <= sn && (!c || c.b <= 5); });
+      return pick(nm2.length ? nm2 : v);
+    }
     if(!S.ord[k] || S.ord[k].length !== v.length) S.ord[k] = shuffle(v.map(function(_, i){ return i; }));
     var p = S.ptr[k] || 0; S.ptr[k] = p + 1;
     if(p < v.length) return v[S.ord[k][p]];
@@ -586,7 +593,7 @@
   function pickPassage(lvs, fresh){
     var K = GYM_KOR, l = K.P.filter(function(p){ return lvs.indexOf(p.lv) >= 0; });
     if(!l.length) return null;
-    var un = l.filter(function(p){ return !S.kpDone[p.id]; }).sort(function(a, b){ return a.lv - b.lv; });
+    var un = l.filter(function(p){ return !S.kpDone[p.id]; }).sort(function(a, b){ return lvs.indexOf(a.lv) - lvs.indexOf(b.lv); });
     if(un.length && !fresh) return un[0];
     return l.slice().sort(function(a, b){ return (S.kpDone[a.id] || "") < (S.kpDone[b.id] || "") ? -1 : 1; })[0];
   }
@@ -594,7 +601,7 @@
     if(typeof GYM_KOR === "undefined") return null;
     var kp = S.kp;
     if(kp && kp.step === 2 && GYM_KOR.PX[kp.id]) return kp.d >= TODAY ? {wait: 1, pid: kp.id} : {pid: kp.id, mode: "d2"};
-    var sn = stageNow(), p = pickPassage(sn === 1 ? [1, 2] : sn === 2 ? [2, 3] : [3]);
+    var sn = stageNow(), p = pickPassage(sn === 1 ? [1, 2] : sn === 2 ? [2.5, 2, 3] : [3, 2.5]);
     return p ? {pid: p.id, mode: p.two ? "d1" : "one"} : null;
   }
   function passFlow(room, pl){
@@ -639,7 +646,8 @@
     if(c.s.length > 1) c.s.forEach(function(s, si){ var lx = W - Rt - 4 - (c.s.length - si) * 74; o += '<rect x="' + lx + '" y="3" width="9" height="9" rx="2" fill="' + PAL[si] + '"/><text x="' + (lx + 12) + '" y="11" font-size="9.5" fill="#2B2111">' + esc(s.n) + "</text>"; });
     return o + "</svg>";
   }
-  function dataHtml(id){ var d = dataOf(id); return d ? '<div class="dset' + (d.ch.length > 1 ? " two" : "") + '"><div class="dtt">📊 ' + esc(d.title) + "</div>" + d.ch.map(chartSVG).join("") + "</div>" : ""; }
+  function dataHtml(id){ var d = dataOf(id); var rd = d.ch[0].t === "text" && d.ch[0].p[0][0] === "📄";
+    return d ? '<div class="dset' + (d.ch.length > 1 ? " two" : "") + '"><div class="dtt">' + (rd ? "📖 " : "📊 ") + esc(d.title) + "</div>" + d.ch.map(chartSVG).join("") + "</div>" : ""; }
   function passDone(x){
     if(x.ds){ S.dsDone[x.ds] = TODAY; day().dsd = 1; return; }
     if(x.mode === "long") return;
@@ -695,7 +703,7 @@
       if(it.nosrs) return;
       if(ok && (!R[room].srsNew || !BANKIX[id])) return;   // 생성 문항은 틀렸을 때만 복습 상자로
       c = S.cards[id] = {r: room, b: ok ? 2 : 1, d: add(TODAY, ok ? 2 : 1), w: ok ? 0 : 1, t: it.tag};
-      if(!BANKIX[id]) c.q = {tag: it.tag, q: it.q, n: it.n, fr: it.fr, num: it.num, c: it.c, a: it.a, e: it.e, ask: it.ask, ox: it.ox};
+      if(!BANKIX[id]) c.q = {tag: it.tag, q: it.q, n: it.n, fr: it.fr, num: it.num, c: it.c, a: it.a, e: it.e, ask: it.ask, ox: it.ox, keep: it.keep, u: it.u};
       return;
     }
     if(ok){ c.b++; c.d = c.b > 5 ? null : add(TODAY, BOX_DAYS[c.b]); }
@@ -789,7 +797,7 @@
     header(r.emo + " " + r.name + " PT", "home");
     var setsHtml = [
       [id === "warm" ? "복습 루프" : r.setNames ? r.setNames[0] : "복습 먼저", r.vocab && r.vocabDaily < 100 ? "복습 " + rc + "장 · 새 어휘 " + Math.min(d.kv || 0, r.vocabDaily) + "/" + r.vocabDaily : rc ? "복습 카드 " + rc + "장" + (id === "warm" ? " · 6과목 오답 + 어제 헷갈린 것" : "") : "복습 카드 없음 → 바로 새 문제"],
-      [id === "warm" ? "학습 도구어" : r.setNames ? r.setNames[1] : "오늘 단원", id === "warm" ? "전 과목 공부 언어, 문장 속 뜻" : r.passages ? passLine() : r.dsets ? (day().dsd ? "📊 오늘 자료 끝 ✓ · OX·공식" : (function(){ var dd = pickData(r.dsets); return dd ? "📊 " + dd.title + " · " + (r.dsets === (typeof GYM_SOC !== "undefined" && GYM_SOC) ? ["", "도표 읽기", "관점 비교", "자료 통합"] : ["", "그래프 읽기", "실험 설계", "자료 통합"])[dd.lv] : "OX·공식"; })()) : cf ? "📍 " + FIB[cf].n + (r.set2 ? " · " + r.set2 : "") : (r.gen && !r.bank ? "계산 반사 · 문제가 끝없이 나와요" : "새 문제 · 시간 안에 푼 만큼")]
+      [id === "warm" ? "학습 도구어" : r.setNames ? r.setNames[1] : "오늘 단원", id === "warm" ? "전 과목 공부 언어, 문장 속 뜻" : r.passages ? passLine() : r.dsets ? (day().dsd ? "📊 오늘 자료 끝 ✓" + (cf ? " · 📍 " + FIB[cf].n : "") : (function(){ var dd = pickData(r.dsets); return dd ? (r.dsets === (typeof GYM_ENG !== "undefined" && GYM_ENG) ? "📖 " + dd.title + " · 짧은 지문 주제 찾기" : "📊 " + dd.title + " · " + (r.dsets === (typeof GYM_SOC !== "undefined" && GYM_SOC) ? ["", "도표 읽기", "관점 비교", "자료 통합"] : ["", "그래프 읽기", "실험 설계", "자료 통합"])[dd.lv]) : (cf ? "📍 " + FIB[cf].n + (r.set2 ? " · " + r.set2 : "") : "오늘 단원"); })()) : cf ? "📍 " + FIB[cf].n + (r.set2 ? " · " + r.set2 : "") : (r.gen && !r.bank ? "계산 반사 · 문제가 끝없이 나와요" : "새 문제 · 시간 안에 푼 만큼")]
     ];
     var fibHtml = "", inl = r.intake && !S.intake[id] ? intakeList(id) : [];
     if(id === "warm"){
@@ -895,7 +903,7 @@
     if(it.listen) setTimeout(function(){ speak(it.listen); }, 250);
     T.chs = {};
     if(it.ds) qc.className = "qcard dsq";
-    document.getElementById("tl").textContent = T.quiz && TESTK[T.quiz.kind] ? R[x.room].emo + " " + R[x.room].name + " · 시간 제한 없음" : x.ds ? "📊 자료 해석 · 세트 문항은 끝까지" : x.pf ? "📄 " + GYM_KOR.PX[x.pid].p.title + " · 지문 문항은 끝까지" : T.quiz ? "📍 " + FIB[x.fid || T.fid].n + " · 시간 제한 없음" : (T.fid && fiberOf(x.room, it) === T.fid ? "📍 오늘 단원 · " + FIB[T.fid].n + " · " : "") + (T.q.revCount() ? "🔁 복습 " + T.q.revCount() + "장 남음 · " : "") + "Lv." + lv(T.room) + (day().cond === "hard" ? " (쉽게)" : "");
+    document.getElementById("tl").textContent = T.quiz && TESTK[T.quiz.kind] ? R[x.room].emo + " " + R[x.room].name + " · 시간 제한 없음" : x.ds ? (x.room === "eng" ? "📖 짧은 지문 · 세 문항은 끝까지" : "📊 자료 해석 · 세트 문항은 끝까지") : x.pf ? "📄 " + GYM_KOR.PX[x.pid].p.title + " · 지문 문항은 끝까지" : T.quiz ? "📍 " + FIB[x.fid || T.fid].n + " · 시간 제한 없음" : (T.fid && fiberOf(x.room, it) === T.fid ? "📍 오늘 단원 · " + FIB[T.fid].n + " · " : "") + (T.q.revCount() ? "🔁 복습 " + T.q.revCount() + "장 남음 · " : "") + "Lv." + lv(T.room) + (day().cond === "hard" ? " (쉽게)" : "");
     if(it.spell){
       var L = it.spell.toLowerCase().split(""), ab = "abcdefghijklmnopqrstuvwxyz";
       for(var dz = 0; dz < 2; dz++) L.push(ab.charAt(Math.floor(Math.random() * 26)));
@@ -914,7 +922,7 @@
           }).join("") + '<button class="fn" data-k="skip" style="font-size:13px">모름</button></div></div>';
     } else {
       var mk = it.mk ? it.mk() : {c: it.c, a: it.a};
-      var order = it.ox ? [0, 1] : shuffle(mk.c.map(function(_, i){ return i; }));
+      var order = it.ox ? [0, 1] : it.keep ? mk.c.map(function(_, i){ return i; }) : shuffle(mk.c.map(function(_, i){ return i; }));
       T.ans = order.indexOf(mk.a); T.choices = order.map(function(i){ return mk.c[i]; });
       pad.innerHTML = it.ox ? '<div class="ox">' + T.choices.map(function(c, i){ return '<button data-c="' + i + '">' + esc(c) + "</button>"; }).join("") + "</div>"
         : '<div class="ch">' + T.choices.map(function(c, i){ return '<button data-c="' + i + '">' + "①②③④⑤"[i] + " " + fmt(c) + "</button>"; }).join("") + "</div>";

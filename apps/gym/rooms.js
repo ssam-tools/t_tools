@@ -140,7 +140,7 @@ var GYM_ROOMS = (function(){
       : {name: "수학", part: "복근", emo: "🧮", col: "#7C5CFF", gen: mathGen, mix: 1, genTags: Object.keys(MGEN),
       unitOf: {"정수 덧셈·뺄셈": "m.int", "정수 곱셈": "m.int", "일차방정식": "m.lin", "제곱근": "m.root", "지수법칙": "m.expr"}},
     eng: typeof GYM_ENG !== "undefined"   // 5단계: 영어 PT 자료는 eng.js (단어 3단계 · 구문 끊어 읽기·동사 찾기·어법 · 듣기)
-      ? {name: "영어", part: "다리", emo: "🔤", col: "#1F9D55", bank: GYM_ENG.gram, vocab: GYM_ENG.vocab, vocabDaily: 10, listen: GYM_ENG.listen,
+      ? {name: "영어", part: "다리", emo: "🔤", col: "#1F9D55", bank: GYM_ENG.gram.concat(GYM_ENG.ritems || []), vocab: GYM_ENG.vocab, vocabDaily: 10, listen: GYM_ENG.listen, dsets: GYM_ENG.D ? GYM_ENG : null,
          srsNew: true, intake: true, setNames: ["단어 + 복습", "구문 끊어 읽기"], set2: "끊어 읽기·동사 찾기·어법"}
       : {name: "영어", part: "다리", emo: "🔤", col: "#1F9D55", bank: vocab("eng:", "단어", EW, "밑줄 친 단어의 뜻은?"), srsNew: true},
     sci: typeof GYM_SCI !== "undefined"   // 7단계: 통합과학 PT 자료는 sci.js (개념 OX · 공식 생성기 · 자료 해석 세트)
