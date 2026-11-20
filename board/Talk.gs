@@ -77,6 +77,7 @@ function talkNews_() {
 }
 /* 편집기에서 한 번 실행해 보세요: 시트를 만들고 교육 소식을 받아 와 로그에 보여 줍니다(외부 접속 권한 승인). */
 function 쌤비이야기_시험() {
+  ScriptApp.requireScopes(ScriptApp.AuthMode.FULL, ['https://www.googleapis.com/auth/script.external_request']);   // 외부 접속(교육 소식) 권한을 한 번 묻기
   talkSheet_();
   Logger.log(JSON.stringify(talkNews_().slice(0, 3)));
 }
