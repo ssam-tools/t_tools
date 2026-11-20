@@ -1,0 +1,26 @@
+/* v2.11.6 우리 학교 공통 사이트 (관리자가 미리 넣어 두는 기본 목록) — 쌤 노트 '자주 가는 사이트'와 첫 화면 단추에 처음 한 번 들어갑니다.
+   · c: "class" 수업용(교실 기기에도 보임) · "work" 업무용 · "me" 개인용 / pin: true 이면 첫 화면 단추로
+   · 선생님이 지운 것은 다시 넣지 않습니다(tt_sites_v1.seeded 에 id 기억). 새로 추가한 줄은 다음에 열 때 각자 목록에 들어갑니다.
+   · id 는 한 번 정하면 바꾸지 마세요. 아이디·비밀번호가 든 주소는 넣지 마세요(이 파일은 누구나 볼 수 있어요).
+   · 다른 학교가 쓸 때는 이 목록만 자기 학교 것으로 바꾸면 됩니다. */
+window.TT_SCHOOL_SITES = [
+  {id: "d-eduptl",   t: "업무포털",       u: "https://gne.eduptl.kr/",                                  c: "work", pin: true},
+  {id: "d-school",   t: "마산서중학교",   u: "https://masanseo-m.gne.go.kr/masanseo-m/main.do",         c: "work", pin: true},
+  {id: "d-bell",     t: "학교종이",       u: "https://schoolbell-e.com/",                               c: "work", pin: true},
+  {id: "d-gneti",    t: "경남교육연수포털", u: "https://www.gneti.or.kr/",                              c: "work", pin: true},
+  {id: "d-highsch",  t: "경남고입포털",   u: "https://highschool.gne.go.kr/s10/hsa/user/main.do",       c: "work", pin: true}
+];
+window.TT_SITES_SEED = function(){
+  try{
+    if(!window.TT || !TT.store || TT.classroom) return false;
+    var D = TT.store.get("tt_sites_v1", null) || {v: 1, items: []}, ch = false;
+    D.items = D.items || []; D.seeded = D.seeded || [];
+    window.TT_SCHOOL_SITES.forEach(function(s){
+      if(D.seeded.indexOf(s.id) >= 0) return;
+      D.seeded.push(s.id); ch = true;
+      if(!D.items.some(function(x){ return x.u === s.u; })) D.items.push({id: s.id, t: s.t, u: s.u, c: s.c, pin: !!s.pin, sch: true});
+    });
+    if(ch) TT.store.set("tt_sites_v1", D);
+    return ch;
+  }catch(e){ return false; }
+};
