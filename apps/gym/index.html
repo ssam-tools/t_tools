@@ -155,6 +155,14 @@
   .mopts{display:flex;gap:6px;flex-wrap:wrap}
   .mopts button{border:2px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:14px;font-weight:800}
   .mopts button[aria-pressed=true]{border-color:#2F5BD3;background:#E6EEFF;color:#2F5BD3}
+  /* 국어 PT (4단계) */
+  .qcard.read{justify-content:flex-start;padding-top:34px;gap:6px}
+  .ptitle{font-size:17px;font-weight:900}.ptitle small{font-size:12px;color:var(--sub);font-weight:700}
+  .ptext{flex:1;min-height:0;overflow:auto;font-size:16px;line-height:1.85;text-align:left;word-break:keep-all;padding-right:4px}
+  .ptext p{margin-bottom:.7em;text-indent:.6em}.ptext p:last-child{margin-bottom:0}
+  .ptext.dlgp{max-height:62dvh;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .pbtn{position:absolute;right:10px;top:8px;border:1px solid var(--line);background:#FFF8E1;border-radius:9px;padding:3px 8px;font-size:12.5px;font-weight:900}
+  .btn small{font-size:13px;opacity:.85;margin-left:6px;font-variant-numeric:tabular-nums}
   /* 수학 PT (3단계) */
   .qcard .tg.dp{background:#2B2111;color:#FFD84D}
   .ckbtn small{display:block;font-size:12px;font-weight:700;color:#8A6A1C;margin-top:1px}
@@ -259,6 +267,7 @@
 </div>
 <script src="../kread/data.js"></script>
 <script src="math.js"></script>
+<script src="kor.js"></script>
 <script src="rooms.js"></script>
 <script src="map.js"></script>
 <script src="../../shared/sbart.js"></script>
@@ -285,7 +294,7 @@
 
   /* ── 저장 (이 기기에만) ── */
   var S;
-  function blank(){ return {v: 1, nick: "", start: TODAY, week: null, days: {}, xp: {}, lv: {}, rx: {}, cards: {}, ptr: {}, conf: [], restUsed: {}, last: null, fib: {}, cur: {}, intake: {}}; }
+  function blank(){ return {v: 1, nick: "", start: TODAY, week: null, days: {}, xp: {}, lv: {}, rx: {}, cards: {}, ptr: {}, conf: [], restUsed: {}, last: null, fib: {}, cur: {}, intake: {}, kp: null, kpDone: {}, kr: []}; }
   function load(){ try{ S = JSON.parse(localStorage.getItem(KEY)) || blank(); }catch(e){ S = blank(); } var b = blank(); for(var k in b) if(S[k] == null) S[k] = b[k]; }
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast("저장 공간이 부족해요"); } }
   function day(s){ s = s || TODAY; var d = S.days[s]; if(!d){ d = S.days[s] = {sec: {}, xp: 0, sets: {}, n: {}, ok: {}, t: {}, rev: {}}; } return d; }
@@ -346,7 +355,7 @@
 
   /* ── 문항 고르기: 복습 먼저 → 신규 ── */
   var BANKIX = {};
-  IDS.forEach(function(k){ (R[k].bank || []).concat(R[k].deep || []).forEach(function(it){ BANKIX[it.id] = it; }); });
+  IDS.forEach(function(k){ (R[k].bank || []).concat(R[k].deep || [], R[k].vocab || []).forEach(function(it){ BANKIX[it.id] = it; }); });
   function roomOf(id){ return id.split(":")[0]; }
   function itemFromCard(c, id){ return BANKIX[id] || (c.q ? Object.assign({id: id}, c.q) : null); }
   function dueCards(room, minBox){
@@ -356,7 +365,21 @@
     return out;
   }
   function revLeft(room){ return Math.max(0, REV_MAX - (day().rev[room] || 0)); }
+  /* 어휘 줄(국어): 섞은 순서대로, 한 바퀴 돈 뒤에는 '완전히 내 것'이 아닌 것부터 */
+  function nextVocab(room){
+    var v = R[room].vocab, k = room + "v"; if(!S.ord) S.ord = {};
+    if(!S.ord[k] || S.ord[k].length !== v.length) S.ord[k] = shuffle(v.map(function(_, i){ return i; }));
+    var p = S.ptr[k] || 0; S.ptr[k] = p + 1;
+    if(p < v.length) return v[S.ord[k][p]];
+    var nm = v.filter(function(x){ var c = S.cards[x.id]; return !c || c.b <= 5; });
+    return pick(nm.length ? nm : v);
+  }
   function newItem(room){
+    var r0 = R[room];
+    if(r0.vocab){   // 첫 세트: 새 어휘 하루 6개 → 카드 / 두 번째: 카드 / 추가 세트: 어휘 반 카드 반
+      var si = day().sets[room] || 0, kv = day().kv || 0, cf0 = curFiber(room);
+      if(!cf0 || (si === 0 ? kv < (r0.vocabDaily || 6) : si >= 2 && Math.random() < .5)) return nextVocab(room);
+    }
     var cf = curFiber(room); if(cf){ var ui = unitItem(cf); if(ui) return ui; }
     var r = R[room], bank = r.bank || [], useGen = r.gen && (!bank.length || Math.random() < (r.mix || 0));
     if(useGen) return r.gen(diffLv(room));
@@ -383,7 +406,8 @@
   SUBJ.forEach(function(room){
     FORDER[room] = [];
     ((typeof GYM_MAP !== "undefined" && GYM_MAP[room]) || {groups: []}).groups.forEach(function(gr){
-      gr.f.forEach(function(f){ FIB[f[0]] = {id: f[0], n: f[1], s: f[2], hs: f[3] || "", g: gr.g, room: room}; FORDER[room].push(f[0]); });
+      var pool = (R[room].poolGroups || []).indexOf(gr.g) >= 0;   // 독서: 지문 문항을 8개 모아 한 번의 연습 기록으로
+      gr.f.forEach(function(f){ FIB[f[0]] = {id: f[0], n: f[1], s: f[2], hs: f[3] || "", g: gr.g, room: room, pool: pool}; FORDER[room].push(f[0]); });
     });
   });
   function fiberOf(room, it){ return it.u || ((R[room] || {}).unitOf || {})[it.tag] || null; }
@@ -403,8 +427,8 @@
   function curFiber(room){
     if(!FORDER[room]) return null;
     var c = S.cur[room];
-    if(c && FIB[c] && fs(c).st < 2 && open(c)) return c;
-    var l = FORDER[room].filter(function(f){ return fs(f).st < 2 && open(f); }), sn = stageNow();
+    if(c && FIB[c] && !FIB[c].pool && fs(c).st < 2 && open(c)) return c;
+    var l = FORDER[room].filter(function(f){ return !FIB[f].pool && fs(f).st < 2 && open(f); }), sn = stageNow();
     var f1 = l.filter(function(f){ return fs(f).st === 1 && FIB[f].s <= sn; })[0] || l.filter(function(f){ return FIB[f].s <= sn; })[0] || l[0] || null;
     S.cur[room] = f1; return f1;
   }
@@ -462,7 +486,7 @@
   /* 🧪 입소 진단: 1단계 단원마다 3문제 → 3/3 진단 통과(숙달, 7일 뒤 확인만) · 2/3 연습 · 0~1/3 처방(먼저 연습) */
   var INTAKE_PER = 3;
   function intakeList(room){
-    var l = (FORDER[room] || []).filter(function(f){ return open(f) && FIB[f].s === 1; });
+    var l = (FORDER[room] || []).filter(function(f){ return open(f) && !FIB[f].pool && FIB[f].s === 1; });
     return (l.length ? l : (FORDER[room] || []).filter(open)).slice(0, 10);
   }
   function IntakeQ(list){
@@ -496,8 +520,38 @@
     var un = l.filter(function(it){ return !S.cards[it.id]; }), wr = l.filter(function(it){ var c = S.cards[it.id]; return c && c.b <= 2; });
     return pick(un.length ? un : wr.length ? wr : l);
   }
+  /* 📄 지문 속독 (국어): 하루 1편 — 읽기(시간) → 문단 요약 1 → 문항 → 한 줄 요약.
+     수능 길이 지문은 이틀에 1편: 1일차 읽기 + 문단마다 요지(구조 잡기) / 2일차 다시 읽기 + 문항 + 한 줄 요약 */
+  function pickPassage(lvs, fresh){
+    var K = GYM_KOR, l = K.P.filter(function(p){ return lvs.indexOf(p.lv) >= 0; });
+    if(!l.length) return null;
+    var un = l.filter(function(p){ return !S.kpDone[p.id]; }).sort(function(a, b){ return a.lv - b.lv; });
+    if(un.length && !fresh) return un[0];
+    return l.slice().sort(function(a, b){ return (S.kpDone[a.id] || "") < (S.kpDone[b.id] || "") ? -1 : 1; })[0];
+  }
+  function passPlan(){
+    if(typeof GYM_KOR === "undefined") return null;
+    var kp = S.kp;
+    if(kp && kp.step === 2 && GYM_KOR.PX[kp.id]) return kp.d >= TODAY ? {wait: 1, pid: kp.id} : {pid: kp.id, mode: "d2"};
+    var sn = stageNow(), p = pickPassage(sn === 1 ? [1, 2] : sn === 2 ? [2, 3] : [3]);
+    return p ? {pid: p.id, mode: p.two ? "d1" : "one"} : null;
+  }
+  function passFlow(room, pl){
+    var X = GYM_KOR.PX[pl.pid], out = [], F = function(it){ return {it: it, kind: "pq", room: room, pf: true, pid: pl.pid, mode: pl.mode}; };
+    out.push({kind: "read", room: room, pf: true, pid: pl.pid, mode: pl.mode, it: {id: "read:" + pl.pid, tag: "지문 속독"}});
+    if(pl.mode === "d1") X.gist.forEach(function(g){ out.push(F(g)); });
+    else { if(pl.mode === "one") out.push(F(pick(X.gist))); else if(pl.mode === "long") X.gist.forEach(function(g){ out.push(F(g)); }); X.qs.forEach(function(q){ out.push(F(q)); }); out.push(F(X.sum)); }
+    out[out.length - 1].last = true;
+    return out;
+  }
+  function passDone(x){
+    if(x.mode === "long") return;
+    S.kpDone[x.pid] = TODAY; day().kpd = 1;
+    S.kp = x.mode === "d1" ? {id: x.pid, step: 2, d: TODAY} : null;
+  }
   function Queue(room){
-    var q = [], used = {}, deep = null;
+    var q = [], used = {}, deep = null, flow = [];
+    if(R[room].passages && (day().sets[room] || 0) >= 1 && !day().kpd){ var pl = passPlan(); if(pl && !pl.wait) flow = passFlow(room, pl); }
     if(R[room].deep && ((S.week && S.week.int) || "base") !== "base" && (day().sets[room] || 0) >= 2) deep = pickDeep(room);
     if(room === "warm"){
       var cf = S.conf.filter(function(x){ return x.d === add(TODAY, -1) || x.d === TODAY; }).slice(-3);
@@ -505,7 +559,9 @@
       dueCards(null, 3).filter(function(id){ return S.cards[id].r !== "warm"; }).slice(0, 10).forEach(function(id){ var it = itemFromCard(S.cards[id], id); if(it) q.push({it: it, kind: "rev", room: S.cards[id].r}); });
     }
     return {
+      busy: function(){ return flow.length > 0; },
       next: function(){
+        if(flow.length) return flow.shift();
         if(deep){ var dp = deep; deep = null; used[dp.id] = 1; return {it: dp, kind: "deep", room: room}; }
         while(q.length){ var x = q.shift(); if(!used[x.it.id]){ used[x.it.id] = 1; return x; } }
         if(revLeft(room) > 0){
@@ -616,8 +672,8 @@
     var rx = S.rx[id] && S.rx[id].until >= TODAY;
     header(r.emo + " " + r.name + " PT", "home");
     var setsHtml = [
-      [id === "warm" ? "복습 루프" : "복습 먼저", rc ? "복습 카드 " + rc + "장" + (id === "warm" ? " · 6과목 오답 + 어제 헷갈린 것" : "") : "복습 카드 없음 → 바로 새 문제"],
-      [id === "warm" ? "학습 도구어" : "오늘 단원", id === "warm" ? "전 과목 공부 언어, 문장 속 뜻" : cf ? "📍 " + FIB[cf].n + (r.set2 ? " · " + r.set2 : "") : (r.gen && !r.bank ? "계산 반사 · 문제가 끝없이 나와요" : "새 문제 · 시간 안에 푼 만큼")]
+      [id === "warm" ? "복습 루프" : r.setNames ? r.setNames[0] : "복습 먼저", r.vocab ? "복습 " + rc + "장 · 새 어휘 " + Math.min(d.kv || 0, r.vocabDaily) + "/" + r.vocabDaily : rc ? "복습 카드 " + rc + "장" + (id === "warm" ? " · 6과목 오답 + 어제 헷갈린 것" : "") : "복습 카드 없음 → 바로 새 문제"],
+      [id === "warm" ? "학습 도구어" : r.setNames ? r.setNames[1] : "오늘 단원", id === "warm" ? "전 과목 공부 언어, 문장 속 뜻" : r.passages ? passLine() : cf ? "📍 " + FIB[cf].n + (r.set2 ? " · " + r.set2 : "") : (r.gen && !r.bank ? "계산 반사 · 문제가 끝없이 나와요" : "새 문제 · 시간 안에 푼 만큼")]
     ];
     var fibHtml = "", inl = r.intake && !S.intake[id] ? intakeList(id) : [];
     if(id !== "warm"){
@@ -626,6 +682,7 @@
         + (cf ? '<span class="ft st' + x.st + '">' + STN[x.st] + "</span><div><b>오늘 단원 · " + esc(FIB[cf].n) + "</b><span>" + (x.st === 0 ? "첫 세트 90% 이상이면 바로 숙달(테스트 아웃)" : "세트 정확도 90% 연속 2번 → 숙달 (" + (x.run || 0) + "/2)") + "</span></div>"
           : '<span class="ft">준비</span><div><b>오늘 단원 · 견본 문항</b><span>이 과목 단원 문항은 다음 단계에서 채워져요</span></div>')
         + '<button class="mini" data-a="tomap" data-sub="' + id + '">🗺️ ' + masterPct(id) + "%</button></div>"
+        + (r.passages && [0, 6].indexOf(new Date().getDay()) >= 0 && pickPassage([3]) ? '<button class="ckbtn" data-a="longp">📚 주말 긴 지문 PT (선택 · 약 20분)<small>수능 길이 지문 1편 · 문단 요지 → 문항 → 한 줄 요약</small></button>' : "")
         + (inl.length ? '<button class="ckbtn" data-a="intake" data-room2="' + id + '">🧪 입소 진단 · ' + inl.length + "단원 × " + INTAKE_PER + "문제 (약 " + Math.round(inl.length * INTAKE_PER * 15 / 60) + "분)<small>아는 단원은 통과 → 연습 없이 7일 뒤 확인만</small></button>" : "")
         + (dc.length ? '<button class="ckbtn" data-a="quiz" data-fid="' + dc[0] + '" data-kind="' + (fs(dc[0]).st === 3 ? "re" : "check") + '">⭐ ' + (fs(dc[0]).st === 3 ? "마스터 확인" : "7일 확인 세트") + " · " + esc(FIB[dc[0]].n) + (dc.length > 1 ? " 외 " + (dc.length - 1) : "") + " ›</button>" : "");
     }
@@ -643,15 +700,17 @@
 
   /* 훈련 중 */
   var T = null;
-  var QK = {diag: "🧪 진단", check: "⭐ 7일 확인", re: "⭐ 마스터 확인", intake: "🧪 입소 진단"};
+  var QK = {diag: "🧪 진단", check: "⭐ 7일 확인", re: "⭐ 마스터 확인", intake: "🧪 입소 진단", long: "📚 주말 긴 지문"};
+  function FlowQ(fl){ return {next: function(){ return fl.shift(); }, busy: function(){ return fl.length > 0; }, revCount: function(){ return 0; }}; }
   function train(id){
     var d = day(), quiz = null;
     if(typeof id === "object"){ quiz = id; id = quiz.room || FIB[quiz.fid].room; }
     var sets = d.sets[id] || 0;
-    T = {room: id, q: quiz ? (quiz.kind === "intake" ? IntakeQ(quiz.list) : QuizQ(quiz.fid)) : Queue(id), quiz: quiz, fid: quiz ? quiz.fid || null : curFiber(id), fu: {n: 0, ok: 0}, fr2: {},
-      N: quiz ? (quiz.kind === "intake" ? quiz.list.length * INTAKE_PER : quiz.kind === "re" ? RE_N : Math.min(QUIZ_N, avail(quiz.fid))) : 0, left: SET_SEC, n: 0, ok: 0, combo: 0, best: 0, xp: 0, wrong: [], tags: {}, t0: 0, qt: 0, cur: null, inp: "", lock: false, paused: false, label: sets === 0 ? (id === "warm" ? "복습 루프" : "복습 먼저") : sets === 1 ? (id === "warm" ? "학습 도구어" : "오늘 단원") : "추가 세트", tick: null, last: performance.now(), acc: 0};
-    if(quiz) T.label = QK[quiz.kind] + " · " + (quiz.fid ? FIB[quiz.fid].n : "1단계 " + quiz.list.length + "단원");
-    header(R[id].emo + " " + R[id].name + " · " + T.label, quiz && quiz.kind !== "intake" ? "map" : "room");
+    T = {room: id, q: quiz ? (quiz.kind === "intake" ? IntakeQ(quiz.list) : quiz.kind === "long" ? FlowQ(passFlow(id, {pid: quiz.pid, mode: "long"})) : QuizQ(quiz.fid)) : Queue(id), quiz: quiz, fid: quiz ? quiz.fid || null : curFiber(id), fu: {n: 0, ok: 0}, fr2: {},
+      readSec: 0, evs: [],
+      N: quiz ? (quiz.kind === "intake" ? quiz.list.length * INTAKE_PER : quiz.kind === "long" ? passFlow(id, {pid: quiz.pid, mode: "long"}).length - 1 : quiz.kind === "re" ? RE_N : Math.min(QUIZ_N, avail(quiz.fid))) : 0, left: SET_SEC, n: 0, ok: 0, combo: 0, best: 0, xp: 0, wrong: [], tags: {}, t0: 0, qt: 0, cur: null, inp: "", lock: false, paused: false, label: sets === 0 ? (id === "warm" ? "복습 루프" : R[id].setNames ? R[id].setNames[0] : "복습 먼저") : sets === 1 ? (id === "warm" ? "학습 도구어" : R[id].setNames ? R[id].setNames[1] : "오늘 단원") : "추가 세트", tick: null, last: performance.now(), acc: 0};
+    if(quiz) T.label = QK[quiz.kind] + " · " + (quiz.fid ? FIB[quiz.fid].n : quiz.kind === "long" ? GYM_KOR.PX[quiz.pid].p.title : "1단계 " + quiz.list.length + "단원");
+    header(R[id].emo + " " + R[id].name + " · " + T.label, quiz && quiz.kind !== "intake" && quiz.kind !== "long" ? "map" : "room");
     m.innerHTML = '<div class="ttop"><span class="lab" id="tl"></span><span class="clk" id="clk">' + (quiz ? "1/" + T.N : "5:00") + '</span><button class="ib" id="pz" aria-label="잠깐 멈춤" style="font-size:13px;padding:0 8px">멈춤</button></div>'
       + '<div class="tbar"><i id="tb" style="width:100%"></i></div>'
       + '<div class="tstat"><span id="ts">0문제</span><span class="combo" id="cb"></span></div>'
@@ -665,6 +724,7 @@
     var now = performance.now(), dt = (now - T.last) / 1000; T.last = now;
     if(T.paused || document.hidden || dt > 5) return;
     if(!T.quiz) T.left -= dt;
+    if(T.cur && T.cur.kind === "read"){ T.readSec += dt; var rt = document.getElementById("rt"); if(rt){ var rs = Math.floor(T.readSec); rt.textContent = Math.floor(rs / 60) + ":" + ("0" + rs % 60).slice(-2); } }
     T.acc += dt;
     var d = day(); d.sec[T.room] = (d.sec[T.room] || 0) + dt;
     if(T.acc >= 5){ T.acc = 0; S.last = TODAY; save(); }
@@ -672,18 +732,30 @@
     var s = Math.max(0, Math.ceil(T.left)), c = document.getElementById("clk");
     if(c){ c.textContent = Math.floor(s / 60) + ":" + ("0" + s % 60).slice(-2); c.classList.toggle("low", s <= 30); }
     var b = document.getElementById("tb"); if(b) b.style.width = Math.max(0, T.left / SET_SEC * 100) + "%";
-    if(T.left <= 0 && !T.lock) stopTrain(false);
+    if(T.left <= 0 && !T.lock && !busy()) stopTrain(false);
   }
   document.addEventListener("visibilitychange", function(){ if(T) T.last = performance.now(); });
+  function busy(){ return (T.cur && T.cur.pf && !T.cur.last) || (T.q.busy && T.q.busy()); }   // 지문은 끝까지
   function nextQ(){
-    if(T.left <= 0 || (T.quiz && T.n >= T.N)) return stopTrain(false);
+    if((T.left <= 0 && !(T.q.busy && T.q.busy())) || (T.quiz && T.n >= T.N)) return stopTrain(false);
     if(T.quiz){ var ck = document.getElementById("clk"); if(ck) ck.textContent = (T.n + 1) + "/" + T.N; var tb = document.getElementById("tb"); if(tb) tb.style.width = (T.n / T.N * 100) + "%"; }
     var x = T.q.next(); T.cur = x; T.inp = ""; T.lock = false; T.qt = performance.now();
     var it = x.it, qc = document.getElementById("qc"), pad = document.getElementById("pad");
     qc.className = "qcard";
+    if(x.kind === "read"){
+      var PP = GYM_KOR.PX[x.pid].p;
+      qc.className = "qcard read";
+      qc.innerHTML = '<span class="tg">📄 ' + (x.mode === "d2" ? "이틀 지문 2일차 · 다시 빠르게 읽기" : x.mode === "d1" ? "이틀 지문 1일차 · 읽고 구조 잡기" : x.mode === "long" ? "주말 긴 지문" : "지문 속독") + "</span>"
+        + '<div class="ptitle">' + esc(PP.title) + " <small>" + esc(PP.area || "") + " · " + PP.chars + "자</small></div>"
+        + '<div class="ptext">' + PP.paras.map(function(t){ return "<p>" + esc(t) + "</p>"; }).join("") + "</div>";
+      pad.innerHTML = '<button class="btn" data-read="1">다 읽었어요 ✓ <small id="rt">0:00</small></button>';
+      document.getElementById("tl").textContent = "📖 핵심어에 주의하며 읽어요 · 읽는 시간을 재요";
+      return;
+    }
     var tag = x.kind === "deep" ? '<span class="tg dp">🎯 한 문제 깊게 · 학평형</span>' : x.kind === "quiz" ? '<span class="tg rv">' + QK[T.quiz.kind] + "</span>" : x.kind === "rev" ? '<span class="tg rv">🔁 복습' + (x.room !== T.room ? " · " + R[x.room].name : "") + "</span>" : x.kind === "conf" ? '<span class="tg rv">🤔 어제 헷갈린 것</span>' : '<span class="tg">' + esc(it.tag || "") + "</span>";
-    qc.innerHTML = tag + '<div class="qq' + (it.num && String(it.q).length < 18 ? " big" : "") + '">' + fmt(it.q) + "</div>" + (it.ask ? '<div class="qa">' + esc(it.ask) + "</div>" : "");
-    document.getElementById("tl").textContent = T.quiz ? "📍 " + FIB[x.fid || T.fid].n + " · 시간 제한 없음" : (T.fid && fiberOf(x.room, it) === T.fid ? "📍 오늘 단원 · " + FIB[T.fid].n + " · " : "") + (T.q.revCount() ? "🔁 복습 " + T.q.revCount() + "장 남음 · " : "") + "Lv." + lv(T.room) + (day().cond === "hard" ? " (쉽게)" : "");
+    if(x.kind === "pq") tag = '<span class="tg">📄 ' + esc(it.tag || "") + "</span>";
+    qc.innerHTML = tag + (it.p ? '<button class="pbtn" data-a="showp" data-p="' + esc(it.p) + '">📄 지문</button>' : "") + '<div class="qq' + (it.num && String(it.q).length < 18 ? " big" : "") + '">' + fmt(it.q) + "</div>" + (it.ask ? '<div class="qa">' + esc(it.ask) + "</div>" : "");
+    document.getElementById("tl").textContent = x.pf ? "📄 " + GYM_KOR.PX[x.pid].p.title + " · 지문 문항은 끝까지" : T.quiz ? "📍 " + FIB[x.fid || T.fid].n + " · 시간 제한 없음" : (T.fid && fiberOf(x.room, it) === T.fid ? "📍 오늘 단원 · " + FIB[T.fid].n + " · " : "") + (T.q.revCount() ? "🔁 복습 " + T.q.revCount() + "장 남음 · " : "") + "Lv." + lv(T.room) + (day().cond === "hard" ? " (쉽게)" : "");
     if(it.num){
       pad.innerHTML = '<div class="num"><div class="disp" id="disp" data-ph="' + (it.fr ? "분수는 / 로 · 예) −3/4" : "답을 누르세요") + '"></div><div class="keys">'
         + ["7", "8", "9", "⌫", "4", "5", "6", "go", "1", "2", "3", "−", "0", it.fr ? "/" : "."].map(function(k){
@@ -699,6 +771,7 @@
     }
   }
   document.getElementById("m").addEventListener("click", function(e){
+    if(V === "train" && T && e.target.closest("[data-read]")) return doneRead();
     if(V !== "train" || !T || T.lock) { var nx = e.target.closest("[data-next]"); if(nx && T) nextQ(); return; }
     var k = e.target.closest("[data-k]"), c = e.target.closest("[data-c]");
     if(k){
@@ -725,12 +798,26 @@
       if(k){ e.preventDefault(); var b = document.querySelector('#pad [data-k="' + k + '"]'); if(b) b.click(); }
     } else if(/^[1-5]$/.test(e.key)){ var b2 = document.querySelectorAll("#pad [data-c]")[+e.key - 1]; if(b2) b2.click(); }
   });
+  function doneRead(){
+    var x = T.cur, PP = GYM_KOR.PX[x.pid].p, sec = Math.max(5, T.readSec), cpm = Math.round(PP.chars / (sec / 60));
+    var prev = S.kr.filter(function(r){ return r.lv === PP.lv && r.m !== "d2"; }).slice(-1)[0];
+    S.kr.push({d: TODAY, p: x.pid, lv: PP.lv, cpm: cpm, s: Math.round(sec), m: x.mode}); S.kr = S.kr.slice(-60);
+    T.read = {cpm: cpm, prev: prev && x.mode !== "d2" ? prev.cpm : null, m: x.mode, title: PP.title};
+    T.readSec = 0; save(); nextQ();
+  }
   function answer(ok){
     T.lock = true;
     var x = T.cur, it = x.it, dtq = (performance.now() - T.qt) / 1000, d = day(), qc = document.getElementById("qc");
     T.n++; if(ok) T.ok++;
     T.tags[it.tag] = 1;
     if(T.fid && x.room === T.room && fiberOf(x.room, it) === T.fid){ T.fu.n++; if(ok) T.fu.ok++; }
+    var fp = fiberOf(x.room, it);
+    if(fp && FIB[fp] && FIB[fp].pool && x.kind !== "quiz"){
+      var xr = fibRec(fp); xr.pool = xr.pool || {n: 0, ok: 0}; xr.pool.n++; if(ok) xr.pool.ok++;
+      if(xr.pool.n >= PRAC_MIN){ var ev2 = practice(fp, xr.pool); xr.pool = {n: 0, ok: 0}; if(ev2) T.evs.push(ev2); }
+    }
+    if(x.last) passDone(x);
+    if(it.tag === "어휘" && x.kind === "new" && R[x.room].vocab) day().kv = (day().kv || 0) + 1;
     if(x.fid){ var f2 = T.fr2[x.fid] = T.fr2[x.fid] || {n: 0, ok: 0}; f2.n++; if(ok) f2.ok++; }
     d.n[T.room] = (d.n[T.room] || 0) + 1; d.ok[T.room] = (d.ok[T.room] || 0) + (ok ? 1 : 0); d.t[T.room] = (d.t[T.room] || 0) + Math.min(dtq, 60);
     if(x.kind === "rev") d.rev[x.room] = (d.rev[x.room] || 0) + 1;
@@ -756,9 +843,9 @@
     clearInterval(T.tick);
     var d = day(), done = T;
     if(done.quiz){
-      if(!quit && done.n >= done.N){ done.ev = done.quiz.kind === "intake" ? intakeDone(done.room, done.quiz.list, done.fr2) : quizDone(done.fid, done.quiz.kind, done.n, done.ok); addXP(done.room, 20); done.xp += 20; }
+      if(!quit && done.n >= done.N){ done.ev = done.quiz.kind === "long" ? {msg: "📚 주말 긴 지문 끝! 정답 <b>" + done.ok + " / " + done.n + "</b>" + (done.read ? " · 읽기 " + done.read.cpm + "자/분" : "")} : done.quiz.kind === "intake" ? intakeDone(done.room, done.quiz.list, done.fr2) : quizDone(done.fid, done.quiz.kind, done.n, done.ok); addXP(done.room, 20); done.xp += 20; }
       T = null; save();
-      if(done.n === 0) return go(done.quiz.kind === "intake" ? "room" : "map", done.room);
+      if(done.n === 0) return go(done.quiz.kind === "intake" || done.quiz.kind === "long" ? "room" : "map", done.room);
       return go("result", done);
     }
     if(!quit || T.n > 0){
@@ -797,7 +884,9 @@
     var evHtml = ev && ev.rows ? '<div class="win fibev st1" style="--c:' + room.col + '">' + ev.msg + '</div><div class="irows" style="--c:' + room.col + '">' + ev.rows.map(function(w){
         var x = fs(w[0]); return '<div><b>' + esc(FIB[w[0]].n) + "</b><span>" + "●".repeat(w[1]) + '<i>' + "●".repeat(w[2] - w[1]) + "</i></span><em class=\"" + (w[1] === w[2] ? "ok" : w[1] <= 1 ? "rx" : "") + "\">" + (w[1] === w[2] ? "통과" : w[1] <= 1 ? "처방" : "연습") + "</em></div>"; }).join("") + "</div>"
       : ev ? '<div class="win fibev st' + fs(ev.fid).st + '" style="--c:' + room.col + '">' + ev.msg + "</div>" : qz && r.n < r.N ? '<div class="win">' + QK[qz.kind] + "은 " + r.N + "문제를 다 풀어야 기록돼요</div>" : "";
-    header(room.emo + (qz ? " " + QK[qz.kind] + " 결과" : " 세트 끝!"), qz && qz.kind !== "intake" ? "map" : "room");
+    header(room.emo + (qz ? " " + QK[qz.kind] + " 결과" : " 세트 끝!"), qz && qz.kind !== "intake" && qz.kind !== "long" ? "map" : "room");
+    if(r.evs && r.evs.length) evHtml += r.evs.map(function(v){ return '<div class="win fibev st' + fs(v.fid).st + '" style="--c:' + room.col + '">' + v.msg + "</div>"; }).join("");
+    if(r.read) evHtml = '<div class="win">📖 읽기 속도 <b>' + r.read.cpm + "자/분</b>" + (r.read.cpm > 1500 ? '<br><span class="muted">너무 빨라요! 핵심어를 놓치지 않게 꼼꼼히 읽어 보자</span>' : "") + (r.read.prev ? (r.read.cpm > r.read.prev ? " · 지난번보다 " + (r.read.cpm - r.read.prev) + "자 빨라졌어요 ⚡" : " · 지난번 " + r.read.prev + "자/분") : "") + (r.read.m === "d1" ? '<br><span class="muted">내일은 이 지문의 문항과 한 줄 요약!</span>' : "") + "</div>" + evHtml;
     m.innerHTML = '<div class="coach"><span class="sb">' + sb(80, {item: r.n && acc >= 80 ? "stamp" : undefined}) + '</span><div class="bub">'
       + (over ? "30분 넘게 했네! 과목을 섞으면 더 오래 남아. 다른 PT실 어때?" : att ? "✅ " + room.name + " 출석 인정! 잘했어." : acc >= 90 ? "정확도 최고! 이 느낌 그대로." : acc >= 60 ? "좋아! 틀린 건 내일 복습 상자에서 다시 만나." : "괜찮아, 틀린 만큼 내일 더 강해져.")
       + "<small>" + (bonus || "오늘 " + room.name + " " + mn + "분" + (gl ? " / " + gl + "분" : "")) + "</small></div></div>"
@@ -817,6 +906,18 @@
   };
   handlers.end = function(){ go("home"); };
   handlers.tomap = function(t){ go("map", t && t.dataset && t.dataset.sub); };
+  function passLine(){
+    if(day().kpd) return "📄 오늘 지문 끝 ✓ · 문법·문학 카드";
+    var pl = passPlan(); if(!pl) return "문법·문학 카드";
+    if(pl.wait) return "📄 내일은 이틀 지문 2일차 · 오늘은 카드";
+    var p = GYM_KOR.PX[pl.pid].p;
+    return "📄 " + p.title + " · " + p.chars + "자" + (pl.mode === "d1" ? " · 이틀 지문 1일차" : pl.mode === "d2" ? " · 2일차" : "");
+  }
+  handlers.longp = function(){ var p = pickPassage([3], true); if(p) go("train", {room: "kor", kind: "long", pid: p.id}); };
+  handlers.showp = function(t){
+    var p = GYM_KOR.PX[t.dataset.p]; if(!p) return; p = p.p;
+    dlg('<h3>📄 ' + esc(p.title) + ' <small class="muted">' + p.chars + '자</small></h3><div class="ptext dlgp">' + p.paras.map(function(x){ return "<p>" + esc(x) + "</p>"; }).join("") + '</div><button class="btn sub" data-x="1">닫기</button>');
+  };
   handlers.intake = function(t){ var id = t.dataset.room2; go("train", {room: id, kind: "intake", list: intakeList(id)}); };
   handlers.quiz = function(t){ closeDlg(); go("train", {fid: t.dataset.fid, kind: t.dataset.kind}); };
 
