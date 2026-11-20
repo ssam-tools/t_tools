@@ -99,7 +99,22 @@
   #pvQl button{display:flex;flex-direction:column;gap:2px;text-align:left;border:0;background:none;border-radius:8px;padding:6px 8px;font:inherit;cursor:pointer}
   #pvQl button:hover{background:#f2f4f7}#pvQl b{font-size:13px}#pvQl small{font-size:12px;color:var(--sub)}#pvQl div{font-size:12px;color:var(--sub);padding:4px 8px}
   html.inframe .pvf{display:none}
-  @media (max-width:760px){ main{grid-template-columns:minmax(0,1fr)} .nav,.body{min-width:0} body{height:auto;min-height:100dvh;overflow:auto} .bar{justify-content:flex-start} }
+  @media (max-width:760px){ main{grid-template-columns:minmax(0,1fr)} .nav,.body{min-width:0}
+    /* v2.24.3 휴대폰 목록: 1줄 = 아이콘 · 제목(2줄까지) · 정보, 2줄 = 단추들(같은 폭으로 나란히) */
+    .it{flex-wrap:wrap;gap:6px 8px;padding:9px 10px}
+    .it .ic{font-size:22px;align-self:flex-start}
+    .it .mn{flex:1 1 calc(100% - 40px)}
+    .it .tt{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:keep-all;line-height:1.35}
+    .it .mt{gap:3px 6px;margin-top:3px}
+    .it .mt .chip{white-space:nowrap}
+    .it .mt > span:not(.chip){white-space:nowrap}
+    .it > .btn{flex:1 1 0;min-width:0;padding:6px 2px;font-size:12.5px;white-space:nowrap;justify-content:center}
+    .it > .btn.star,.it > .btn[data-del]{flex:0 0 38px}
+    /* 갈래: 세로 목록 대신 칩 줄 (자료 목록이 바로 보이게) */
+    .nav{flex-direction:row;flex-wrap:wrap;gap:5px;overflow:visible}
+    .nav button{flex:none;border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-size:13px;gap:5px;justify-content:flex-start}
+    .nav button[aria-current=true]{border-color:var(--accent)}
+    .nav label{padding:4px 2px} body{height:auto;min-height:100dvh;overflow:auto} .bar{justify-content:flex-start} }
   .btn.star{font-size:16px;color:#9aa5b1;padding-left:10px;padding-right:10px}.btn.star.on{color:#e0a526}
   html.inframe header{display:none}
 </style>
