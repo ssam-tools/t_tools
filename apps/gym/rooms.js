@@ -123,6 +123,8 @@ var GYM_ROOMS = (function(){
     o.id = "sci:g:" + o.q; o.num = true; return o;
   }
 
+  var SCIU = {"힘": "s.force", "빛과 파동": "s.light", "전기": "s.elec", "물질의 상태": "s.state", "기체": "s.gas", "물질의 구성": "s.matter", "식물과 에너지": "s.plant",
+    "자극과 반응": "s.resp", "생식과 유전": "s.gene", "기권과 날씨": "s.air", "태양계": "s.solar", "에너지": "s.energy", "속력": "s.motion", "밀도": "s.prop"};
   return {
     order: ["warm", "kor", "math", "eng", "sci", "soc"],
     warm: typeof GYM_WARM !== "undefined"   // 6단계: 학습 도구어는 warm.js
@@ -141,9 +143,10 @@ var GYM_ROOMS = (function(){
       ? {name: "영어", part: "다리", emo: "🔤", col: "#1F9D55", bank: GYM_ENG.gram, vocab: GYM_ENG.vocab, vocabDaily: 10, listen: GYM_ENG.listen,
          srsNew: true, intake: true, setNames: ["단어 + 복습", "구문 끊어 읽기"], set2: "끊어 읽기·동사 찾기·어법"}
       : {name: "영어", part: "다리", emo: "🔤", col: "#1F9D55", bank: vocab("eng:", "단어", EW, "밑줄 친 단어의 뜻은?"), srsNew: true},
-    sci:  {name: "통합과학", part: "어깨", emo: "🔬", col: "#2F80ED", bank: SCI, gen: sciGen, mix: .35, srsNew: true, genTags: ["속력", "밀도"],
-      unitOf: {"힘": "s.force", "빛과 파동": "s.light", "전기": "s.elec", "물질의 상태": "s.state", "기체": "s.gas", "물질의 구성": "s.matter", "식물과 에너지": "s.plant",
-        "자극과 반응": "s.resp", "생식과 유전": "s.gene", "기권과 날씨": "s.air", "태양계": "s.solar", "에너지": "s.energy", "속력": "s.motion", "밀도": "s.prop"}},
+    sci: typeof GYM_SCI !== "undefined"   // 7단계: 통합과학 PT 자료는 sci.js (개념 OX · 공식 생성기 · 자료 해석 세트)
+      ? {name: "통합과학", part: "어깨", emo: "🔬", col: "#2F80ED", bank: SCI.concat(GYM_SCI.ox, GYM_SCI.ditems), gen: GYM_SCI.gen, genTags: GYM_SCI.genTags, mix: .35, genRatio: .4,
+         unitOf: Object.assign({}, SCIU, GYM_SCI.unitOf), srsNew: true, intake: true, dsets: GYM_SCI, setNames: ["개념 OX + 공식", "자료 해석"]}
+      : {name: "통합과학", part: "어깨", emo: "🔬", col: "#2F80ED", bank: SCI, gen: sciGen, mix: .35, srsNew: true, genTags: ["속력", "밀도"], unitOf: SCIU},
     soc:  {name: "통합사회", part: "가슴", emo: "🌏", col: "#E05BA8", bank: vocab("soc:", "개념어", SW, "밑줄 친 말의 뜻으로 알맞은 것은?"), srsNew: true}
   };
 })();
