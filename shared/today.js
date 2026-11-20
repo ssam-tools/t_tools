@@ -634,8 +634,11 @@
   function build(q){
     if(pasted) return pasteRows();
     var R = [], qq = q.trim(), low = qq.toLowerCase(); if(!qq) return bagRows();
-    var act = [], m0 = qq.match(/^종례\s*[:：]?\s*(.+)$/), m1 = !m0 && qq.match(/^할\s*일\s*[:：]\s*(.+)$/);
-    if(m1){                                                            // 개편 9단계: "할 일: …" → 내 할 일
+    var act = [], m0 = qq.match(/^종례\s*[:：]?\s*(.+)$/), m1 = !m0 && qq.match(/^할\s*일\s*[:：]\s*(.+)$/), m2 = !m0 && !m1 && qq.match(/^소식\s*[:：]\s*(.*)$/);
+    if(m2){                                                            // v2.13 "소식: …" → 모든 선생님 쌤비에게 학교 소식
+      act.push({ic: "📢", tx: "학교 소식 보내기 · <b>" + esc(m2[1] || "…") + "</b>", sub: "모든 선생님 쌤비 말풍선에", go: function(){ closeFind(); if(window.TT_TALK) TT_TALK.open("send", m2[1]); }});
+      m0 = m2;
+    }else if(m1){                                                            // 개편 9단계: "할 일: …" → 내 할 일
       var pd1 = parseDate(m1[1]);
       act.push({ic: "📝", tx: "내 할 일에 넣기 · <b>" + esc(pd1.rest || m1[1]) + "</b>", sub: dLabel(pd1.date), go: function(){ addTodo(pd1.rest || m1[1], pd1.date); }});
       m0 = m1;                                                         // 아래 찾기는 건너뜀
@@ -954,7 +957,7 @@
     if(cm) addBag(pd.rest || rest, pd.date || closeDay()); else addTodo(pd.rest || rest, pd.date);
     render(); window.dispatchEvent(new Event("tt-home-change")); return true;
   }
-  window.TT_TODAY = {render: render, menuNow: menuNow, status: status, openStudent: openStudent, brief: brief, home: homeData, act: homeAct, done: homeDone, add: homeAdd};
+  window.TT_TODAY = {bag: function(t){ addBag(t, closeDay()); }, render: render, menuNow: menuNow, status: status, openStudent: openStudent, brief: brief, home: homeData, act: homeAct, done: homeDone, add: homeAdd};
   window.addEventListener("pageshow", render);
   window.addEventListener("tt-mytodo-change", render);
   window.addEventListener("tt-auto-change", render);

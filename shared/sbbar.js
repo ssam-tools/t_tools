@@ -83,7 +83,8 @@
   function hrowHTML(){
     var p = P(), d = new Date(), s = (TT.school && TT.school.load ? TT.school.load() : {}) || {};
     return '<button type="button" class="owl" id="sbBarOwl" title="쌤비 — 오늘 상황 · 말로 기록 (Alt+B)" aria-label="쌤비 열기 (Alt+B)">' + owlSvg(132) + "</button>"
-      + '<div class="bub" role="status"><div class="b0">' + (p.ev ? '<div class="when"><span class="ev">📌 ' + esc(p.ev) + "</span></div>" : "") + "<p>" + esc(p.line || "") + "</p>" + (p.sub ? "<small>" + esc(p.sub) + "</small>" : "") + "</div></div>";
+      + '<div class="bub' + (p.talk ? " talk" : "") + '" role="status"><div class="b0"' + (p.talk ? ' title="누르면 다음 이야기"' : "") + ">" + (p.ev ? '<div class="when"><span class="ev">📌 ' + esc(p.ev) + "</span></div>" : "") + (p.tag ? '<span class="ttag">' + esc(p.tag) + "</span>" : "") + "<p>" + esc(p.line || "") + "</p>" + (p.sub ? "<small>" + esc(p.sub) + "</small>" : "") + "</div>"
+      + (p.acts && p.acts.length ? '<div class="acts">' + p.acts.map(function(a){ return '<button type="button" data-tact="' + esc(a[0]) + '">' + esc(a[1]) + "</button>"; }).join("") + "</div>" : "") + "</div>";   // v2.13 쌤비 이야기: 꼬리표 · 단추
   }
   function wxTag(sep){ var c = window.TT_WX ? TT_WX.chip() : ""; return c ? sep + '<span data-hid="wx" class="wx">' + esc(c) + "</span>" : ""; }   // v2.12 날씨 (올리면 자세히)
   function dateHTML(){                                                  // 학교 · 날짜 · 시간은 맨 위 ⋯ 줄 왼쪽에 (휴대폰은 짧게)
@@ -156,7 +157,7 @@
       e.preventDefault();
       var v = q.value.trim(); if(!v){ h.search(""); return; }
       if(v.charAt(0) === "+" && v.length > 1) v = "할 일: " + v.replace(/^\+\s*/, "");   // v2.7: "+ 할 일" = 할 일 넣기 (도구 화면 검색창과 같게)
-      if(/^(종례|할\s*일|todo)\s*[:：]/i.test(v) && window.TT_FIND && TT_FIND.rows){ var r = TT_FIND.rows(v).filter(function(r){ return !r.h && !r.bag && r.go; })[0]; if(r){ r.go(); q.value = ""; sync(); h.search(""); return; } }
+      if(/^(종례|할\s*일|todo|소식)\s*[:：]/i.test(v) && window.TT_FIND && TT_FIND.rows){ var r = TT_FIND.rows(v).filter(function(r){ return !r.h && !r.bag && r.go; })[0]; if(r){ r.go(); q.value = ""; sync(); h.search(""); return; } }
       if(h.query() === v) h.run(); else h.search(v);
     });
     x.addEventListener("click", function(){ q.value = ""; sync(); var h = SH(); if(h) h.search(""); q.focus(); });
@@ -400,6 +401,8 @@
   document.addEventListener("click", function(e){
     var host = e.target.closest && e.target.closest("#sbHero,#sbRail,#sbBar"); if(!host) return;
     if(e.target.closest("[data-tree]") && TT.joy){ e.preventDefault(); e.stopPropagation(); TT.joy.open("tree"); return; }   // v2.8 우리 반 나무
+    var ta = e.target.closest(".bub [data-tact]"); if(ta && window.TT_TALK){ e.stopPropagation(); TT_TALK.act(ta.getAttribute("data-tact")); return; }   // v2.13 쌤비 이야기 단추
+    if(e.target.closest(".bub.talk .b0") && window.TT_TALK){ TT_TALK.next(); return; }                                   // 말풍선을 누르면 다음 이야기
     if(e.target.closest(".bub .b0") && window.TT_SBHOME && TT_SBHOME.prepGo && document.querySelector("#prep .pi")){ TT_SBHOME.prepGo(); return; }   // 시작 준비 → 말풍선을 누르면 바로
     var t = e.target.closest("button,a"); if(!t || (t.closest("#more") && !t.dataset.m)) return;
     if(t.id === "sbBarOwl" || t.id === "sbBarOwl2"){ e.stopPropagation(); openSsambi(false); return; }

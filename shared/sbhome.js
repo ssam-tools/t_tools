@@ -60,7 +60,7 @@
     if(nxt && nxt.left <= 15) return r("book", nxt.left + "분 뒤 " + nxt.n + "교시 " + nxt.cls + (nxt.subj ? " " + nxt.subj : "") + " 수업이에요.", nxt.prog && nxt.prog.now ? "이번 차시: " + nxt.prog.now : (nxt.unit ? "단원: " + nxt.unit : ""));
     if(wk && m >= 720 && m < 780){ var ml = ""; try{ ml = window.TTMeal ? TTMeal.todayText() : ""; }catch(e){} return r("spoon", "점심시간이에요. 맛있게 드세요!", ml || (cnt ? "오후에 챙길 일 " + cnt + "개" : "")); }
     /* v2.8: 새로 바뀐 점(업데이트 후 첫날) · 금요일 한 주 결산 · 백업 30일 */
-    var NEWS = {"2.10.3": ["학기초 세팅에서 급식(나이스)·학교 업무판 주소도 함께 배포", "문서 찾기가 찾은 글자를 정확히 칠해요"], "2.8.0": ["새 기능: 퇴근 도장은 급한 일만 없으면!", "쌤비 소품 · 연속 도장 · 우리 반 나무 · 앱 설치하기(쌤비 아이콘) — ⋯ 메뉴에서"], "2.10.2": ["새 도구: 학교 → 자료실 → 🔗 짧은 주소 (g/?수학1 · QR)", "문서 도우미 목록이 접혀서 한눈에 보여요"], "2.10.1": ["새 기능: 교실 전자칠판을 이름 + 숫자 6자리로 열어요", "⋯ → 기기 연결·동기화 → 교실 전자칠판에서 열기에서 번호를 정하세요"], "2.10.0": ["새 기능: 교실 전자칠판을 이름 + 숫자 6자리로 열어요", "⋯ → 기기 연결·동기화 → 교실 전자칠판에서 열기에서 번호를 정하세요"]}, nv = NEWS[TT.VERSION];
+    var NEWS = {"2.13.0": ["새 기능: 쌤비 이야기 — 말풍선을 누르면 다음 이야기", "설정 → 쌤비 이야기에서 학교 소식을 모든 선생님께"], "2.10.3": ["학기초 세팅에서 급식(나이스)·학교 업무판 주소도 함께 배포", "문서 찾기가 찾은 글자를 정확히 칠해요"], "2.8.0": ["새 기능: 퇴근 도장은 급한 일만 없으면!", "쌤비 소품 · 연속 도장 · 우리 반 나무 · 앱 설치하기(쌤비 아이콘) — ⋯ 메뉴에서"], "2.10.2": ["새 도구: 학교 → 자료실 → 🔗 짧은 주소 (g/?수학1 · QR)", "문서 도우미 목록이 접혀서 한눈에 보여요"], "2.10.1": ["새 기능: 교실 전자칠판을 이름 + 숫자 6자리로 열어요", "⋯ → 기기 연결·동기화 → 교실 전자칠판에서 열기에서 번호를 정하세요"], "2.10.0": ["새 기능: 교실 전자칠판을 이름 + 숫자 6자리로 열어요", "⋯ → 기기 연결·동기화 → 교실 전자칠판에서 열기에서 번호를 정하세요"]}, nv = NEWS[TT.VERSION];
     if(nv && m >= 300){ var sk = "sn_news_seen", sv0 = ""; try{ sv0 = localStorage.getItem(sk) || ""; }catch(e){}
       var td = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
       if(sv0.indexOf(TT.VERSION + "|") !== 0){ try{ localStorage.setItem(sk, TT.VERSION + "|" + td); }catch(e){} sv0 = TT.VERSION + "|" + td; }
@@ -256,9 +256,26 @@
   /* v2.12 날씨·즐겨찾기 한마디: 쌤비가 한가할 때(소품 없음·커피)만 — 수업·급한 일·퇴근 안내는 그대로
      비 → 우산, 미세먼지 나쁨 → 마스크, 아주 추움 → 목도리 (shared/wx.js) · 평일 아침 업무포털을 아직 안 열었으면 한 번 물어봄 (shared/favs.js) */
   function extra(P){
-    if(!P || P.sleep || (P.item && P.item !== "coffee")) return P;
+    if(!P) return P;
     var d = new Date(), m = d.getHours() * 60 + d.getMinutes(), wk = d.getDay() >= 1 && d.getDay() <= 5;
-    var w = window.TT_WX ? TT_WX.hint() : null;
+    var w = window.TT_WX && !P.sleep ? TT_WX.hint() : null;
+    if(P.item === "coffee" && wk && m >= 7 * 60 + 30 && m < 8 * 60 + 20 && !TT.classroom && window.TT_FAVS){   // 조회 전(8:20~)에는 아이들 이야기가 먼저
+      var ep0 = TT_FAVS.list().filter(function(x){ return x.id === "d-eduptl"; })[0];
+      if(ep0 && TT_FAVS.opened().indexOf(ep0.id) < 0){ var q0 = {}; for(var j0 in P) q0[j0] = P[j0]; q0.sub = "업무포털 확인하셨어요? ☆에서 바로 열어요"; return q0; }
+    }
+    /* v2.13 쌤비 이야기 (shared/talk.js): 한가할 때 · 아침 인사 · 퇴근 도장 찍은 뒤 · 저녁·주말에만 — 수업·급한 일 안내는 그대로 */
+    var stamped = P.item === "stamp" && TT.joy && TT.joy.stamped && TT.joy.stamped();
+    if(window.TT_TALK && !TT.classroom && (P.item === "" || P.item === "coffee" || stamped || (P.item === "night" && P.sleep && d.getHours() >= 5))){
+      var T = null; try{ T = TT_TALK.bubble(); }catch(e){}
+      if(T){
+        var o2 = {}; for(var k2 in P) o2[k2] = P[k2];
+        o2.line = T.line; o2.tag = T.tag; o2.acts = T.acts; o2.talk = 1;
+        o2.sub = stamped ? "✅ " + (P.sub || "퇴근 도장 쾅!") : P.item === "coffee" ? (w && w.sub ? w.sub : P.line) : P.sleep ? "" : (P.sub || (w && w.sub) || "");
+        if(w && w.item) o2.item = w.item;
+        return o2;
+      }
+    }
+    if(P.sleep || (P.item && P.item !== "coffee")) return P;
     if(w){ var o = {}; for(var k in P) o[k] = P[k]; if(w.item) o.item = w.item; if(P.item === "coffee" || !P.sub) o.sub = w.sub; return o; }   // 소품은 늘, 한마디는 아침 인사·빈 칸일 때만
     if(P.item === "coffee" && wk && m >= 7 * 60 + 30 && m < 9 * 60 + 30 && !TT.classroom && window.TT_FAVS){
       var ep = TT_FAVS.list().filter(function(x){ return x.id === "d-eduptl"; })[0];
@@ -276,7 +293,7 @@
     if(!ok){ host.hidden = true; host.textContent = ""; R.classList.add("sbReady"); return; }
     var H; try{ H = TT_TODAY.home(); }catch(e){ console.warn("쌤비 홈:", e); return; }
     var P = lastP = extra(pick(H));
-    if(window.TT_SBAR) TT_SBAR.setOwl({item: P.item, open: P.open, sleep: P.sleep, listen: P.listen, line: P.line, sub: P.sub, ev: H.events.join(" · ")});
+    if(window.TT_SBAR) TT_SBAR.setOwl({item: P.item, open: P.open, sleep: P.sleep, listen: P.listen, line: P.line, sub: P.sub, ev: H.events.join(" · "), tag: P.tag || "", acts: P.acts || null, talk: P.talk || 0});
     host.hidden = false;
     if(window.TT_SBAR && TT_SBAR.seatBox) TT_SBAR.seatBox();
     if(Q.q){ host.innerHTML = '<div class="sbWrap">' + resHTML() + "</div>"; var on1 = host.querySelector(".rr.on"); if(on1 && on1.scrollIntoView) on1.scrollIntoView({block: "nearest"}); return; }
