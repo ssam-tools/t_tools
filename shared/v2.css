@@ -485,5 +485,5 @@ html[data-room="on"] #sbHero .srow,html[data-room="on"] #sbBar [data-mic]{displa
 #sbFavPop .fm:hover{background:var(--t-chip);color:var(--t-accent)}
 #sbHero .top .sp .wx{cursor:default;border-bottom:1px dotted transparent}
 #sbHero .top .sp .wx:hover{border-bottom-color:var(--t-sub)}
-@media (max-width:760px){ #sbFavPop{position:fixed;top:auto;left:8px;right:8px;width:auto;margin-top:6px} }
+@media (max-width:760px){ #sbFavPop{position:absolute;top:calc(100% + 6px);left:0;right:0;width:auto;max-height:calc(100dvh - 90px);overflow-y:auto} }
 @media (prefers-reduced-motion:reduce){ #sbFavPop{animation:none} #sbHero .top .fav.on svg{transform:none} }
