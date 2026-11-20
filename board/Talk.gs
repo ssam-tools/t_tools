@@ -3,32 +3,12 @@
      모든 선생님 쌤비 말풍선에 정한 기간 동안 하루 한 번 먼저 보여 줍니다. 시트에서 직접 고치거나 지워도 됩니다.
    - 교육 소식: 구글 뉴스(검색) RSS에서 교육 기사 제목·링크만 받아 3시간 동안 저장해 둡니다(본문은 가져오지 않음).
      검색어는 스크립트 속성 NEWS_QUERY 로 바꿀 수 있습니다(기본: 교육부 OR 교육청 학교 교사). 끄려면 NEWS_QUERY 를 off.
-   - 쓰는 법: 이 파일을 Apps Script에 새 파일(Talk.gs)로 추가하고 [배포 → 배포 관리 → ✏ 수정 → 새 버전 → 배포].
-     Code.gs는 고치지 않아도 됩니다. 이 파일이 doPost를 감싸서 talk · talkadd · talkdel 세 가지만 여기서 처리하고,
-     나머지는 원래 doPost로 그대로 넘깁니다(이 파일이 Code.gs보다 아래에 있어야 함 — 새 파일은 맨 아래에 생김). */
+   - 쓰는 법: 이 파일을 Apps Script에 새 파일(Talk.gs)로 추가하고, Code.gs의 doPost 안 fb: () => fb_(req), 뒤에
+       talk: () => talkGet_(req), talkadd: () => talkAdd_(req), talkdel: () => talkDel_(req),
+     를 넣은 뒤 [배포 → 배포 관리 → ✏ 수정 → 새 버전 → 배포]. */
 var TALK_SHEET = '쌤비소식';
-var TALK_ACTIONS = { talk: 1, talkadd: 1, talkdel: 1 };
-var talkOrigPost_ = (typeof doPost === 'function') ? doPost : null;
+function talkGet_(req) { auth_(req.pw); return { notices: talkList_(), news: talkNews_() }; }
 
-doPost = function (e) {
-  var req = null;
-  try { req = JSON.parse(e && e.postData && e.postData.contents || '{}'); } catch (x) { req = null; }
-  if (!req || !TALK_ACTIONS[req.action]) {
-    if (talkOrigPost_) return talkOrigPost_(e);
-    return talkOut_({ ok: false, error: '지원하지 않는 요청' });
-  }
-  try {
-    var pw = PropertiesService.getScriptProperties().getProperty('PASSWORD') || '';
-    if (!pw || String(req.pw || '') !== pw) return talkOut_({ ok: false, error: 'AUTH' });
-    if (req.action === 'talk') return talkOut_({ ok: true, notices: talkList_(), news: talkNews_() });
-    if (req.action === 'talkadd') return talkOut_(talkAdd_(req));
-    if (req.action === 'talkdel') return talkOut_(talkDel_(req));
-  } catch (err) {
-    return talkOut_({ ok: false, error: String(err && err.message || err) });
-  }
-};
-
-function talkOut_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function talkYmd_(d) { return Utilities.formatDate(d, 'Asia/Seoul', 'yyyy-MM-dd'); }
 function talkSheet_() {
   var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(TALK_SHEET);
@@ -48,8 +28,9 @@ function talkList_() {
   }).filter(function (x) { return x.id && x.text && (!x.to || x.to >= t); }).slice(-30);
 }
 function talkAdd_(req) {
+  auth_(req.pw);
   var text = String(req.text || '').replace(/\s+/g, ' ').trim().slice(0, 80);
-  if (text.length < 2) return { ok: false, error: '내용이 없어요' };
+  if (text.length < 2) throw new Error('내용이 없어요');
   var re = /^\d{4}-\d{2}-\d{2}$/, t = talkYmd_(new Date());
   var from = re.test(req.from) ? req.from : t, to = re.test(req.to) ? req.to : from;
   var lock = LockService.getScriptLock(); lock.waitLock(10000);
@@ -57,17 +38,18 @@ function talkAdd_(req) {
     var sh = talkSheet_(), id = 'n' + new Date().getTime().toString(36);
     sh.appendRow([id, text, from, to, String(req.by || '').trim().slice(0, 10), new Date()]);
     sh.getRange(sh.getLastRow(), 3, 1, 2).setNumberFormat('@').setValues([[from, to]]);
-    return { ok: true, id: id };
+    return { id: id };
   } finally { lock.releaseLock(); }
 }
 function talkDel_(req) {
-  var id = String(req.id || ''); if (!id) return { ok: false, error: '번호가 없어요' };
+  auth_(req.pw);
+  var id = String(req.id || ''); if (!id) throw new Error('번호가 없어요');
   var lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
-    var sh = talkSheet_(), n = sh.getLastRow(); if (n < 2) return { ok: true };
+    var sh = talkSheet_(), n = sh.getLastRow(); if (n < 2) return {};
     var ids = sh.getRange(2, 1, n - 1, 1).getValues();
     for (var i = ids.length - 1; i >= 0; i--) if (String(ids[i][0]) === id) sh.deleteRow(i + 2);
-    return { ok: true };
+    return {};
   } finally { lock.releaseLock(); }
 }
 /* 교육 소식: 제목 · 언론사 · 링크 · 날짜만 (3시간 저장) */
