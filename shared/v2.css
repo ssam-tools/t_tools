@@ -343,7 +343,7 @@ body.sbOn > .sbhome{flex:1 0 auto}
 .sbRow.mine .tx b{font-weight:700;color:var(--t-ink)}
 .sbRow.sys .tx b{font-weight:400;color:var(--t-sub)}
 .sbRow.sys.hot .tx b{color:var(--t-ink);font-weight:500}
-.sbSep{display:flex;align-items:center;padding:5px 16px 3px;border-top:1px solid var(--t-line);background:var(--t-bg,#FAF9F6);font-size:11.5px;font-weight:700;color:var(--t-sub);letter-spacing:.02em}
+.sbSep{display:flex;align-items:center;padding:16px 16px 6px;border-top:1px solid var(--t-line);background:var(--t-bg,#FAF9F6);font-size:11.5px;font-weight:700;color:var(--t-sub);letter-spacing:.02em}
 .sbSep + .sbRow{border-top:0}
 .sbMore{display:block;margin:8px auto 0;border:0;background:transparent;font:inherit;font-size:14px;color:var(--t-sub);cursor:pointer;border-radius:10px;padding:6px 12px}
 .sbMore:hover{background:var(--t-chip);color:var(--t-ink)}

@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.12.5";
+  var VERSION = "2.12.6";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -512,6 +512,34 @@ var TT = (function(){
   /* ================= 설치·오프라인 ================= */
   if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
     window.addEventListener("load", function(){ navigator.serviceWorker.register(BASE + "sw.js", {scope: BASE}).catch(function(){}); });
+    /* v2.12.6 빠르게: 메뉴·도구에 마우스를 올리면(휴대폰은 손가락을 대면) 그 화면을 미리 받아 둠 → 누르면 바로
+       누르는 순간 맨 위에 얇은 진행 줄을 띄워 "눌렸다"는 느낌을 바로 줌 */
+    (function(){
+      var warmed = {}, wT = 0;
+      function link(t){
+        var a = t && t.closest ? t.closest("a[href]") : null; if(!a || a.target === "_blank" || a.hasAttribute("download")) return null;
+        var u; try{ u = new URL(a.href, location.href); }catch(e){ return null; }
+        if(u.origin !== location.origin || u.pathname === location.pathname || /\/downloads\//.test(u.pathname) || !/\/$|\.html$/.test(u.pathname)) return null;
+        return u;
+      }
+      function warm(u){
+        var c = navigator.serviceWorker && navigator.serviceWorker.controller; if(!c || !u) return;
+        var k = u.pathname, now = Date.now(); if(warmed[k] && now - warmed[k] < 60000) return; warmed[k] = now;
+        try{ c.postMessage({warm: u.origin + u.pathname}); }catch(e){}
+      }
+      document.addEventListener("pointerover", function(e){ var u = link(e.target); if(!u) return; clearTimeout(wT); wT = setTimeout(function(){ warm(u); }, 60); }, true);
+      document.addEventListener("touchstart", function(e){ warm(link(e.target)); }, {passive: true, capture: true});
+      document.addEventListener("focusin", function(e){ warm(link(e.target)); }, true);
+      var st = document.createElement("style");
+      st.textContent = "html.tt-going::before{content:'';position:fixed;z-index:2147483000;top:0;left:0;height:3px;width:100%;background:var(--t-accent,#2f6fb5);transform-origin:0 50%;animation:ttGo 1.2s cubic-bezier(.2,.7,.2,1) forwards;pointer-events:none}@keyframes ttGo{from{transform:scaleX(0)}to{transform:scaleX(.9)}}@media (prefers-reduced-motion:reduce){html.tt-going::before{animation:none;transform:scaleX(.6)}}";
+      (document.head || document.documentElement).appendChild(st);
+      document.addEventListener("click", function(e){
+        if(e.defaultPrevented || e.button || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+        var u = link(e.target); if(!u) return;
+        setTimeout(function(){ if(!e.defaultPrevented) document.documentElement.classList.add("tt-going"); }, 0);
+      });
+      window.addEventListener("pageshow", function(){ document.documentElement.classList.remove("tt-going"); });
+    })();
     /* v2.8.1 새 버전 알림: version.json 의 번호가 지금과 다르면 "새로고침" 단추 (처음 열 때 + 30분마다, 다른 화면 안에서는 안 함) */
     if(window.top === window){
       var verNum = function(v){ return String(v || "").split(".").map(function(x){ return ("000" + (parseInt(x, 10) || 0)).slice(-3); }).join("."); }, verTold = "";

@@ -28,7 +28,8 @@
     + "#hidPeek[hidden]{display:none}#hidPeek h4{margin:0 0 4px;font-size:13px;color:var(--t-accent,#2f6fb5);display:flex;gap:6px;align-items:center}#hidPeek h4 small{margin-left:auto;color:var(--t-faint,#9aa5b1);font-weight:400;font-size:11px}"
     + "#hidPeek .r{display:flex;gap:8px;justify-content:space-between}#hidPeek .r b{font-weight:700}#hidPeek .m{color:var(--t-sub,#5b6773);font-size:12.5px}#hidPeek .on{color:var(--t-accent,#2f6fb5);font-weight:700}"
     + "#hidPeek ul{margin:2px 0 0;padding-left:16px}#hidPeek li{margin:1px 0}#hidPeek hr{border:0;border-top:1px solid var(--t-line,#dde3ea);margin:6px 0}"
-    + "[data-hid]{cursor:default}";
+    + "[data-hid]{cursor:default}"
+    + "@media (hover:hover){#sbHero [data-hid=school],#sbHero [data-hid=meal],#sbHero [data-hid=time],#sbBar [data-hid=school],#sbBar [data-hid=meal],#sbBar [data-hid=time],#sbRail [data-hid=school],#sbRail [data-hid=meal],#sbRail [data-hid=time]{cursor:pointer;border-radius:6px}#sbHero [data-hid]:hover,#sbBar [data-hid]:hover,#sbRail [data-hid]:hover{color:var(--t-accent,#2f6fb5)}}";
   document.head.appendChild(css);
   function attach(){ if(!tip.parentNode && document.body) document.body.appendChild(tip); }
   var cur = null, T = 0;
@@ -251,6 +252,11 @@
   document.addEventListener("touchmove", function(){ clearTimeout(lp); }, {passive: true, capture: true});
   document.addEventListener("click", function(e){
     var hk = e.target.closest && e.target.closest('[data-hid="meal"],[data-hid="time"],[data-hid="wx"],[data-hid="school"]');
+    /* v2.12.6 데스크톱: 맨 위 줄의 학교 이름 → 내선번호, 날짜 → 학교 업무판, 시각 → 시간표 (휴대폰은 누르면 미리보기 그대로) */
+    if(hk && !touch && hk.closest("#sbHero,#sbBar,#sbRail")){
+      var to = {school: "apps/school/?tab=ext", meal: "apps/school/?tab=board", time: "apps/timetable/"}[hk.getAttribute("data-hid")];
+      if(to){ e.preventDefault(); hide(); document.documentElement.classList.add("tt-going"); location.href = (TT.BASE || "") + to; return; }
+    }
     if(hk){ if(cur === hk){ hide(); return; } var h = detect(hk); if(h) open(h); return; }
     if(!tip.contains(e.target)) hide();
   }, true);
