@@ -4,7 +4,7 @@
    · 국어는 국어 근육(apps/kread/data.js)의 어휘를 그대로 빌려 씁니다.
    · id 는 바꾸지 않습니다(학생 기기의 복습 상자가 id 로 연결됨). 새 문항은 끝에 덧붙입니다.
 
-   PT실 {name, unitOf(유형 → 마스터 맵 근섬유 id), genTags(생성기가 만드는 유형), part(근육), emo, col(색), bank:[문항], gen(lv, tag) → 문항, mix(만든 문항 비율 0~1), srsNew(새 문항을 맞혀도 복습 상자에 넣을지)}
+   PT실 {name, deep(한 문제 깊게), intake(입소 진단), genRatio(오늘 단원에서 생성 문항 비율), set2(두 번째 세트 이름), unitOf(유형 → 마스터 맵 근섬유 id), genTags(생성기가 만드는 유형), part(근육), emo, col(색), bank:[문항], gen(lv, tag) → 문항, mix(만든 문항 비율 0~1), srsNew(새 문항을 맞혀도 복습 상자에 넣을지)}
    문항 {id, tag(유형), q(문제, [ ] 안은 밑줄), ask(작은 물음), c:[보기], a(정답 번호), e(해설 한 줄)}
         또는 숫자 입력 {id, tag, q, n(정답 수), e}
    보기 순서는 화면에서 섞습니다(OX는 그대로). */
@@ -127,7 +127,10 @@ var GYM_ROOMS = (function(){
     order: ["warm", "kor", "math", "eng", "sci", "soc"],
     warm: {name: "준비운동", part: "공부 체력", emo: "🔥", col: "#FF7A45", bank: vocab("warm:", "학습 도구어", TOOLW, "밑줄 친 말의 뜻은?"), srsNew: true},
     kor:  {name: "국어", part: "팔", emo: "📖", col: "#E5484D", bank: vocab("kor:", "어휘", KW), srsNew: true, shuffleBank: true},
-    math: {name: "수학", part: "복근", emo: "🧮", col: "#7C5CFF", gen: mathGen, mix: 1, genTags: Object.keys(MGEN),
+    math: typeof GYM_MATH !== "undefined"   // 3단계: 수학 PT 자료는 math.js
+      ? {name: "수학", part: "복근", emo: "🧮", col: "#7C5CFF", gen: GYM_MATH.gen, genTags: GYM_MATH.genTags, unitOf: GYM_MATH.unitOf, bank: GYM_MATH.concept, deep: GYM_MATH.deep,
+         mix: .8, genRatio: .8, srsNew: true, intake: true, set2: "계산 반사 + 개념 연결"}
+      : {name: "수학", part: "복근", emo: "🧮", col: "#7C5CFF", gen: mathGen, mix: 1, genTags: Object.keys(MGEN),
       unitOf: {"정수 덧셈·뺄셈": "m.int", "정수 곱셈": "m.int", "일차방정식": "m.lin", "제곱근": "m.root", "지수법칙": "m.expr"}},
     eng:  {name: "영어", part: "다리", emo: "🔤", col: "#1F9D55", bank: vocab("eng:", "단어", EW, "밑줄 친 단어의 뜻은?"), srsNew: true},
     sci:  {name: "통합과학", part: "어깨", emo: "🔬", col: "#2F80ED", bank: SCI, gen: sciGen, mix: .35, srsNew: true, genTags: ["속력", "밀도"],
