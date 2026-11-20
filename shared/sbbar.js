@@ -217,6 +217,14 @@
       return '<a href="' + esc(href(m[0])) + '" data-m="' + m[0] + '"' + (m[0] === cur ? ' class="on" aria-current="page"' : "") + ">" + icon(m[0], 18) + "<span>" + m[1] + "</span></a>";
     }).join("");
   }
+  function barSubs(){
+    var L = tools(curMenu()), me = hereTool();
+    if(L.length < 2) return "";
+    return L.map(function(t){
+      var here = me && me.id === t.id;
+      return '<a class="si' + (here ? " on" : "") + '" href="' + esc(BASE + t.href) + '" title="' + esc(t.name) + '"' + (here ? ' aria-current="page"' : "") + ">" + (ART ? ART.toolIcon(t.id, t.icon, 16) : esc(t.icon || "")) + "<span>" + esc(t.short || t.name) + "</span></a>";
+    }).join("");
+  }
   function drawApp(){
     if(!rail){
       rail = document.createElement("aside"); rail.id = "sbRail"; rail.setAttribute("aria-label", "쌤비와 메뉴");
@@ -225,13 +233,15 @@
     }
     if(!bar){
       bar = document.createElement("div"); bar.id = "sbBar";
-      bar.innerHTML = '<div class="in"><span class="bo"></span>' + fboxHTML("B") + '<button type="button" class="ib" data-mic aria-label="말로 기록">' + icon("mic", 18) + '</button></div><div class="fr" id="sbBr" hidden></div><nav class="sbTabs" aria-label="메뉴"></nav>';
+      bar.innerHTML = '<div class="in"><span class="bo"></span>' + fboxHTML("B") + '<button type="button" class="ib" data-mic aria-label="말로 기록">' + icon("mic", 18) + '</button></div><div class="fr" id="sbBr" hidden></div><nav class="sbTabs" aria-label="메뉴"></nav><nav class="sbSubs" aria-label="이 메뉴의 도구"></nav>';
       document.body.insertBefore(bar, document.body.firstChild); document.body.classList.add("sbBarOn");
       F.wire("R"); F.wire("B");
     }
     rail.querySelector(".rt").innerHTML = railTop(); rail.querySelector(".rn").innerHTML = railHTML();
     bar.querySelector(".bo").innerHTML = '<button type="button" class="owl" id="sbBarOwl2" title="쌤비 (Alt+B)" aria-label="쌤비 열기">' + owlSvg(46) + "</button>";
     bar.querySelector(".sbTabs").innerHTML = barTabs();
+    var sbs = bar.querySelector(".sbSubs"), subH = barSubs();   // v2.24.1 휴대폰: 지금 메뉴의 도구(소메뉴)를 한 줄로 — 옆으로 밀어 다른 도구로
+    if(sbs.getAttribute("data-h") !== subH){ sbs.setAttribute("data-h", subH); sbs.innerHTML = subH; sbs.hidden = !subH; var on = sbs.querySelector(".on"); if(on) setTimeout(function(){ try{ sbs.scrollLeft = on.offsetLeft - (sbs.clientWidth - on.offsetWidth) / 2; }catch(e){} }, 30); }
     F.ph(); headIcon(); fitRail();
     requestAnimationFrame(function(){ R.classList.add("sbReady"); fitRail(); }); setTimeout(function(){ R.classList.add("sbReady"); }, 120);   // v2.8.1: 창이 뒤에 있어 그림 신호가 늦어도 보이게
   }
