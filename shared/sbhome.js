@@ -224,6 +224,15 @@
 
   /* ── 그리기: 쌤비·말풍선·검색창·메뉴는 shared/sbbar.js(머리), 여기는 홈 = 지금 · 오늘 할 일 / 중메뉴 = 도구 ── */
   var lastP = null;
+  /* v2.11.5 자주 가는 사이트: 📌 고정한 것을 지금 수업 카드 아래 한 줄로 (교실 기기는 수업용만) — apps/sites/ */
+  function sitesRow(){
+    var D = TT.store.get("tt_sites_v1", null), L = D && D.items ? D.items.filter(function(x){ return x.pin && x.u && (!TT.classroom || x.c === "class"); }) : [];
+    if(!L.length && TT.classroom) return "";
+    var C = {"class": "#2f6fb5", work: "#1f8a7a", me: "#b5652f"};
+    return '<nav class="sbSites" aria-label="자주 가는 사이트">' + L.slice(0, 8).map(function(x){
+        return '<a href="' + esc(x.u) + '" target="_blank" rel="noopener noreferrer" title="' + esc(x.t) + " · " + esc(x.u) + '"><i style="background:' + (C[x.c] || C.work) + '">' + esc(Array.from(String(x.t || "?").trim() || "?")[0]) + "</i>" + esc(x.t) + "</a>";
+      }).join("") + '<a class="mg" href="apps/sites/" title="자주 가는 사이트 넣기·고치기">' + (L.length ? "⋯" : "＋ 자주 가는 사이트") + "</a></nav>";
+  }
   function render(){
     var ok = on();
     document.body.classList.toggle("sbOn", ok);
@@ -240,7 +249,7 @@
     if(Q.q){ host.innerHTML = '<div class="sbWrap">' + resHTML() + "</div>"; var on1 = host.querySelector(".rr.on"); if(on1 && on1.scrollIntoView) on1.scrollIntoView({block: "nearest"}); return; }
     if(document.body.classList.contains("inmenu")){ host.innerHTML = '<div class="sbWrap mid">' + midHTML() + "</div>"; return; }
     host.innerHTML = '<div class="sbWrap">'
-      + '<div class="sbNowWrap">' + nowCard(H.now) + "</div>"
+      + '<div class="sbNowWrap">' + nowCard(H.now) + sitesRow() + "</div>"
       + (TT.classroom ? "" : '<section class="sbTasks" aria-label="오늘 할 일">' + tasks(H.tasks) + "</section>") + "</div>";
     var shown = Math.min(MAX, cur.length);
     if(!st.more && window.innerWidth > 760 && shown > 2 && document.documentElement.scrollHeight > window.innerHeight + 2){ MAX = shown - 1; render(); }   // 넘치면 한 줄씩 줄여 스크롤 없이

@@ -72,6 +72,7 @@ var TT_TOOLS = [
   {id:"group",  icon:"🧩", cat:"teach", menu:"class", group:"teach", short:"모둠 편성", name:"모둠 편성", desc:"조건에 맞게 모둠과 좌석을 편성합니다.", href:"apps/group/", ready:true, room:true, months:[3], season:["start"]},
   /* ── 수업 · 평가 ── */
   {id:"stuprog", icon:"🎒", cat:"teach", menu:"class", group:"teach", short:"학생 프로그램", name:"학생 프로그램", desc:"학생 휴대폰용 중학 개념지도(수학) · 국어 근육 — 큰 QR · 인쇄용 · 교실 함께 읽기 · 결과 모으기.", href:"apps/stuprog/", ready:true, room:true},
+  {id:"sites",  icon:"🌐", cat:"teach", menu:"class", group:"teach", short:"사이트", name:"자주 가는 사이트", desc:"많이 쓰는 사이트를 수업용·업무용·개인용으로 모아 두기 · 📌 고정하면 첫 화면에 단추로 · 교실 기기에는 수업용만.", href:"apps/sites/", ready:true, room:true},
   {id:"assess", icon:"📊", cat:"teach", menu:"class", group:"eval", short:"수행평가", name:"수행평가", desc:"채점 기준(점수형·수준형)을 만들고 반마다 채점, 관찰은 교과 세특 기록으로.", href:"apps/assess/", ready:true, season:["start","end"]},
   {id:"mblue",  icon:"🎯", cat:"math", menu:"class", group:"eval",  short:"분류표", name:"이원목적분류표", desc:"문항별 성취기준·난이도·배점·정답 → 합계·분포 점검, 인쇄.", href:"apps/mblue/", ready:true, exam:21, season:["end"]},
   /* ── 수업 · 교과 칸 ── 교과 전용 도구는 교과 팩 파일(subjects/<교과>.js)에 있습니다. 아래 TT_PACKS 참고 */
