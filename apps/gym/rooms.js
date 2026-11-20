@@ -125,7 +125,9 @@ var GYM_ROOMS = (function(){
 
   return {
     order: ["warm", "kor", "math", "eng", "sci", "soc"],
-    warm: {name: "준비운동", part: "공부 체력", emo: "🔥", col: "#FF7A45", bank: vocab("warm:", "학습 도구어", TOOLW, "밑줄 친 말의 뜻은?"), srsNew: true},
+    warm: typeof GYM_WARM !== "undefined"   // 6단계: 학습 도구어는 warm.js
+      ? {name: "준비운동", part: "공부 체력", emo: "🔥", col: "#FF7A45", bank: [], vocab: GYM_WARM.vocab, vocabDaily: 999, srsNew: true}
+      : {name: "준비운동", part: "공부 체력", emo: "🔥", col: "#FF7A45", bank: vocab("warm:", "학습 도구어", TOOLW, "밑줄 친 말의 뜻은?"), srsNew: true},
     kor: typeof GYM_KOR !== "undefined"   // 4단계: 국어 PT 자료는 kor.js (국어 근육 어휘·지문 이식 + 문법·문학 카드)
       ? {name: "국어", part: "팔", emo: "📖", col: "#E5484D", bank: GYM_KOR.cards.concat(GYM_KOR.pitems), vocab: GYM_KOR.vocab, vocabDaily: 6, passages: true,
          poolGroups: ["독서"], srsNew: true, intake: true, setNames: ["어휘 + 복습", "지문 속독"], set2: "문법·문학 카드"}

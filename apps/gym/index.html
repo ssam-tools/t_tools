@@ -284,6 +284,7 @@
 <script src="math.js"></script>
 <script src="kor.js"></script>
 <script src="eng.js"></script>
+<script src="warm.js"></script>
 <script src="rooms.js"></script>
 <script src="map.js"></script>
 <script src="../../shared/sbart.js"></script>
@@ -424,7 +425,7 @@
     return it;
   }
   function byTag(room, tag){
-    var r = R[room], l = (r.bank || []).filter(function(x){ return x.tag === tag; });
+    var r = R[room], l = (r.bank || []).concat(r.vocab || []).filter(function(x){ return x.tag === tag; });
     if(l.length) return pick(l);
     if(r.gen) return r.gen(diffLv(room), tag);
     return null;
@@ -577,14 +578,29 @@
     S.kpDone[x.pid] = TODAY; day().kpd = 1;
     S.kp = x.mode === "d1" ? {id: x.pid, step: 2, d: TODAY} : null;
   }
+  /* 어제(와 오늘) 고른 '가장 헷갈린 것' */
+  function confList(){ return S.conf.filter(function(x){ return (x.d === add(TODAY, -1) || x.d === TODAY) && R[x.r]; }).slice(-3); }
+  /* 🔀 섞어 풀기: 과목마다 숙달·마스터한 단원에서 한 문제씩 (교차 인출) */
+  function mixItems(){
+    var out = [];
+    SUBJ.forEach(function(r){ var l = (FORDER[r] || []).filter(function(f){ return fs(f).st >= 2 && open(f) && !FIB[f].pool; }); if(l.length){ var it = unitItem(pick(l)); if(it) out.push({it: it, kind: "mix", room: r}); } });
+    return out.slice(0, 5);
+  }
+  function vowOpts(){
+    var w = SUBJ.slice().sort(function(a, b){ return masterPct(a) - masterPct(b) || (S.xp[a] || 0) - (S.xp[b] || 0); })[0];
+    return [R[w].emo + " 약한 근육 " + R[w].name + " 한 세트 더", "❌ 틀린 문제는 해설까지 다시 읽기", "⭕ 오늘 링 " + totalGoal() + "분 채우기", "🔀 과목을 섞어서 공부하기"];
+  }
   function Queue(room){
     var q = [], used = {}, deep = null, flow = [], pend = [];
     if(R[room].passages && (day().sets[room] || 0) >= 1 && !day().kpd){ var pl = passPlan(); if(pl && !pl.wait) flow = passFlow(room, pl); }
     if(R[room].deep && ((S.week && S.week.int) || "base") !== "base" && (day().sets[room] || 0) >= 2) deep = pickDeep(room);
     if(room === "warm"){
-      var cf = S.conf.filter(function(x){ return x.d === add(TODAY, -1) || x.d === TODAY; }).slice(-3);
-      cf.forEach(function(x){ var it = byTag(x.r, x.t); if(it) q.push({it: it, kind: "conf", room: x.r}); });
-      dueCards(null, 3).filter(function(id){ return S.cards[id].r !== "warm"; }).slice(0, 10).forEach(function(id){ var it = itemFromCard(S.cards[id], id); if(it) q.push({it: it, kind: "rev", room: S.cards[id].r}); });
+      /* 🔥 복습 루프: ① 어제 헷갈린 것(유형마다 2문제) → ② 6과목 오래된 오답(상자 3~5) + 🔀 숙달한 단원 섞어 풀기 (과목을 섞어서) */
+      var w0 = day().sets.warm || 0;
+      if(!day().confDone) confList().forEach(function(x){ for(var k = 0; k < 2; k++){ var it = byTag(x.r, x.t); if(it) q.push({it: it, kind: "conf", room: x.r, ct: x.t}); } });
+      var old = dueCards(null, 3).filter(function(id){ return S.cards[id].r !== "warm"; }).slice(0, 10).map(function(id){ return {it: itemFromCard(S.cards[id], id), kind: "rev", room: S.cards[id].r}; }).filter(function(o){ return o.it; });
+      q = q.concat(shuffle(old.concat(w0 === 0 ? mixItems() : [])));
+      if(w0 === 1 && !day().vow) q.unshift({it: {id: "vow:" + TODAY, tag: "오늘의 다짐"}, kind: "vow", room: room});
     }
     return {
       busy: function(){ return flow.length > 0; },
@@ -659,7 +675,8 @@
   }
   function home(){
     header("💪 공부 Gym");
-    var d = day(), cl = coachLine(), wk = (S.week && S.week.int) || "base", tm = totalMin(), g = totalGoal();
+    var d = day(), cl = coachLine(); if(d.vow && !d.back) cl[1] = "☀️ 오늘의 다짐: " + esc(d.vow);
+    var wk = (S.week && S.week.int) || "base", tm = totalMin(), g = totalGoal();
     var att = IDS.map(function(k){ return '<i class="' + (mins(k) >= 10 ? "on" : "") + '">' + (mins(k) >= 10 ? "✓" : "") + "</i>"; }).join("");
     var wm = mins("warm"), wg = goalMin("warm");
     m.innerHTML = '<div class="coach"><span class="sb" data-a="poke">' + sb(96) + '</span><div class="bub">' + cl[0] + "<small>" + cl[1] + "</small></div></div>"
@@ -702,10 +719,16 @@
     var rx = S.rx[id] && S.rx[id].until >= TODAY;
     header(r.emo + " " + r.name + " PT", "home");
     var setsHtml = [
-      [id === "warm" ? "복습 루프" : r.setNames ? r.setNames[0] : "복습 먼저", r.vocab ? "복습 " + rc + "장 · 새 어휘 " + Math.min(d.kv || 0, r.vocabDaily) + "/" + r.vocabDaily : rc ? "복습 카드 " + rc + "장" + (id === "warm" ? " · 6과목 오답 + 어제 헷갈린 것" : "") : "복습 카드 없음 → 바로 새 문제"],
+      [id === "warm" ? "복습 루프" : r.setNames ? r.setNames[0] : "복습 먼저", r.vocab && r.vocabDaily < 100 ? "복습 " + rc + "장 · 새 어휘 " + Math.min(d.kv || 0, r.vocabDaily) + "/" + r.vocabDaily : rc ? "복습 카드 " + rc + "장" + (id === "warm" ? " · 6과목 오답 + 어제 헷갈린 것" : "") : "복습 카드 없음 → 바로 새 문제"],
       [id === "warm" ? "학습 도구어" : r.setNames ? r.setNames[1] : "오늘 단원", id === "warm" ? "전 과목 공부 언어, 문장 속 뜻" : r.passages ? passLine() : cf ? "📍 " + FIB[cf].n + (r.set2 ? " · " + r.set2 : "") : (r.gen && !r.bank ? "계산 반사 · 문제가 끝없이 나와요" : "새 문제 · 시간 안에 푼 만큼")]
     ];
     var fibHtml = "", inl = r.intake && !S.intake[id] ? intakeList(id) : [];
+    if(id === "warm"){
+      var cl2 = confList(), mixN = SUBJ.filter(function(rr){ return (FORDER[rr] || []).some(function(f){ return fs(f).st >= 2 && open(f) && !FIB[f].pool; }); }).length;
+      fibHtml = '<div class="fibc" style="--c:' + r.col + '"><span class="ft">🤔</span><div><b>어제 헷갈린 것</b><span>' + (d.confDone ? "오늘 다시 풀었어요 ✓" : cl2.length ? cl2.map(function(x){ return R[x.r].emo + " " + esc(x.t); }).join(" · ") + " → 맨 먼저 2문제씩" : "없음 · 세트가 끝나면 30초 동안 골라요") + "</span></div></div>"
+        + '<div class="fibc" style="--c:' + r.col + '"><span class="ft">🔀</span><div><b>섞어 풀기 · 오래된 오답</b><span>숙달한 단원이 있는 과목 ' + mixN + "개 · 상자 3~5 오답 " + dueCards(null, 3).filter(function(i){ return S.cards[i].r !== "warm"; }).length + "장</span></div></div>"
+        + '<div class="fibc" style="--c:' + r.col + '"><span class="ft">🧠</span><div><b>학습 도구어 ' + GYM_WARM.count + "개</b><span>" + (d.vow ? "☀️ " + esc(d.vow) : "두 번째 세트 시작에 ☀️ 오늘의 다짐") + "</span></div></div>";
+    }
     if(id !== "warm"){
       var dc = dueChecks(id), x = cf ? fs(cf) : null;
       fibHtml = '<div class="fibc" style="--c:' + r.col + '">'
@@ -737,7 +760,7 @@
     var d = day(), quiz = null;
     if(typeof id === "object"){ quiz = id; id = quiz.room || FIB[quiz.fid].room; }
     var sets = d.sets[id] || 0;
-    T = {room: id, q: quiz ? (quiz.kind === "intake" ? IntakeQ(quiz.list) : quiz.kind === "long" ? FlowQ(passFlow(id, {pid: quiz.pid, mode: "long"})) : QuizQ(quiz.fid)) : Queue(id), quiz: quiz, fid: quiz ? quiz.fid || null : curFiber(id), fu: {n: 0, ok: 0}, fr2: {},
+    T = {room: id, q: quiz ? (quiz.kind === "intake" ? IntakeQ(quiz.list) : quiz.kind === "long" ? FlowQ(passFlow(id, {pid: quiz.pid, mode: "long"})) : QuizQ(quiz.fid)) : Queue(id), quiz: quiz, fid: quiz ? quiz.fid || null : curFiber(id), fu: {n: 0, ok: 0}, fr2: {}, cf: {n: 0, ok: 0},
       readSec: 0, evs: [],
       N: quiz ? (quiz.kind === "intake" ? quiz.list.length * INTAKE_PER : quiz.kind === "long" ? passFlow(id, {pid: quiz.pid, mode: "long"}).length - 1 : quiz.kind === "re" ? RE_N : Math.min(QUIZ_N, avail(quiz.fid))) : 0, left: SET_SEC, n: 0, ok: 0, combo: 0, best: 0, xp: 0, wrong: [], tags: {}, t0: 0, qt: 0, cur: null, inp: "", lock: false, paused: false, label: sets === 0 ? (id === "warm" ? "복습 루프" : R[id].setNames ? R[id].setNames[0] : "복습 먼저") : sets === 1 ? (id === "warm" ? "학습 도구어" : R[id].setNames ? R[id].setNames[1] : "오늘 단원") : "추가 세트", tick: null, last: performance.now(), acc: 0};
     if(quiz) T.label = QK[quiz.kind] + " · " + (quiz.fid ? FIB[quiz.fid].n : quiz.kind === "long" ? GYM_KOR.PX[quiz.pid].p.title : "1단계 " + quiz.list.length + "단원");
@@ -773,6 +796,14 @@
     var x = T.q.next(); T.cur = x; T.inp = ""; T.lock = false; T.qt = performance.now();
     var it = x.it, qc = document.getElementById("qc"), pad = document.getElementById("pad");
     qc.className = "qcard";
+    if(x.kind === "vow"){
+      var dd = day();
+      qc.className = "qcard";
+      qc.innerHTML = '<span class="tg">☀️ 오늘의 다짐</span><div class="qq">오늘 꼭 지킬 한 가지는?</div><div class="qa">' + (dd.cond ? COND[dd.cond][0] + " 컨디션 " + COND[dd.cond][1] : "컨디션 미선택") + " · 이번 주 " + intensity().emo + " " + intensity().name + " (" + intensity().sub + ")</div>";
+      pad.innerHTML = '<div class="ch">' + vowOpts().map(function(o){ return '<button data-vow="' + esc(o) + '">' + esc(o) + "</button>"; }).join("") + "</div>";
+      document.getElementById("tl").textContent = "📌 고른 다짐은 홈에서 쌤비가 다시 알려 줘요";
+      return;
+    }
     if(x.kind === "read"){
       var PP = GYM_KOR.PX[x.pid].p;
       qc.className = "qcard read";
@@ -783,7 +814,7 @@
       document.getElementById("tl").textContent = "📖 핵심어에 주의하며 읽어요 · 읽는 시간을 재요";
       return;
     }
-    var tag = x.kind === "deep" ? '<span class="tg dp">🎯 한 문제 깊게 · 학평형</span>' : x.kind === "quiz" ? '<span class="tg rv">' + QK[T.quiz.kind] + "</span>" : x.kind === "rev" ? '<span class="tg rv">🔁 복습' + (x.room !== T.room ? " · " + R[x.room].name : "") + "</span>" : x.kind === "conf" ? '<span class="tg rv">🤔 어제 헷갈린 것</span>' : '<span class="tg">' + esc(it.tag || "") + "</span>";
+    var tag = x.kind === "deep" ? '<span class="tg dp">🎯 한 문제 깊게 · 학평형</span>' : x.kind === "quiz" ? '<span class="tg rv">' + QK[T.quiz.kind] + "</span>" : x.kind === "rev" ? '<span class="tg rv">🔁 복습' + (x.room !== T.room ? " · " + R[x.room].name : "") + "</span>" : x.kind === "conf" ? '<span class="tg rv">🤔 어제 헷갈린 것 · ' + R[x.room].emo + " " + esc(x.ct || it.tag || "") + "</span>" : x.kind === "mix" ? '<span class="tg rv">🔀 섞어 풀기 · ' + R[x.room].emo + " " + R[x.room].name + "</span>" : '<span class="tg">' + esc(it.tag || "") + "</span>";
     if(x.kind === "pq") tag = '<span class="tg">📄 ' + esc(it.tag || "") + "</span>";
     var qtext = it.chunk ? '<div class="toks">' + it.chunk.t.map(function(w, i){ return '<span class="tk">' + esc(w) + "</span>" + (i < it.chunk.t.length - 1 ? '<button class="gap" data-gap="' + i + '" aria-label="여기서 끊기"></button>' : ""); }).join("") + "</div>"
       : it.verb ? '<div class="toks vb">' + it.verb.t.map(function(w, i){ return '<button class="tk" data-vb="' + i + '">' + esc(w) + "</button>"; }).join(" ") + "</div>"
@@ -819,6 +850,8 @@
   }
   document.getElementById("m").addEventListener("click", function(e){
     if(V === "train" && T && e.target.closest("[data-read]")) return doneRead();
+    var vw = V === "train" && T && e.target.closest("[data-vow]");
+    if(vw){ day().vow = vw.dataset.vow; save(); toast("☀️ 오늘의 다짐: " + vw.dataset.vow); return nextQ(); }
     if(V !== "train" || !T || T.lock) { var nx = e.target.closest("[data-next]"); if(nx && T) nextQ(); return; }
     var k = e.target.closest("[data-k]"), c = e.target.closest("[data-c]"), it0 = T.cur.it;
     var sp = e.target.closest("[data-sp]"), gp = e.target.closest("[data-gap]"), vb = e.target.closest("[data-vb]");
@@ -871,6 +904,7 @@
     var x = T.cur, it = x.it, dtq = (performance.now() - T.qt) / 1000, d = day(), qc = document.getElementById("qc");
     T.n++; if(ok) T.ok++;
     T.tags[it.tag] = 1;
+    if(x.kind === "conf"){ T.cf.n++; if(ok) T.cf.ok++; }
     if(T.fid && x.room === T.room && fiberOf(x.room, it) === T.fid){ T.fu.n++; if(ok) T.fu.ok++; }
     var fp = fiberOf(x.room, it);
     if(fp && FIB[fp] && FIB[fp].pool && x.kind !== "quiz"){
@@ -911,6 +945,7 @@
     }
     if(!quit || T.n > 0){
       d.sets[T.room] = (d.sets[T.room] || 0) + 1;
+      if(T.room === "warm" && T.cf.n) d.confDone = 1;
       if(!quit){ addXP(T.room, 20); done.xp += 20; }
       done.ev = practice(done.fid, done.fu);
     }
@@ -947,6 +982,7 @@
       : ev ? '<div class="win fibev st' + fs(ev.fid).st + '" style="--c:' + room.col + '">' + ev.msg + "</div>" : qz && r.n < r.N ? '<div class="win">' + QK[qz.kind] + "은 " + r.N + "문제를 다 풀어야 기록돼요</div>" : "";
     header(room.emo + (qz ? " " + QK[qz.kind] + " 결과" : " 세트 끝!"), qz && qz.kind !== "intake" && qz.kind !== "long" ? "map" : "room");
     if(r.evs && r.evs.length) evHtml += r.evs.map(function(v){ return '<div class="win fibev st' + fs(v.fid).st + '" style="--c:' + room.col + '">' + v.msg + "</div>"; }).join("");
+    if(r.cf && r.cf.n) evHtml = '<div class="win">🤔 어제 헷갈린 것 ' + r.cf.n + "문제 중 <b>" + r.cf.ok + "개</b> 정답" + (r.cf.ok === r.cf.n ? " — 극복! 💪" : " — 틀린 건 복습 상자로") + "</div>" + evHtml;
     if(r.read) evHtml = '<div class="win">📖 읽기 속도 <b>' + r.read.cpm + "자/분</b>" + (r.read.cpm > 1500 ? '<br><span class="muted">너무 빨라요! 핵심어를 놓치지 않게 꼼꼼히 읽어 보자</span>' : "") + (r.read.prev ? (r.read.cpm > r.read.prev ? " · 지난번보다 " + (r.read.cpm - r.read.prev) + "자 빨라졌어요 ⚡" : " · 지난번 " + r.read.prev + "자/분") : "") + (r.read.m === "d1" ? '<br><span class="muted">내일은 이 지문의 문항과 한 줄 요약!</span>' : "") + "</div>" + evHtml;
     m.innerHTML = '<div class="coach"><span class="sb">' + sb(80, {item: r.n && acc >= 80 ? "stamp" : undefined}) + '</span><div class="bub">'
       + (over ? "30분 넘게 했네! 과목을 섞으면 더 오래 남아. 다른 PT실 어때?" : att ? "✅ " + room.name + " 출석 인정! 잘했어." : acc >= 90 ? "정확도 최고! 이 느낌 그대로." : acc >= 60 ? "좋아! 틀린 건 내일 복습 상자에서 다시 만나." : "괜찮아, 틀린 만큼 내일 더 강해져.")
@@ -954,7 +990,7 @@
       + (ev && ev.rows ? "" : '<div class="res"><span class="muted">이번 세트</span><span class="xp">+' + r.xp + " XP</span></div>"
       + '<div class="stats"><div class="stat"><b>' + r.n + '</b><span>푼 문제</span></div><div class="stat"><b>' + acc + '%</b><span>정확도</span></div><div class="stat"><b>' + (r.n ? (d.t[id] / d.n[id]).toFixed(1) + "초" : "-") + "</b><span>한 문제 평균</span></div></div>")
       + evHtml + (qz ? "" : '<div class="win">' + win + (r.wrong.length ? '<br><span class="muted">📌 틀린 ' + r.wrong.length + "문제는 복습 상자에 저장했어요</span>" : "") + "</div>")
-      + (opts.length && !qz ? '<div class="card meta"><div class="h">🤔 오늘 가장 헷갈린 것은? <i>내일 준비운동에 먼저 나와요</i></div><div class="mopts">' + opts.map(function(o){ var p = o.split("|"); return '<button data-a="conf" data-v="' + esc(o) + '" aria-pressed="false">' + (p[0] !== id ? R[p[0]].emo + " " : "") + esc(p[1]) + "</button>"; }).join("") + '<button data-a="conf" data-v="" aria-pressed="false">없어요 👍</button></div></div>' : "")
+      + (opts.length && !qz ? '<div class="card meta"><div class="h">🤔 30초 · 오늘 가장 헷갈린 것은? <i>내일 준비운동에 먼저 나와요</i></div><div class="mopts">' + opts.map(function(o){ var p = o.split("|"); return '<button data-a="conf" data-v="' + esc(o) + '" aria-pressed="false">' + (p[0] !== id ? R[p[0]].emo + " " : "") + esc(p[1]) + "</button>"; }).join("") + '<button data-a="conf" data-v="" aria-pressed="false">없어요 👍</button></div></div>' : "")
       + '<div class="grow"></div>'
       + (qz ? '<div class="row"><button class="btn sub" data-a="tomap">🗺️ 마스터 맵</button><button class="btn" data-room="' + id + '">' + room.emo + " PT실로 ▶</button></div>"
          : '<div class="row"><button class="btn sub" data-a="end">오늘은 끝</button><button class="btn" data-start="' + id + '">' + ((d.sets[id] || 0) < 2 ? "다음 세트 ▶" : "한 세트 더 ▶") + "</button></div>");
