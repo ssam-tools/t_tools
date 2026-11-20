@@ -135,7 +135,10 @@ var GYM_ROOMS = (function(){
          mix: .8, genRatio: .8, srsNew: true, intake: true, set2: "계산 반사 + 개념 연결"}
       : {name: "수학", part: "복근", emo: "🧮", col: "#7C5CFF", gen: mathGen, mix: 1, genTags: Object.keys(MGEN),
       unitOf: {"정수 덧셈·뺄셈": "m.int", "정수 곱셈": "m.int", "일차방정식": "m.lin", "제곱근": "m.root", "지수법칙": "m.expr"}},
-    eng:  {name: "영어", part: "다리", emo: "🔤", col: "#1F9D55", bank: vocab("eng:", "단어", EW, "밑줄 친 단어의 뜻은?"), srsNew: true},
+    eng: typeof GYM_ENG !== "undefined"   // 5단계: 영어 PT 자료는 eng.js (단어 3단계 · 구문 끊어 읽기·동사 찾기·어법 · 듣기)
+      ? {name: "영어", part: "다리", emo: "🔤", col: "#1F9D55", bank: GYM_ENG.gram, vocab: GYM_ENG.vocab, vocabDaily: 10, listen: GYM_ENG.listen,
+         srsNew: true, intake: true, setNames: ["단어 + 복습", "구문 끊어 읽기"], set2: "끊어 읽기·동사 찾기·어법"}
+      : {name: "영어", part: "다리", emo: "🔤", col: "#1F9D55", bank: vocab("eng:", "단어", EW, "밑줄 친 단어의 뜻은?"), srsNew: true},
     sci:  {name: "통합과학", part: "어깨", emo: "🔬", col: "#2F80ED", bank: SCI, gen: sciGen, mix: .35, srsNew: true, genTags: ["속력", "밀도"],
       unitOf: {"힘": "s.force", "빛과 파동": "s.light", "전기": "s.elec", "물질의 상태": "s.state", "기체": "s.gas", "물질의 구성": "s.matter", "식물과 에너지": "s.plant",
         "자극과 반응": "s.resp", "생식과 유전": "s.gene", "기권과 날씨": "s.air", "태양계": "s.solar", "에너지": "s.energy", "속력": "s.motion", "밀도": "s.prop"}},
