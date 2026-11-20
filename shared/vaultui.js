@@ -141,7 +141,7 @@
     dlg.showModal(); return dlg;
   }
   function q(s){ return dlg.querySelector(s); }
-  function serverPrefill(){ var s = J(LS("ttv_server")) || {}, b = J(LS("tt_board_v1")) || {}; return {url: s.url || b.url || "", pw: s.pw || b.pw || ""}; }
+  function serverPrefill(){ var s = J(LS("ttv_server")) || {}, b = J(LS("tt_board_v1")) || {}, d = (window.TT_GO_SCHOOLS || {})[""] || ""; return {url: s.url || b.url || d, pw: s.pw || b.pw || ""}; }   // d = 우리 학교 업무판 기본 주소(g/schools.js)
   function localData(){ var n = 0; try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^tt_(roster|journal|timetable|guide|tardy|notes|record|seat|duty|book|stucard|alltt|staff|calendar)/.test(k || "")) n++; } }catch(e){} return n; }
   function open(want){
     if(typeof want !== "string") want = "";
@@ -222,7 +222,7 @@
         setTimeout(function(){ location.reload(); }, 1200);
       });
     };
-    setTimeout(function(){ (p.url ? q("[name=id]") : q("[name=url]")).focus(); }, 30);
+    setTimeout(function(){ (!p.url ? q("[name=url]") : !p.pw ? q("[name=pw]") : kind() === "classroom" ? q("[name=room]") : q("[name=id]")).focus(); }, 30);
   }
   function confirm2(el, text){ if(el.dataset.sure) return true; el.dataset.sure = "1"; el.dataset.old = el.textContent; el.textContent = text; setTimeout(function(){ el.textContent = el.dataset.old; delete el.dataset.sure; }, 4000); return false; }
 

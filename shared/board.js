@@ -219,7 +219,8 @@
   /* 설정 대화상자 */
   function openSetup(){
     var c = cfg();
-    $("bUrl").value = c.url || "";
+    $("bUrl").value = c.url || (window.TT_GO_SCHOOLS || {})[""] || "";   // v2.11.3 처음이면 우리 학교 업무판 주소를 미리 넣기
+    var hasUrl = !!$("bUrl").value;
     $("bPw").value = "";
     $("bPw").placeholder = c.pw ? "저장된 비밀번호 사용 (바꿀 때만 입력)" : "업무판 공용 비밀번호";
     $("bErr").textContent = "";
@@ -227,7 +228,7 @@
     $("bOk").disabled = false; $("bOk").textContent = "연결 확인";
     var iw = document.getElementById("bInvWrap"); if(iw) iw.hidden = !(c.url && c.pw);   // v2.8.1 연결된 선생님(담당자)만 초대 링크 만들기
     dlg.showModal();
-    setTimeout(function(){ (c.url ? $("bPw") : $("bUrl")).focus(); }, 0);
+    setTimeout(function(){ (hasUrl ? $("bPw") : $("bUrl")).focus(); }, 0);
   }
   $("fBoard").addEventListener("submit", function(e){
     e.preventDefault();
