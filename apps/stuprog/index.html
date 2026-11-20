@@ -50,7 +50,8 @@
   var ROOT = new URL("../../", location.href);
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   var P = [
-    {id: "g", ic: "💪", n: "공부 Gym · 쌤비 PT", d: "하루 60분 · 6개 PT실 · 중학교 마스터 12주", u: new URL("apps/gym/", ROOT).href, x: []},
+    {id: "g", ic: "💪", n: "공부 Gym · 쌤비 PT", d: "하루 60분 · 6개 PT실 · 중학교 마스터 12주", u: new URL("apps/gym/", ROOT).href,
+     x: [["📊 반 현황판", "../gym/board.html"], ["🖨️ 학생 안내문", "../gym/board.html#guide"]]},
     {id: "m", ic: "🗺️", n: "중학 수학 개념지도", d: "개념지도 · 고1 3월 모의고사 유형맵", u: new URL("apps/mstudy/", ROOT).href, x: []},
     {id: "k", ic: "📖", n: "국어 근육", d: "긴 지문 빨리 읽고 이해 확인 · 수능 어휘", u: new URL("apps/kread/", ROOT).href,
      x: [["🖥️ 교실 함께 읽기", "../kread/teach.html?tab=room"], ["📥 결과 모으기", "../kread/teach.html?tab=res"]]}
