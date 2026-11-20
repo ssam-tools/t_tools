@@ -147,6 +147,9 @@ var GYM_ROOMS = (function(){
       ? {name: "통합과학", part: "어깨", emo: "🔬", col: "#2F80ED", bank: SCI.concat(GYM_SCI.ox, GYM_SCI.ditems), gen: GYM_SCI.gen, genTags: GYM_SCI.genTags, mix: .35, genRatio: .4,
          unitOf: Object.assign({}, SCIU, GYM_SCI.unitOf), srsNew: true, intake: true, dsets: GYM_SCI, setNames: ["개념 OX + 공식", "자료 해석"]}
       : {name: "통합과학", part: "어깨", emo: "🔬", col: "#2F80ED", bank: SCI, gen: sciGen, mix: .35, srsNew: true, genTags: ["속력", "밀도"], unitOf: SCIU},
-    soc:  {name: "통합사회", part: "가슴", emo: "🌏", col: "#E05BA8", bank: vocab("soc:", "개념어", SW, "밑줄 친 말의 뜻으로 알맞은 것은?"), srsNew: true}
+    soc: typeof GYM_SOC !== "undefined"   // 8단계: 통합사회 PT 자료는 soc.js (개념어 · 자료 해석 · 관점 비교)
+      ? {name: "통합사회", part: "가슴", emo: "🌏", col: "#E05BA8", bank: vocab("soc:", "개념어", SW, "밑줄 친 말의 뜻으로 알맞은 것은?").concat(GYM_SOC.words, GYM_SOC.ditems),
+         srsNew: true, intake: true, dsets: GYM_SOC, setNames: ["개념어", "자료 해석 + 관점 비교"]}
+      : {name: "통합사회", part: "가슴", emo: "🌏", col: "#E05BA8", bank: vocab("soc:", "개념어", SW, "밑줄 친 말의 뜻으로 알맞은 것은?"), srsNew: true}
   };
 })();

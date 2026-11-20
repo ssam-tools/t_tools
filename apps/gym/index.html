@@ -163,6 +163,10 @@
   .dtab{width:100%;border-collapse:collapse;font-size:12.5px;text-align:center;background:#FFFDF6;border-radius:10px;overflow:hidden}
   .dtab th,.dtab td{border:1px solid var(--line);padding:4px 3px}.dtab th{background:#FFF3C4;font-weight:900}
   .qq.qs{font-size:16px;line-height:1.5}
+  .pv{display:flex;flex-direction:column;gap:6px}
+  .pvr{display:flex;gap:8px;align-items:flex-start;background:#FFFDF6;border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:14.5px;line-height:1.55;text-align:left}
+  .pvr b{flex:none;width:28px;height:28px;border-radius:50%;background:#E05BA8;color:#fff;display:grid;place-items:center;font-size:14px}
+  .pvr:nth-child(2) b{background:#2F80ED}
   .dset.two .chart{max-height:min(15dvh,118px)}
   /* 영어 PT (5단계) */
   .toks{font-size:19px;font-weight:800;line-height:2.1;text-align:center;word-break:normal}
@@ -295,6 +299,7 @@
 <script src="eng.js"></script>
 <script src="warm.js"></script>
 <script src="sci.js"></script>
+<script src="soc.js"></script>
 <script src="rooms.js"></script>
 <script src="map.js"></script>
 <script src="../../shared/sbart.js"></script>
@@ -594,6 +599,7 @@
   var PAL = ["#2F80ED", "#E5484D", "#1F9D55", "#FF8A00"];
   function niceStep(r){ var p = Math.pow(10, Math.floor(Math.log(r) / Math.LN10)), f = r / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
   function chartSVG(c){
+    if(c.t === "text") return '<div class="pv">' + c.p.map(function(x){ return '<div class="pvr"><b>' + esc(x[0]) + "</b><span>" + esc(x[1]) + "</span></div>"; }).join("") + "</div>";
     if(c.t === "table") return '<table class="dtab"><tr>' + c.h.map(function(x){ return "<th>" + esc(x) + "</th>"; }).join("") + "</tr>" + c.r.map(function(r){ return "<tr>" + r.map(function(x, i){ return i ? "<td>" + esc(x) + "</td>" : "<th>" + esc(x) + "</th>"; }).join("") + "</tr>"; }).join("") + "</table>";
     var W = 320, H = 150, L = 38, Rt = 8, Tp = 22, B = 30, all = [];
     c.s.forEach(function(s){ all = all.concat(s.v); });
@@ -709,7 +715,7 @@
     ({home: home, body: bodyV, map: mapV, log: logV, room: room, train: train, result: result})[v](arg);
   }
   nav.addEventListener("click", function(e){ var b = e.target.closest("button"); if(b) go(b.dataset.v); });
-  hd.addEventListener("click", function(e){ var b = e.target.closest("[data-go]"); if(b){ if(T && V === "train") stopTrain(true); else go(b.dataset.go); } });
+  hd.addEventListener("click", function(e){ var b = e.target.closest("[data-go]"); if(b){ if(T && V === "train") stopTrain(true); else { var gv = b.dataset.go.split(":"); go(gv[0], gv[1]); } } });
 
   /* 홈 */
   function ring(min, goal){
@@ -766,7 +772,7 @@
     header(r.emo + " " + r.name + " PT", "home");
     var setsHtml = [
       [id === "warm" ? "복습 루프" : r.setNames ? r.setNames[0] : "복습 먼저", r.vocab && r.vocabDaily < 100 ? "복습 " + rc + "장 · 새 어휘 " + Math.min(d.kv || 0, r.vocabDaily) + "/" + r.vocabDaily : rc ? "복습 카드 " + rc + "장" + (id === "warm" ? " · 6과목 오답 + 어제 헷갈린 것" : "") : "복습 카드 없음 → 바로 새 문제"],
-      [id === "warm" ? "학습 도구어" : r.setNames ? r.setNames[1] : "오늘 단원", id === "warm" ? "전 과목 공부 언어, 문장 속 뜻" : r.passages ? passLine() : r.dsets ? (day().dsd ? "📊 오늘 자료 끝 ✓ · OX·공식" : (function(){ var dd = pickData(r.dsets); return dd ? "📊 " + dd.title + " · " + ["", "그래프 읽기", "실험 설계", "자료 통합"][dd.lv] : "OX·공식"; })()) : cf ? "📍 " + FIB[cf].n + (r.set2 ? " · " + r.set2 : "") : (r.gen && !r.bank ? "계산 반사 · 문제가 끝없이 나와요" : "새 문제 · 시간 안에 푼 만큼")]
+      [id === "warm" ? "학습 도구어" : r.setNames ? r.setNames[1] : "오늘 단원", id === "warm" ? "전 과목 공부 언어, 문장 속 뜻" : r.passages ? passLine() : r.dsets ? (day().dsd ? "📊 오늘 자료 끝 ✓ · OX·공식" : (function(){ var dd = pickData(r.dsets); return dd ? "📊 " + dd.title + " · " + (r.dsets === (typeof GYM_SOC !== "undefined" && GYM_SOC) ? ["", "도표 읽기", "관점 비교", "자료 통합"] : ["", "그래프 읽기", "실험 설계", "자료 통합"])[dd.lv] : "OX·공식"; })()) : cf ? "📍 " + FIB[cf].n + (r.set2 ? " · " + r.set2 : "") : (r.gen && !r.bank ? "계산 반사 · 문제가 끝없이 나와요" : "새 문제 · 시간 안에 푼 만큼")]
     ];
     var fibHtml = "", inl = r.intake && !S.intake[id] ? intakeList(id) : [];
     if(id === "warm"){
@@ -1027,7 +1033,7 @@
     var evHtml = ev && ev.rows ? '<div class="win fibev st1" style="--c:' + room.col + '">' + ev.msg + '</div><div class="irows" style="--c:' + room.col + '">' + ev.rows.map(function(w){
         var x = fs(w[0]); return '<div><b>' + esc(FIB[w[0]].n) + "</b><span>" + "●".repeat(w[1]) + '<i>' + "●".repeat(w[2] - w[1]) + "</i></span><em class=\"" + (w[1] === w[2] ? "ok" : w[1] <= 1 ? "rx" : "") + "\">" + (w[1] === w[2] ? "통과" : w[1] <= 1 ? "처방" : "연습") + "</em></div>"; }).join("") + "</div>"
       : ev ? '<div class="win fibev st' + fs(ev.fid).st + '" style="--c:' + room.col + '">' + ev.msg + "</div>" : qz && r.n < r.N ? '<div class="win">' + QK[qz.kind] + "은 " + r.N + "문제를 다 풀어야 기록돼요</div>" : "";
-    header(room.emo + (qz ? " " + QK[qz.kind] + " 결과" : " 세트 끝!"), qz && qz.kind !== "intake" && qz.kind !== "long" ? "map" : "room");
+    header(room.emo + (qz ? " " + QK[qz.kind] + " 결과" : " 세트 끝!"), qz && qz.kind !== "intake" && qz.kind !== "long" ? "map" : "room:" + id);
     if(r.evs && r.evs.length) evHtml += r.evs.map(function(v){ return '<div class="win fibev st' + fs(v.fid).st + '" style="--c:' + room.col + '">' + v.msg + "</div>"; }).join("");
     if(r.cf && r.cf.n) evHtml = '<div class="win">🤔 어제 헷갈린 것 ' + r.cf.n + "문제 중 <b>" + r.cf.ok + "개</b> 정답" + (r.cf.ok === r.cf.n ? " — 극복! 💪" : " — 틀린 건 복습 상자로") + "</div>" + evHtml;
     if(r.read) evHtml = '<div class="win">📖 읽기 속도 <b>' + r.read.cpm + "자/분</b>" + (r.read.cpm > 1500 ? '<br><span class="muted">너무 빨라요! 핵심어를 놓치지 않게 꼼꼼히 읽어 보자</span>' : "") + (r.read.prev ? (r.read.cpm > r.read.prev ? " · 지난번보다 " + (r.read.cpm - r.read.prev) + "자 빨라졌어요 ⚡" : " · 지난번 " + r.read.prev + "자/분") : "") + (r.read.m === "d1" ? '<br><span class="muted">내일은 이 지문의 문항과 한 줄 요약!</span>' : "") + "</div>" + evHtml;
