@@ -81,22 +81,38 @@
     setTimeout(function(){ if(done) return; done = true; if(cur === el) show(el, "meal", '<h4>🍚 급식</h4><div class="m">급식을 불러오지 못했어요. 인터넷 연결을 확인하거나, 날짜를 눌러 급식 창에서 다시 보세요.</div>'); }, 8000);
     return '<h4>🍚 급식</h4><div class="m">불러오는 중…</div>';
   }
-  /* ── ①-2 학교 연락처 (v2.12.4 맨 위 학교 이름에 올리면) — 학교·선생님 설정 + 교직원 명렬·내선번호에서 ── */
-  function schoolHTML(){
+  /* ── ①-2 학교 연락처 (v2.12.4 맨 위 학교 이름에 올리면) — 대표전화 · 행정실 · 교무실 · 팩스 + 주소
+     v2.12.5 보건실·교장실·사람 이름은 빼고, 주소가 설정에 없으면 나이스 학교 정보에서 한 번 받아 둠 */
+  var ADK = "sn_school_addr_v1";
+  function neisAddr(s, el){
+    if(!s.neisA || !s.neisS) return "";
+    var c = null; try{ c = JSON.parse(localStorage.getItem(ADK) || "null"); }catch(e){}
+    if(c && c.k === s.neisA + s.neisS && c.a) return c.a;
+    if(neisAddr.busy || (c && c.k === s.neisA + s.neisS && Date.now() - (c.at || 0) < 86400000)) return "";
+    neisAddr.busy = true;
+    var u = "https://open.neis.go.kr/hub/schoolInfo?Type=json&pIndex=1&pSize=1&ATPT_OFCDC_SC_CODE=" + encodeURIComponent(s.neisA) + "&SD_SCHUL_CODE=" + encodeURIComponent(s.neisS) + (s.neisKey ? "&KEY=" + encodeURIComponent(s.neisKey) : "");
+    fetch(u).then(function(r){ return r.json(); }).then(function(j){
+      var row = j && j.schoolInfo && j.schoolInfo.filter(function(x){ return x.row; })[0], x = row && row.row[0];
+      var ad = x ? [x.ORG_RDNMA, x.ORG_RDNDA].filter(Boolean).join(" ").trim() : "";
+      try{ localStorage.setItem(ADK, JSON.stringify({k: s.neisA + s.neisS, a: ad, at: Date.now()})); }catch(e){}
+      neisAddr.busy = false; if(ad && cur === el) show(el, "school", schoolHTML(el));
+    }).catch(function(){ neisAddr.busy = false; try{ localStorage.setItem(ADK, JSON.stringify({k: s.neisA + s.neisS, a: "", at: Date.now()})); }catch(e){} });
+    return "";
+  }
+  function schoolHTML(el){
     var s = {}; try{ s = TT.school.load() || {}; }catch(e){}
     var h = "<h4>🏫 " + esc(s.name || "우리 학교") + "<small>학교 연락처</small></h4>", rows = [], seen = {};
-    function r(k, v){ if(!v || seen[k + v]) return; seen[k + v] = 1; rows.push('<div class="r"><span>' + esc(k) + "</span><b>" + esc(v) + "</b></div>"); }
+    function r(k, v){ if(!v || seen[v]) return; seen[v] = 1; rows.push('<div class="r"><span>' + esc(k) + "</span><b>" + esc(v) + "</b></div>"); }
+    var OFF = /대표|행정실|교무실|팩스|FAX|fax/;
     r("📞 대표전화", s.tel);
     var o = {}; try{ o = TT.store.get("tt_staff_v1", null) || {}; }catch(e){}
-    (Array.isArray(o.main) ? o.main : []).slice(0, 4).forEach(function(x){ if(x && x.number) r(String(x.label || "대표번호"), String(x.number)); });
+    (Array.isArray(o.main) ? o.main : []).forEach(function(x){ if(x && x.number && OFF.test(String(x.label || "대표"))) r(String(x.label || "대표번호"), String(x.number)); });
     var EX = []; try{ EX = window.TT_LIBD ? TT_LIBD.extCached() : []; }catch(e){}
-    var OFF = /교무실|행정실|교장실|교감|보건실|상담실|팩스|FAX|fax/;
-    EX.filter(function(x){ return OFF.test((x.n || "") + " " + (x.d || "")); }).slice(0, 6).forEach(function(x){ r(x.n || x.d, x.t); });
-    var vp = staffList().filter(function(x){ return /교감/.test(x.pos || ""); })[0];
-    var who = [s.principal ? "교장 " + s.principal : "", vp ? "교감 " + vp.name : ""].filter(Boolean).join(" · ");
+    EX.filter(function(x){ return OFF.test(x.n || "") || (!x.n && OFF.test(x.d || "")); }).slice(0, 6).forEach(function(x){ r(x.n || x.d, x.t); });
+    var ad = s.addr || neisAddr(s, el);
     if(rows.length) h += rows.join("");
-    if(who || s.addr) h += (rows.length ? "<hr>" : "") + (who ? '<div class="m">' + esc(who) + "</div>" : "") + (s.addr ? '<div class="m">📍 ' + esc(s.addr) + "</div>" : "");
-    if(!rows.length && !who && !s.addr) h += '<div class="m">설정 → 학교·선생님 설정에서 대표전화·주소를 넣으면 여기에 보여요.</div>';
+    if(ad) h += (rows.length ? "<hr>" : "") + '<div class="m">📍 ' + esc(ad) + "</div>";
+    if(!rows.length && !ad) h += '<div class="m">설정 → 학교·선생님 설정에서 대표전화·주소를 넣으면 여기에 보여요.</div>';
     return h;
   }
   /* ── ② 교시 ── */
@@ -205,7 +221,7 @@
     switch(h.kind){
       case "meal": return on("meal") ? mealHTML(h.el) : "";
       case "time": return on("time") ? timeHTML() : "";
-      case "school": return on("school") ? schoolHTML() : "";
+      case "school": return on("school") ? schoolHTML(h.el) : "";
       case "wx": return window.TT_WX ? TT_WX.html() : "";
       case "owl": return owlHTML();
       case "tree": return treeHTML();
