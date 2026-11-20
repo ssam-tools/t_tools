@@ -57,7 +57,7 @@
   .who.spin{opacity:.55;filter:blur(.5px)}
   .side .ck{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13px}
   @media print{ .side,.bh .btn{display:none!important} main{grid-template-columns:1fr} }
-  @media (max-width:760px){ main{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} }
+  @media (max-width:760px){ main{grid-template-columns:minmax(0,1fr)} body{height:auto;min-height:100dvh;overflow:auto} .board,.side{min-width:0} .bh{flex-wrap:wrap;gap:6px} .bh h2{flex:1 1 auto;text-align:center} .bh .sp{display:none} .roles{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));grid-auto-rows:auto} }
 </style>
 </head>
 <body>

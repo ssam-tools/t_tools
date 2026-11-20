@@ -99,7 +99,7 @@
   #pvQl button{display:flex;flex-direction:column;gap:2px;text-align:left;border:0;background:none;border-radius:8px;padding:6px 8px;font:inherit;cursor:pointer}
   #pvQl button:hover{background:#f2f4f7}#pvQl b{font-size:13px}#pvQl small{font-size:12px;color:var(--sub)}#pvQl div{font-size:12px;color:var(--sub);padding:4px 8px}
   html.inframe .pvf{display:none}
-  @media (max-width:760px){ main{grid-template-columns:1fr} body{height:auto;min-height:100dvh;overflow:auto} .bar{justify-content:flex-start} }
+  @media (max-width:760px){ main{grid-template-columns:minmax(0,1fr)} .nav,.body{min-width:0} body{height:auto;min-height:100dvh;overflow:auto} .bar{justify-content:flex-start} }
   .btn.star{font-size:16px;color:#9aa5b1;padding-left:10px;padding-right:10px}.btn.star.on{color:#e0a526}
   html.inframe header{display:none}
 </style>

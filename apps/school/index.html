@@ -22,6 +22,11 @@
   .note a,.note button{font:inherit;font-size:13px;color:var(--accent);background:none;border:0;cursor:pointer;padding:0;text-decoration:underline}
   .msg{margin:auto;text-align:center;color:var(--sub);line-height:1.7;max-width:460px}
   .msg b{color:var(--ink)}
+  .msg.mob{display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px 10px}
+  .msg.mob .bi{font-size:44px;line-height:1}
+  .msg.mob span{font-size:13px}
+  .msg.mob .big{margin-top:10px;font-size:18px;font-weight:800;padding:14px 28px;border-radius:14px;text-decoration:none}
+  .msg.mob .lnk{margin-top:6px;font:inherit;font-size:13px;color:var(--sub);background:none;border:0;text-decoration:underline;cursor:pointer}
   .lock{margin:auto;display:flex;flex-direction:column;gap:10px;align-items:center;max-width:320px;width:100%}
   .lock input{font:inherit;font-size:16px;width:100%;height:46px;border:1px solid var(--line);border-radius:12px;padding:0 14px;background:var(--card);color:var(--ink)}
   .lock .er{color:var(--danger);font-size:13px;min-height:18px}
@@ -119,8 +124,19 @@
     if(cur === "board"){
       if(!boardOk()){ P.innerHTML = '<div class="msg"><b>학교 업무판이 아직 연결되지 않았어요.</b><br>설정 → 학교 업무판 연결에서 업무판 주소를 넣어 주세요.<br><br><a class="btn" href="../../#settings">설정 열기</a></div>'; return; }
       var u = B().url;
+      /* v2.24.2 휴대폰: 구글 업무판은 화면 안 칸(iframe)에서 "현재 파일을 열 수 없습니다"가 나오므로 큰 단추로 새 창에서 엽니다 */
+      var phone = window.matchMedia("(max-width:760px)").matches, tryIn = sessionStorage.getItem("tt_school_inframe") === "1";
+      if(phone && !tryIn){
+        P.innerHTML = '<div class="msg mob"><div class="bi">📅</div><b>휴대폰에서는 업무판을 새 창으로 열어요</b><br><span>구글이 휴대폰에서는 화면 안에 업무판을 보여 주지 않아요.</span>'
+          + '<a class="btn primary big" href="' + esc(u) + '" target="_blank" rel="noopener">📅 업무판 열기</a>'
+          + '<button type="button" class="lnk" id="tryIn">그래도 여기서 열어 보기</button></div>';
+        $("tryIn").onclick = function(){ sessionStorage.setItem("tt_school_inframe", "1"); draw(); };
+        return;
+      }
       P.innerHTML = '<iframe class="frame" src="' + esc(u) + '" title="학교 주간·월간 업무판" referrerpolicy="no-referrer"></iframe>'
-        + '<div class="note">업무판이 비어 보이면 → <a href="' + esc(u) + '" target="_blank" rel="noopener">새 창으로 열기</a></div>';
+        + '<div class="note">업무판이 비어 보이면 → <a href="' + esc(u) + '" target="_blank" rel="noopener">새 창으로 열기</a>'
+        + (phone ? ' · <button type="button" id="noIn">큰 단추로 돌아가기</button>' : "") + '</div>';
+      if(phone) $("noIn").onclick = function(){ sessionStorage.removeItem("tt_school_inframe"); draw(); };
       return;
     }
     if(cur === "ext"){ drawExt(P); return; }

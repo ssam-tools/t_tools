@@ -48,7 +48,8 @@
     main.panel{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);gap:8px}
     .side{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px}
     .step .sub{display:none}
-    .go{grid-column:1 / -1;margin-top:0;flex-direction:row;align-items:center}
+    .go{grid-column:1 / -1;margin-top:0;flex-direction:row;align-items:center;flex-wrap:wrap}
+    main.panel{grid-template-columns:minmax(0,1fr)}
     .go .btn{flex:none;padding:9px 12px;font-size:14px}
     #empty{grid-column:1}
     #empty .big{font-size:30px}
