@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.12.3";
+  var VERSION = "2.12.4";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -975,7 +975,7 @@ var TT = (function(){
     function reset(){ var keepUi = get().ui; try{ localStorage.removeItem(KEY); if(keepUi !== "board") localStorage.setItem(KEY, JSON.stringify({ui: keepUi})); }catch(e){} var u = store.get("tt_ui_v1", {}) || {}; if(u.font){ delete u.font; store.set("tt_ui_v1", u); } apply(); }
     try{ if(!document.querySelector('link[href$="shared/look.css"]')){ var lk = document.createElement("link"); lk.rel = "stylesheet"; lk.href = BASE + "shared/look.css"; document.head.appendChild(lk); } }catch(e){}   // 화면 꾸미기 값(색·글꼴 변수)
     try{ var l = document.createElement("link"); l.rel = "stylesheet"; l.href = BASE + "shared/fonts.css"; document.head.appendChild(l); }catch(e){}
-    try{ if(!document.querySelector('link[href$="shared/v2.css"]')){ var l2 = document.createElement("link"); l2.rel = "stylesheet"; l2.href = BASE + "shared/v2.css?v=" + VERSION; document.head.appendChild(l2); } }catch(e){}   // v2.0 쌤비 홈 디자인 (html[data-ui=ssambi] 일 때만 적용)
+    try{ if(!document.querySelector('link[href*="shared/v2.css"]')){ var l2 = document.createElement("link"); l2.rel = "stylesheet"; l2.href = BASE + "shared/v2.css?v=" + VERSION; document.head.appendChild(l2); } }catch(e){}   // v2.0 쌤비 홈 디자인 (html[data-ui=ssambi] 일 때만 적용)
     apply();
     window.addEventListener("storage", function(e){ if(e.key === KEY || e.key === "tt_ui_v1") apply(); });
     /* 화면 꾸미기 창: 고르면 바로 바뀌고(미리 보기), [처음대로]로 되돌림 */

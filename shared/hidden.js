@@ -13,7 +13,7 @@
   function pad(n){ return (n < 10 ? "0" : "") + n; }
   function ymd(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
   function classDev(){ try{ return !!TT.classroom || localStorage.getItem("ttv_device") === "classroom"; }catch(e){ return false; } }
-  var KINDS = {meal: "날짜 → 급식", time: "시각 → 교시", wx: "날씨 → 자세히", staff: "선생님 이름", cls: "반 이름", owl: "쌤비", stu: "학생 이름", tree: "우리 반 나무", trip: "업무판 날짜 → 출장"};
+  var KINDS = {meal: "날짜 → 급식", time: "시각 → 교시", wx: "날씨 → 자세히", staff: "선생님 이름", cls: "반 이름", owl: "쌤비", school: "학교 이름 → 연락처", stu: "학생 이름", tree: "우리 반 나무", trip: "업무판 날짜 → 출장"};
   function on(k){
     var u = TT.store.get("tt_ui_v1", {}) || {}; if(u.hidOff) return false;
     var h = (TT.school.load() || {}).hid; if(h && h[k] === false) return false;
@@ -80,6 +80,24 @@
     if(done) return fin();
     setTimeout(function(){ if(done) return; done = true; if(cur === el) show(el, "meal", '<h4>🍚 급식</h4><div class="m">급식을 불러오지 못했어요. 인터넷 연결을 확인하거나, 날짜를 눌러 급식 창에서 다시 보세요.</div>'); }, 8000);
     return '<h4>🍚 급식</h4><div class="m">불러오는 중…</div>';
+  }
+  /* ── ①-2 학교 연락처 (v2.12.4 맨 위 학교 이름에 올리면) — 학교·선생님 설정 + 교직원 명렬·내선번호에서 ── */
+  function schoolHTML(){
+    var s = {}; try{ s = TT.school.load() || {}; }catch(e){}
+    var h = "<h4>🏫 " + esc(s.name || "우리 학교") + "<small>학교 연락처</small></h4>", rows = [], seen = {};
+    function r(k, v){ if(!v || seen[k + v]) return; seen[k + v] = 1; rows.push('<div class="r"><span>' + esc(k) + "</span><b>" + esc(v) + "</b></div>"); }
+    r("📞 대표전화", s.tel);
+    var o = {}; try{ o = TT.store.get("tt_staff_v1", null) || {}; }catch(e){}
+    (Array.isArray(o.main) ? o.main : []).slice(0, 4).forEach(function(x){ if(x && x.number) r(String(x.label || "대표번호"), String(x.number)); });
+    var EX = []; try{ EX = window.TT_LIBD ? TT_LIBD.extCached() : []; }catch(e){}
+    var OFF = /교무실|행정실|교장실|교감|보건실|상담실|팩스|FAX|fax/;
+    EX.filter(function(x){ return OFF.test((x.n || "") + " " + (x.d || "")); }).slice(0, 6).forEach(function(x){ r(x.n || x.d, x.t); });
+    var vp = staffList().filter(function(x){ return /교감/.test(x.pos || ""); })[0];
+    var who = [s.principal ? "교장 " + s.principal : "", vp ? "교감 " + vp.name : ""].filter(Boolean).join(" · ");
+    if(rows.length) h += rows.join("");
+    if(who || s.addr) h += (rows.length ? "<hr>" : "") + (who ? '<div class="m">' + esc(who) + "</div>" : "") + (s.addr ? '<div class="m">📍 ' + esc(s.addr) + "</div>" : "");
+    if(!rows.length && !who && !s.addr) h += '<div class="m">설정 → 학교·선생님 설정에서 대표전화·주소를 넣으면 여기에 보여요.</div>';
+    return h;
   }
   /* ── ② 교시 ── */
   function timeHTML(){
@@ -187,6 +205,7 @@
     switch(h.kind){
       case "meal": return on("meal") ? mealHTML(h.el) : "";
       case "time": return on("time") ? timeHTML() : "";
+      case "school": return on("school") ? schoolHTML() : "";
       case "wx": return window.TT_WX ? TT_WX.html() : "";
       case "owl": return owlHTML();
       case "tree": return treeHTML();
@@ -203,19 +222,19 @@
     var h = detect(e.target);
     if(!h){ if(cur && !(cur.contains(e.target) || tip.contains(e.target))){ clearTimeout(T); T = setTimeout(hide, 150); } return; }
     if(h.el === cur) { clearTimeout(T); return; }
-    clearTimeout(T); T = setTimeout(function(){ open(h); }, h.kind === "meal" || h.kind === "time" || h.kind === "wx" || h.kind === "owl" || h.kind === "tree" ? 350 : 650);
+    clearTimeout(T); T = setTimeout(function(){ open(h); }, h.kind === "meal" || h.kind === "time" || h.kind === "wx" || h.kind === "school" || h.kind === "owl" || h.kind === "tree" ? 350 : 650);
   }, true);
   /* 터치: 날짜·시각은 누르면, 이름·반·쌤비·나무는 길게 누르면 */
   var lp = 0, lpEl = null;
   document.addEventListener("touchstart", function(e){
     var h = detect(e.target); if(!h) return; lpEl = h;
-    if(h.kind === "meal" || h.kind === "time" || h.kind === "wx") return;
+    if(h.kind === "meal" || h.kind === "time" || h.kind === "wx" || h.kind === "school") return;
     clearTimeout(lp); lp = setTimeout(function(){ open(h); lpEl = null; }, 500);
   }, {passive: true, capture: true});
   document.addEventListener("touchend", function(){ clearTimeout(lp); }, true);
   document.addEventListener("touchmove", function(){ clearTimeout(lp); }, {passive: true, capture: true});
   document.addEventListener("click", function(e){
-    var hk = e.target.closest && e.target.closest('[data-hid="meal"],[data-hid="time"],[data-hid="wx"]');
+    var hk = e.target.closest && e.target.closest('[data-hid="meal"],[data-hid="time"],[data-hid="wx"],[data-hid="school"]');
     if(hk){ if(cur === hk){ hide(); return; } var h = detect(hk); if(h) open(h); return; }
     if(!tip.contains(e.target)) hide();
   }, true);

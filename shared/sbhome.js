@@ -215,7 +215,7 @@
         var cells = "";
         function hd(t, c, r, span, cls){ return '<h3 class="fh' + (r > 1 ? " r3" : "") + (cls ? " " + cls : "") + '" style="grid-column:' + c + " / span " + span + ";grid-row:" + r + '">' + esc(t) + "</h3>"; }
         function bt(it, c, r, cls){ var nd = needs(it);
-          return '<button type="button" class="sc' + (it.dim ? " dim" : "") + (cls ? " " + cls : "") + (nd ? " need" : "") + '" data-mid="' + idx(it) + '" style="grid-column:' + c + ";grid-row:" + r + '" title="' + esc(nd || (it.name + (it.st ? " · " + it.st : ""))) + '"><span class="ci">' + ico(it, 20) + (nd ? '<i class="dot" aria-label="할 일 있음"></i>' : "") + "</span><b>" + esc(it.name) + "</b></button>"; }
+          return '<button type="button" class="sc' + (it.dim ? " dim" : "") + (cls ? " " + cls : "") + (nd ? " need" : "") + (it.name.length >= 9 ? " lg" : "") + '" data-mid="' + idx(it) + '" style="grid-column:' + c + ";grid-row:" + r + '" title="' + esc(nd || (it.name + (it.st ? " · " + it.st : ""))) + '"><span class="ci">' + ico(it, 20) + (nd ? '<i class="dot" aria-label="할 일 있음"></i>' : "") + "</span><b>" + esc(it.name) + "</b></button>"; }
         cells += hd("안내", 1, 1, 4); A.items.forEach(function(it, i){ cells += bt(it, 1 + i, 2); });
         if(D){ cells += hd("백업", 1, 3, D.items.length); D.items.forEach(function(it, i){ cells += bt(it, 1 + i, 4); }); }
         if(Y){ cells += hd("새 학년", 4, 3, 1, "ny"); cells += bt(Y.items[0], 4, 4, "ny"); }

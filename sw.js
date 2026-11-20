@@ -5,7 +5,7 @@
    그래야 새로 올린 화면 파일과 예전 공통 파일이 섞여 화면이 비는 일이 없습니다. */
 importScripts('shared/tools.js');
 TT_PACKS.forEach(p => { try { importScripts(p.file); } catch (e) {} });   // 교과 팩 도구도 오프라인 저장
-const CACHE = 'tt-files-v127';
+const CACHE = 'tt-files-v128';
 const CORE = ['./', 'manifest.webmanifest', 'assets/ssambi3-192.png', 'assets/ssambi3-512.png', 'assets/ssambi3-maskable-512.png', 'assets/ssambi3-180.png', 'assets/ssambi3-32.png',
               'shared/look.css', 'shared/tt.css', 'shared/tt.js', 'shared/tools.js', ...TT_PACKS.map(p => p.file), 'shared/board.js', 'shared/early.js', 'apps/mstudy/', 'apps/kread/', 'shared/mytodo.js', 'shared/today.js', 'shared/clock.js', 'shared/meal.js', 'shared/vaultui.js', 'shared/vault.js', 'shared/notes.js', 'shared/guidelogic.js', 'shared/theme.css', 'shared/calendar.js', 'shared/mathgen.js', 'shared/comci.js', 'shared/hwpx.js', 'shared/auto.js', 'shared/fonts.css', 'shared/fill.js', 'shared/libd.js', 'shared/voice.js', 'shared/mask.js', 'shared/ssambi.js', 'shared/ink.js', 'shared/follow.js', 'shared/exam-data.js', 'shared/challenge.js', 'shared/concepts.js', 'shared/sync.html', 'apps/tardy/absence-form.hwpx', 'apps/kread/data.js', 'shared/qr.js', 'shared/clean.js', 'apps/qr/', 'apps/remote/', 'apps/stuprog/', 'apps/sguide/', 'apps/mgen/ans.html', 'shared/peek.js', 'shared/quick.js', 'shared/keys.js', 'shared/joy.js', 'shared/hidden.js', 'shared/sbart.js', 'shared/sbhome.js', 'shared/sbbar.js', 'shared/v2.css', 'g/schools.js', 'g/sites.js', 'shared/wx.js', 'shared/favs.js'];
 // 글꼴 파일(shared/fonts/)은 미리 받지 않고, 그 글꼴을 골라 처음 쓸 때 저장해 둡니다(아래 fetch).
