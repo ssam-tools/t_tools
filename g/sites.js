@@ -19,6 +19,8 @@ window.TT_SCHOOL_SITES = [
   {id: "c-thub",     t: "티칭허브 중등",   u: "https://thub.kumsung.co.kr/main.do",                      c: "class"},
   {id: "c-neteacher",t: "능률엔이 중등",   u: "https://www.neteacher.co.kr/",                            c: "class"}
 ];
+/* v2.12 날씨 위치 = 학교 위치 (선생님 기기 위치는 쓰지 않음). 지우면 날씨가 나오지 않습니다. */
+window.TT_SCHOOL_WX = {name: "마산", lat: 35.21, lon: 128.57};
 /* 학교 목록에서 뺀 것: 이미 선생님 목록에 들어간 공통 사이트(🏫)도 지움 (선생님이 직접 넣은 것은 그대로) */
 window.TT_SCHOOL_SITES_GONE = ["c-didimdol"];
 window.TT_SITES_SEED = function(){

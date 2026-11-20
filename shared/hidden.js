@@ -13,7 +13,7 @@
   function pad(n){ return (n < 10 ? "0" : "") + n; }
   function ymd(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
   function classDev(){ try{ return !!TT.classroom || localStorage.getItem("ttv_device") === "classroom"; }catch(e){ return false; } }
-  var KINDS = {meal: "날짜 → 급식", time: "시각 → 교시", staff: "선생님 이름", cls: "반 이름", owl: "쌤비", stu: "학생 이름", tree: "우리 반 나무", trip: "업무판 날짜 → 출장"};
+  var KINDS = {meal: "날짜 → 급식", time: "시각 → 교시", wx: "날씨 → 자세히", staff: "선생님 이름", cls: "반 이름", owl: "쌤비", stu: "학생 이름", tree: "우리 반 나무", trip: "업무판 날짜 → 출장"};
   function on(k){
     var u = TT.store.get("tt_ui_v1", {}) || {}; if(u.hidOff) return false;
     var h = (TT.school.load() || {}).hid; if(h && h[k] === false) return false;
@@ -180,6 +180,7 @@
     switch(h.kind){
       case "meal": return on("meal") ? mealHTML(h.el) : "";
       case "time": return on("time") ? timeHTML() : "";
+      case "wx": return window.TT_WX ? TT_WX.html() : "";
       case "owl": return owlHTML();
       case "tree": return treeHTML();
       case "staff": return staffHTML(h.data);
@@ -195,19 +196,19 @@
     var h = detect(e.target);
     if(!h){ if(cur && !(cur.contains(e.target) || tip.contains(e.target))){ clearTimeout(T); T = setTimeout(hide, 150); } return; }
     if(h.el === cur) { clearTimeout(T); return; }
-    clearTimeout(T); T = setTimeout(function(){ open(h); }, h.kind === "meal" || h.kind === "time" || h.kind === "owl" || h.kind === "tree" ? 350 : 650);
+    clearTimeout(T); T = setTimeout(function(){ open(h); }, h.kind === "meal" || h.kind === "time" || h.kind === "wx" || h.kind === "owl" || h.kind === "tree" ? 350 : 650);
   }, true);
   /* 터치: 날짜·시각은 누르면, 이름·반·쌤비·나무는 길게 누르면 */
   var lp = 0, lpEl = null;
   document.addEventListener("touchstart", function(e){
     var h = detect(e.target); if(!h) return; lpEl = h;
-    if(h.kind === "meal" || h.kind === "time") return;
+    if(h.kind === "meal" || h.kind === "time" || h.kind === "wx") return;
     clearTimeout(lp); lp = setTimeout(function(){ open(h); lpEl = null; }, 500);
   }, {passive: true, capture: true});
   document.addEventListener("touchend", function(){ clearTimeout(lp); }, true);
   document.addEventListener("touchmove", function(){ clearTimeout(lp); }, {passive: true, capture: true});
   document.addEventListener("click", function(e){
-    var hk = e.target.closest && e.target.closest('[data-hid="meal"],[data-hid="time"]');
+    var hk = e.target.closest && e.target.closest('[data-hid="meal"],[data-hid="time"],[data-hid="wx"]');
     if(hk){ if(cur === hk){ hide(); return; } var h = detect(hk); if(h) open(h); return; }
     if(!tip.contains(e.target)) hide();
   }, true);

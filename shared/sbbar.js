@@ -60,7 +60,8 @@
   }
   var owlState = null;
   function P(){ return owlState || basicPick(); }
-  function owlSvg(size){ var p = P(); return ART ? ART.svg({acc: TT.joy && TT.joy.acc ? TT.joy.acc() : "", item: p.item, deco: TT.joy && TT.joy.on && !TT.joy.on() ? "" : season(), open: !!p.open, sleep: !!p.sleep, listen: !!p.listen, size: size}) : "🦉"; }
+  var tempItem = null;                                                  // v2.12 잠깐 드는 소품(즐겨찾기 서랍 = 책갈피)
+  function owlSvg(size){ var p = P(), it = tempItem || p.item; return ART ? ART.svg({acc: TT.joy && TT.joy.acc ? TT.joy.acc() : "", item: it, deco: (TT.joy && TT.joy.on && !TT.joy.on()) || it === "scarf" ? "" : season(), open: !!p.open, sleep: !!p.sleep, listen: !!p.listen, size: size}) : "🦉"; }
   /* v2.3: 메뉴를 누르면 중메뉴 없이 대표 도구가 바로 (홈·설정은 메인 화면) */
   var REP = {"class": "apps/book/", homeroom: "apps/tardy/", student: "apps/stucard/", school: "apps/school/", lib: "apps/lib/"};
   function href(id){ return id === "home" ? BASE : REP[id] ? BASE + REP[id] : BASE + "#" + id; }
@@ -84,9 +85,10 @@
     return '<button type="button" class="owl" id="sbBarOwl" title="쌤비 — 오늘 상황 · 말로 기록 (Alt+B)" aria-label="쌤비 열기 (Alt+B)">' + owlSvg(132) + "</button>"
       + '<div class="bub" role="status"><div class="b0">' + (p.ev ? '<div class="when"><span class="ev">📌 ' + esc(p.ev) + "</span></div>" : "") + "<p>" + esc(p.line || "") + "</p>" + (p.sub ? "<small>" + esc(p.sub) + "</small>" : "") + "</div></div>";
   }
+  function wxTag(sep){ var c = window.TT_WX ? TT_WX.chip() : ""; return c ? sep + '<span data-hid="wx" class="wx">' + esc(c) + "</span>" : ""; }   // v2.12 날씨 (올리면 자세히)
   function dateHTML(){                                                  // 학교 · 날짜 · 시간은 맨 위 ⋯ 줄 왼쪽에 (휴대폰은 짧게)
     var d = new Date(), s = (TT.school && TT.school.load ? TT.school.load() : {}) || {}, t = (d.getHours() < 12 ? "오전 " : "오후 ") + ((d.getHours() % 12) || 12) + ":" + pad(d.getMinutes());
-    return '<span class="lg">' + (s.name ? esc(s.name) + " · " : "") + '<span data-hid="meal">' + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + DOW[d.getDay()] + '요일</span> · <span data-hid="time">' + t + '</span></span><span class="st"><span data-hid="meal">' + (d.getMonth() + 1) + "/" + d.getDate() + "(" + DOW[d.getDay()] + ')</span> <span data-hid="time">' + t + "</span></span>";   // v2.9 숨은 정보: 날짜 → 급식, 시각 → 교시
+    return '<span class="lg">' + (s.name ? esc(s.name) + " · " : "") + '<span data-hid="meal">' + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + DOW[d.getDay()] + '요일</span> · <span data-hid="time">' + t + '</span>' + wxTag(" · ") + '</span><span class="st"><span data-hid="meal">' + (d.getMonth() + 1) + "/" + d.getDate() + "(" + DOW[d.getDay()] + ')</span> <span data-hid="time">' + t + "</span>" + wxTag(" ") + "</span>";   // v2.9 숨은 정보: 날짜 → 급식, 시각 → 교시
   }
   function srowHTML(){
     return '<div class="q">' + icon("search", 20) + '<label for="sbQ2" class="sr">찾기 또는 한 줄 입력</label><input id="sbQ2" type="text" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="찾기 · 할 일 적기">'
@@ -105,7 +107,7 @@
   function drawHero(){
     if(!hero){
       hero = document.createElement("div"); hero.id = "sbHero";
-      hero.innerHTML = '<div class="top"><span class="sp"></span></div><div class="hrow"></div><div class="srow">' + srowHTML() + '</div><nav class="circ" aria-label="메뉴"></nav>';
+      hero.innerHTML = '<div class="top"><span class="sp"></span><button type="button" class="fav" id="sbFav" aria-label="자주 가는 사이트 (Alt+S)" title="자주 가는 사이트 (Alt+S)" aria-expanded="false" aria-haspopup="dialog">' + icon("star", 19) + '</button></div><div class="hrow"></div><div class="srow">' + srowHTML() + '</div><nav class="circ" aria-label="메뉴"></nav>';
       document.body.insertBefore(hero, document.body.firstChild);
       wireSearch();
     }
@@ -436,7 +438,9 @@
   setInterval(function(){ if(document.visibilityState === "visible" && !(document.getElementById("more") || {}).open) draw(); }, 60 * 1000);   // 시각·한마디
   new MutationObserver(function(){ if(HOME) seatMore(); draw(); }).observe(R, {attributes: true, attributeFilter: ["data-look", "data-ui"]});
 
+  document.addEventListener("tt-wx", function(){ if(window.TT_SBHOME && TT_SBHOME.render && HOME) TT_SBHOME.render(); else draw(); });   // v2.12 날씨를 새로 받으면
   window.TT_SBAR = {
+    prop: function(it){ if(tempItem === (it || null)) return; tempItem = it || null; draw(); },
     setOwl: function(p){ var k = JSON.stringify(p || null); if(k === JSON.stringify(owlState)) return; owlState = p || null; draw(); },
     draw: draw, cur: curMenu, sub: sub, seatBox: function(){ if(HOME && hero) seatBox(); },
     focusSearch: function(v){ return HOME ? focusSearch(v) : F.focus(v); }, clearSearch: function(){ if(HOME) clearSearch(); else F.clear(); },

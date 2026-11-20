@@ -123,6 +123,7 @@
     save(); reset(); draw(); $("fT").focus();
   });
   $("cols").addEventListener("click", function(e){
+    var a = e.target.closest("a.go"); if(a && window.TT_FAVS){ var it = a.closest(".it"), id = it && it.querySelector("[data-pin]"); if(id) TT_FAVS.mark(id.dataset.pin); }   // 오늘 열어 봄 ✓
     var b = e.target.closest("button"); if(!b || ROOM) return;
     var id = b.dataset.pin || b.dataset.up || b.dataset.ed || b.dataset.del, i = -1;
     D.items.forEach(function(x, k){ if(x.id === id) i = k; }); if(i < 0) return;

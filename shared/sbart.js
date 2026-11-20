@@ -39,7 +39,17 @@
     paper: '<g class="sbIt"><rect x="88" y="60" width="20" height="27" rx="2" fill="#fff" stroke="' + INK + '" stroke-width="1.6" transform="rotate(8 98 73)"/>'
       + '<path d="M92 67 h12 M92 71 h12 M92 75 h9 M92 79 h11" stroke="#9aa5b1" stroke-width="1.4" transform="rotate(8 98 73)"/></g>',
     calendar: '<g class="sbIt"><rect x="88" y="64" width="21" height="22" rx="3" fill="#fff" stroke="' + INK + '" stroke-width="1.6"/><path d="M88 64 h21 v6 h-21 z" fill="' + RED + '"/>'
-      + '<path d="M93 61 v5 M104 61 v5" stroke="' + INK + '" stroke-width="1.6" stroke-linecap="round"/><text x="98.5" y="82.5" font-size="10" font-weight="700" text-anchor="middle" fill="' + INK + '" font-family="sans-serif">D</text></g>'
+      + '<path d="M93 61 v5 M104 61 v5" stroke="' + INK + '" stroke-width="1.6" stroke-linecap="round"/><text x="98.5" y="82.5" font-size="10" font-weight="700" text-anchor="middle" fill="' + INK + '" font-family="sans-serif">D</text></g>',
+    /* v2.12 날씨·즐겨찾기 소품 */
+    umbrella: '<g class="sbIt"><path d="M84 62 a16 13 0 0 1 32 0 q-4 -3 -8 0 q-4 -3 -8 0 q-4 -3 -8 0 q-4 -3 -8 0 z" fill="#378ADD" stroke="' + INK + '" stroke-width="1.5" stroke-linejoin="round"/>'
+      + '<path d="M100 49 v-3" stroke="' + INK + '" stroke-width="1.6" stroke-linecap="round"/><path d="M100 62 v24 q0 5 -5 5 q-4 0 -4 -4" fill="none" stroke="' + INK + '" stroke-width="2" stroke-linecap="round"/>'
+      + '<path class="sbDrop" d="M88 74 v4 M112 70 v4 M107 80 v4" stroke="#85B7EB" stroke-width="1.8" stroke-linecap="round"/></g>',
+    mask: '<g class="sbIt"><path d="M47 53 q13 -5 26 0 v9 q-13 9 -26 0 z" fill="#fff" stroke="' + INK + '" stroke-width="1.5" stroke-linejoin="round"/>'
+      + '<path d="M51 56 h18 M51 60 h18" stroke="#c3cad2" stroke-width="1.2"/><path d="M47 54 q-7 -6 -6 -14 M73 54 q7 -6 6 -14" fill="none" stroke="#c3cad2" stroke-width="1.2"/></g>',
+    scarf: '<g class="sbIt"><path d="M30 68 Q60 77 90 68 L90 76 Q60 85 30 76 Z" fill="#378ADD"/><path d="M40 72 v7 M50 74 v7 M60 75 v7 M70 74 v7 M80 72 v7" stroke="#fff" stroke-width="1.3" opacity=".7"/>'
+      + '<path d="M76 75 l3 18 l8 -2 l-3 -17 z" fill="#378ADD"/><path d="M78 92 l1 4 M81 91 l1 4 M84 90 l1 4" stroke="#378ADD" stroke-width="1.4" stroke-linecap="round"/></g>',
+    mark: '<g class="sbIt"><path d="M92 58 h14 v30 l-7 -6 l-7 6 z" fill="#EF9F27" stroke="' + INK + '" stroke-width="1.6" stroke-linejoin="round" transform="rotate(8 99 73)"/>'
+      + '<path d="M99 64 l1.6 3.4 l3.6 .4 l-2.7 2.4 l.8 3.6 l-3.3 -1.9 l-3.3 1.9 l.8 -3.6 l-2.7 -2.4 l3.6 -.4 z" fill="#fff" transform="rotate(8 99 73)"/></g>'
   };
   /* 계절 장식: 머리 왼쪽 위 */
   var DECO = {
@@ -104,6 +114,7 @@
     qr: '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM18 14h2M14 18h2"/>',
     game: '<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 12.5h4M9 10.5v4"/><circle cx="16" cy="11.5" r=".9"/><circle cx="18" cy="13.5" r=".9"/>',
     teacher: '<circle cx="8" cy="7" r="3"/><path d="M3 20a5 5 0 0 1 10 0M14 5h7v8h-7M17 13v3"/>',
+    star: '<path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',
     link: '<path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1"/>',
     phone: '<path d="M5 4h4l2 5-3 2a11 11 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
     palette: '<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-1-2 0-3h3a4 4 0 0 0 4-4c0-5-4-9-9-9z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/>',
@@ -178,6 +189,7 @@
   }
   var CSS = ".sbArt{display:block;overflow:visible}.tt-rail [data-ic]{display:flex!important;align-items:center;justify-content:center}.sbArt .sbEye{animation:sbArtBlink 4.2s infinite;transform-origin:60px 53px}"
     + "@keyframes sbArtBlink{0%,93%,100%{transform:none}95%{transform:scaleY(.1)}}"
+    + ".sbArt .sbDrop{animation:sbArtDrop 1.4s linear infinite}@keyframes sbArtDrop{0%{opacity:0;transform:translateY(-3px)}30%{opacity:1}100%{opacity:0;transform:translateY(5px)}}"   // v2.12 빗방울
     + ".sbArt .sbSteam{animation:sbArtSteam 2.4s ease-in-out infinite}@keyframes sbArtSteam{0%,100%{opacity:.25;transform:translateY(2px)}50%{opacity:1;transform:none}}"
     + ".sbArt .sbShake{animation:sbArtShake 1.6s ease-in-out infinite;transform-origin:98px 76px}@keyframes sbArtShake{0%,80%,100%{transform:none}84%{transform:rotate(-10deg)}88%{transform:rotate(10deg)}92%{transform:rotate(-6deg)}}"
     + ".sbArt.lis .sbWave{animation:sbArtWave 1s ease-in-out infinite}@keyframes sbArtWave{0%,100%{opacity:.35}50%{opacity:1}}"

@@ -427,3 +427,31 @@ html[data-room="on"] #sbHero .srow,html[data-room="on"] #sbBar [data-mic]{displa
 .sbSites a:hover{border-color:var(--t-accent,#2f6fb5)}
 .sbSites a i{flex:none;font-style:normal;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:900}
 .sbSites a.mg{padding:4px 10px;color:var(--sub,#5b6775);font-weight:600;border-style:dashed}
+
+/* v2.12 ☆ 자주 가는 사이트 서랍 (⋯ 왼쪽) — ⋯ 단추·메뉴와 같은 모양 */
+#sbHero .top .fav{flex:none;display:grid;place-items:center;min-width:40px;min-height:40px;border:0;border-radius:12px;background:transparent;color:var(--t-sub);cursor:pointer;transition:background .15s,color .15s,transform .2s}
+#sbHero .top .fav:hover,#sbHero .top .fav.on{background:var(--t-chip);color:var(--t-accent)}
+#sbHero .top .fav.on svg{fill:currentColor;transform:rotate(-12deg) scale(1.08);transition:transform .25s}
+#sbHero .top .fav:focus-visible{outline:2px solid var(--t-accent);outline-offset:2px}
+#sbFavPop{position:absolute;top:calc(100% + 6px);right:0;z-index:40;width:min(352px,92vw);background:var(--t-card,#fff);border:1px solid var(--t-line);border-radius:14px;box-shadow:var(--sb-pop,0 12px 32px rgba(20,40,70,.18));padding:10px;display:flex;flex-direction:column;gap:8px;animation:sbFavIn .16s ease-out}
+#sbFavPop[hidden]{display:none}
+@keyframes sbFavIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+#sbFavPop .ft{display:flex;gap:4px;background:var(--t-chip);border-radius:10px;padding:3px}
+#sbFavPop .ft button{flex:1;border:0;background:transparent;border-radius:8px;padding:6px 4px;font:inherit;font-size:13px;color:var(--t-sub);cursor:pointer}
+#sbFavPop .ft button.on{background:var(--t-card,#fff);color:var(--t-ink);font-weight:800;box-shadow:0 1px 3px rgba(20,40,70,.12)}
+#sbFavPop .fh{font-size:13px;font-weight:800;color:var(--t-sub);padding:2px 4px}
+#sbFavPop .fg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+#sbFavPop .fg a{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px 6px;border-radius:12px;text-decoration:none;color:var(--t-ink);min-width:0}
+#sbFavPop .fg a:hover,#sbFavPop .fg a:focus-visible{background:var(--t-chip);outline:0}
+#sbFavPop .fg a:hover i{transform:translateY(-2px)}
+#sbFavPop .fg i{position:relative;font-style:normal;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#fff;font-weight:900;font-size:17px;transition:transform .15s}
+#sbFavPop .fg i s{position:absolute;right:-3px;bottom:-3px;width:17px;height:17px;border-radius:50%;background:#1D9E75;border:2px solid var(--t-card,#fff);color:#fff;font-size:10px;text-decoration:none;display:grid;place-items:center;line-height:1}
+#sbFavPop .fg i u{position:absolute;right:0;top:0;width:9px;height:9px;border-radius:50%;background:#EF9F27;border:2px solid var(--t-card,#fff)}
+#sbFavPop .fg span{font-size:12px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sbFavPop .fe{margin:6px 0;text-align:center;color:var(--t-sub);font-size:13px}
+#sbFavPop .fm{align-self:flex-end;font-size:12.5px;color:var(--t-sub);text-decoration:none;padding:2px 6px;border-radius:8px}
+#sbFavPop .fm:hover{background:var(--t-chip);color:var(--t-accent)}
+#sbHero .top .sp .wx{cursor:default;border-bottom:1px dotted transparent}
+#sbHero .top .sp .wx:hover{border-bottom-color:var(--t-sub)}
+@media (max-width:760px){ #sbFavPop{position:fixed;top:auto;left:8px;right:8px;width:auto;margin-top:6px} }
+@media (prefers-reduced-motion:reduce){ #sbFavPop{animation:none} #sbHero .top .fav.on svg{transform:none} }
