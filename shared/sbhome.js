@@ -166,6 +166,15 @@
     });
     return G;
   }
+  function needs(it){                                              // 설정 칸: 아직 할 일이 남았으면 그 이유(말풍선 글), 없으면 ""
+    try{
+      if(it.warn) return it.st;
+      if(it.name === "학교·선생님 설정" && !TT.school.load().name) return "학교 이름을 아직 넣지 않았어요";
+      if(it.name === "학교 업무판 연결"){ var B = TT.store.get("tt_board_v1", null) || {}; if(!(B.url && /^https:\/\/script\.google\.com\//.test(B.url))) return "학교 업무판이 아직 연결되지 않았어요"; }
+      if(it.name === "전체 백업 저장" && TT.backup.hasData()){ var d = TT.backup.daysSince(); if(d == null) return "아직 한 번도 백업하지 않았어요"; if(d > 30) return d + "일 동안 백업하지 않았어요"; }
+    }catch(e){}
+    return "";
+  }
   function midHTML(){
     var m = window.TT_SBAR ? TT_SBAR.cur() : "", G = midData() || [];
     if(m === "lib") G = G.filter(function(g){ return /자료실/.test(g.name); });
@@ -195,19 +204,21 @@
             return '<button type="button" class="sc' + (it.dim ? " dim" : "") + '" data-mid="' + idx(it) + '" title="' + esc(it.name + (it.st ? " · " + it.st : "")) + '"><span class="ci">' + ico(it, 20) + "</span><b>" + esc(it.name) + "</b></button>";
           }).join("") + "</div>") + "</section>";
     }
-    /* v2.12.1 설정: 왼쪽 4칸(안내 / 백업) · 오른쪽 4칸(설정 4개 / 나머지 설정 + 새 학년) — 한 줄이 길어지지 않게 두 줄로 */
+    /* v2.12.2 설정: 왼쪽 4칸(안내 / 백업 · 한 칸 띄우고 새 학년) | 오른쪽 4칸(설정 4개 / 나머지 설정)
+       할 일이 남은 칸에만 점(●) — 학교 이름 없음 · 업무판 연결 안 함 · 백업 30일 넘음 · 도구가 ⚠ 알림 */
     if(flat){
       var GN = {}; rest.forEach(function(g){ GN[g.name] = g; });
       var A = GN["안내"], S = GN["설정"], D = GN["백업"], Y = GN["새 학년"];
-      if(A && S && A.items.length <= 4 && (!D || D.items.length <= 4) && S.items.length <= (Y ? 7 : 8) && rest.length === [A, S, D, Y].filter(Boolean).length){
+      if(A && S && A.items.length <= 4 && (!D || D.items.length <= 3) && S.items.length <= 8 && (!Y || Y.items.length === 1) && rest.length === [A, S, D, Y].filter(Boolean).length){
         var cells = "";
         function hd(t, c, r, span, cls){ return '<h3 class="fh' + (r > 1 ? " r3" : "") + (cls ? " " + cls : "") + '" style="grid-column:' + c + " / span " + span + ";grid-row:" + r + '">' + esc(t) + "</h3>"; }
-        function bt(it, c, r, cls){ return '<button type="button" class="sc' + (it.dim ? " dim" : "") + (cls ? " " + cls : "") + '" data-mid="' + idx(it) + '" style="grid-column:' + c + ";grid-row:" + r + '" title="' + esc(it.name + (it.st ? " · " + it.st : "")) + '"><span class="ci">' + ico(it, 20) + "</span><b>" + esc(it.name) + "</b></button>"; }
+        function bt(it, c, r, cls){ var nd = needs(it);
+          return '<button type="button" class="sc' + (it.dim ? " dim" : "") + (cls ? " " + cls : "") + (nd ? " need" : "") + '" data-mid="' + idx(it) + '" style="grid-column:' + c + ";grid-row:" + r + '" title="' + esc(nd || (it.name + (it.st ? " · " + it.st : ""))) + '"><span class="ci">' + ico(it, 20) + (nd ? '<i class="dot" aria-label="할 일 있음"></i>' : "") + "</span><b>" + esc(it.name) + "</b></button>"; }
         cells += hd("안내", 1, 1, 4); A.items.forEach(function(it, i){ cells += bt(it, 1 + i, 2); });
-        if(D){ cells += hd("백업", 1, 3, 4); D.items.forEach(function(it, i){ cells += bt(it, 1 + i, 4); }); }
+        if(D){ cells += hd("백업", 1, 3, D.items.length); D.items.forEach(function(it, i){ cells += bt(it, 1 + i, 4); }); }
+        if(Y){ cells += hd("새 학년", 4, 3, 1, "ny"); cells += bt(Y.items[0], 4, 4, "ny"); }
         cells += hd("설정", 6, 1, 4);
         S.items.forEach(function(it, i){ cells += bt(it, 6 + (i % 4), i < 4 ? 2 : 4); });
-        if(Y){ var yc = 6 + Math.max(0, S.items.length - 4); cells += hd("새 학년", yc, 3, 1, "ny"); Y.items.forEach(function(it){ cells += bt(it, yc, 4, "ny"); }); }
         return h + '<div class="sbFlat">' + cells + '<i class="fsep" aria-hidden="true"></i></div></div>';
       }
     }
