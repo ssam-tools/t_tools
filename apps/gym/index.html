@@ -16,7 +16,8 @@
   · 홈: 쌤비 트레이너 · 오늘 링(기본 60 / 권장 90 / 도전 120) · 이번 주 강도 · 준비운동 + PT실 5개
   · PT실: 5분 미니 세트(첫 세트 복습 먼저 → 오늘 단원) · 끝나면 "오늘은 끝 / 한 세트 더"
   · 간격 반복 상자 1~5(1·2·4·7·14일) · 하루 복습 최대치 · XP · 출석(10분) · 휴식권(주 1회) · 복귀 루트(3일 이상 쉬면) · 컨디션
-  · 문항 자료: rooms.js (GYM_ROOMS). 별명만, 기록은 이 기기에만. 저장: localStorage "gym_v1"
+  · 2단계 마스터 시스템: 근섬유(단원) 미진단 → 연습 중 → 숙달(연속 2세트 90%) → 7일 뒤 확인 90% = 마스터⭐ (14일 뒤 다시 확인) · 마스터 맵
+  · 문항 자료: rooms.js (GYM_ROOMS), 근섬유 지도: map.js (GYM_MAP). 별명만, 기록은 이 기기에만. 저장: localStorage "gym_v1"
   jidangmath가 Claude와 함께 제작
 -->
 <style>
@@ -91,11 +92,12 @@
   /* PT실 입구 */
   .rhead{display:flex;align-items:center;gap:10px}
   .rhead .e{font-size:34px}.rhead h2{font-size:22px;font-weight:900}.rhead p{font-size:13px;color:var(--sub);font-weight:700}
-  .sets{display:flex;flex-direction:column;gap:7px}
-  .set{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px}
+  .sets{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .set{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:9px 10px;min-width:0}
+  .set>div{min-width:0}
   .set .n{width:30px;height:30px;border-radius:50%;background:var(--ac2);color:#B14E00;font-weight:900;display:grid;place-items:center;flex:none}
   .set.done .n{background:var(--ok);color:#fff}
-  .set b{font-size:15.5px;display:block}.set span{font-size:12.5px;color:var(--sub)}
+  .set b{font-size:14.5px;display:block}.set div span{font-size:12px;color:var(--sub);display:block;line-height:1.35}
   .grow2{display:flex;flex-direction:column;gap:5px}
   .gbar{height:14px;border-radius:8px;background:#F2EAD3;overflow:hidden;position:relative}.gbar i{display:block;height:100%;border-radius:8px}
   .glab{display:flex;justify-content:space-between;font-size:12.5px;font-weight:800;color:var(--sub)}
@@ -150,6 +152,42 @@
   .mopts{display:flex;gap:6px;flex-wrap:wrap}
   .mopts button{border:2px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:14px;font-weight:800}
   .mopts button[aria-pressed=true]{border-color:#2F5BD3;background:#E6EEFF;color:#2F5BD3}
+  /* 마스터 시스템 */
+  .door .dc{position:absolute;right:3px;top:8px;font-size:10px;font-weight:900;background:#FFF3C4;border-radius:6px;padding:0 2px}
+  .fibc{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--c);border-radius:14px;padding:9px 10px}
+  .fibc>div{flex:1;min-width:0}.fibc b{display:block;font-size:15px}.fibc>div>span{font-size:12px;color:var(--sub)}
+  .ft{flex:none;font-size:11.5px;font-weight:900;border-radius:8px;padding:3px 7px;background:#EFE6CC;color:#7A6A45}
+  .ft.st1{background:color-mix(in srgb,var(--c) 22%,#fff);color:var(--c)}.ft.st2{background:var(--c);color:#fff}.ft.st3{background:linear-gradient(135deg,var(--c),#FFB000);color:#fff}
+  .mini{flex:none;border:1px solid var(--line);background:#FFF8E1;border-radius:10px;padding:6px 8px;font-size:12.5px;font-weight:900}
+  .ckbtn{border:2px solid #FFB000;background:#FFF5D6;border-radius:14px;padding:10px 12px;font-size:15px;font-weight:900;color:#8A5A00;text-align:left;animation:glow 1.8s ease-in-out infinite}
+  @keyframes glow{50%{box-shadow:0 0 0 4px #FFD84D66}}
+  .fibev{border-style:solid;border-color:var(--c);text-align:center;line-height:1.55}
+  .fibev.st2{background:color-mix(in srgb,var(--c) 10%,#fff)}.fibev.st3{background:#FFF5D6;border-color:#FFB000}
+  .mtop{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:10px 14px}
+  .mbig{display:flex;flex-direction:column;align-items:center;line-height:1.1;flex:none}
+  .mbig b{font-size:34px;font-weight:900;color:#B14E00}.mbig span{font-size:11.5px;font-weight:800;color:var(--sub)}
+  .msum{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.msum .muted{font-size:12px}
+  .sbar{display:flex;height:12px;border-radius:7px;background:#F2EAD3;overflow:hidden}
+  .sbar i{display:block;height:100%}.sbar .s3{background:linear-gradient(90deg,#FF8A00,#FFB000)}.sbar .s2{background:#FFC870}.sbar .s1{background:#FFE6B0}
+  .stab{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+  .stab button{border:2px solid var(--line);background:#fff;border-radius:12px;padding:5px 2px;line-height:1.2;display:flex;flex-direction:column;align-items:center}
+  .stab b{font-size:12.5px;font-weight:900;white-space:nowrap}.stab span{font-size:12px;font-weight:900;color:var(--c)}
+  .stab button[aria-pressed=true]{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,#fff)}
+  .fgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;align-content:start;padding:4px 2px 2px}
+  .fg{grid-column:1/-1;font-size:12px;font-weight:900;color:var(--sub);margin-top:2px}
+  .fb2{position:relative;border:1.5px solid #E6D9B0;background:#F3ECD6;border-radius:10px;min-height:36px;padding:3px;font-size:11.5px;font-weight:800;line-height:1.2;color:#6E5F3A;word-break:keep-all}
+  .fb2.st1{background:color-mix(in srgb,var(--c) 18%,#fff);border-color:color-mix(in srgb,var(--c) 45%,#fff);color:var(--ink)}
+  .fb2.st2{background:var(--c);border-color:var(--c);color:#fff}
+  .fb2.st3{background:var(--c);border-color:#FFB000;color:#fff;box-shadow:inset 0 0 0 2px #FFD84D}
+  .fb2 i{position:absolute;right:-3px;top:-7px;font-style:normal;font-size:12px}.fb2 i.due{font-size:10px;background:#FFF3C4;border:1px solid #FFB000;border-radius:6px;padding:0 2px;color:#B14E00;font-weight:900}
+  .fb2.lock{background:transparent;border-style:dashed;color:#B5A57A}
+  .fb2.cur{outline:2.5px solid #2B2111;outline-offset:1px}
+  .legend{display:flex;flex-wrap:wrap;gap:3px 9px;font-size:11px;font-weight:800;color:var(--sub);justify-content:center}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:3px;vertical-align:-1px;background:#F3ECD6;border:1px solid #E6D9B0}
+  .legend i.st1{background:color-mix(in srgb,var(--c) 18%,#fff);border-color:color-mix(in srgb,var(--c) 45%,#fff)}.legend i.st2{background:var(--c);border-color:var(--c)}.legend i.st3{background:var(--c);border-color:#FFB000}.legend i.lock{background:none;border-style:dashed}
+  .fdh{display:flex;align-items:center;gap:8px}
+  .fsteps{display:flex;align-items:center;gap:3px;flex-wrap:wrap;font-size:12.5px;font-weight:800;color:#B5A57A}
+  .fsteps span{border-radius:8px;padding:3px 7px;background:#F3ECD6}.fsteps span.on{background:var(--c);color:#fff}.fsteps em{font-style:normal}
   /* 내 근육 */
   .body{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:6px}
   .body svg{height:100%;max-height:330px;width:auto}
@@ -209,6 +247,7 @@
 </div>
 <script src="../kread/data.js"></script>
 <script src="rooms.js"></script>
+<script src="map.js"></script>
 <script src="../../shared/sbart.js"></script>
 <script>
 (function(){
@@ -233,7 +272,7 @@
 
   /* ── 저장 (이 기기에만) ── */
   var S;
-  function blank(){ return {v: 1, nick: "", start: TODAY, week: null, days: {}, xp: {}, lv: {}, rx: {}, cards: {}, ptr: {}, conf: [], restUsed: {}, last: null}; }
+  function blank(){ return {v: 1, nick: "", start: TODAY, week: null, days: {}, xp: {}, lv: {}, rx: {}, cards: {}, ptr: {}, conf: [], restUsed: {}, last: null, fib: {}, cur: {}}; }
   function load(){ try{ S = JSON.parse(localStorage.getItem(KEY)) || blank(); }catch(e){ S = blank(); } var b = blank(); for(var k in b) if(S[k] == null) S[k] = b[k]; }
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast("저장 공간이 부족해요"); } }
   function day(s){ s = s || TODAY; var d = S.days[s]; if(!d){ d = S.days[s] = {sec: {}, xp: 0, sets: {}, n: {}, ok: {}, t: {}, rev: {}}; } return d; }
@@ -298,6 +337,7 @@
   }
   function revLeft(room){ return Math.max(0, REV_MAX - (day().rev[room] || 0)); }
   function newItem(room){
+    var cf = curFiber(room); if(cf){ var ui = unitItem(cf); if(ui) return ui; }
     var r = R[room], bank = r.bank || [], useGen = r.gen && (!bank.length || Math.random() < (r.mix || 0));
     if(useGen) return r.gen(diffLv(room));
     var p = S.ptr[room] || 0;
@@ -317,6 +357,87 @@
     if(l.length) return pick(l);
     if(r.gen) return r.gen(diffLv(room), tag);
     return null;
+  }
+  /* ── 마스터 시스템: 근섬유(단원) ── 0 미진단 · 1 연습 중 · 2 숙달 · 3 마스터⭐ */
+  var FIB = {}, FORDER = {}, SUBJ = IDS.slice(1), MIN_AV = 5, PRAC_MIN = 8, QUIZ_N = 10, RE_N = 5;
+  SUBJ.forEach(function(room){
+    FORDER[room] = [];
+    ((typeof GYM_MAP !== "undefined" && GYM_MAP[room]) || {groups: []}).groups.forEach(function(gr){
+      gr.f.forEach(function(f){ FIB[f[0]] = {id: f[0], n: f[1], s: f[2], hs: f[3] || "", g: gr.g, room: room}; FORDER[room].push(f[0]); });
+    });
+  });
+  function fiberOf(room, it){ return it.u || ((R[room] || {}).unitOf || {})[it.tag] || null; }
+  function genTagsFor(fid){ var r = R[FIB[fid].room]; return r.gen ? (r.genTags || []).filter(function(t){ return (r.unitOf || {})[t] === fid; }) : []; }
+  function bankFor(fid){ var room = FIB[fid].room; return (R[room].bank || []).filter(function(it){ return fiberOf(room, it) === fid; }); }
+  function avail(fid){ return genTagsFor(fid).length ? 99 : bankFor(fid).length; }
+  function open(fid){ return avail(fid) >= MIN_AV; }
+  function unitItem(fid, used){
+    var room = FIB[fid].room, gt = genTagsFor(fid), b = bankFor(fid).filter(function(x){ return !used || !used[x.id]; });
+    if(gt.length && (!b.length || Math.random() < .6)){ var it = R[room].gen(diffLv(room), pick(gt)); it.u = fid; return it; }
+    return b.length ? pick(b) : null;
+  }
+  function fs(fid){ return S.fib[fid] || {st: 0}; }
+  function weekNo(){ return Math.floor(diff(S.start, TODAY) / 7) + 1; }
+  function stageNow(){ var w = weekNo(); return w <= 4 ? 1 : w <= 8 ? 2 : 3; }
+  /* 오늘 단원: 직접 고른 단원 → 이번 단계까지의 단원 중 아직 숙달 전인 첫 단원 → (빠른 학생) 다음 단계 */
+  function curFiber(room){
+    if(!FORDER[room]) return null;
+    var c = S.cur[room];
+    if(c && FIB[c] && fs(c).st < 2 && open(c)) return c;
+    var l = FORDER[room].filter(function(f){ return fs(f).st < 2 && open(f); }), sn = stageNow();
+    var f1 = l.filter(function(f){ return fs(f).st === 1 && FIB[f].s <= sn; })[0] || l.filter(function(f){ return FIB[f].s <= sn; })[0] || l[0] || null;
+    S.cur[room] = f1; return f1;
+  }
+  function dueChecks(room){ return (FORDER[room] || []).filter(function(f){ var x = fs(f); return x.st >= 2 && x.ck && x.ck <= TODAY && open(f); }); }
+  function counts(room){ var o = {0: 0, 1: 0, 2: 0, 3: 0, all: 0}; (room ? [room] : SUBJ).forEach(function(r){ FORDER[r].forEach(function(f){ o[fs(f).st]++; o.all++; }); }); return o; }
+  function masterPct(room){ var c = counts(room); return c.all ? Math.round(c[3] / c.all * 100) : 0; }
+  function allPct(){ var t = 0; SUBJ.forEach(function(r){ t += FORDER[r].length ? counts(r)[3] / FORDER[r].length : 0; }); return Math.round(t / SUBJ.length * 100); }
+  var STN = ["미진단", "연습 중", "숙달", "마스터"];
+  function toSuk(x){ x.st = 2; x.sk = TODAY; x.ck = add(TODAY, 7); x.run = 0; }
+  function fibRec(fid){ return S.fib[fid] = S.fib[fid] || {st: 0, run: 0}; }
+  function hist(x, a){ x.h = (x.h || []).concat([[TODAY, a]]).slice(-8); }
+  /* 연습 세트 결과 → 근섬유 상태 (그 단원 문제를 8개 이상 풀었을 때만) */
+  function practice(fid, fu){
+    if(!fid || !fu.n) return null;
+    var f = FIB[fid];
+    if(fu.n < PRAC_MIN) return {fid: fid, msg: "📍 " + f.n + " 문제 " + fu.n + "개 · " + PRAC_MIN + "개 이상 풀어야 숙달 기록에 들어가요"};
+    var x = fibRec(fid), a = Math.round(fu.ok / fu.n * 100); hist(x, a);
+    if(x.st === 0){
+      x.dg = a;
+      if(a >= 90){ toSuk(x); return {fid: fid, up: 2, msg: "🎯 첫 세트 " + a + "% → 테스트 아웃! <b>" + f.n + " 숙달</b><br>7일 뒤 확인 세트도 90%면 마스터 ⭐"}; }
+      x.st = 1; x.run = 0; return {fid: fid, up: 1, msg: "📍 진단 " + a + "% → <b>" + f.n + "</b> 연습 시작!<br>세트 정확도 90%를 2번 연속 넘기면 숙달"};
+    }
+    if(x.st === 1){
+      if(a >= 90){ x.run = (x.run || 0) + 1; if(x.run >= 2){ toSuk(x); return {fid: fid, up: 2, msg: "💪 <b>" + f.n + " 숙달!</b> (" + a + "%)<br>7일 뒤 확인 세트에서 90% 넘으면 마스터 ⭐"}; }
+        return {fid: fid, msg: "✅ " + f.n + " " + a + "% · 숙달까지 " + x.run + "/2 — 한 번 더!"}; }
+      x.run = 0; return {fid: fid, msg: "📍 " + f.n + " " + a + "% · 90%를 2번 연속 넘기면 숙달 (0/2)"};
+    }
+    return null;
+  }
+  /* 진단·확인 세트 결과 */
+  function quizDone(fid, kind, n, ok){
+    var x = fibRec(fid), f = FIB[fid], a = Math.round(ok / n * 100); hist(x, a);
+    if(kind === "diag"){
+      x.dg = a;
+      if(a >= 90){ toSuk(x); return {fid: fid, up: 2, msg: "🎯 진단 " + a + "% → 테스트 아웃! <b>" + f.n + " 숙달</b><br>7일 뒤 확인 세트도 90%면 마스터 ⭐"}; }
+      if(x.st === 0){ x.st = 1; x.run = 0; }
+      S.cur[f.room] = fid;
+      return {fid: fid, up: 1, msg: "📍 진단 " + a + "% → <b>" + f.n + "</b>을(를) 오늘 단원으로!<br>세트 정확도 90%를 2번 연속 넘기면 숙달"};
+    }
+    if(kind === "check"){
+      if(a >= 90){ x.st = 3; x.ms = TODAY; x.ck = add(TODAY, 14); return {fid: fid, up: 3, msg: "⭐ <b>" + f.n + " 마스터!</b> (" + a + "%)<br>14일 뒤 한 번 더 확인 문제가 나와요"}; }
+      x.st = 1; x.run = 1; x.ck = null; return {fid: fid, msg: "아깝다! " + a + "% → <b>" + f.n + "</b> 다시 연습 중<br>90% 세트 한 번이면 다시 숙달이야"};
+    }
+    if(a >= 80){ x.ck = null; return {fid: fid, up: 3, msg: "⭐ <b>" + f.n + "</b> 마스터 유지! (" + a + "%)<br>이제 완전히 내 근섬유"}; }
+    x.st = 2; x.ck = add(TODAY, 7); return {fid: fid, msg: a + "% → <b>" + f.n + "</b> 숙달로 내려감<br>7일 뒤 다시 확인해서 마스터 되찾자"};
+  }
+  /* 진단·확인 세트 문제 줄: 그 단원 문제만, 정해진 개수 */
+  function QuizQ(fid){
+    var used = {}, room = FIB[fid].room;
+    return {next: function(){
+      for(var i = 0; i < 8; i++){ var it = unitItem(fid, used); if(it && !used[it.id]){ used[it.id] = 1; return {it: it, kind: "quiz", room: room}; } }
+      return {it: unitItem(fid), kind: "quiz", room: room};
+    }, revCount: function(){ return 0; }};
   }
   function diffLv(room){ return Math.max(0, lv(room) - (day().cond === "hard" ? 1 : 0)); }   // 힘듦 = 한 단계 쉽게
   /* 한 세트의 문제 줄: 시간 안에 푼 만큼만 꺼냄 */
@@ -403,16 +524,18 @@
       + '<div class="tinfo"><div class="int" role="group" aria-label="이번 주 강도">' + Object.keys(INT).map(function(k){ return '<button data-int="' + k + '" aria-pressed="' + (wk === k) + '">' + INT[k].emo + " " + INT[k].name + "<small>" + INT[k].sub + "</small></button>"; }).join("") + "</div>"
       + '<div class="attend">출석 ' + att + "</div>"
       + '<div class="attend"><button class="chip" data-a="cond">' + (d.cond ? COND[d.cond][0] + " " + COND[d.cond][1] : "🙂 컨디션") + "</button>"
-      + (d.back ? '<span class="chip hot">🔁 복귀 세트</span>' : '<span class="chip">⭐ ' + totalXP() + " XP</span>") + "</div></div></div>"
+      + (d.back ? '<span class="chip hot">🔁 복귀 세트</span>' : "") + '<button class="chip" data-a="tomap" title="중학교 마스터">🗺️ 마스터 ' + allPct() + "%</button></div></div></div>"
       + '<button class="warm' + (wm >= wg ? " done" : "") + '" data-room="warm"><span class="e">' + (wm >= wg ? "✅" : "🔥") + '</span><div><b>준비운동 · 공부 체력</b><span>복습 루프 + 학습 도구어 · 먼저!</span></div><span class="m">' + wm + " / " + wg + "분</span></button>"
       + '<div class="doors">' + IDS.slice(1).map(function(k){
-          var r = R[k], mn = mins(k), gl = goalMin(k), rx = S.rx[k] && S.rx[k].until >= TODAY;
-          return '<button class="door' + (gl && mn >= gl ? " done" : "") + '" style="--c:' + r.col + '" data-room="' + k + '">' + (gl && mn >= gl ? '<span class="ck">✅</span>' : "") + (rx ? '<span class="rx">+' + S.rx[k].plus + "</span>" : "")
-            + '<span class="e">' + r.emo + "</span><b>" + r.name.replace("통합", "통합<br>") + "</b><small>" + r.part + '</small><span class="bar"><i style="width:' + (gl ? Math.min(100, mn / gl * 100) : (mn ? 100 : 0)) + '%"></i></span><span class="mn">' + mn + (gl ? "/" + gl : "") + "분</span></button>";
+          var r = R[k], mn = mins(k), gl = goalMin(k), rx = S.rx[k] && S.rx[k].until >= TODAY, dc = dueChecks(k).length;
+          return '<button class="door' + (gl && mn >= gl ? " done" : "") + '" style="--c:' + r.col + '" data-room="' + k + '">' + (gl && mn >= gl ? '<span class="ck">✅</span>' : "") + (rx ? '<span class="rx">+' + S.rx[k].plus + "</span>" : "") + (dc ? '<span class="dc">⭐' + dc + "</span>" : "")
+            + '<span class="e">' + r.emo + "</span><b>" + r.name.replace("통합", "통합<br>") + "</b><small>" + r.part + " · " + masterPct(k) + '%</small><span class="bar"><i style="width:' + (gl ? Math.min(100, mn / gl * 100) : (mn ? 100 : 0)) + '%"></i></span><span class="mn">' + mn + (gl ? "/" + gl : "") + "분</span></button>";
         }).join("") + "</div>";
   }
   m.addEventListener("click", function(e){
-    var t = e.target.closest("[data-room],[data-int],[data-a],[data-start],[data-r]"); if(!t) return;
+    var t = e.target.closest("[data-room],[data-int],[data-a],[data-start],[data-r],[data-sub],[data-fib]"); if(!t) return;
+    if(t.dataset.fib) return fibDlg(t.dataset.fib);
+    if(t.dataset.sub && !t.dataset.a) return mapV(t.dataset.sub);
     if(t.dataset.room) return go("room", t.dataset.room);
     if(t.dataset.r && V === "body") return go("room", t.dataset.r);
     if(t.dataset.int){ setInt(t.dataset.int); return; }
@@ -432,17 +555,26 @@
 
   /* PT실 입구 */
   function room(id){
-    var r = R[id], d = day(), sets = d.sets[id] || 0, mn = mins(id), gl = goalMin(id), xp = S.xp[id] || 0, stg = stage(xp), qu = Queue(id), rc = qu.revCount();
+    var r = R[id], d = day(), sets = d.sets[id] || 0, mn = mins(id), gl = goalMin(id), xp = S.xp[id] || 0, stg = stage(xp), qu = Queue(id), rc = qu.revCount(), cf = curFiber(id);
     var rx = S.rx[id] && S.rx[id].until >= TODAY;
     header(r.emo + " " + r.name + " PT", "home");
     var setsHtml = [
-      [id === "warm" ? "복습 루프" : "복습 먼저", rc ? "복습 카드 " + rc + "장" + (id === "warm" ? " · 6과목 오답 + 어제 헷갈린 것" : "") : "오늘 복습할 카드가 없어요 → 바로 새 문제"],
-      [id === "warm" ? "학습 도구어" : "오늘 단원", id === "warm" ? "전 과목 공부 언어, 문장 속 뜻" : (r.gen && !r.bank ? "계산 반사 · 문제가 끝없이 나와요" : "새 문제 · 시간 안에 푼 만큼")]
+      [id === "warm" ? "복습 루프" : "복습 먼저", rc ? "복습 카드 " + rc + "장" + (id === "warm" ? " · 6과목 오답 + 어제 헷갈린 것" : "") : "복습 카드 없음 → 바로 새 문제"],
+      [id === "warm" ? "학습 도구어" : "오늘 단원", id === "warm" ? "전 과목 공부 언어, 문장 속 뜻" : cf ? "📍 " + FIB[cf].n : (r.gen && !r.bank ? "계산 반사 · 문제가 끝없이 나와요" : "새 문제 · 시간 안에 푼 만큼")]
     ];
+    var fibHtml = "";
+    if(id !== "warm"){
+      var dc = dueChecks(id), x = cf ? fs(cf) : null;
+      fibHtml = '<div class="fibc" style="--c:' + r.col + '">'
+        + (cf ? '<span class="ft st' + x.st + '">' + STN[x.st] + "</span><div><b>오늘 단원 · " + esc(FIB[cf].n) + "</b><span>" + (x.st === 0 ? "첫 세트 90% 이상이면 바로 숙달(테스트 아웃)" : "세트 정확도 90% 연속 2번 → 숙달 (" + (x.run || 0) + "/2)") + "</span></div>"
+          : '<span class="ft">준비</span><div><b>오늘 단원 · 견본 문항</b><span>이 과목 단원 문항은 다음 단계에서 채워져요</span></div>')
+        + '<button class="mini" data-a="tomap" data-sub="' + id + '">🗺️ ' + masterPct(id) + "%</button></div>"
+        + (dc.length ? '<button class="ckbtn" data-a="quiz" data-fid="' + dc[0] + '" data-kind="' + (fs(dc[0]).st === 3 ? "re" : "check") + '">⭐ ' + (fs(dc[0]).st === 3 ? "마스터 확인" : "7일 확인 세트") + " · " + esc(FIB[dc[0]].n) + (dc.length > 1 ? " 외 " + (dc.length - 1) : "") + " ›</button>" : "");
+    }
     m.innerHTML = '<div class="coach"><span class="sb">' + sb(78) + '</span><div class="bub">' + (sets === 0 ? (rc ? "복습부터 끝내야 새 문제가 열려! 5분씩 2세트면 출석." : "5분 세트 2개면 오늘 출석이야. 가 보자!") : mn >= gl && gl ? "출석 완료! 한 세트 더 하면 " + r.part + " 근육 보너스." : "좋아, 이어서 " + (sets + 1) + "번째 세트!")
       + "<small>" + r.part + " 근육 · Lv." + lv(id) + (d.cond === "hard" ? " · 😮‍💨 한 단계 쉽게" : "") + "</small></div></div>"
       + '<div class="sets">' + setsHtml.map(function(s, i){ var dn = sets > i; return '<div class="set' + (dn ? " done" : "") + '"><span class="n">' + (dn ? "✓" : i + 1) + "</span><div><b>" + s[0] + " · 5분</b><span>" + s[1] + "</span></div></div>"; }).join("")
-      + (sets >= 2 ? '<div class="set done"><span class="n">+' + (sets - 2) + "</span><div><b>추가 세트</b><span>더 하면 할수록 근육이 진해져요</span></div></div>" : "") + "</div>"
+      + "</div>" + (sets >= 2 ? '<div class="muted" style="text-align:center;font-weight:800">💪 추가 세트 ' + (sets - 2) + "개 · 더 하면 할수록 근육이 진해져요</div>" : "") + fibHtml
       + '<div class="card grow2"><div class="glab"><span>⏱️ 오늘 ' + mn + "분" + (gl ? " / 목표 " + gl + "분" : " (오늘은 선택)") + "</span>" + (rx ? '<span class="badge">처방 +' + S.rx[id].plus + "분</span>" : "<span>출석 = 10분</span>") + "</div>"
       + '<div class="gbar"><i style="width:' + (gl ? Math.min(100, mn / gl * 100) : 0) + "%;background:" + r.col + '"></i></div>'
       + '<div class="glab" style="margin-top:4px"><span>💪 ' + r.part + " 근육 " + (stg + 1) + "단계</span><span>" + xp + " XP</span></div>"
@@ -453,11 +585,15 @@
 
   /* 훈련 중 */
   var T = null;
+  var QK = {diag: "🧪 진단", check: "⭐ 7일 확인", re: "⭐ 마스터 확인"};
   function train(id){
-    var d = day(), sets = d.sets[id] || 0;
-    T = {room: id, q: Queue(id), left: SET_SEC, n: 0, ok: 0, combo: 0, best: 0, xp: 0, wrong: [], tags: {}, t0: 0, qt: 0, cur: null, inp: "", lock: false, paused: false, label: sets === 0 ? (id === "warm" ? "복습 루프" : "복습 먼저") : sets === 1 ? (id === "warm" ? "학습 도구어" : "오늘 단원") : "추가 세트", tick: null, last: performance.now(), acc: 0};
-    header(R[id].emo + " " + R[id].name + " · " + T.label, "room");
-    m.innerHTML = '<div class="ttop"><span class="lab" id="tl"></span><span class="clk" id="clk">5:00</span><button class="ib" id="pz" aria-label="잠깐 멈춤" style="font-size:13px;padding:0 8px">멈춤</button></div>'
+    var d = day(), quiz = null;
+    if(typeof id === "object"){ quiz = id; id = FIB[quiz.fid].room; }
+    var sets = d.sets[id] || 0;
+    T = {room: id, q: quiz ? QuizQ(quiz.fid) : Queue(id), quiz: quiz, fid: quiz ? quiz.fid : curFiber(id), fu: {n: 0, ok: 0}, N: quiz ? (quiz.kind === "re" ? RE_N : Math.min(QUIZ_N, avail(quiz.fid))) : 0, left: SET_SEC, n: 0, ok: 0, combo: 0, best: 0, xp: 0, wrong: [], tags: {}, t0: 0, qt: 0, cur: null, inp: "", lock: false, paused: false, label: sets === 0 ? (id === "warm" ? "복습 루프" : "복습 먼저") : sets === 1 ? (id === "warm" ? "학습 도구어" : "오늘 단원") : "추가 세트", tick: null, last: performance.now(), acc: 0};
+    if(quiz) T.label = QK[quiz.kind] + " · " + FIB[quiz.fid].n;
+    header(R[id].emo + " " + R[id].name + " · " + T.label, quiz ? "map" : "room");
+    m.innerHTML = '<div class="ttop"><span class="lab" id="tl"></span><span class="clk" id="clk">' + (quiz ? "1/" + T.N : "5:00") + '</span><button class="ib" id="pz" aria-label="잠깐 멈춤" style="font-size:13px;padding:0 8px">멈춤</button></div>'
       + '<div class="tbar"><i id="tb" style="width:100%"></i></div>'
       + '<div class="tstat"><span id="ts">0문제</span><span class="combo" id="cb"></span></div>'
       + '<div class="qcard" id="qc"></div><div class="pad" id="pad"></div>';
@@ -469,9 +605,11 @@
     if(!T) return;
     var now = performance.now(), dt = (now - T.last) / 1000; T.last = now;
     if(T.paused || document.hidden || dt > 5) return;
-    T.left -= dt; T.acc += dt;
+    if(!T.quiz) T.left -= dt;
+    T.acc += dt;
     var d = day(); d.sec[T.room] = (d.sec[T.room] || 0) + dt;
     if(T.acc >= 5){ T.acc = 0; S.last = TODAY; save(); }
+    if(T.quiz) return;   // 진단·확인 세트는 시간 제한 없이 정해진 개수만
     var s = Math.max(0, Math.ceil(T.left)), c = document.getElementById("clk");
     if(c){ c.textContent = Math.floor(s / 60) + ":" + ("0" + s % 60).slice(-2); c.classList.toggle("low", s <= 30); }
     var b = document.getElementById("tb"); if(b) b.style.width = Math.max(0, T.left / SET_SEC * 100) + "%";
@@ -479,13 +617,14 @@
   }
   document.addEventListener("visibilitychange", function(){ if(T) T.last = performance.now(); });
   function nextQ(){
-    if(T.left <= 0) return stopTrain(false);
+    if(T.left <= 0 || (T.quiz && T.n >= T.N)) return stopTrain(false);
+    if(T.quiz){ var ck = document.getElementById("clk"); if(ck) ck.textContent = (T.n + 1) + "/" + T.N; var tb = document.getElementById("tb"); if(tb) tb.style.width = (T.n / T.N * 100) + "%"; }
     var x = T.q.next(); T.cur = x; T.inp = ""; T.lock = false; T.qt = performance.now();
     var it = x.it, qc = document.getElementById("qc"), pad = document.getElementById("pad");
     qc.className = "qcard";
-    var tag = x.kind === "rev" ? '<span class="tg rv">🔁 복습' + (x.room !== T.room ? " · " + R[x.room].name : "") + "</span>" : x.kind === "conf" ? '<span class="tg rv">🤔 어제 헷갈린 것</span>' : '<span class="tg">' + esc(it.tag || "") + "</span>";
+    var tag = x.kind === "quiz" ? '<span class="tg rv">' + QK[T.quiz.kind] + "</span>" : x.kind === "rev" ? '<span class="tg rv">🔁 복습' + (x.room !== T.room ? " · " + R[x.room].name : "") + "</span>" : x.kind === "conf" ? '<span class="tg rv">🤔 어제 헷갈린 것</span>' : '<span class="tg">' + esc(it.tag || "") + "</span>";
     qc.innerHTML = tag + '<div class="qq' + (it.num && String(it.q).length < 18 ? " big" : "") + '">' + fmt(it.q) + "</div>" + (it.ask ? '<div class="qa">' + esc(it.ask) + "</div>" : "");
-    document.getElementById("tl").textContent = (T.q.revCount() ? "🔁 복습 " + T.q.revCount() + "장 남음 · " : "") + "Lv." + lv(T.room) + (day().cond === "hard" ? " (쉽게)" : "");
+    document.getElementById("tl").textContent = T.quiz ? "📍 " + FIB[T.fid].n + " · 시간 제한 없음" : (T.fid && fiberOf(x.room, it) === T.fid ? "📍 오늘 단원 · " + FIB[T.fid].n + " · " : "") + (T.q.revCount() ? "🔁 복습 " + T.q.revCount() + "장 남음 · " : "") + "Lv." + lv(T.room) + (day().cond === "hard" ? " (쉽게)" : "");
     if(it.num){
       pad.innerHTML = '<div class="num"><div class="disp" id="disp"></div><div class="keys">'
         + ["7", "8", "9", "⌫", "4", "5", "6", "go", "1", "2", "3", "−", "0", "."].map(function(k){
@@ -531,6 +670,7 @@
     var x = T.cur, it = x.it, dtq = (performance.now() - T.qt) / 1000, d = day(), qc = document.getElementById("qc");
     T.n++; if(ok) T.ok++;
     T.tags[it.tag] = 1;
+    if(T.fid && x.room === T.room && fiberOf(x.room, it) === T.fid){ T.fu.n++; if(ok) T.fu.ok++; }
     d.n[T.room] = (d.n[T.room] || 0) + 1; d.ok[T.room] = (d.ok[T.room] || 0) + (ok ? 1 : 0); d.t[T.room] = (d.t[T.room] || 0) + Math.min(dtq, 60);
     if(x.kind === "rev") d.rev[x.room] = (d.rev[x.room] || 0) + 1;
     srs(x, ok);
@@ -554,9 +694,16 @@
     if(!T) return;
     clearInterval(T.tick);
     var d = day(), done = T;
+    if(done.quiz){
+      if(!quit && done.n >= done.N){ done.ev = quizDone(done.fid, done.quiz.kind, done.n, done.ok); addXP(done.room, 20); done.xp += 20; }
+      T = null; save();
+      if(done.n === 0) return go("map");
+      return go("result", done);
+    }
     if(!quit || T.n > 0){
       d.sets[T.room] = (d.sets[T.room] || 0) + 1;
       if(!quit){ addXP(T.room, 20); done.xp += 20; }
+      done.ev = practice(done.fid, done.fu);
     }
     T = null; save();
     if(quit && done.n === 0) return go("room", done.room);
@@ -584,16 +731,20 @@
     Object.keys(r.tags).forEach(function(t){ var k = id + "|" + t; if(t && t !== "undefined" && opts.indexOf(k) < 0) opts.push(k); });
     opts = opts.slice(0, 3);
     var over = mn >= 30 && id !== "warm";
-    header(room.emo + " 세트 끝!", "room");
+    var ev = r.ev, qz = r.quiz;
+    if(ev && ev.up) setTimeout(function(){ sparkle(ev.up === 3 ? "⭐" : ev.up === 2 ? "💪" : "📍"); }, 250);
+    var evHtml = ev ? '<div class="win fibev st' + fs(ev.fid).st + '" style="--c:' + room.col + '">' + ev.msg + "</div>" : qz && r.n < r.N ? '<div class="win">' + QK[qz.kind] + "은 " + r.N + "문제를 다 풀어야 기록돼요</div>" : "";
+    header(room.emo + (qz ? " " + QK[qz.kind] + " 결과" : " 세트 끝!"), qz ? "map" : "room");
     m.innerHTML = '<div class="coach"><span class="sb">' + sb(80, {item: r.n && acc >= 80 ? "stamp" : undefined}) + '</span><div class="bub">'
       + (over ? "30분 넘게 했네! 과목을 섞으면 더 오래 남아. 다른 PT실 어때?" : att ? "✅ " + room.name + " 출석 인정! 잘했어." : acc >= 90 ? "정확도 최고! 이 느낌 그대로." : acc >= 60 ? "좋아! 틀린 건 내일 복습 상자에서 다시 만나." : "괜찮아, 틀린 만큼 내일 더 강해져.")
       + "<small>" + (bonus || "오늘 " + room.name + " " + mn + "분" + (gl ? " / " + gl + "분" : "")) + "</small></div></div>"
       + '<div class="res"><span class="muted">이번 세트</span><span class="xp">+' + r.xp + " XP</span></div>"
       + '<div class="stats"><div class="stat"><b>' + r.n + '</b><span>푼 문제</span></div><div class="stat"><b>' + acc + '%</b><span>정확도</span></div><div class="stat"><b>' + (r.n ? (d.t[id] / d.n[id]).toFixed(1) + "초" : "-") + "</b><span>한 문제 평균</span></div></div>"
-      + '<div class="win">' + win + (r.wrong.length ? '<br><span class="muted">📌 틀린 ' + r.wrong.length + "문제는 복습 상자에 저장했어요</span>" : "") + "</div>"
-      + (opts.length ? '<div class="card meta"><div class="h">🤔 오늘 가장 헷갈린 것은? <i>내일 준비운동에 먼저 나와요</i></div><div class="mopts">' + opts.map(function(o){ var p = o.split("|"); return '<button data-a="conf" data-v="' + esc(o) + '" aria-pressed="false">' + (p[0] !== id ? R[p[0]].emo + " " : "") + esc(p[1]) + "</button>"; }).join("") + '<button data-a="conf" data-v="" aria-pressed="false">없어요 👍</button></div></div>' : "")
+      + evHtml + (qz ? "" : '<div class="win">' + win + (r.wrong.length ? '<br><span class="muted">📌 틀린 ' + r.wrong.length + "문제는 복습 상자에 저장했어요</span>" : "") + "</div>")
+      + (opts.length && !qz ? '<div class="card meta"><div class="h">🤔 오늘 가장 헷갈린 것은? <i>내일 준비운동에 먼저 나와요</i></div><div class="mopts">' + opts.map(function(o){ var p = o.split("|"); return '<button data-a="conf" data-v="' + esc(o) + '" aria-pressed="false">' + (p[0] !== id ? R[p[0]].emo + " " : "") + esc(p[1]) + "</button>"; }).join("") + '<button data-a="conf" data-v="" aria-pressed="false">없어요 👍</button></div></div>' : "")
       + '<div class="grow"></div>'
-      + '<div class="row"><button class="btn sub" data-a="end">오늘은 끝</button><button class="btn" data-start="' + id + '">' + ((d.sets[id] || 0) < 2 ? "다음 세트 ▶" : "한 세트 더 ▶") + "</button></div>";
+      + (qz ? '<div class="row"><button class="btn sub" data-a="tomap">🗺️ 마스터 맵</button><button class="btn" data-room="' + id + '">' + room.emo + " PT실로 ▶</button></div>"
+         : '<div class="row"><button class="btn sub" data-a="end">오늘은 끝</button><button class="btn" data-start="' + id + '">' + ((d.sets[id] || 0) < 2 ? "다음 세트 ▶" : "한 세트 더 ▶") + "</button></div>");
   }
   handlers.conf = function(t){
     var v = t.dataset.v; Array.prototype.forEach.call(t.parentNode.children, function(b){ b.setAttribute("aria-pressed", b === t ? "true" : "false"); });
@@ -602,6 +753,8 @@
     save(); toast(v ? "📌 내일 준비운동에서 다시 만나요" : "👍 좋아요!");
   };
   handlers.end = function(){ go("home"); };
+  handlers.tomap = function(t){ go("map", t && t.dataset && t.dataset.sub); };
+  handlers.quiz = function(t){ closeDlg(); go("train", {fid: t.dataset.fid, kind: t.dataset.kind}); };
 
   /* 내 근육 */
   function bodyV(){
@@ -631,12 +784,44 @@
       + '<div class="ml" style="--c:#2B2111"><b>⭐ 합계</b><span class="muted" style="font-size:12px;font-weight:900">' + totalXP() + " XP</span><span class=\"muted\" style=\"font-size:11px\">완전히 내 것 " + mineCount() + "</span></div></div>";
   }
 
-  /* 마스터 맵 (2단계에서 열림) */
-  function mapV(){
+  /* 마스터 맵 — 과목별 근섬유 지도 */
+  var MAPSUB = "math";
+  function mapV(sub){
+    if(sub && FORDER[sub]) MAPSUB = sub;
     header("🗺️ 마스터 맵");
-    m.innerHTML = '<div class="soon">' + sb(130, {item: "calendar"}) + "<b>마스터 맵은 곧 열려요</b><p class=\"muted\">중학교 전 단원을 근섬유 지도로 보여 주고<br>“중학교 마스터 %”를 매일 숫자로 보여 줄 거예요.</p>"
-      + '<div class="card" style="width:100%"><div class="glab"><span>📦 복습 상자 속 카드</span><span>' + Object.keys(S.cards).length + "장</span></div><div class=\"glab\"><span>🏅 완전히 내 것</span><span>" + mineCount() + "장</span></div></div></div>";
+    var c = counts(), r = R[MAPSUB], ap = allPct(), cf = curFiber(MAPSUB);
+    var seg = function(o){ var t = o.all || 1; return '<span class="sbar"><i class="s3" style="width:' + o[3] / t * 100 + '%"></i><i class="s2" style="width:' + o[2] / t * 100 + '%"></i><i class="s1" style="width:' + o[1] / t * 100 + '%"></i></span>'; };
+    var grid = "";
+    GYM_MAP[MAPSUB].groups.forEach(function(gr){
+      grid += '<div class="fg">' + esc(gr.g) + "</div>";
+      gr.f.forEach(function(f){
+        var x = fs(f[0]), op = open(f[0]), due = x.st >= 2 && x.ck && x.ck <= TODAY && op;
+        grid += '<button class="fb2 st' + x.st + (op ? "" : " lock") + (f[0] === cf ? " cur" : "") + '" data-fib="' + f[0] + '">' + esc(f[1]) + (x.st === 3 && !due ? "<i>⭐</i>" : due ? '<i class="due">⭐?</i>' : "") + "</button>";
+      });
+    });
+    m.innerHTML = '<div class="mtop"><div class="mbig"><b>' + ap + '%</b><span>중학교 마스터</span></div><div class="msum">' + seg(c)
+      + '<span class="muted">⭐ 마스터 ' + c[3] + " · 숙달 " + c[2] + " · 연습 " + c[1] + " / 근섬유 " + c.all + "</span>"
+      + '<span class="muted">' + weekNo() + "주차 · " + ["", "1단계 기초 체력", "2단계 근력 강화", "3단계 실전·연결"][stageNow()] + "</span></div></div>"
+      + '<div class="stab">' + SUBJ.map(function(k){ return '<button style="--c:' + R[k].col + '" aria-pressed="' + (k === MAPSUB) + '" data-sub="' + k + '"><b>' + R[k].emo + " " + R[k].name.replace("통합", "") + "</b><span>" + masterPct(k) + "%</span></button>"; }).join("") + "</div>"
+      + '<div class="fgrid grow sc" style="--c:' + r.col + '">' + grid + "</div>"
+      + '<div class="legend" style="--c:' + r.col + '"><span><i class="st0"></i>미진단</span><span><i class="st1"></i>연습 중</span><span><i class="st2"></i>숙달</span><span><i class="st3"></i>⭐ 마스터</span><span><i class="lock"></i>문항 준비 중</span><span>▢ 오늘 단원</span></div>';
   }
+  function fibDlg(fid){
+    var f = FIB[fid], x = fs(fid), r = R[f.room], op = open(fid), due = x.st >= 2 && x.ck && x.ck <= TODAY;
+    var rule = ["진단에서 90% 넘으면 바로 숙달(테스트 아웃), 아니면 연습 시작", "연습 세트 정확도 90%를 연속 2번 → 숙달 (지금 " + (x.run || 0) + "/2)",
+      "숙달 7일 뒤 확인 세트 90% → 마스터 ⭐" + (x.ck ? " · " + (x.ck <= TODAY ? "지금 확인할 수 있어요!" : "D-" + diff(TODAY, x.ck) + " (" + x.ck.slice(5).replace("-", "/") + ")") : ""),
+      x.ck ? "마스터! 14일 뒤 한 번 더 확인 · " + (x.ck <= TODAY ? "지금 확인할 수 있어요!" : "D-" + diff(TODAY, x.ck)) : "완전히 내 근섬유! 중학교 마스터 %에 들어갔어요"][x.st];
+    var steps = ["진단", "연습", "숙달", "7일 확인", "마스터"], on = [x.st >= 1 || x.dg != null, x.st >= 1, x.st >= 2, x.st >= 3, x.st >= 3];
+    dlg('<div class="fdh" style="--c:' + r.col + '"><span class="ft st' + x.st + '">' + STN[x.st] + "</span><h3>" + r.emo + " " + esc(f.n) + "</h3></div>"
+      + '<p class="muted">' + esc(f.g) + " · " + f.s + "단계(" + ["", "1~4주", "5~8주", "9~12주"][f.s] + ")" + (f.hs ? " · 고등 연결: " + esc(f.hs) : "") + "</p>"
+      + '<div class="fsteps" style="--c:' + r.col + '">' + steps.map(function(t, i){ return '<span class="' + (on[i] ? "on" : "") + '">' + t + "</span>"; }).join("<em>›</em>") + "</div>"
+      + '<div class="win" style="text-align:left">' + rule + (x.h && x.h.length ? '<br><span class="muted">최근 기록 ' + x.h.map(function(h){ return h[1] + "%"; }).join(" · ") + "</span>" : "") + "</div>"
+      + (!op ? '<div class="win">🛠️ 이 단원 문항은 ' + ({kor: 4, math: 3, eng: 5, sci: 7, soc: 8})[f.room] + "단계에서 채워져요</div>"
+        : (due ? '<button class="btn" data-a2="quiz" data-fid="' + fid + '" data-kind="' + (x.st === 3 ? "re" : "check") + '">⭐ ' + (x.st === 3 ? "마스터 확인 (" + RE_N : "7일 확인 세트 (" + Math.min(QUIZ_N, avail(fid))) + "문제)</button>" : "")
+          + (x.st < 2 ? '<div class="row"><button class="btn sub" data-a2="quiz" data-fid="' + fid + '" data-kind="diag">🧪 진단 ' + Math.min(QUIZ_N, avail(fid)) + '문제</button><button class="btn" data-a2="setcur" data-fid="' + fid + '">📍 오늘 단원으로</button></div>' : ""))
+      + '<button class="btn sub" data-x="1">닫기</button>');
+  }
+  handlers.setcur = function(t){ var f = FIB[t.dataset.fid]; S.cur[f.room] = f.id; save(); closeDlg(); toast("📍 " + f.n + " → " + R[f.room].name + " 오늘 단원"); go("room", f.room); };
 
   /* 기록 */
   function logV(){
@@ -681,6 +866,7 @@
     if(e.target === D) return closeDlg();
     var t = e.target.closest("[data-x],[data-a2],[data-ci],[data-ii]"); if(!t) return;
     if(t.dataset.x){ closeDlg(); return; }
+    if(t.dataset.a2 && handlers[t.dataset.a2]){ handlers[t.dataset.a2](t); return; }
     if(t.dataset.a2 === "doReset"){ try{ localStorage.removeItem(KEY); }catch(er){} load(); closeDlg(); boot(); return; }
     if(t.dataset.ci || t.dataset.ii){
       Array.prototype.forEach.call(t.parentNode.children, function(b){ b.setAttribute("aria-pressed", b === t ? "true" : "false"); });
@@ -734,6 +920,7 @@
   }
   /* 자정을 넘기면 새 날로 */
   setInterval(function(){ if(ymd() !== TODAY && !T){ TODAY = ymd(); boot(); } }, 60000);
+  if(/[?&]fast=1/.test(location.search)) window.__gymT = function(){ return T; };   // 화면 점검용
   boot();
   if("serviceWorker" in navigator) navigator.serviceWorker.register("../../sw.js").catch(function(){});
 })();
