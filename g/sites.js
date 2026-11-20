@@ -17,9 +17,10 @@ window.TT_SCHOOL_SITES = [
   {id: "c-tsol",     t: "티솔루션 중등",   u: "https://tsol.jihak.co.kr/main.ez?schoolTypeSeq=SUBJECT_SCHOOLTYPE_MIDDLE", c: "class"},
   {id: "c-mteacher", t: "엠티처 중등",     u: "https://m.m-teacher.co.kr/pages/mid/Main.mrn",            c: "class"},
   {id: "c-thub",     t: "티칭허브 중등",   u: "https://thub.kumsung.co.kr/main.do",                      c: "class"},
-  {id: "c-neteacher",t: "능률엔이 중등",   u: "https://www.neteacher.co.kr/",                            c: "class"},
-  {id: "c-didimdol", t: "디딤돌 중등",     u: "https://tclass.didimdol.co.kr/",                          c: "class"}
+  {id: "c-neteacher",t: "능률엔이 중등",   u: "https://www.neteacher.co.kr/",                            c: "class"}
 ];
+/* 학교 목록에서 뺀 것: 이미 선생님 목록에 들어간 공통 사이트(🏫)도 지움 (선생님이 직접 넣은 것은 그대로) */
+window.TT_SCHOOL_SITES_GONE = ["c-didimdol"];
 window.TT_SITES_SEED = function(){
   try{
     if(!window.TT || !TT.store || TT.classroom) return false;
@@ -30,6 +31,9 @@ window.TT_SITES_SEED = function(){
       D.seeded.push(s.id); ch = true;
       if(!D.items.some(function(x){ return x.u === s.u; })) D.items.push({id: s.id, t: s.t, u: s.u, c: s.c, pin: !!s.pin, sch: true});
     });
+    var n0 = D.items.length;
+    D.items = D.items.filter(function(x){ return !(x.sch && window.TT_SCHOOL_SITES_GONE.indexOf(x.id) >= 0); });
+    if(D.items.length !== n0) ch = true;
     if(ch) TT.store.set("tt_sites_v1", D);
     return ch;
   }catch(e){ return false; }
