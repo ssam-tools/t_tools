@@ -13,11 +13,11 @@
 <title>학생 프로그램 · 쌤 노트</title>
 <!--
   학생 프로그램: 학생이 휴대폰으로 스스로 공부하는 쌤 노트 프로그램을 한 화면에 (예전 '개념지도 교사용' + '국어 근육 교사용').
-  왼쪽 = 중학 개념지도(수학, apps/mstudy) · 오른쪽 = 국어 근육(apps/kread) — 큰 QR · 주소 복사 · 인쇄용 16개 · 크게 띄우기.
+  공부 Gym(apps/gym) · 중학 개념지도(수학, apps/mstudy) · 국어 근육(apps/kread) — 큰 QR · 주소 복사 · 인쇄용 16개 · 크게 띄우기.
   QR은 이 기기 안에서 만들고(shared/qr.js) 주소를 밖으로 보내지 않습니다.
 -->
 <style>
-  main.sp2{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:12px!important;min-height:0}
+  main.sp2{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:12px!important;min-height:0}
   .pc{border:1px solid var(--line);border-radius:18px;background:var(--card);padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
   .pc .hd{display:flex;align-items:center;gap:10px}
   .pc .ic{font-size:30px}
@@ -50,6 +50,7 @@
   var ROOT = new URL("../../", location.href);
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   var P = [
+    {id: "g", ic: "💪", n: "공부 Gym · 쌤비 PT", d: "하루 60분 · 6개 PT실 · 중학교 마스터 12주", u: new URL("apps/gym/", ROOT).href, x: []},
     {id: "m", ic: "🗺️", n: "중학 수학 개념지도", d: "개념지도 · 고1 3월 모의고사 유형맵", u: new URL("apps/mstudy/", ROOT).href, x: []},
     {id: "k", ic: "📖", n: "국어 근육", d: "긴 지문 빨리 읽고 이해 확인 · 수능 어휘", u: new URL("apps/kread/", ROOT).href,
      x: [["🖥️ 교실 함께 읽기", "../kread/teach.html?tab=room"], ["📥 결과 모으기", "../kread/teach.html?tab=res"]]}

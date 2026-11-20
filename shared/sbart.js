@@ -65,6 +65,12 @@
     bow: '<g class="sbAcc"><path d="M60 73 L49 67 L49 79 Z M60 73 L71 67 L71 79 Z" fill="#D9483B" stroke="#04342C" stroke-width="1.2" stroke-linejoin="round"/><circle cx="60" cy="73" r="2.8" fill="#A32D24" stroke="#04342C" stroke-width="1.2"/></g>',
     flower: '<g class="sbAcc"><circle cx="89.0" cy="31.0" r="4.2" fill="#FFE27A" stroke="#C99A1E" stroke-width=".8"/><circle cx="85.5" cy="35.8" r="4.2" fill="#FFE27A" stroke="#C99A1E" stroke-width=".8"/><circle cx="80.0" cy="33.9" r="4.2" fill="#FFE27A" stroke="#C99A1E" stroke-width=".8"/><circle cx="80.0" cy="28.1" r="4.2" fill="#FFE27A" stroke="#C99A1E" stroke-width=".8"/><circle cx="85.5" cy="26.2" r="4.2" fill="#FFE27A" stroke="#C99A1E" stroke-width=".8"/><circle cx="84" cy="31" r="3" fill="#EF9F27"/></g>',
     grad: '<g class="sbAcc"><path d="M60 8 L86 18 L60 28 L34 18 Z" fill="#2C2C2A" stroke="#04342C" stroke-width="1.2" stroke-linejoin="round"/><path d="M45 22 v8 q15 6 30 0 v-8" fill="#2C2C2A"/><path d="M86 18 v12" stroke="#EF9F27" stroke-width="1.6"/><circle cx="86" cy="31" r="2" fill="#EF9F27"/></g>',
+    /* 공부 Gym 트레이너: 머리띠 + 호루라기 */
+    trainer: '<g class="sbAcc"><path d="M31 37 Q60 17 89 37 L89 44 Q60 24 31 44 Z" fill="#D9483B" stroke="#04342C" stroke-width="1.2" stroke-linejoin="round"/>'
+      + '<path d="M34 38.5 Q60 21 86 38.5" fill="none" stroke="#fff" stroke-width="1.3" opacity=".8"/>'
+      + '<path d="M88 39 l10 -6 l-1 8 z M88 42 l9 6 l-8 2 z" fill="#D9483B" stroke="#04342C" stroke-width="1" stroke-linejoin="round"/>'
+      + '<path d="M48 65 Q44 74 30 77" fill="none" stroke="#378ADD" stroke-width="1.8" stroke-linecap="round"/>'
+      + '<rect x="15" y="73" width="16" height="9" rx="4.5" fill="#F2C744" stroke="#04342C" stroke-width="1.4"/><path d="M15 77.5 h-4" stroke="#04342C" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="77.5" r="1.8" fill="#04342C"/></g>',
     crown: '<g class="sbAcc"><path d="M44 30 L46 12 L53 21 L60 8 L67 21 L74 12 L76 30 Z" fill="#F2C744" stroke="#9A6A00" stroke-width="1.4" stroke-linejoin="round"/><circle cx="60" cy="24" r="2.4" fill="#D9483B"/><circle cx="51" cy="25" r="1.8" fill="#378ADD"/><circle cx="69" cy="25" r="1.8" fill="#378ADD"/></g>'
   };
   /* ── 선 아이콘 한 종류 (굵기 1.8 · 둥근 끝) — 쌤비 홈·메뉴 막대·도구 화면 왼쪽 막대가 함께 씀 ── */
