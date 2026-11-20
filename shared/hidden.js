@@ -65,13 +65,20 @@
     var d = new Date(), m = d.getHours() * 60 + d.getMinutes(), w = d.getDay(), days = [];
     function nextWk(x){ x = new Date(x); do{ x.setDate(x.getDate() + 1); }while(x.getDay() === 0 || x.getDay() === 6); return x; }
     if(w >= 1 && w <= 5 && m < 810) days.push([d, "오늘"]); days.push([w >= 1 && w <= 5 && m < 810 ? nextWk(d) : nextWk(d), "다음"]);
-    var out = [], left = days.length;
+    /* v2.12.3 고침: 저장해 둔 급식은 답이 바로(같은 순간에) 와서 '불러오는 중…'이 덮어써 멈춰 있던 문제
+       → 바로 온 답은 바로 보여 주고, 인터넷이 늦으면 8초 뒤 '불러오지 못했어요' */
+    var out = [], left = days.length, sync = true, done = false;
+    function fin(){ return "<h4>🍚 급식<small>학교 급식 · 나이스</small></h4>" + out.join("<hr>"); }
     days.forEach(function(x, i){
       TTMeal.day(x[0], function(v){
+        if(done || out[i]) return;
         out[i] = '<div class="m">' + (x[1] === "오늘" ? "오늘" : (x[0].getMonth() + 1) + "/" + x[0].getDate() + "(" + DOW[x[0].getDay()] + ")") + "</div>" + (v && v.raw ? "<div>" + esc(TTMeal.dishes(v.raw, false).join(", ")) + "</div>" + (v.cal ? '<div class="m">' + esc(v.cal) + "</div>" : "") : '<div class="m">급식 정보 없음</div>');
-        if(--left === 0 && cur === el) show(el, "meal", "<h4>🍚 급식<small>학교 급식 · 나이스</small></h4>" + out.join("<hr>"));
+        if(--left === 0){ done = true; if(!sync && cur === el) show(el, "meal", fin()); }
       });
     });
+    sync = false;
+    if(done) return fin();
+    setTimeout(function(){ if(done) return; done = true; if(cur === el) show(el, "meal", '<h4>🍚 급식</h4><div class="m">급식을 불러오지 못했어요. 인터넷 연결을 확인하거나, 날짜를 눌러 급식 창에서 다시 보세요.</div>'); }, 8000);
     return '<h4>🍚 급식</h4><div class="m">불러오는 중…</div>';
   }
   /* ── ② 교시 ── */

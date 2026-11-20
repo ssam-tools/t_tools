@@ -919,7 +919,8 @@
     function My(x){ return {kind: "todo", id: x.id, ic: "📝", t: x.text, n: !x.date ? "" : x.date < td ? "지남" : x.date === td ? "오늘" : x.date === tmr ? "내일" : dLabel(x.date), lv: x.date && x.date <= td ? "hi" : "mid", menu: "", tip: "내 할 일 (나만 보기)"}; }
     function Au(x, i){ return {kind: "auto", i: i, ic: x.r.icon || "✨", t: (x.o && x.o.name) || x.r.name, n: (x.o && x.o.n) || "준비됨", lv: "rd", menu: "", tip: "쌤 노트가 준비해 둔 일 · 눌러서 확인 → 복사·인쇄·저장"}; }
     var hi = L.filter(function(x){ return x.lv === "hi"; }), mid = L.filter(function(x){ return x.lv !== "hi" && x.lv !== "dd"; }), dd = L.filter(function(x){ return x.lv === "dd"; });
-    var tasks = hi.map(C).concat(A.map(Au), BG.sort(sortD).map(Bg), myNow.sort(sortD).map(My), mid.map(C), mySoon.sort(sortD).map(My), dd.map(C), myNo.map(My));
+    /* v2.12.3 내가 적은 일(내 할 일 · 종례 때 전할 말)을 맨 위에, 그 아래 쌤 노트가 저절로 챙긴 일 */
+    var tasks = myNow.sort(sortD).map(My).concat(BG.sort(sortD).map(Bg), mySoon.sort(sortD).map(My), myNo.map(My), hi.map(C), A.map(Au), mid.map(C), dd.map(C));
     var C0 = TT.store.get("tt_calendar_v1", null), evs = (C0 && C0.events || []).filter(function(e){ return e.d === td; }).map(function(e){ return e.t; });
     return {now: now, tasks: tasks, events: evs, mode: md0 ? md0.id : "", modeLabel: md0 ? md0.label : "", close: weekday ? closeMin(w) : 0, later: MY.length - myNow.length - mySoon.length - myNo.length};
   }

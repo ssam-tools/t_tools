@@ -116,7 +116,9 @@
     var go = x.kind === "auto" || x.kind === "autos" || x.pop || x.href || x.kind === "todo";
     var sub = "";
     var body = '<span class="tx"><b>' + esc(x.t) + "</b>" + (sub ? "<small>" + esc(sub) + "</small>" : "") + "</span>";
-    return '<li class="sbRow ' + esc(x.kind) + (hot ? " hot" : "") + '">' + lead
+    var mine = x.kind === "todo" || x.kind === "bag";                // v2.12.3 내가 적은 일 / 쌤 노트가 챙긴 일 구분
+    var sep = !mine && i > 0 && cur[i - 1] && (cur[i - 1].kind === "todo" || cur[i - 1].kind === "bag") ? '<li class="sbSep" aria-hidden="true"><span>🦉 쌤 노트가 챙긴 일</span></li>' : "";
+    return sep + '<li class="sbRow ' + esc(x.kind) + (mine ? " mine" : " sys") + (hot ? " hot" : "") + '" title="' + esc(x.tip || "") + '">' + lead
       + (go ? '<button type="button" class="go" data-go="' + i + '">' + body + "</button>" : '<span class="go">' + body + "</span>")
       + '<span class="n">' + esc(x.n || "") + "</span></li>";
   }

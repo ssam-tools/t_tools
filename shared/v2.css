@@ -336,6 +336,13 @@ body.sbOn > .sbhome{flex:1 0 auto}
 .sbRow .n{flex:none;min-width:48px;text-align:right;font-size:13px;font-weight:700;color:var(--t-sub);font-variant-numeric:tabular-nums}
 .sbRow.hot .n{color:var(--t-accent)}
 .sbRow .ico{color:var(--t-sub);display:flex;align-items:center;justify-content:center}
+/* v2.12.3 내가 적은 일: 진한 글씨 + 왼쪽 색 띠 · 쌤 노트가 챙긴 일: 옅은 글씨, 그 사이에 작은 구분 줄 */
+.sbRow.mine{box-shadow:inset 3px 0 0 var(--t-accent)}
+.sbRow.mine .tx b{font-weight:700;color:var(--t-ink)}
+.sbRow.sys .tx b{font-weight:400;color:var(--t-sub)}
+.sbRow.sys.hot .tx b{color:var(--t-ink);font-weight:500}
+.sbSep{display:flex;align-items:center;padding:5px 16px 3px;border-top:1px solid var(--t-line);background:var(--t-bg,#FAF9F6);font-size:11.5px;font-weight:700;color:var(--t-sub);letter-spacing:.02em}
+.sbSep + .sbRow{border-top:0}
 .sbMore{display:block;margin:8px auto 0;border:0;background:transparent;font:inherit;font-size:14px;color:var(--t-sub);cursor:pointer;border-radius:10px;padding:6px 12px}
 .sbMore:hover{background:var(--t-chip);color:var(--t-ink)}
 .sbTh .sbNone{font-size:14px;color:var(--t-sub)}
