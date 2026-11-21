@@ -463,7 +463,7 @@
   }
   /* ---------- 처음 한 번: 이 기기는 누가 쓰나요? ---------- */
   function firstRun(){
-    if(here || CR || !document.getElementById("mBoard") || LS("ttv_device") || LS("ttv_vault") || LS("ttv_kind") || /[?&](legacy|invite)=/.test(location.search)) return;
+    if(here || CR || !document.getElementById("mBoard") || LS("ttv_device") || LS("ttv_vault") || LS("ttv_kind") || /[?&](legacy|invite|room)=/.test(location.search)) return;
     setTimeout(function(){
       if(document.querySelector("dialog[open]")) return;
       dialog('<h2>이 기기는 누가 쓰나요?</h2><p>처음 한 번만 고르면 돼요. 나중에 <b>⋯ → 기기 연결·동기화</b>에서 바꿀 수 있어요.</p>'
@@ -494,6 +494,10 @@
     }
     if(personal){ vault(); roomWatch(); document.addEventListener("visibilitychange", function(){ if(!document.hidden) roomWatch(); }); }
     firstRun();
+    if(/[?&]room=1\b/.test(location.search) && document.getElementById("mBoard")){   // v2.40 교실 기기 QR → 학기초 세팅에서 비밀번호 확인 → 여기서 교실 기기로 정하기
+      try{ history.replaceState(null, "", location.pathname + location.hash); }catch(e){}
+      setTimeout(function(){ open("classroom"); }, 700);
+    }
     placeChips();
     setTimeout(placeChips, 600);                                                     // 왼쪽 메뉴가 늦게 그려질 때
     var mb = document.getElementById("mBoard");                                      // 첫 화면 ⋯ 메뉴에 "기기 연결·동기화" 추가

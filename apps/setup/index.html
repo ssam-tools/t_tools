@@ -4,13 +4,15 @@
 <meta charset="utf-8">
 <style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
 <!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://open.neis.go.kr; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://open.neis.go.kr https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
 <!-- v2.38.1 빠르게 열기: 화면 파일을 처음부터 한꺼번에 받아 둠 (아래 <script src>를 바꾸면 여기도 같이) -->
 <link rel="preload" as="script" href="../../shared/early.js">
 <link rel="preload" as="script" href="../../shared/tt.js">
 <link rel="preload" as="script" href="../../shared/comci.js">
 <link rel="preload" as="script" href="../../shared/calendar.js">
 <link rel="preload" as="script" href="../../shared/hwpx.js">
+<link rel="preload" as="script" href="../../shared/schoolset.js">
+<link rel="preload" as="script" href="../../shared/qr.js">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2f6fb5">
 <link rel="manifest" href="../../manifest.webmanifest">
@@ -83,6 +85,35 @@
   .chk input{width:auto!important;flex:none}
   .done{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;font-size:15px;line-height:1.6}
   .done .big{font-size:46px}
+  /* v2.40 PLAN_세팅공유: 인터넷으로 받기 · 올리기 */
+  .cloud{display:flex;flex-direction:column;gap:8px;border:1px solid #9cc3ea;background:#fff;border-radius:12px;padding:10px}
+  .dev{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .dev label{display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:1px solid var(--line);border-radius:10px;padding:6px 8px;cursor:pointer;font-weight:400;font-size:13px;position:relative}
+  .dev label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+  .dev input{position:absolute;opacity:0;pointer-events:none}.dev small{color:var(--sub);font-size:11.5px}
+  #fWay summary{cursor:pointer;font-size:13px;color:var(--sub);font-weight:700;padding:2px 0}
+  #fWay[open]{display:flex;flex-direction:column;gap:8px}
+  .keep{display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:400;color:var(--sub);cursor:pointer;margin-top:4px}.keep input{width:auto!important}
+  .side .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}.side .field{font-size:12px}.side .field input{font-size:14px;padding:6px 9px}
+  .opts{display:flex;flex-direction:column;gap:3px;font-size:12.5px}.opts label{display:flex;gap:5px;align-items:center;cursor:pointer;font-weight:400}.opts input{width:auto}
+  .row2{display:flex;gap:6px}.row2 .btn.primary{flex:1}
+  .upst{font-size:12.5px;color:var(--sub);background:#f4f7fa;border-radius:8px;padding:6px 8px;line-height:1.45}.upst b{color:var(--ink)}
+  .links{display:grid;grid-template-columns:1fr 1fr;gap:5px}.links .btn{font-size:12.5px;padding:5px 6px}.links .ghost{color:var(--danger)}
+  dialog.sd{width:min(760px,94vw);max-height:90vh;border:0;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+  dialog.sd:not([open]){display:none}
+  dialog.sd h2{font-size:17px}.sd .tabs{display:flex;gap:6px}.sd .tabs button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .sd .pane{display:flex;gap:10px;min-height:300px;max-height:56vh}
+  .sd .lst{flex:1;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:3px;font-size:13.5px}
+  .sd .lst button{text-align:left;font-weight:400;font-size:13px;padding:4px 8px}.sd .lst button[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent)}
+  .sd .frm{flex:0 0 250px;display:flex;flex-direction:column;gap:7px}
+  .sd .frm .field input,.sd .frm .field select{font-size:14px;padding:6px 8px}
+  .sd .acts{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .map{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .map section{border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;line-height:1.55}
+  .map h3{font-size:14.5px;margin-bottom:4px}.map ul{list-style:none;display:flex;flex-direction:column;gap:2px}.map li b{color:var(--ink)}
+  .qrbox{display:flex;gap:14px;align-items:center}.qrbox svg{width:210px;height:210px;flex:none;border:1px solid var(--line);border-radius:8px}
+  .qrbox p{font-size:13.5px;line-height:1.6}.qrbox code{font-size:11px;word-break:break-all;color:var(--sub)}
+  @media (max-width:860px){.map{grid-template-columns:1fr}.sd .pane{flex-direction:column;max-height:none}.sd .frm{flex:none}.qrbox{flex-direction:column}}
   @media (max-width:860px){
     body{height:auto;min-height:100dvh;overflow:auto}
     .view{flex-direction:column}
@@ -99,8 +130,9 @@
   </div>
   <div class="bar">
     <div class="seg" role="tablist">
-      <button type="button" id="tLoad" aria-pressed="true">📥 세팅 파일 불러오기 <small>(선생님)</small></button>
-      <button type="button" id="tMake" aria-pressed="false">📤 세팅 파일 만들기 <small>(담당자)</small></button>
+      <button type="button" id="tLoad" aria-pressed="true">📥 세팅 받기 <small>(선생님)</small></button>
+      <button type="button" id="tMake" aria-pressed="false">📤 세팅 만들기·올리기 <small>(담당자)</small></button>
+      <button type="button" id="tMap" aria-pressed="false" title="어디에 무엇이 저장되나">🗺️ 내 자료 지도</button>
     </div>
   </div>
 </header>
@@ -110,12 +142,20 @@
   <section class="view" id="vLoad">
     <div class="steps" id="steps">
       <div class="step" id="s1">
-        <h2><i>1</i>세팅 파일 열기</h2>
+        <h2><i>1</i>학교 세팅 받기</h2>
+        <div class="cloud" id="cBox">
+          <div class="dev" role="radiogroup" aria-label="이 기기"><label><input type="radio" name="dev" value="me" checked><b>💻 내 기기</b><small>교무실 PC · 휴대폰</small></label><label><input type="radio" name="dev" value="room"><b>🏫 교실 기기</b><small>전자칠판 · 교실 PC</small></label></div>
+          <label class="field">업무판 공용 비밀번호 <small id="cSch"></small><input type="password" id="cPw" autocomplete="off"></label>
+          <button type="button" class="btn primary" id="cGo">☁ 인터넷으로 받기</button>
+          <div class="msg" id="cMsg"></div>
+        </div>
+        <details id="fWay"><summary>📂 또는 세팅 파일로 <small>(인터넷이 안 될 때)</small></summary>
         <div class="drop" id="drop" tabindex="0" role="button"><b>📂 학교 세팅 파일 고르기</b>담당 선생님께 받은 파일(.json)을 고르거나 여기에 끌어다 놓으세요.</div>
         <p class="sm" id="fName"></p>
         <label class="field">비밀 문구 <small>(담당 선생님께 따로 받은 것)</small><input type="password" id="lPass" autocomplete="off"></label>
-        <button type="button" class="btn primary" id="lOpen" disabled>🔓 열기</button>
+        <button type="button" class="btn" id="lOpen" disabled>🔓 열기</button>
         <div class="msg" id="lMsg"></div>
+        </details>
       </div>
       <div class="step dim" id="s2">
         <h2><i>2</i>들어 있는 자료</h2>
@@ -130,6 +170,9 @@
         <div class="field">이 기기에 넣을 학생 명렬
           <div class="chk"><label><input type="radio" name="scope" value="mine" checked> 내 수업 반 + 우리 반만</label><label><input type="radio" name="scope" value="all"> 전체 학급</label></div></div>
         <div class="field">함께 넣을 것<div class="chk" id="lWhat"></div></div>
+        <div class="field" id="bWrap" hidden>학생 명렬 비밀 문구 <small>(담당 선생님께 따로 받은 것)</small>
+          <div class="nrow"><input type="password" id="lBk" autocomplete="off"><button type="button" class="btn" id="lBkGo">🔓 열기</button></div>
+          <label class="keep"><input type="checkbox" id="lBkKeep" checked> 이 기기에서 기억 <small>(바뀐 명렬도 저절로)</small></label></div>
         <p class="sm" id="lNote"></p>
         <button type="button" class="btn primary" id="lApply">✔ 이대로 세팅하기</button>
       </div>
@@ -184,26 +227,33 @@
     </div>
     </div>
     <div class="side">
-      <h2>🔒 잠그고 내보내기</h2>
-      <p>학생·교직원 이름이 들어 있어 <b>비밀 문구로 잠가서</b> 내보냅니다. 파일과 비밀 문구는 <b>따로</b> 전하세요(예: 파일은 쿨메신저, 비밀 문구는 회의 때 말로).</p>
-      <label class="field">비밀 문구 <small>(8자 이상)</small><input type="password" id="mPass" autocomplete="new-password"></label>
-      <label class="field">한 번 더<input type="password" id="mPass2" autocomplete="new-password"></label>
-      <button type="button" class="btn primary" id="mExport">📤 학교 세팅 파일 내보내기</button>
+      <h2>🔒 잠가서 보내기</h2>
+      <p>학교 업무판에는 <b>잠긴 글자만</b> 올라가요. 학생 명렬은 아래 <b>비밀 문구</b>로 한 번 더 잠급니다. 비밀 문구는 따로(회의·쿨메신저) 알려 주세요.</p>
+      <div class="two"><label class="field">학생 명렬 비밀 문구 <small>(8자 이상)</small><input type="password" id="mPass" autocomplete="new-password"></label>
+      <label class="field">한 번 더<input type="password" id="mPass2" autocomplete="new-password"></label></div>
+      <label class="field">관리자 비밀번호 <small>(자료실 관리자와 같음)</small><input type="password" id="mAdm" autocomplete="off"></label>
+      <div class="opts"><label title="내 사이트 목록의 업무용·수업용 사이트와 ★ 자주 보는 문서를 학교 추천으로 함께 보냄 (선생님이 고친 것이 우선)"><input type="checkbox" id="mRec" checked> ⭐ 내 추천 사이트·★ 문서</label>
+        <label title="선생님 PC·전자칠판이 쉬는 동안 내 교과·내 학년 교과서를 학교 드라이브에서 받아 둠 (와이파이일 때만, 휴대폰은 안 받음)"><input type="checkbox" id="mBooks" checked> 📘 교과서 자동 받기</label></div>
+      <div class="row2"><button type="button" class="btn primary" id="mUp">☁ 학교 세팅 올리기</button><button type="button" class="btn" id="mExport" title="인터넷이 안 될 때: 파일로 내보내기">📤 파일로</button></div>
       <div class="msg" id="mMsg"></div>
-      <p class="sm" style="margin-top:auto">학기 중에 명렬·시간표가 바뀌면 다시 내보내면 됩니다. 선생님들은 새 파일을 불러오면 그대로 덮어씁니다(기록·메모는 그대로).</p>
+      <div class="upst" id="mUpSt">올라간 학교 세팅 확인 중…</div>
+      <div class="links"><button type="button" class="btn" id="mEdit">✏️ 바뀐 것만 고치기</button><button type="button" class="btn" id="mInv">🔗 초대 링크</button><button type="button" class="btn" id="mQR">🏫 교실 기기 QR</button><button type="button" class="btn ghost" id="mWipe">🗑 서버 세팅 지우기</button></div>
+      <p class="sm" style="margin-top:auto">학기 중에 바뀌면 고치고 다시 [올리기]만 하면, 선생님 기기에 저절로 반영돼요(바뀐 점 요약도 저절로).</p>
     </div>
   </section>
 </main>
 
 <footer>
-  <span>세팅 파일 하나로 명렬 · 학사일정 · 시간표 · 학교 정보가 모든 도구에 함께 쓰입니다.</span>
-  <span class="priv">🔒 기기 안에서만 만들고 엶 · 서버로 보내지 않음</span>
+  <span>초대 링크 → 공용 비밀번호 → 내 이름 고르기, 세 번이면 명렬 · 학사일정 · 시간표 · 학교 정보가 모든 도구에 함께 쓰입니다.</span>
+  <span class="priv">🔒 기기 안에서 잠그고 엶 · 서버에는 잠긴 글자만</span>
 </footer>
 
 <script src="../../shared/tt.js"></script>
 <script src="../../shared/comci.js"></script>
 <script src="../../shared/calendar.js"></script>
 <script src="../../shared/hwpx.js"></script>
+<script src="../../shared/schoolset.js"></script>
+<script src="../../shared/qr.js"></script>
 <script>
   /* v2.9 숨은 정보: 담당자가 켤 것을 고름 (세팅 파일 school.hid 로 선생님 기기에 그대로) */
   var HIDK = [["meal","날짜 → 급식", "날짜 → 급식"],["time","시각 → 교시", "시각 → 교시"],["staff","선생님 → 내선", "선생님 이름 → 내선·수업 중"],["cls","반 → 담임", "반 → 담임·지금 수업"],["owl","쌤비 → 오늘", "쌤비 → 오늘·이번 주"],["stu","학생 → 출결", "학생 이름 → 출결·기록"],["tree","반 나무 → 칭찬", "우리 반 나무 → 칭찬왕"],["trip","업무판 → 출장", "업무판 날짜 → 출장"]];
@@ -453,44 +503,318 @@
     d.showModal(); ta.focus();
   };
 
-  /* 내보내기 */
-  $("mExport").onclick = function(){
-    var msg = $("mMsg"), p1 = $("mPass").value, p2 = $("mPass2").value;
-    function err(t){ msg.className = "msg err"; msg.textContent = t; }
+  /* ================= 담당자: 묶음 만들기 (파일·인터넷 공용) ================= */
+  function buildBody(){
     var name = $("mName").value.trim();
-    if(!name) return err("학교 이름을 넣어 주세요.");
-    if(p1.length < 8) return err("비밀 문구는 8자 이상으로 해 주세요.");
-    if(p1 !== p2) return err("두 비밀 문구가 서로 다릅니다.");
+    if(!name) return {err: "학교 이름을 넣어 주세요."};
     var sc = {name: name, principal: $("mPrin").value.trim(), addr: $("mAddr").value.trim(), tel: $("mTel").value.trim(), comci: $("mComci").value.trim(), hid: hidVal()};
-    var sc0 = TT.school.load(); ["neisA", "neisS", "neisKey"].forEach(function(k){ if(sc0[k]) sc[k] = sc0[k]; });   // 보완 3단계: 급식 연결도 함께
+    var sc0 = TT.school.load(); ["neisA", "neisS", "neisKey"].forEach(function(k){ if(sc0[k]) sc[k] = sc0[k]; });   // 급식·학사일정 학교 코드도 함께
     TT.school.save(sc);                                                   // 담당자 기기에도 저장
     var bu = $("mBoardUrl").value.trim();
-    if(bu && !BOARD_RE.test(bu)) return err("학교 업무판 주소가 올바르지 않아요 (https://script.google.com/…/exec).");
+    if(bu && !BOARD_RE.test(bu)) return {err: "학교 업무판 주소가 올바르지 않아요 (https://script.google.com/…/exec)."};
     var B0 = TT.store.get("tt_board_v1", null) || {}; if(bu && B0.url !== bu){ B0.url = bu; delete B0.hidden; TT.store.set("tt_board_v1", B0); }
     var body = {v: 1, made: new Date().toISOString(), school: sc}, has = ["school"];
     if(bu){ body.board = {url: bu}; has.push("board"); }
     var r = rosterInfo(); if($("iRos").checked && r.n){ body.roster = r.cl.map(function(c){ return {name: c.name, grade: c.grade, cls: c.cls, students: c.students.map(function(s){ return {no: s.no, name: s.name}; })}; }); has.push("roster"); }
     var st = TT.staff.load(); if($("iStaff").checked && st.length){ body.staff = st; body.staffMain = staffMain(); has.push("staff"); }
-    var c = calInfo(); if($("iCal").checked && c.n){ body.calendar = {y: c.y || null, events: c.ev}; has.push("calendar"); }
+    var c = calInfo(); if($("iCal").checked && c.n){ body.calendar = {y: c.y || null, events: c.ev.filter(function(e){ return e.src !== "neis"; }).map(function(e){ return {d: e.d, t: e.t, k: e.k}; })}; has.push("calendar"); }
     if($("iAll").checked && ALL && ALL.teachers && ALL.teachers.length){
       var tm = times(); ALL.periods.forEach(function(p, i){ if(tm[i]) p.t = tm[i]; });
-      if(ALL.periods.some(function(p){ return !/^\d{2}:\d{2}$/.test(p.t) || p.t === "00:00"; })) return err("교시 시작 시각을 교시 수만큼 넣어 주세요.");
+      if(ALL.periods.some(function(p){ return !/^\d{2}:\d{2}$/.test(p.t) || p.t === "00:00"; })) return {err: "교시 시작 시각을 교시 수만큼 넣어 주세요."};
       body.alltt = {periods: ALL.periods, teachers: ALL.teachers}; has.push("alltt");
     }
+    return {body: body, has: has};
+  }
+  function passErr(need){
+    var p1 = $("mPass").value, p2 = $("mPass2").value;
+    if(!need && !p1) return "";
+    if(p1.length < 8) return "비밀 문구는 8자 이상으로 해 주세요.";
+    if(p1 !== p2) return "두 비밀 문구가 서로 다릅니다.";
+    return "";
+  }
+  /* 파일로 내보내기 (인터넷이 안 될 때 · 예전 방식 그대로) */
+  $("mExport").onclick = function(){
+    var msg = $("mMsg"); function err(t){ msg.className = "msg err"; msg.textContent = t; }
+    var pe = passErr(true); if(pe) return err(pe);
+    var b = buildBody(); if(b.err) return err(b.err);
+    var body = b.body, has = b.has, name = body.school.name;
     if(has.filter(function(k){ return k !== "board"; }).length < 2) return err("학교 정보 말고도 넣을 자료가 하나는 있어야 합니다.");
     msg.className = "msg"; msg.textContent = "잠그는 중…"; $("mExport").disabled = true;
-    lock(body, p1).then(function(L){
+    lock(body, $("mPass").value).then(function(L){
       var file = {app: APP, v: 1, school: name, made: body.made, has: has, lock: L};
       var d = new Date(), stamp = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
       TT.util.download("학교세팅_" + TT.util.safe(TT.school.short() || "학교") + "_" + stamp + ".json", JSON.stringify(file), "application/json");
-      msg.className = "msg ok"; msg.textContent = "✔ 내보냈습니다. 다운로드 폴더를 확인하세요. 비밀 문구는 따로 알려 주세요.";
-      $("mPass").value = $("mPass2").value = "";
+      msg.className = "msg ok"; msg.textContent = "✔ 파일로 내보냈습니다. 비밀 문구는 따로 알려 주세요.";
     }).catch(function(){ err("파일을 만들지 못했습니다. 최신 크롬·엣지에서 다시 해 주세요."); })
       .then(function(){ $("mExport").disabled = false; });
   };
 
-  /* ================= 선생님: 불러오기 ================= */
-  var FILE = null, DATA = null;
+  /* ================= 2·5·8단계: 학교 세팅 올리기 (바뀐 점 요약은 저절로) ================= */
+  var ADM = TT.store.get("tt_schoolset_v1", null) || {};
+  (function(){ var a = ADM.adm || {}; if(a.rec === false) $("mRec").checked = false; if(a.books === false) $("mBooks").checked = false; try{ $("mAdm").value = sessionStorage.getItem("ttset_adm") || ""; }catch(e){} })();
+  function recSet(){
+    var SI = TT.store.get("tt_sites_v1", null), sites = (SI && SI.items || []).filter(function(x){ return x.u && (x.c === "work" || x.c === "class"); }).slice(0, 40).map(function(x){ return {t: x.t, u: x.u, c: x.c}; });
+    var stars = Object.keys(((TT.store.get("tt_lib_star_v1", null) || {}).ids) || {}).slice(0, 20);
+    return {sites: sites, stars: stars};
+  }
+  function names(list){ var m = {}; (list || []).forEach(function(c){ (c.students || []).forEach(function(s){ m[s.name] = c.grade + "-" + c.cls; }); }); return m; }
+  function diffSum(o, n){
+    if(!o) return "처음 올림";
+    var out = [];
+    if(n.roster && o.roster){
+      var a = names(o.roster), b = names(n.roster), inn = 0, outn = 0, mv = 0;
+      Object.keys(b).forEach(function(k){ if(!(k in a)) inn++; else if(a[k] !== b[k]) mv++; });
+      Object.keys(a).forEach(function(k){ if(!(k in b)) outn++; });
+      if(inn) out.push("전입생 " + inn + "명"); if(outn) out.push("전출 " + outn + "명"); if(mv) out.push("반 이동 " + mv + "명");
+    } else if(n.roster && !o.roster) out.push("학생 명렬");
+    var ek = function(D){ var m = {}; ((D.calendar || {}).events || []).forEach(function(e){ m[e.d + "|" + e.t] = 1; }); return m; }, e0 = ek(o), e1 = ek(n);
+    var ea = Object.keys(e1).filter(function(k){ return !e0[k]; }).length, ed = Object.keys(e0).filter(function(k){ return !e1[k]; }).length;
+    if(ea || ed) out.push("일정 " + (ea ? "+" + ea : "") + (ea && ed ? " " : "") + (ed ? "−" + ed : "") + "건");
+    var sk = function(D){ var m = {}; (D.staff || []).forEach(function(x){ m[x.name] = [x.dept, x.pos, x.subj, x.tel].join("|"); }); return m; }, s0 = sk(o), s1 = sk(n), sc = 0;
+    Object.keys(s1).forEach(function(k){ if(s0[k] !== s1[k]) sc++; }); Object.keys(s0).forEach(function(k){ if(!(k in s1)) sc++; });
+    if(sc) out.push("교직원 " + sc + "명");
+    if(JSON.stringify(o.alltt || null) !== JSON.stringify(n.alltt || null)) out.push("시간표");
+    if(JSON.stringify(o.school || null) !== JSON.stringify(n.school || null)) out.push("학교 정보");
+    if(JSON.stringify(o.rec || null) !== JSON.stringify(n.rec || null)) out.push("추천 세트");
+    return out.length ? out.join(" · ") : "작은 손질";
+  }
+  function upStatus(m){
+    var el = $("mUpSt");
+    if(!m){ el.innerHTML = "학교 업무판이 연결되어 있지 않아요 · ⋯ → 학교 업무판 연결"; return; }
+    el.innerHTML = m.ver ? "☁ 올라간 판: <b>" + new Date(m.ver).toLocaleString("ko-KR", {month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit"}) + "</b>" + (m.sum ? "<br>" + esc(m.sum) : "") + (m.hasB ? "" : "<br>학생 명렬 없음")
+      : "아직 올린 학교 세팅이 없어요. 칸을 채우고 [☁ 학교 세팅 올리기]를 누르세요.";
+  }
+  function upCheck(){
+    var c = TTSet.board(); if(!c.url || !c.pw){ upStatus(null); return; }
+    TTSet.api("setver").then(upStatus, function(e){ $("mUpSt").textContent = TTSet.errText(e); });
+  }
+  function admPw(){ var a = $("mAdm").value; try{ sessionStorage.setItem("ttset_adm", a); }catch(e){} return a; }
+  $("mUp").onclick = function(){
+    var msg = $("mMsg"), btn = this; function err(t){ msg.className = "msg err"; msg.textContent = t; }
+    var c = TTSet.board(); if(!c.url || !c.pw) return err("먼저 ⋯ → 학교 업무판 연결에서 주소와 공용 비밀번호를 넣어 주세요.");
+    var b = buildBody(); if(b.err) return err(b.err);
+    var withB = !!b.body.roster, pe = passErr(withB); if(pe) return err(withB ? "학생 명렬을 잠글 " + pe : pe);
+    var adm = admPw(); if(!adm) return err("관리자 비밀번호를 넣어 주세요.");
+    var bk = $("mPass").value, A = Object.assign({}, b.body), Bd = withB ? {roster: b.body.roster} : null;
+    delete A.roster;
+    if($("mRec").checked) A.rec = recSet();
+    var books = $("mBooks").checked;
+    var S0 = TTSet.state(); S0.adm = {rec: $("mRec").checked, books: books}; TTSet.saveState(S0);
+    btn.disabled = true; msg.className = "msg"; msg.textContent = "관리자 확인 중…";
+    TTSet.api("setadmin", {admin: adm}).then(function(){
+      msg.textContent = "바뀐 점 찾는 중…";
+      return TTSet.pull(c, bk).then(function(r){ var o = r.A ? Object.assign({}, r.A) : null; if(o && r.B) o.roster = r.B.roster; return o; }, function(){ return null; });
+    }).then(function(old){
+      var nw = Object.assign({}, A); if(Bd) nw.roster = Bd.roster;
+      var sum = diffSum(old, nw);
+      msg.textContent = "잠그는 중…";
+      return Promise.all([TTSet.lock(A, c.pw), Bd ? TTSet.lock(Bd, bk) : Promise.resolve("")]).then(function(L){
+        msg.textContent = "올리는 중…";
+        return TTSet.api("setput", {admin: adm, a: L[0], b: L[1], keepB: !Bd, sum: sum, books: books});
+      }).then(function(r){
+        var S = TTSet.state(); S.ver = r.ver; S.sum = sum; S.books = books; if(bk && withB) S.bk = bk; TTSet.saveState(S);
+        msg.className = "msg ok"; msg.textContent = "✔ 올렸어요 · " + sum + ". 선생님 기기가 켤 때 저절로 반영됩니다.";
+        upCheck();
+      });
+    }).catch(function(e){ err(TTSet.errText(e)); }).then(function(){ btn.disabled = false; });
+  };
+  $("mWipe").onclick = function(){
+    var adm = admPw(); if(!adm){ $("mMsg").className = "msg err"; $("mMsg").textContent = "관리자 비밀번호를 넣어 주세요."; return; }
+    TT.ui.confirm("🗑 서버의 학교 세팅 지우기", "학교 업무판(드라이브)에 올라간 학교 세팅을 모두 지웁니다. 새 학년에 공용 비밀번호·비밀 문구를 바꿀 때 쓰세요. 선생님 기기에 이미 받은 자료는 그대로예요.", "지우기", function(){
+      TTSet.api("setwipe", {admin: adm}).then(function(){ $("mMsg").className = "msg ok"; $("mMsg").textContent = "✔ 서버의 학교 세팅을 지웠어요."; upCheck(); }, function(e){ $("mMsg").className = "msg err"; $("mMsg").textContent = TTSet.errText(e); });
+    });
+  };
+
+  /* ================= 3·9단계: 초대 링크 · 교실 기기 QR ================= */
+  function inviteLink(roomDev){
+    var c = TTSet.board(), sn = $("mName").value.trim() || TT.school.load().name || c.school || "";
+    if(!c.url) return "";
+    var o = {s: sn, b: c.url}; if(roomDev) o.r = 1;
+    var code = btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return new URL("../../", location.href).href + "?invite=" + code;
+  }
+  function sdialog(html){ var d = document.createElement("dialog"); d.className = "sd"; d.innerHTML = html; document.body.appendChild(d); d.addEventListener("close", function(){ d.remove(); }); d.showModal(); return d; }
+  $("mInv").onclick = function(){
+    var link = inviteLink(false); if(!link){ TT.ui.toast("먼저 업무판 주소를 넣어 주세요."); return; }
+    var ask = function(){ prompt("이 링크를 복사해 쿨메신저로 보내 주세요 (비밀번호는 따로)", link); };
+    try{ navigator.clipboard.writeText(link).then(function(){ TT.ui.toast("🔗 초대 링크를 복사했어요. 쿨메신저로 보내고, 공용 비밀번호·학생 명렬 비밀 문구는 따로 알려 주세요.", null, null, 10000); }, ask); }catch(e){ ask(); }
+  };
+  $("mQR").onclick = function(){
+    var link = inviteLink(true); if(!link){ TT.ui.toast("먼저 업무판 주소를 넣어 주세요."); return; }
+    var d = sdialog('<h2>🏫 교실 기기 한 번에 세팅</h2><div class="qrbox">' + TTQR.svg(link) + '<p>전자칠판 카메라로 찍거나 아래 주소를 열면 <b>교실 기기</b>로 세팅돼요.<br>① 공용 비밀번호 넣기 → ② 기기 이름(예: 3-2 교실) → 끝<br>· 수업에 필요한 자료만 받고, <b>학생 명렬 비밀 문구는 기억하지 않아요.</b><br>· 선생님은 지금처럼 이름을 누르고 숫자 6자리로 수업을 시작해요.<br><code>' + esc(link) + '</code></p></div><div class="acts"><button type="button" class="btn" data-x="copy">🔗 주소 복사</button><button type="button" class="btn primary" data-x="close">닫기</button></div>');
+    d.querySelector("[data-x=close]").onclick = function(){ d.close(); };
+    d.querySelector("[data-x=copy]").onclick = function(){ try{ navigator.clipboard.writeText(link).then(function(){ TT.ui.toast("주소를 복사했어요."); }); }catch(e){ prompt("주소", link); } };
+  };
+
+  /* ================= 5단계: 바뀐 것만 고치기 (학생 · 일정 · 교직원) ================= */
+  $("mEdit").onclick = function(){
+    var d = sdialog('<h2>✏️ 바뀐 것만 고치기 <small style="font-size:13px;color:var(--sub);font-weight:400">고친 뒤 [☁ 학교 세팅 올리기]를 누르면 모든 선생님께 반영돼요</small></h2>'
+      + '<div class="tabs"><button type="button" class="btn" data-t="stu" aria-pressed="true">👥 학생</button><button type="button" class="btn" data-t="cal" aria-pressed="false">📌 일정</button><button type="button" class="btn" data-t="staff" aria-pressed="false">🧑‍🏫 교직원</button></div>'
+      + '<div class="pane"></div><div class="acts"><span class="msg" data-m></span><button type="button" class="btn primary" data-x="close">다 고쳤어요</button></div>');
+    var P = d.querySelector(".pane"), M = d.querySelector("[data-m]"), cur = "stu";
+    function note(t){ M.className = "msg ok"; M.textContent = t; drawMake(); }
+    d.querySelector("[data-x=close]").onclick = function(){ d.close(); };
+    d.querySelector(".tabs").onclick = function(e){ var b = e.target.closest("[data-t]"); if(!b) return; cur = b.dataset.t; Array.prototype.forEach.call(this.children, function(x){ x.setAttribute("aria-pressed", x === b); }); draw(); };
+    var selC = null, selS = null, selT = null;
+    function draw(){ M.textContent = ""; ({stu: stu, cal: cal, staff: staff})[cur](); }
+    function stu(){
+      var R = TT.roster.load(), cl = R.classes.filter(function(c){ return c.grade != null; }).sort(function(a, b){ return a.grade - b.grade || a.cls - b.cls; });
+      if(!cl.length){ P.innerHTML = '<p class="sm">학생 명렬이 아직 없어요. 위 칸에 전체 학생 명렬을 먼저 넣어 주세요.</p>'; return; }
+      if(!selC || !cl.some(function(c){ return c.id === selC; })) selC = cl[0].id;
+      var C = cl.filter(function(c){ return c.id === selC; })[0];
+      var opts = cl.map(function(c){ return '<option value="' + c.id + '"' + (c.id === selC ? " selected" : "") + ">" + esc(c.name) + " (" + c.students.length + "명)</option>"; }).join("");
+      var S = C.students.filter(function(s){ return s.no === selS; })[0];
+      P.innerHTML = '<div class="lst">' + C.students.map(function(s){ return '<button type="button" class="btn" data-no="' + s.no + '" aria-pressed="' + (s.no === selS) + '">' + s.no + "번 " + esc(s.name) + "</button>"; }).join("") + '</div>'
+        + '<div class="frm"><label class="field">반<select data-c>' + opts + '</select></label>'
+        + '<b style="font-size:13px">➕ 전입생 넣기</b><div class="two"><label class="field">번호<input type="number" data-ano min="1" max="99" value="' + (C.students.reduce(function(a, s){ return Math.max(a, s.no); }, 0) + 1) + '"></label><label class="field">이름<input type="text" data-anm maxlength="20"></label></div><button type="button" class="btn" data-x="add">넣기</button>'
+        + (S ? '<b style="font-size:13px;margin-top:6px">선택: ' + S.no + "번 " + esc(S.name) + '</b><div class="two"><label class="field">옮길 반<select data-mc>' + opts + '</select></label><label class="field">새 번호<input type="number" data-mno min="1" max="99"></label></div><div class="row2"><button type="button" class="btn" data-x="mv">반 옮기기</button><button type="button" class="btn" data-x="out" style="color:var(--danger)">전출</button></div>' : '<p class="sm">학생을 누르면 반 옮기기·전출을 할 수 있어요.</p>')
+        + '</div>';
+      P.querySelector("[data-c]").onchange = function(){ selC = this.value; selS = null; stu(); };
+      P.querySelector(".lst").onclick = function(e){ var b = e.target.closest("[data-no]"); if(!b) return; selS = +b.dataset.no; stu(); };
+      function saveR(){ TT.roster.save(TT.roster.clean(R)); }
+      P.querySelector("[data-x=add]").onclick = function(){
+        var no = +P.querySelector("[data-ano]").value, nm = P.querySelector("[data-anm]").value.trim();
+        if(!(no >= 1) || !nm){ M.className = "msg err"; M.textContent = "번호와 이름을 넣어 주세요."; return; }
+        if(C.students.some(function(s){ return s.no === no; })){ M.className = "msg err"; M.textContent = no + "번은 이미 있어요."; return; }
+        C.students.push({no: no, name: nm.slice(0, 20)}); C.students.sort(function(a, b){ return a.no - b.no; }); saveR(); stu(); note("✔ " + C.name + " " + no + "번 " + nm + " 넣음");
+      };
+      if(S){
+        var mc = P.querySelector("[data-mc]"), mno = P.querySelector("[data-mno]");
+        function nextNo(){ var T = cl.filter(function(c){ return c.id === mc.value; })[0]; mno.value = T.students.reduce(function(a, s){ return Math.max(a, s.no); }, 0) + 1; }
+        mc.onchange = nextNo; nextNo();
+        P.querySelector("[data-x=mv]").onclick = function(){
+          var T = cl.filter(function(c){ return c.id === mc.value; })[0], no = +mno.value;
+          if(T.id === C.id || !(no >= 1)){ M.className = "msg err"; M.textContent = "다른 반과 새 번호를 골라 주세요."; return; }
+          if(T.students.some(function(s){ return s.no === no; })){ M.className = "msg err"; M.textContent = T.name + " " + no + "번은 이미 있어요."; return; }
+          C.students = C.students.filter(function(s){ return s.no !== S.no; }); T.students.push({no: no, name: S.name}); T.students.sort(function(a, b){ return a.no - b.no; });
+          saveR(); selS = null; stu(); note("✔ " + S.name + " → " + T.name + " " + no + "번");
+        };
+        P.querySelector("[data-x=out]").onclick = function(){
+          C.students = C.students.filter(function(s){ return s.no !== S.no; }); saveR(); var nm = S.name; selS = null; stu(); note("✔ " + nm + " 전출 (명렬에서 뺌)");
+        };
+      }
+    }
+    function cal(){
+      var C = TT.store.get("tt_calendar_v1", null) || {v: 1, events: []}, ev = (C.events || []).filter(function(e){ return e.src !== "neis"; }), t0 = new Date().toISOString().slice(0, 10);
+      var up = ev.map(function(e, i){ return {e: e, i: i}; }).filter(function(x){ return x.e.d >= t0; }).slice(0, 80);
+      P.innerHTML = '<div class="lst">' + (up.length ? up.map(function(x){ return '<div style="display:flex;gap:6px;align-items:center"><span style="flex:none;width:86px;color:var(--sub)">' + x.e.d.slice(5).replace("-", "/") + '</span><span style="flex:1">' + esc(x.e.t) + '</span><button type="button" class="btn" data-del="' + esc(x.e.d + "|" + x.e.t) + '" title="지우기">✕</button></div>'; }).join("") : '<p class="sm">앞으로의 일정이 없어요.</p>') + '</div>'
+        + '<div class="frm"><b style="font-size:13px">➕ 일정 한 줄 넣기</b><label class="field">날짜<input type="date" data-d value="' + t0 + '"></label><label class="field">내용<input type="text" data-t maxlength="40" placeholder="예: 2학기 1차 지필평가"></label><button type="button" class="btn" data-x="add">넣기</button>'
+        + '<p class="sm">나이스 학사일정이 연결된 학교는 나이스 일정이 저절로 들어와요. 여기에는 나이스에 없는 학교 일정만 넣으면 돼요.</p></div>';
+      function saveC(){ C.events.sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; }); C.at = Date.now(); TT.store.set("tt_calendar_v1", C); }
+      P.querySelector("[data-x=add]").onclick = function(){
+        var dd = P.querySelector("[data-d]").value, tt = P.querySelector("[data-t]").value.trim();
+        if(!dd || !tt){ M.className = "msg err"; M.textContent = "날짜와 내용을 넣어 주세요."; return; }
+        C.events = C.events || []; C.events.push({d: dd, t: tt, k: TTCal.kind(tt)}); saveC(); cal(); note("✔ " + dd + " " + tt + " 넣음");
+      };
+      P.querySelector(".lst").onclick = function(e){ var b = e.target.closest("[data-del]"); if(!b) return; var k = b.dataset.del; C.events = C.events.filter(function(x){ return x.d + "|" + x.t !== k; }); saveC(); cal(); note("✔ 일정 하나 지움"); };
+    }
+    function staff(){
+      var L = TT.staff.load().slice(), S = selT != null ? L.filter(function(x){ return x.name === selT; })[0] : null;
+      P.innerHTML = '<div class="lst">' + L.map(function(x){ return '<button type="button" class="btn" data-n="' + esc(x.name) + '" aria-pressed="' + (x.name === selT) + '">' + esc(x.name) + ' <small style="color:var(--sub)">' + esc([x.dept, x.subj, x.tel].filter(Boolean).join(" · ")) + "</small></button>"; }).join("") + '</div>'
+        + '<div class="frm"><b style="font-size:13px">' + (S ? "✏ " + esc(S.name) + " 고치기" : "➕ 새 교직원") + '</b>'
+        + '<label class="field">이름<input type="text" data-k="name" maxlength="10" value="' + esc(S ? S.name : "") + '"></label>'
+        + '<div class="two"><label class="field">부서<input type="text" data-k="dept" maxlength="20" value="' + esc(S ? S.dept : "") + '"></label><label class="field">교과<input type="text" data-k="subj" maxlength="12" value="' + esc(S ? S.subj : "") + '"></label></div>'
+        + '<div class="two"><label class="field">직위·담임<input type="text" data-k="pos" maxlength="30" value="' + esc(S ? S.pos : "") + '" placeholder="예: 3-2 담임"></label><label class="field">내선<input type="text" data-k="tel" maxlength="15" value="' + esc(S ? S.tel : "") + '"></label></div>'
+        + '<div class="row2"><button type="button" class="btn primary" data-x="save">저장</button>' + (S ? '<button type="button" class="btn" data-x="new">새로</button><button type="button" class="btn" data-x="del" style="color:var(--danger)">전출·삭제</button>' : "") + '</div></div>';
+      function v(k){ return P.querySelector('[data-k="' + k + '"]').value.trim(); }
+      function saveS(list){ saveStaff(list, staffMain()); }
+      P.querySelector(".lst").onclick = function(e){ var b = e.target.closest("[data-n]"); if(!b) return; selT = b.dataset.n; staff(); };
+      P.querySelector("[data-x=save]").onclick = function(){
+        var nm = v("name").replace(/\s+/g, ""); if(!/^[가-힣A-Za-z]{2,10}$/.test(nm)){ M.className = "msg err"; M.textContent = "이름을 확인해 주세요."; return; }
+        var o = {name: nm, dept: v("dept"), pos: v("pos"), subj: v("subj"), tel: /^[\d\-~ ]{2,15}$/.test(v("tel")) ? v("tel") : ""};
+        if(S) L = L.map(function(x){ return x.name === S.name ? Object.assign({}, x, o) : x; });
+        else { if(L.some(function(x){ return x.name === nm; })){ M.className = "msg err"; M.textContent = "같은 이름이 이미 있어요."; return; } L.push(o); }
+        saveS(L); selT = nm; staff(); note("✔ " + nm + " 저장");
+      };
+      if(S){
+        P.querySelector("[data-x=new]").onclick = function(){ selT = null; staff(); };
+        P.querySelector("[data-x=del]").onclick = function(){ var nm = S.name; saveS(L.filter(function(x){ return x.name !== nm; })); selT = null; staff(); note("✔ " + nm + " 뺌"); };
+      }
+    }
+    draw();
+  };
+
+  /* ================= 10단계: 내 자료 지도 ================= */
+  function openMap(){
+    var S = TTSet.state(), B = TTSet.board(), room = TTSet.room(), vc = null; try{ vc = JSON.parse(localStorage.getItem("ttv_vault") || "null"); }catch(e){}
+    var r = rosterInfo(), st = TT.staff.load(), c = calInfo(), keys = TT.store.keys(), bytes = 0;
+    keys.forEach(function(k){ bytes += (localStorage.getItem(k) || "").length; });
+    var mine = keys.filter(function(k){ return /^tt_(guide|tardy|journal|notes|record|seat|duty|book|stucard|submit|mytodo|voice)/.test(k); }).length;
+    var d = sdialog('<h2>🗺️ 내 자료 지도 <small style="font-size:13px;color:var(--sub);font-weight:400">어디에 무엇이 저장되나</small></h2><div class="map">'
+      + '<section><h3>📱 이 기기 ' + (room ? "(교실 기기)" : "(내 기기)") + '</h3><ul>'
+      + '<li>🏫 학교 세팅: <b>' + (S.ver ? new Date(S.ver).toLocaleDateString("ko-KR") + " 판" : "받지 않음") + '</b></li>'
+      + '<li>👥 학생 명렬: <b>' + r.n + "개 반 " + r.s + '명</b></li><li>🧑‍🏫 교직원: <b>' + st.length + '명</b> · 📌 일정 <b>' + c.n + '개</b></li>'
+      + '<li>📝 내 기록(출결·상담·수업 등): <b>' + mine + '가지</b></li><li>💾 모두 합쳐 약 <b>' + Math.max(1, Math.round(bytes / 1024)) + 'KB</b> · 이 브라우저 안</li></ul>'
+      + '<p class="sm" style="margin-top:6px">' + (room ? "교실 기기는 수업이 끝나면 선생님 자료를 지워요." : "전체 백업(⋯ → 전체 백업 저장)으로 파일 하나에 담을 수 있어요.") + '</p></section>'
+      + '<section><h3>☁ 학교 업무판 <small>(학교 구글 드라이브)</small></h3><ul>'
+      + '<li>🏫 학교 정보·교직원·일정·시간표<br><small>→ <b>공용 비밀번호</b>로 잠긴 글자</small></li>'
+      + '<li>👥 학생 명렬<br><small>→ <b>학생 명렬 비밀 문구</b>로 한 번 더 잠김 (업무판 담당자도 못 엶)</small></li>'
+      + '<li>☁️ 내 보관함 ' + (vc && vc.id ? "<b>(연결됨: " + esc(vc.id) + ")</b>" : "(연결 안 함)") + '<br><small>→ <b>내 비밀 문구</b>로 잠김 (나만 엶)</small></li>'
+      + '<li>📚 자료실 · 주간업무<br><small>→ 학교 공용 자료 (개인정보 없음)</small></li></ul></section>'
+      + '<section><h3>🔑 여는 열쇠</h3><ul>'
+      + '<li>공용 비밀번호: <b>' + (B.pw ? "이 기기에 있음" : "없음") + '</b></li>'
+      + '<li>학생 명렬 비밀 문구: <b>' + (room ? "기억 안 함(교실 기기)" : S.bk ? "이 기기가 기억함" : "기억 안 함") + '</b></li>'
+      + '<li>내 비밀 문구: <b>어디에도 저장 안 함</b></li>'
+      + '<li>관리자 비밀번호: <b>업무판에만</b> (올리기·지우기용)</li></ul>'
+      + '<p class="sm" style="margin-top:6px">학기가 바뀌면 담당자가 공용 비밀번호·학생 명렬 비밀 문구를 바꾸고 다시 올려요. 그러면 모든 기기에서 한 번만 새로 물어봐요.</p></section></div>'
+      + '<div class="acts"><div style="display:flex;gap:6px;flex-wrap:wrap">' + (S.bk ? '<button type="button" class="btn" data-x="forget">학생 명렬 비밀 문구 잊기</button>' : "")
+      + '<button type="button" class="btn" data-x="books">' + (S.booksOff ? "📘 교과서 자동 받기 켜기" : "📘 이 기기는 교과서 자동 받기 끄기") + '</button>'
+      + '<button type="button" class="btn" data-x="wipe" style="color:var(--danger)">이 기기에서 학교 세팅 지우기</button></div><button type="button" class="btn primary" data-x="close">닫기</button></div>');
+    d.querySelector("[data-x=close]").onclick = function(){ d.close(); };
+    var fg = d.querySelector("[data-x=forget]"); if(fg) fg.onclick = function(){ var s = TTSet.state(); delete s.bk; TTSet.saveState(s); d.close(); TT.ui.toast("학생 명렬 비밀 문구를 이 기기에서 지웠어요."); };
+    d.querySelector("[data-x=books]").onclick = function(){ var s = TTSet.state(); s.booksOff = !s.booksOff; TTSet.saveState(s); d.close(); TT.ui.toast(s.booksOff ? "이 기기는 교과서를 저절로 받지 않아요." : "쉬는 동안 교과서를 저절로 받아요."); };
+    d.querySelector("[data-x=wipe]").onclick = function(){
+      TT.ui.confirm("이 기기에서 학교 세팅 지우기", "받아 둔 교직원 명렬·전체 교사 시간표·학교가 넣은 학사일정과 학교 세팅 기록을 이 기기에서 지웁니다. 학생 명렬과 내 기록(출결·상담·수업)은 그대로예요.", "지우기", function(){
+        TTSet.wipeLocal(); TT.store.remove("tt_staff_v1"); TT.store.remove("tt_alltt_v1");
+        var C = TT.store.get("tt_calendar_v1", null); if(C && C.events){ C.events = C.events.filter(function(e){ return e.src !== "set" && e.src !== "neis"; }); TT.store.set("tt_calendar_v1", C); }
+        d.close(); drawMake(); TT.ui.toast("이 기기에서 학교 세팅을 지웠어요.");
+      });
+    };
+  }
+  $("tMap").onclick = openMap;
+
+  /* ================= 선생님: 받기 (인터넷 · 파일) ================= */
+  var FILE = null, DATA = null, CLOUD = null, CFG = null, BK = "";
+  (function initCloud(){
+    var c = TTSet.board(), sn = TT.school.load().name || c.school || "";
+    $("cSch").textContent = sn ? "· " + sn : "";
+    if(c.pw) $("cPw").placeholder = "저장된 비밀번호 사용 (바뀌었으면 입력)";
+    if(!c.url){ $("cMsg").className = "msg err"; $("cMsg").textContent = "학교 업무판 주소가 없어요. 담당 선생님의 초대 링크로 열거나 세팅 파일로 받으세요."; $("cGo").disabled = true; $("fWay").open = true; }
+    if(/[?&]room\b/.test(location.search)) document.querySelector('input[name=dev][value=room]').checked = true;
+  })();
+  function devRoom(){ return document.querySelector("input[name=dev]:checked").value === "room"; }
+  $("cPw").onkeydown = function(e){ if(e.key === "Enter" && !$("cGo").disabled) $("cGo").click(); };
+  $("cGo").onclick = function(){
+    var c = TTSet.board(), pw = $("cPw").value || c.pw || "", msg = $("cMsg"), btn = this;
+    if(!pw){ msg.className = "msg err"; msg.textContent = "공용 비밀번호를 넣어 주세요."; $("cPw").focus(); return; }
+    var cfg = {url: c.url, pw: pw};
+    function keepBoard(school){ var B = TT.store.get("tt_board_v1", null) || {}; B.url = cfg.url; B.pw = pw; if(school) B.school = school; delete B.hidden; TT.store.set("tt_board_v1", B); TT.store.remove("tt_board_cache_v1"); }
+    btn.disabled = true; msg.className = "msg"; msg.textContent = "확인 중…";
+    if(devRoom()){                                                        // 9단계: 교실 기기 — 비밀번호 확인 → 교실 기기 정하기 창
+      TTSet.api("setver", null, cfg).catch(function(e){ if(/지원하지 않는 요청/.test(String(e && e.message))) return {ver: 0}; throw e; }).then(function(){
+        keepBoard(); try{ localStorage.setItem("ttset_room_books", "1"); }catch(e){}
+        msg.className = "msg ok"; msg.textContent = "✔ 확인했어요. 교실 기기 정하기 창으로 갑니다…";
+        setTimeout(function(){ location.href = "../../?room=1"; }, 900);
+      }, function(e){ msg.className = "msg err"; msg.textContent = TTSet.errText(e); btn.disabled = false; });
+      return;
+    }
+    TTSet.pull(cfg, "").then(function(r){
+      keepBoard();
+      if(!r.meta.ver){ msg.className = "msg err"; msg.textContent = "업무판은 연결했어요. 아직 올라온 학교 세팅이 없어요 — 세팅 파일로 받거나 담당 선생님께 [올리기]를 부탁하세요."; $("fWay").open = true; return; }
+      CFG = cfg; CLOUD = r.meta; DATA = r.A; BK = "";
+      msg.className = "msg ok"; msg.textContent = "✔ 받았어요 · " + new Date(r.meta.ver).toLocaleDateString("ko-KR") + " 판";
+      $("fWay").open = false; showData();
+    }).catch(function(e){ msg.className = "msg err"; msg.textContent = TTSet.errText(e); if(/지원하지 않는/.test(String(e && e.message))){ keepBoard(); $("fWay").open = true; } })
+      .then(function(){ btn.disabled = false; });
+  };
+  $("lBkGo").onclick = function(){
+    var bk = $("lBk").value, b = this; if(!bk || !CLOUD) return;
+    b.disabled = true; b.textContent = "여는 중…";
+    TTSet.pullB(CFG, bk).then(function(B){ DATA.roster = B.roster; BK = bk; $("lBk").value = ""; showData(); TT.ui.toast("👥 학생 명렬을 열었어요."); },
+      function(e){ TT.ui.toast(String(e && e.message) === "LOCK" ? "학생 명렬 비밀 문구가 맞지 않아요." : TTSet.errText(e)); })
+      .then(function(){ b.disabled = false; b.textContent = "🔓 열기"; });
+  };
+  $("lBk").onkeydown = function(e){ if(e.key === "Enter") $("lBkGo").click(); };
   function choose(f){
     f.text().then(function(t){
       var o = null; try{ o = JSON.parse(t.replace(/^﻿/, "")); }catch(e){}
@@ -506,35 +830,35 @@
   $("lOpen").onclick = function(){
     var msg = $("lMsg"); msg.className = "msg"; msg.textContent = "여는 중…"; $("lOpen").disabled = true;
     unlock(FILE.lock, $("lPass").value).then(function(d){
-      DATA = d; $("lPass").value = ""; msg.className = "msg ok"; msg.textContent = "✔ 열었습니다.";
+      DATA = d; CLOUD = null; $("lPass").value = ""; msg.className = "msg ok"; msg.textContent = "✔ 열었습니다.";
       showData();
     }).catch(function(e){
       msg.className = "msg err"; msg.textContent = e && e.message === "old" ? "이 브라우저로는 열 수 없어요. 최신 크롬·엣지를 써 주세요." : "비밀 문구가 맞지 않습니다.";
     }).then(function(){ $("lOpen").disabled = false; });
   };
-  function homeGuess(me){
-    var st = (DATA.staff || []).filter(function(s){ return s.name === me; })[0]; if(!st) return "";
-    var m = /(\d)\s*[-학년]\s*(\d{1,2})\s*반?\s*담임/.exec((st.pos || "") + " " + (st.dept || "")); return m ? m[1] + "-" + (+m[2]) : "";
-  }
-  function teacherOf(me){ return ((DATA.alltt || {}).teachers || []).filter(function(t){ return t.name === me; })[0] || null; }
-  function myCodes(me){ var t = teacherOf(me), c = {}; if(t) Object.keys(t.slots).forEach(function(k){ var x = t.slots[k].cls; if(x) c[x] = 1; }); return c; }
+  function teacherOf(me){ return TTSet.teacherOf(DATA, me); }
+  function myCodes(me){ return TTSet.myCodes(DATA, me); }
   function showData(){
     var D = DATA, ul = "", ros = D.roster || [], tt = (D.alltt || {}).teachers || [];
+    var keepMe = $("lMe").value, keepSubj = $("lSubj").value, keepHome = $("lHome").value;
     function li(icon, t, v){ ul += "<li>" + icon + " " + t + "<span>" + v + "</span></li>"; }
-    li("🏷️", "학교 정보", esc(D.school.name) + (D.school.comci ? " · 컴시간" : "") + (D.school.neisS ? " · 급식" : "") + (D.board && D.board.url ? " · 업무판" : ""));
+    li("🏷️", "학교 정보", esc(D.school.name) + (D.school.comci ? " · 컴시간" : "") + (D.school.neisS ? " · 급식·학사일정" : "") + (D.board && D.board.url ? " · 업무판" : ""));
     if(ros.length) li("👥", "학생 명렬", ros.length + "개 반 · " + ros.reduce(function(a, c){ return a + c.students.length; }, 0) + "명");
+    else if(CLOUD && CLOUD.hasB) li("👥", "학생 명렬", "🔒 비밀 문구로 열기");
     if(D.staff) li("🧑‍🏫", "교직원 명렬", D.staff.length + "명");
     if(D.calendar) li("📌", "학사일정", D.calendar.events.length + "개");
     if(tt.length) li("🕘", "전체 교사 시간표", tt.length + "명 · " + D.alltt.periods.length + "교시");
+    if(D.rec && ((D.rec.sites || []).length || (D.rec.stars || []).length)) li("⭐", "학교 추천", (D.rec.sites || []).length + "개 사이트 · ★ " + (D.rec.stars || []).length);
+    if(CLOUD && CLOUD.books) li("📘", "교과서", "쉬는 동안 저절로");
     $("lSum").innerHTML = ul;
-    $("lMade").textContent = "만든 날: " + new Date(D.made).toLocaleDateString("ko-KR");
-    /* 내 이름 목록: 교직원 + 시간표 선생님 */
+    $("lMade").textContent = (CLOUD ? "☁ 올라온 날: " + new Date(CLOUD.ver).toLocaleString("ko-KR") + (CLOUD.sum ? " · " + CLOUD.sum : "") : "만든 날: " + new Date(D.made).toLocaleDateString("ko-KR"));
+    $("bWrap").hidden = !(CLOUD && CLOUD.hasB && !ros.length);
     var names = {}; (D.staff || []).forEach(function(s){ names[s.name] = s.subj || ""; }); tt.forEach(function(t){ if(!(t.name in names) || !names[t.name]) names[t.name] = t.subj || ""; });
-    var cur = TT.school.load().teacher, keys = Object.keys(names).sort();
+    var cur = keepMe || TT.school.load().teacher, keys = Object.keys(names).sort();
     $("lMe").innerHTML = '<option value="">— 고르세요 —</option>' + keys.map(function(n){ return '<option value="' + esc(n) + '">' + esc(n) + (names[n] ? " (" + esc(names[n]) + ")" : "") + "</option>"; }).join("");
     if(names.hasOwnProperty(cur)) $("lMe").value = cur;
     $("lHome").innerHTML = '<option value="">담임 아님</option>' + ros.map(function(c){ return '<option value="' + c.grade + "-" + c.cls + '">' + esc(c.name) + "</option>"; }).join("");
-    var h = TT.roster.home(); if(h) $("lHome").value = h.grade + "-" + h.cls;
+    var h = TT.roster.home(); if(keepHome) $("lHome").value = keepHome; else if(h) $("lHome").value = h.grade + "-" + h.cls;
     var W = [];
     if(D.calendar) W.push(["cal", "학사일정"]);
     if(D.staff) W.push(["staff", "교직원 명렬·내선번호"]);
@@ -543,11 +867,13 @@
     $("lWhat").innerHTML = W.map(function(w){ return '<label><input type="checkbox" value="' + w[0] + '" checked> ' + w[1] + "</label>"; }).join("");
     $("s2").classList.remove("dim"); $("s3").classList.remove("dim");
     $("lMe").onchange = meChanged; meChanged();
+    if(keepSubj && keepMe === $("lMe").value) $("lSubj").value = keepSubj;
+    if(CLOUD && !$("lMe").value) setTimeout(function(){ $("lMe").focus(); }, 50);
   }
   function meChanged(){
     var me = $("lMe").value, t = me ? teacherOf(me) : null, st = (DATA.staff || []).filter(function(s){ return s.name === me; })[0];
     $("lSubj").value = (st && st.subj) || (t && t.subj) || TT.school.load().subject || "";
-    var g = me ? homeGuess(me) : ""; if(g && Array.prototype.some.call($("lHome").options, function(o){ return o.value === g; })) $("lHome").value = g;
+    var g = me ? TTSet.homeGuess(DATA, me) : ""; if(g && Array.prototype.some.call($("lHome").options, function(o){ return o.value === g; })) $("lHome").value = g;
     var n = Object.keys(myCodes(me)).length, notes = [];
     if(me && (DATA.alltt || {}).teachers && !t) notes.push("전체 교사 시간표에 이 이름이 없어 내 시간표는 넣지 않습니다.");
     if(me && t) notes.push("내 수업 " + Object.keys(t.slots).length + "시간 · " + n + "개 반");
@@ -556,52 +882,28 @@
   }
   $("lApply").onclick = function(){
     var me = $("lMe").value; if(!me){ TT.ui.toast("내 이름을 골라 주세요."); $("lMe").focus(); return; }
-    var D = DATA, what = {}; Array.prototype.forEach.call($("lWhat").querySelectorAll("input"), function(i){ what[i.value] = i.checked; });
-    var scope = document.querySelector("input[name=scope]:checked").value, home = $("lHome").value, done = [];
-    /* 학교 정보 · 내 이름 · 내 교과 */
-    var sc = {teacher: me, subject: $("lSubj").value.trim()};
-    if(what.school && D.school.hid) sc.hid = D.school.hid;   // v2.9 숨은 정보 켜고 끄기 (담당자가 정한 대로)
-    if(what.school){ sc.name = D.school.name; sc.principal = D.school.principal; sc.addr = D.school.addr; sc.tel = D.school.tel; sc.comci = D.school.comci; ["neisA", "neisS", "neisKey"].forEach(function(k){ if(D.school[k]) sc[k] = D.school[k]; }); }
-    TT.school.save(sc);
-    if(what.school && D.board && D.board.url && /^https:\/\/script\.google\.com\//.test(D.board.url)){   // v2.10.3 학교 업무판 주소 (비밀번호는 업무판을 처음 열 때 따로)
-      var B = TT.store.get("tt_board_v1", null) || {}; if(B.url !== D.board.url){ B.url = D.board.url; delete B.hidden; TT.store.set("tt_board_v1", B); done.push("학교 업무판 주소"); }
-    }
-    if(what.school && D.school.neisS) done.push("급식");
-    /* 학생 명렬: 같은 학년·반은 명단만 새로, 나머지 반은 그대로 (학생 기록·메모는 학년-반-번호로 이어짐) */
-    if(D.roster && D.roster.length){
-      var codes = myCodes(me), want = D.roster.filter(function(c){ return scope === "all" || codes[c.grade * 100 + c.cls] || home === c.grade + "-" + c.cls; });
-      var R = TT.roster.load(), n = 0;
-      R.classes = R.classes.filter(function(c){ return c.students.length || c.grade != null; });   // 비어 있는 "우리 반" 자리는 정리
-      want.forEach(function(w){
-        var ex = R.classes.filter(function(c){ return c.grade === w.grade && c.cls === w.cls; })[0];
-        if(ex){ ex.students = w.students; ex.name = w.name; } else R.classes.push({id: TT.util.uid(), name: w.name, grade: w.grade, cls: w.cls, students: w.students});
-        n += w.students.length;
-      });
-      var hc = home ? R.classes.filter(function(c){ return c.grade + "-" + c.cls === home; })[0] : null;
-      R.home = hc ? hc.id : (home === "" ? "" : R.home);
-      R = TT.roster.clean(R); if(hc) R.current = hc.id;
-      TT.roster.save(R); done.push("학생 " + want.length + "개 반 " + n + "명");
-    }
-    if(what.cal && D.calendar){ TT.store.set("tt_calendar_v1", {v: 1, y: D.calendar.y, events: D.calendar.events, at: Date.now()}); done.push("학사일정 " + D.calendar.events.length + "개"); }
-    if(what.staff && D.staff){ saveStaff(D.staff, D.staffMain || []); done.push("교직원 " + D.staff.length + "명" + (D.staff.some(function(x){ return x.tel; }) ? "(내선번호 포함)" : "")); }
-    if(D.alltt){
-      TT.store.set("tt_alltt_v1", {v: 1, periods: D.alltt.periods, teachers: D.alltt.teachers, at: Date.now()});
-      var t = teacherOf(me);
-      if(what.tt && t){
-        var old = TT.timetable.load() || {v: 1};
-        var subj = sc.subject, slots = {};
-        Object.keys(t.slots).forEach(function(k){ var s = t.slots[k]; slots[k] = {code: s.code, cls: s.cls, subj: s.subj || subj}; });
-        var maxP = Object.keys(slots).reduce(function(a, k){ return Math.max(a, +k.split("-")[1]); }, 0);
-        old.periods = D.alltt.periods.filter(function(p){ return p.n <= Math.max(maxP, 7); });
-        old.slots = slots; old.weeks = {}; old.updatedAt = Date.now(); old.from = "setup";
-        TT.store.set(TT.timetable.KEY, old); done.push("내 시간표 " + Object.keys(slots).length + "시간");
-      }
+    if(CLOUD && CLOUD.hasB && !(DATA.roster || []).length && $("lBk").value){ $("lBkGo").click(); return; }   // 비밀 문구를 넣고 바로 누른 경우: 먼저 열기
+    var what = {}; Array.prototype.forEach.call($("lWhat").querySelectorAll("input"), function(i){ what[i.value] = i.checked; });
+    var scope = document.querySelector("input[name=scope]:checked").value, home = $("lHome").value;
+    var done = TTSet.apply(DATA, {me: me, subj: $("lSubj").value.trim(), home: home, scope: scope, what: what});
+    if(CLOUD){
+      var S = TTSet.state(); S.ver = CLOUD.ver; S.at = CLOUD.at; S.sum = CLOUD.sum || ""; S.books = !!CLOUD.books;
+      if(BK && $("lBkKeep").checked) S.bk = BK; else delete S.bk;
+      TTSet.saveState(S); try{ localStorage.setItem("ttset_chk", String(Date.now())); }catch(e){}
+      if(DATA.school && DATA.school.neisS) TTSet.neisCal(true);
     }
     $("steps").hidden = true; $("lDone").hidden = false;
-    $("lDoneTxt").innerHTML = "<b>" + esc(me) + " 선생님, 세팅이 끝났습니다.</b><br>" + esc(done.join(" · ")) + (home ? "<br>★ 우리 반: " + esc(home.replace("-", "학년 ") + "반") : "");
+    $("lDoneTxt").innerHTML = "<b>" + esc(me) + " 선생님, 세팅이 끝났습니다.</b><br>" + esc(done.join(" · ")) + (home ? "<br>★ 우리 반: " + esc(home.replace("-", "학년 ") + "반") : "")
+      + (CLOUD && CLOUD.hasB && !(DATA.roster || []).length ? "<br><small>학생 명렬은 비밀 문구를 받으면 여기서 다시 열 수 있어요.</small>" : "")
+      + (CLOUD ? "<br><small>🦉 앞으로 바뀐 내용은 쌤 노트를 켤 때 저절로 반영돼요. 잠시 뒤 쌤비 홈으로 갑니다…</small>" : "");
+    if(CLOUD) setTimeout(function(){ location.href = "../../"; }, 3500);
   };
 
+  var tab0 = tab; tab = function(make){ tab0(make); if(make) upCheck(); };
+  $("tMake").onclick = function(){ tab(true); };
   if(/[?&]make/.test(location.search)) tab(true);
+  if(/[?&]map/.test(location.search)) setTimeout(openMap, 200);
+  if(/[?&]cloud/.test(location.search) && !$("cGo").disabled) setTimeout(function(){ var c = TTSet.board(); if(c.pw && !devRoom()) $("cGo").click(); else $("cPw").focus(); }, 300);
 })();
 </script>
 </body>

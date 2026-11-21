@@ -40,6 +40,7 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
 <link rel="preload" as="script" href="shared/meal.js">
 <link rel="preload" as="script" href="shared/libd.js">
 <link rel="preload" as="script" href="shared/libcache.js">
+<link rel="preload" as="script" href="shared/schoolset.js">
 <link rel="preload" as="script" href="shared/voice.js">
 <link rel="preload" as="script" href="shared/sbart.js">
 <link rel="preload" as="script" href="shared/ssambi.js">
@@ -555,6 +556,7 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
         <button type="button" id="mJoy" data-e="🎈" onclick="this.closest('details').open=false;window.TT&&TT.joy?TT.joy.open():TT.ui.toast('교실 기기에서는 재미 요소가 꺼져 있어요.')">도장판·배지</button>
         <hr><div class="mh">설정</div>
         <a href="apps/setup/" data-e="🧳"><span data-tn="setup">학기초 세팅</span></a>
+        <a href="apps/setup/?map" id="mMap" data-e="🗺️">내 자료 지도</a>
         <button type="button" id="mSchool" data-e="🏫">학교·선생님 설정</button>
         <button type="button" id="mAuto" data-e="✨">자동 준비 설정</button>
         <button type="button" id="mFont" data-e="🎨">화면 꾸미기</button>
@@ -690,6 +692,7 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
 <script src="shared/meal.js"></script>
 <script src="shared/libd.js"></script>
 <script src="shared/libcache.js"></script>
+<script src="shared/schoolset.js"></script>
 <script src="shared/voice.js"></script>
 <script src="shared/sbart.js"></script>
 <script src="shared/ssambi.js"></script>
@@ -855,7 +858,7 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
       }
       if(m.id === "settings" && !TT.classroom){                                   // 설정 메뉴: ⋯ 메뉴에 있던 설정을 카드로 (누르면 같은 창이 열림)
         ({guide: [["mHelp","❓","처음 사용 안내","쌤 노트 쓰는 법"],["mKeys","⌨️","단축키 안내","/ · Ctrl+F · Alt+B · ?"],["mFeedback","💬","의견 보내기","불편한 점 · 아이디어를 담당 선생님께"],["mJoy","🎈","도장판·배지","퇴근 도장 · 아낀 시간 · 배지 · 쌤비 소품"]],
-          set: [["mSchool","🏫","학교·선생님 설정","내 정보 · 담임/교과 · 교과 칸"],["mAuto","✨","자동 준비 설정","시기에 맞춰 할 일 미리 넣기"],["mFont","🎨","화면 꾸미기","테마 색 · 글꼴 · 글자 크기"],["mBoard","📅","학교 업무판 연결","업무판 주소 · 자료실 · 내선번호"],["mVault","☁️","기기 연결·동기화","내 기기끼리 자료 맞추기"],["mTalk","📣","쌤비 이야기","학교 소식 보내기 · 들을 이야기 고르기"],["mInstall","📲","앱 설치하기","바탕화면·홈 화면에 쌤비 아이콘"]],
+          set: [["mSchool","🏫","학교·선생님 설정","내 정보 · 담임/교과 · 교과 칸"],["mAuto","✨","자동 준비 설정","시기에 맞춰 할 일 미리 넣기"],["mFont","🎨","화면 꾸미기","테마 색 · 글꼴 · 글자 크기"],["mBoard","📅","학교 업무판 연결","업무판 주소 · 자료실 · 내선번호"],["mVault","☁️","기기 연결·동기화","내 기기끼리 자료 맞추기"],["mTalk","📣","쌤비 이야기","학교 소식 보내기 · 들을 이야기 고르기"],["mInstall","📲","앱 설치하기","바탕화면·홈 화면에 쌤비 아이콘"],["mMap","🗺️","내 자료 지도","어디에 무엇이 저장되나 · 학교 세팅 지우기"]],
           data: [["mBackup","💾","전체 백업 저장","이 기기 자료를 파일 하나로"],["mRestore","📂","백업 불러오기","백업 파일에서 되살리기"]],
           year: [["mNewYear","🌱","새 학년 시작","한 해 돌아보기 → 백업 → 정리 (조심)"]]}[g.id] || []
         ).forEach(function(a){ var el = $(a[0]); if(el && !el.hidden) items.push({x: {icon: a[1], name: a[2], st: a[3], fn: clickMenu(a[0])}}); });
@@ -1239,10 +1242,10 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
     if(!o || !/^https:\/\/script\.google\.com\/(?:a\/macros\/[^\/?#\s]+|macros)\/s\/[\w-]+\/exec$/.test(o.b || "")){ TT.ui.toast("초대 링크가 올바르지 않아요. 링크를 다시 받아 주세요."); return; }
     var sn = String(o.s || "").slice(0, 20);
     setTimeout(function(){
-      TT.ui.confirm("🦉 쌤 노트 초대", (sn ? sn + " " : "") + "쌤 노트에 초대받았어요. 학교 이름과 학교 업무판 주소를 넣을까요? 다음 창에서 업무판 공용 비밀번호(따로 받은 것)만 입력하면 됩니다.", "넣기", function(){
+      TT.ui.confirm(o.r ? "🏫 교실 기기 세팅" : "🦉 쌤 노트 초대", (sn ? sn + " " : "") + (o.r ? "교실 기기(전자칠판)로 세팅할까요? 다음 화면에서 업무판 공용 비밀번호만 넣으면 됩니다." : "쌤 노트에 초대받았어요. 다음 화면에서 ① 공용 비밀번호 ② 내 이름 고르기만 하면 학교 세팅이 끝나요."), "시작", function(){
         if(sn && !TT.school.load().name) TT.school.save({name: sn});
         var B = TT.store.get("tt_board_v1", null) || {}; B.url = o.b; delete B.hidden; TT.store.set("tt_board_v1", B);
-        var mb = $("mBoard"); if(mb) mb.click();
+        location.href = "apps/setup/?cloud" + (o.r ? "&room" : "");     // v2.40 PLAN_세팅공유: 자동 세팅 마법사
       });
     }, 900);
   })();

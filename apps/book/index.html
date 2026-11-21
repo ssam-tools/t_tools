@@ -1242,6 +1242,31 @@
   });
   var rt; addEventListener("resize", function(){ clearTimeout(rt); rt = setTimeout(show, 200); });
 
+  /* v2.40 PLAN_세팅공유 7단계: 첫 화면이 숨은 창으로 ?auto=학년들 을 열면, 내 교과·내 학년 교과서와 수업 자료 묶음을 조용히 받아 둠(이미 받은 것은 건너뜀) */
+  var AUTO = (location.search.match(/[?&]auto=([\d,]+)/) || [])[1];
+  if(AUTO && window.parent !== window){
+    var post = function(k, t){ try{ parent.postMessage({ttbook: k, text: t || ""}, location.origin); }catch(e){} };
+    if(!hasBoard()){ post("done"); return; }
+    var gs = AUTO.split(",").map(Number).filter(function(g){ return g >= 1 && g <= 3; }), got = [];
+    gs.reduce(function(pr, g){ return pr.then(function(){
+      return cSets(g).then(function(L){
+        if(!L.length) return;
+        return new Promise(function(r){ getPdf(g, r); }).then(function(rec){
+          if(rec && S.got[g] === L[0].set) return;
+          return cloudDown(g, function(t){ post("prog", g + "학년 교과서 " + t.replace(/^☁\s*/, "")); }).then(function(){ S.got[g] = L[0].set; save(); got.push(g + "학년"); });
+        });
+      });
+    }); }, Promise.resolve()).then(function(){ return packSets(); }).then(function(P){
+      if(!P.length || S.got.pack === P[0].set) return 0;
+      var n = 0;
+      return packDown(P[0], function(t){ post("prog", t.replace(/^☁\s*/, "")); }).then(function(items){ n = items.length; return new Promise(function(res){ processFiles(items, false, res); }); })
+        .then(function(){ S.got.pack = P[0].set; save(); return n; });
+    }).then(function(n){
+      post("done", got.length || n ? "교과서·수업 자료를 받아 두었어요" + (got.length ? " · " + got.join("·") : "") + (n ? " · 자료 " + n + "개" : "") : "");
+    }, function(){ post("done"); });
+    return;
+  }
+
   /* 처음: 주소의 반 → 지금 시간표의 반 → 지난번 고른 반 → 첫 반 */
   drawChips();
   var nc = nowClass(), q = (location.search.match(/[?&]c=(\d+)/) || [])[1], L0 = /[?&]lesson=1/.test(location.search);
