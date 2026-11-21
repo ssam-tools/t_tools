@@ -268,10 +268,10 @@
   })();
 
   /* ---------- 도장판·배지 창 ---------- */
-  /* 📝 나의 지당 — 지금 당장, 한 줄부터 (학생 지당 노트와 같은 마음으로 선생님도) */
+  /* 📝 나의 지당 — 지금 당장, 변화의 시작! (학생 지당 노트와 같은 마음으로 선생님도) */
   function jdBlock(){
     var jd = J.jd || {days: {}}, n = Object.keys(jd.days || {}).length, did = !!(jd.days || {})[ymd()];
-    if(!jd.goal || jd.edit) return '<h3>📝 나의 지당 <small>지금 당장, 한 줄부터 · 선생님도 100일 도전</small></h3><div style="display:flex;gap:6px"><input id="jdGoal" maxlength="60" value="' + esc(jd.goal || "") + '" placeholder="예: 매일 팔굽혀펴기 30개" style="flex:1;font:inherit;padding:6px 10px;border:1.5px solid var(--t-line,#dde3ea);border-radius:10px"><button type="button" data-jd="set" style="font:inherit;font-weight:800;border:0;border-radius:10px;padding:6px 14px;background:#FFD84D;cursor:pointer">' + (jd.goal ? "바꾸기" : "시작") + "</button></div>";
+    if(!jd.goal || jd.edit) return '<h3>📝 나의 지당 <small>지금 당장, 변화의 시작! · 선생님도 100일 도전</small></h3><div style="display:flex;gap:6px"><input id="jdGoal" maxlength="60" value="' + esc(jd.goal || "") + '" placeholder="예: 매일 팔굽혀펴기 30개" style="flex:1;font:inherit;padding:6px 10px;border:1.5px solid var(--t-line,#dde3ea);border-radius:10px"><button type="button" data-jd="set" style="font:inherit;font-weight:800;border:0;border-radius:10px;padding:6px 14px;background:#FFD84D;cursor:pointer">' + (jd.goal ? "바꾸기" : "시작") + "</button></div>";
     return '<h3>📝 나의 지당 <small>' + n + "번째" + (n >= 100 ? " · 💯 백일 지당!" : " · 100일까지 " + (100 - n) + "번") + ' · <a href="#" data-jd="edit" style="color:inherit">목표 바꾸기</a></small></h3>'
       + '<div style="display:flex;align-items:center;gap:8px"><span style="flex:1;font-weight:700">' + esc(jd.goal) + "</span>"
       + (did ? '<button type="button" data-jd="undo" title="다시 누르면 취소" style="font:inherit;font-weight:800;border:2px solid #c62828;color:#c62828;background:#fff;border-radius:10px;padding:5px 12px;cursor:pointer;transform:rotate(-4deg)">✔ 오늘 지당</button>'

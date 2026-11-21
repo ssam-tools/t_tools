@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="../../assets/ssambi3-192.png">
 <link rel="apple-touch-icon" href="../../assets/ssambi3-180.png">
-<title>지당 노트 · 지금 당장, 한 줄부터</title>
+<title>지당 노트 · 지금 당장, 변화의 시작!</title>
 <!--
   📝 지당 노트 — 지당 프로젝트(지금 당장 시작하는 것이 변화의 시작: 목표 → 실천 → 한 줄 기록 → 100일)의 학생용 휴대폰 앱.
   쌤 노트 가족: 쌤 노트(교사) · 공부 Gym(학생 실력, 쌤비 트레이너) · 지당 노트(학생 습관·마음, 쌤비 코치). PLAN_지당연계.md
@@ -393,7 +393,7 @@ function render(){
   app.innerHTML=headerBar()+(view==='today'?viewToday():view==='change'?viewChange():view==='reward'?viewReward():view==='quest'?viewQuest():viewGoal());
   if(view==='today'&&justSaved)loadFeedback();
 }
-const headerBar=()=>`<div class="top"><div class="brand"><span class="sbm" aria-hidden="true">${sbArt(40,{})}</span><span class="bt">지당 노트<small>지금 당장, 한 줄부터</small></span></div>${S.goal?`<a class="chip" href="../gym/" style="text-decoration:none;color:inherit;font-weight:700">💪 Gym${(g=>g.has&&g.today?` ${g.today}분`:'')(gymNow())}</a>`:''}</div>`;
+const headerBar=()=>`<div class="top"><div class="brand"><span class="sbm" aria-hidden="true">${sbArt(40,{})}</span><span class="bt">지당 노트<small>지금 당장, 변화의 시작!</small></span></div>${S.goal?`<a class="chip" href="../gym/" style="text-decoration:none;color:inherit;font-weight:700">💪 Gym${(g=>g.has&&g.today?` ${g.today}분`:'')(gymNow())}</a>`:''}</div>`;
 
 /* 시작하기 */
 function startOb(edit){
@@ -402,7 +402,7 @@ function startOb(edit){
 }
 function steps(n){return `<div class="steps" aria-hidden="true">${[0,1,2].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`}
 function renderOb(){
-  if(ob.step===0)return `<div class="stack"><div class="hero"><h1>지금 당장,<br>한 줄부터 시작해요</h1><p class="sub">'지당'은 <b>지금 당장</b>이에요. 지금 시작하는 것이 변화의 시작! 목표 하나를 정하고 오늘 한 줄을 남기면 1일차예요.</p></div>${steps(0)}
+  if(ob.step===0)return `<div class="stack"><div class="hero"><h1>지금 당장,<br>변화의 시작!</h1><p class="sub">'지당'은 <b>지금 당장</b>이에요. 지금 시작하는 것이 변화의 시작! 목표 하나를 정하고 오늘 한 줄을 남기면 1일차예요.</p></div>${steps(0)}
   <div class="card"><label for="nick">별명</label><input type="text" id="nick" data-ob="nick" maxlength="12" value="${esc(ob.nick)}" placeholder="예: 새벽달" autocomplete="off">
   <p class="tiny" style="margin-top:8px">실명, 학교, 전화번호 같은 개인정보는 쓰지 마세요. 기록은 이 휴대폰에만 저장돼요.</p></div>
   <button class="btn block" data-act="ob-next">다음</button><div class="err" id="err"></div></div>`;
@@ -562,7 +562,7 @@ function coachLine(mood){
   const g=gymNow();
   if(mood==='wait'&&g.has&&g.today>=10)return `오늘 공부 Gym ${g.today}분 했네! 아래에서 한 번에 지당에 넣자.`;
   const L={
-    wait:['지금 당장, 한 줄부터! 오늘의 지당 같이 할까?','아주 조금만 해도 돼. 시작한 게 이긴 거야.','2분이면 충분해. 지금 바로 해 보자!'],
+    wait:['지금 당장, 변화의 시작! 오늘의 지당 같이 할까?','아주 조금만 해도 돼. 시작한 게 이긴 거야.','2분이면 충분해. 지금 바로 해 보자!'],
     rest:['잠깐 쉬었구나. 괜찮아, 지금 당장 다시 시작!','언제 와도 반가워. 작게 한 번만 해 볼까?','쉬었으니 오늘은 가볍게 한 줄만!'],
     cheer:['오늘도 해냈다! 끈기 심장이 한 번 더 뛰었어.','지금 당장 한 게 변화의 시작이야!','멋져! 내일의 나도 고마워할 거야.']
   }[mood];
