@@ -10,6 +10,7 @@ var TTSet = (function(){
   "use strict";
   var APP = "ssamnote-schoolset", ITER = 310000, KEY = "tt_schoolset_v1", PREV = "ttset_prev";
   var URL_RE = /^https:\/\/script\.google\.com\/(?:a\/macros\/[^\/?#\s]+|macros)\/s\/[\w-]+\/exec$/;
+  var T = {};                                                                     // 밖에서 쓰는 이름표 (안에서도 T.api로 불러 바꿔 끼울 수 있게)
   var SNAP = ["tt_school_v1", "tt_roster_v1", "tt_staff_v1", "tt_calendar_v1", "tt_alltt_v1", "tt_timetable_v1", "tt_sites_v1", "tt_lib_star_v1"];
   function LS(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
   function LSset(k, v){ try{ if(v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){} }
@@ -71,16 +72,16 @@ var TTSet = (function(){
   /* 서버에서 받아 풀기: A는 공용 비밀번호로, B는 비밀 문구(bk)가 있을 때만 */
   function pull(cfg, bk){
     var out = {};
-    return api("setver", null, cfg).then(function(m){
+    return T.api("setver", null, cfg).then(function(m){
       out.meta = m; if(!m.ver) return out;
-      return api("setget", {part: "a"}, cfg).then(function(r){ return unlock(r.data, cfg.pw); }).then(function(A){
+      return T.api("setget", {part: "a"}, cfg).then(function(r){ return unlock(r.data, cfg.pw); }).then(function(A){
         out.A = A;
         if(!m.hasB || !bk) return out;
-        return api("setget", {part: "b"}, cfg).then(function(r){ return unlock(r.data, bk); }).then(function(B){ out.B = B; return out; }, function(e){ out.bErr = e; return out; });
+        return T.api("setget", {part: "b"}, cfg).then(function(r){ return unlock(r.data, bk); }).then(function(B){ out.B = B; return out; }, function(e){ out.bErr = e; return out; });
       });
     });
   }
-  function pullB(cfg, bk){ return api("setget", {part: "b"}, cfg).then(function(r){ return unlock(r.data, bk); }); }
+  function pullB(cfg, bk){ return T.api("setget", {part: "b"}, cfg).then(function(r){ return unlock(r.data, bk); }); }
 
   /* ================= 적용 (세팅 파일 · 인터넷 둘 다) =================
      D = {school, board, staff, staffMain, calendar, alltt, roster, rec}
@@ -198,7 +199,7 @@ var TTSet = (function(){
     var last = +(LS("ttset_chk") || 0); if(!force && Date.now() - last < 15 * 60000) return Promise.resolve(null);
     LSset("ttset_chk", String(Date.now()));
     var S = state();
-    return api("setver", null, c).then(function(m){
+    return T.api("setver", null, c).then(function(m){
       if(!m.ver) return null;
       S = state(); S.books = !!m.books; saveState(S);
       if(!S.ver){                                                                // 아직 인터넷 세팅을 받지 않은 기기: 한 번만 알림
@@ -241,7 +242,7 @@ var TTSet = (function(){
     if(!force && LS("ttset_cal") === today) return Promise.resolve(null);
     LSset("ttset_cal", today);
     var Y = ay(), c = board();
-    var get = c.url && c.pw ? api("setcal", {a: s.neisA, s: s.neisS, y: Y, key: s.neisKey || ""}, c).then(function(r){ return r.rows; }) : Promise.reject(new Error("NOBOARD"));
+    var get = c.url && c.pw ? T.api("setcal", {a: s.neisA, s: s.neisS, y: Y, key: s.neisKey || ""}, c).then(function(r){ return r.rows; }) : Promise.reject(new Error("NOBOARD"));
     return get.catch(function(){                                                 // 업무판이 없거나 예전 것: 인증키가 있으면 바로 받기
       if(!s.neisKey) throw new Error("NOKEY");
       return fetch("https://open.neis.go.kr/hub/SchoolSchedule?Type=json&pIndex=1&pSize=1000&KEY=" + encodeURIComponent(s.neisKey) + "&ATPT_OFCDC_SC_CODE=" + s.neisA + "&SD_SCHUL_CODE=" + s.neisS + "&AA_FROM_YMD=" + Y + "0301&AA_TO_YMD=" + (Y + 1) + "0228")
@@ -321,8 +322,8 @@ var TTSet = (function(){
     }, {timeout: 6000}); }, 4000);
   }
 
-  return {APP: APP, lock: lock, unlock: unlock, api: api, errText: errText, board: board, state: state, saveState: saveState, pull: pull, pullB: pullB,
+  return Object.assign(T, {APP: APP, lock: lock, unlock: unlock, api: api, errText: errText, board: board, state: state, saveState: saveState, pull: pull, pullB: pullB,
           apply: apply, teacherOf: teacherOf, myCodes: myCodes, homeGuess: homeGuess, snapshot: snapshot, revert: revert, check: check, neisCal: neisCal,
-          books: books, myGrades: myGrades, wipeLocal: wipeLocal, boot: boot, room: room, URL_RE: URL_RE};
+          books: books, myGrades: myGrades, wipeLocal: wipeLocal, boot: boot, room: room, URL_RE: URL_RE});
 })();
 if(typeof window !== "undefined" && window.TT && !/\/apps\//.test(location.pathname)) TTSet.boot();
