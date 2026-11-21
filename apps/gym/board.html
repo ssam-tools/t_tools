@@ -97,6 +97,7 @@
 </div>
 <script src="../../shared/qr.js"></script>
 <script src="../../shared/jdgym.js"></script>
+<script src="../jidang/subjects.js"></script>
 <script src="map.js"></script>
 <script src="feedback.js"></script>
 <script>
@@ -234,15 +235,16 @@
     var J = window.JDGYM, L = Object.keys(S.jd).map(function(k){ var o = S.jd[k]; o._k = k; return o; }).sort(function(a, b){ return (b.r || 0) - (a.r || 0); });
     var MI = [7, 30, 50, 100], stop = L.filter(function(o){ return dAgo(o.l) >= 3; }).length, done = L.filter(function(o){ return (o.r || 0) >= 100; }).length;
     var avg = L.length ? Math.round(L.reduce(function(s, o){ return s + (o.r || 0); }, 0) / L.length) : 0;
+    var sjCell = function(o){ var F = o.sf && window.JD_SUBJ ? JD_SUBJ.fields.filter(function(f){ return f.id === o.sf; })[0] : null; return F ? '<span title="' + esc((o.sl || []).join(", ")) + '">' + F.ic + " " + esc(F.n) + " · " + (o.sp || 0) + "</span>" : "-"; };
     var cp = function(o){ return MI.map(function(d){ if((o.r || 0) < d) return ""; var c = (o.c || []).filter(function(x){ return x[0] === d; })[0]; return '<span title="' + (c ? (c[3] ? "사용 완료" : "쿠폰 발급 · 아직 사용 전") : "도달 · 쿠폰 아직 안 받음") + '">' + d + (c ? (c[3] ? "✓" : "●") : "○") + "</span>"; }).filter(Boolean).join(" "); };
     if(!JSTART){ var d = new Date(); d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7)); JSTART = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
     var jurl = new URL("../jidang/", location.href).href + "?start=" + JSTART, e100 = new Date(JSTART + "T00:00:00"); e100.setDate(e100.getDate() + 99);
     m.innerHTML = '<div class="lk" style="grid-template-columns:1.6fr 1fr">'
       + '<div class="card" style="padding:12px"><div class="row"><b>📝 지당 노트 현황</b><span class="muted">학생이 지당 노트 → 목표 → 선생님께 보내기로 준 코드를 📥 칸에 넣으면 모여요 (글 내용은 없어요)</span><span style="flex:1"></span>' + (L.length ? '<button class="btn gray" id="jclr">모두 지우기</button>' : "") + "</div>"
       + '<div class="sum" style="grid-template-columns:repeat(4,1fr)"><div><b>' + L.length + '명</b><span>코드 제출</span></div><div><b>' + avg + '번</b><span>평균 기록한 날</span></div><div><b>' + stop + '명</b><span>3일 넘게 멈춤</span></div><div><b>' + done + '명</b><span>100일 완주</span></div></div>'
-      + (L.length ? '<div class="grow sc" style="border:1px solid var(--line);border-radius:12px"><table><thead><tr><th>별명</th><th>시작</th><th>기록한 날</th><th>연속</th><th>마지막</th><th>끈기 심장</th><th>Gym 함께</th><th>보상 (○도달 ●쿠폰 ✓사용)</th><th></th><th></th></tr></thead><tbody>'
+      + (L.length ? '<div class="grow sc" style="border:1px solid var(--line);border-radius:12px"><table><thead><tr><th>별명</th><th>시작</th><th>기록한 날</th><th>연속</th><th>마지막</th><th>끈기 심장</th><th>Gym 함께</th><th>과목 설계</th><th>보상 (○도달 ●쿠폰 ✓사용)</th><th></th><th></th></tr></thead><tbody>'
         + L.map(function(o){ var ag = dAgo(o.l), h = J ? J.heart(o.r || 0) : {lv: 0, name: ""};
-            return '<tr><td class="nk">' + esc(o.n || "?") + "</td><td>" + esc((o.s || "").slice(5).replace("-", ".")) + "</td><td><b>" + (o.r || 0) + "</b>번</td><td>" + (o.st || 0) + "일</td><td>" + (o.l ? (ag ? ag + "일 전" : "오늘") : "-") + "</td><td>" + (h.lv ? "💗" : "🤍") + " " + esc(h.name) + "</td><td>" + (o.gy || 0) + "번</td><td>" + cp(o) + "</td><td>"
+            return '<tr><td class="nk">' + esc(o.n || "?") + "</td><td>" + esc((o.s || "").slice(5).replace("-", ".")) + "</td><td><b>" + (o.r || 0) + "</b>번</td><td>" + (o.st || 0) + "일</td><td>" + (o.l ? (ag ? ag + "일 전" : "오늘") : "-") + "</td><td>" + (h.lv ? "💗" : "🤍") + " " + esc(h.name) + "</td><td>" + (o.gy || 0) + "번</td><td>" + sjCell(o) + "</td><td>" + cp(o) + "</td><td>"
               + ((o.r || 0) >= 100 ? '<span class="ok">완주</span>' : ag >= 3 ? '<span class="flag">관심</span>' : "") + '</td><td><button class="x" data-jdel="' + esc(o._k) + '" title="지우기">✕</button></td></tr>'; }).join("") + "</tbody></table></div>"
         : '<p class="muted">아직 들어온 지당 보고 코드가 없어요. 📥 결과 코드 넣기 칸에 JD1.… 코드를 붙여 넣어 주세요.</p>')
       + "</div>"

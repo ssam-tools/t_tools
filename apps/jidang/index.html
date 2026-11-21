@@ -50,6 +50,11 @@ p{margin:0}
 .muted{color:var(--muted);font-size:14px}
 .tiny{font-size:13px;color:var(--muted)}
 .hero h1{font-size:30px}
+.hero.slim h1{font-size:24px}.hero.slim .sub{margin-top:2px;font-size:14px}
+.card.mini{padding:10px 14px}.card.mini .gl{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn.sm{min-height:38px;padding:6px 12px;font-size:14px;white-space:nowrap;box-shadow:none}
+.today-form textarea{min-height:64px}
+.today-form{gap:12px!important}
 .hero .sub{color:var(--muted);margin-top:6px}
 label,.lab{display:block;font-weight:600;font-size:15px;margin-bottom:6px}
 input[type=text],input[type=number],textarea{width:100%;background:#FFFBEB;border:2px solid var(--line);border-radius:14px;padding:11px 12px;outline:none}
@@ -162,7 +167,7 @@ details summary{cursor:pointer;font-weight:600}
 .pre-wrap{white-space:pre-wrap}
 
 .petcard{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;background:linear-gradient(180deg,#fff,#FFF6D6)}
-.pet{width:92px;flex:none}
+.pet{width:76px;flex:none}
 .petcard .heart{flex-basis:100%;margin-top:2px}
 .petcard .pet svg{animation:bob 2.8s ease-in-out infinite}
 @keyframes bob{50%{transform:translateY(-4px)}}
@@ -207,6 +212,14 @@ details summary{cursor:pointer;font-weight:600}
 .gymc .btn{min-height:40px;padding:8px 14px;font-size:14px;white-space:nowrap}
 .dday{display:inline-block;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:1px 10px;font-size:12.5px;font-weight:800;color:var(--ink);margin-left:4px}
 .gift{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.gift span{background:#FFF6D6;border:1.5px solid var(--lamp);border-radius:999px;padding:4px 12px;font-weight:700;font-size:14px}
+.sj .chips{margin-top:6px}.sj .chip{font-size:13.5px;padding:5px 11px}
+.chip.core{border-color:#FFB238}.chip.core:before{content:"★ ";color:#E07A00}
+.chip.plus:before{content:"+ ";color:var(--muted)}
+.chip.fixed{background:#F7F1DE;border-style:dashed;cursor:default}
+.fgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fgrid button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:2px solid var(--line);background:#fff;border-radius:16px;padding:10px 12px;cursor:pointer;font-weight:800}
+.fgrid button small{font-weight:500;color:var(--muted);font-size:12.5px}
+.fgrid button.rec{border-color:var(--water);background:var(--water-soft)}
 .capsule{background:linear-gradient(180deg,#fff,#FFF6D6)}.capsule .lock{font-size:30px;text-align:center}
 </style>
 </head>
@@ -222,6 +235,7 @@ details summary{cursor:pointer;font-weight:600}
 
 <script src="../../shared/sbart.js"></script>
 <script src="../../shared/jdgym.js"></script>
+<script src="subjects.js"></script>
 <script>
 "use strict";
 /* ---------- 도우미 ---------- */
@@ -280,6 +294,7 @@ function badges(){
     {n:'배움 10번',d:'퀘스트를 10번 마쳤어요',v:Q().stats.done,t:10},
     {n:'꿈 탐험가',d:'직업 5개를 살펴봤어요',v:Object.keys(Q().jobs).length,t:5},
     {n:'꿈을 적은 날',d:'나의 꿈을 글로 적었어요',v:(S.dream&&S.dream.text)?1:0,t:1},
+    {n:'과목 설계',d:'고교 과목 바구니를 담았어요',v:S.subj?1:0,t:1},
     {n:'Gym과 함께',d:'공부 Gym 기록을 지당에 5번 넣었어요',v:ks.filter(k=>S.entries[k].gym).length,t:5},
     {n:'100일 뒤의 나에게',d:'타임캡슐 편지를 썼어요',v:(S.capsule&&S.capsule.text)?1:0,t:1},
     ...(S.pet?[{n:'예전 친구',d:'예전 친구 캐릭터와 함께 출발했어요',v:1,t:1}]:[]),
@@ -423,8 +438,8 @@ function viewToday(){
   const t=todayKey(),e=S.entries[t],N=dayNum(),g=S.goal,sk=streak();
   const yest=addDays(t,-1),miss=!S.entries[yest]&&!S.bridges[yest]&&yest>=S.start&&tickets()>0&&keys().length>0;
   const d100=S.start&&N<=100?`<span class="dday">🎯 100일째 ${kdate(addDays(S.start,99))}</span>`:'';
-  const head=`<div class="hero"><p class="tiny">${kdate(t)}${d100}</p><h1>${esc(S.nick)}님, ${N}일차</h1><p class="sub">연속 ${sk}일 · 기록한 날 ${keys().length}번 · 회복권 ${Math.max(0,tickets())}장</p><p class="sub" style="margin-top:2px">칭호 <b>${esc(level(keys().length).name)}</b>${nextMile(keys().length)?` · ${nextMile(keys().length).d}일 보상까지 ${nextMile(keys().length).d-keys().length}번`:''}</p></div>`;
-  const goalCard=`<div class="card"><p class="tiny">내가 정한 목표</p><p style="font-weight:600;margin-top:2px">${esc(g.text)}</p>${g.plan&&(g.plan.when||g.plan.what)?`<p class="muted" style="margin-top:8px">${esc([g.plan.when,g.plan.where,g.plan.what].filter(Boolean).join(' · '))}</p>`:''}</div>`;
+  const head=`<div class="hero slim"><p class="tiny">${kdate(t)}${d100}</p><h1>${esc(S.nick)}님, ${N}일차 <span class="pill" style="vertical-align:middle">${esc(level(keys().length).name)}</span></h1><p class="sub">연속 ${sk}일 · 기록 ${keys().length}번 · 회복권 ${Math.max(0,tickets())}장${nextMile(keys().length)?` · ${nextMile(keys().length).d}일 보상까지 ${nextMile(keys().length).d-keys().length}번`:''}</p></div>`;
+  const qn=qDoneToday(),goalCard=`<div class="card mini"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><div style="min-width:0;flex:1"><p class="tiny">🎯 내 목표${g.plan&&g.plan.when?` · ${esc(g.plan.when)}`:''}</p><p class="gl">${esc(g.text)}</p></div><button class="btn ghost sm" data-act="nav" data-v="quest">퀘스트 ${qn}/${QMAX}</button></div></div>`;
   const bridge=miss?`<div class="hint">어제는 쉬어갔어요. 회복권으로 어제를 이어 붙이면 연속 기록이 끊기지 않아요.<div style="margin-top:8px"><button class="btn ghost" data-act="bridge" data-d="${yest}">회복권 쓰기</button></div></div>`:'';
   if(e&&!form){
     const celebrate=justSaved?`<div class="card"><div class="drop" aria-hidden="true"><span class="r"></span><span class="r r2"></span><span class="stone">지당</span></div><h2 style="text-align:center;font-size:22px">오늘의 지당 완료! ${dayNum()}일차</h2>${justSaved.title?`<p style="text-align:center;margin-top:6px">새 칭호: <b>${esc(justSaved.title)}</b></p>`:''}${justSaved.newBadges.length?`<p style="text-align:center;margin-top:6px">새 배지: <b>${justSaved.newBadges.map(esc).join(', ')}</b></p>`:''}${justSaved.first&&!(S.capsule&&S.capsule.text)?`<div class="hint" style="margin-top:10px;text-align:center">첫날 기념으로 <b>100일 뒤의 나에게</b> 편지를 남겨 볼까요? 100번 지당하면 열려요.<div style="margin-top:8px"><button class="btn ghost" data-act="nav" data-v="goal">✉️ 편지 쓰러 가기</button></div></div>`:''}</div>${mileCard()}<div class="card" id="fb"><div class="skeleton"></div><div class="skeleton" style="width:60%"></div></div>`:'';
@@ -432,7 +447,7 @@ function viewToday(){
     <div class="card"><h3>오늘의 기록</h3><p>${g.type==='count'?`<b>${e.val}${esc(unit())}</b> <span class="muted">/ 약속 ${esc(g.target||'-')}${esc(unit())}</span>`:`<b>${e.done?'했어요':'시작만 했어요'}</b>`}${e.done?' · 약속을 지켰어요':''}</p>
     ${e.win?`<p class="muted" style="margin-top:6px">작은 승리: ${esc(e.win)}</p>`:''}
     ${e.note?`<p class="pre-wrap" style="margin-top:8px">${esc(e.note)}</p>`:''}
-    <div class="row" style="margin-top:12px"><button class="btn ghost" data-act="edit-today">고치기</button><button class="btn" data-act="copy" data-d="${t}">글 복사하기</button></div><div class="tiny" id="copyMsg" style="margin-top:8px" aria-live="polite"></div></div>${goalCard}${questCard()}</div>`;
+    <div class="row" style="margin-top:12px"><button class="btn ghost" data-act="edit-today">고치기</button><button class="btn" data-act="copy" data-d="${t}">글 복사하기</button></div><div class="tiny" id="copyMsg" style="margin-top:8px" aria-live="polite"></div></div>${goalCard}</div>`;
   }
   const f=form||(form={val:e?e.val:'',done:e?(e.done?'1':'0'):'',energy:e?e.energy:0,note:e?e.note:'',win:e?e.win:''});
   const first=keys().length===0,gm=gymNow();
@@ -441,13 +456,12 @@ function viewToday(){
   const input=g.type==='count'
    ?`<label for="val">오늘 한 양 (${esc(unit())})</label><div class="stepper"><button type="button" data-act="step" data-n="-1" aria-label="하나 줄이기">−</button><input type="number" inputmode="numeric" id="val" data-form="val" min="0" value="${esc(f.val)}"><button type="button" data-act="step" data-n="1" aria-label="하나 늘리기">+</button></div>${g.target?`<div class="row" style="margin-top:8px"><button type="button" class="chip" data-act="fill">약속한 만큼 ${esc(g.target)}${esc(unit())}</button><span class="tiny">적게 해도 지당이에요</span></div>`:''}`
    :`<div class="lab">오늘 실천</div><div class="seg"><input type="radio" name="done" id="d1" value="1" data-form="done" ${f.done==='1'?'checked':''}><label for="d1">했어요</label><input type="radio" name="done" id="d0" value="0" data-form="done" ${f.done==='0'?'checked':''}><label for="d0">시작만 했어요</label></div>`;
-  return `<div class="stack">${head}${petCard()}${bridge}${rwHint()}${goalCard}${questCard()}
-  ${first?`<div class="hint">오늘이 1일차예요. 지금 당장, 2분이면 첫 지당을 남길 수 있어요. 아주 작게 시작해도 괜찮아요.</div>`:''}
-  ${gymCard}<div class="card stack"><h3>📝 오늘의 지당</h3><div>${input}</div>
+  return `<div class="stack">${head}${petCard()}${bridge}${first?'':rwHint()}${goalCard}
+  ${gymCard}<div class="card stack today-form"><h3>📝 오늘의 지당${first?' <span class="tiny">· 1일차, 2분이면 돼요</span>':''}</h3><div>${input}</div>
   <div><div class="lab">지금 내 에너지는?</div><div class="energy">${['방전','느릿','보통','충전'].map((n,i)=>`<input type="radio" name="energy" id="en${i+1}" value="${i+1}" data-form="energy" ${f.energy===i+1?'checked':''}><label for="en${i+1}" class="l${i+1}"><i></i>${n}</label>`).join('')}</div>
   <p class="hint" id="lowE" style="margin-top:8px" ${f.energy===1?'':'hidden'}>방전인 날에는 가장 작은 양이면 충분해요. 한 줄 남기는 것만으로도 지당이에요.</p></div>
   <div><label for="note">오늘 느낀 점 (한 줄이면 돼요)</label><textarea id="note" data-form="note" maxlength="600" placeholder="어떤 점이 쉬웠거나 어려웠나요? 어제와 달라진 점이 있나요?">${esc(f.note)}</textarea></div>
-  <div><label for="win">오늘의 작은 승리 (선택)</label><input type="text" id="win" data-form="win" maxlength="60" value="${esc(f.win)}" placeholder="예: 귀찮았지만 시작했다"></div>
+  <div><label for="win">작은 승리 (선택)</label><input type="text" id="win" data-form="win" maxlength="60" value="${esc(f.win)}" placeholder="예: 귀찮았지만 시작했다"></div>
   <div class="err" id="err" aria-live="polite"></div>
   <button class="btn lamp block" data-act="save-today">오늘의 지당 남기기</button></div></div>`;
 }
@@ -560,8 +574,8 @@ function heartRow(n){
 }
 function petCard(){                                       // 오늘 화면 맨 위: 쌤비 코치 + 끈기 심장
   const mood=coachMood(),n=keys().length,lv=heartOf(n).lv;
-  const o={size:92,acc:lv>=4?'crown':undefined,item:mood==='wait'?'redpen':undefined,open:mood==='cheer',sleep:false};
-  return `<div class="card petcard"><div class="pet" aria-hidden="true">${sbArt(92,o)}</div><div class="bubble"><small>쌤비 코치</small><p>${esc(coachLine(mood))}</p></div>${heartRow(n)}</div>`;
+  const o={size:76,acc:lv>=4?'crown':undefined,item:mood==='wait'?'redpen':undefined,open:mood==='cheer',sleep:false};
+  return `<div class="card petcard"><div class="pet" aria-hidden="true">${sbArt(76,o)}</div><div class="bubble"><small>쌤비 코치</small><p>${esc(coachLine(mood))}</p></div>${heartRow(n)}</div>`;
 }
 let friendMsg='';
 function friendSection(){                                 // 보상 화면: 선생님 선물 코드
@@ -701,7 +715,7 @@ const JOBS=[
   {n:'영상 크리에이터',d:'영상을 기획하고 찍어서 사람들에게 이야기를 전해요.',c:'art'}
 ];
 const Q=()=>{const q=S.quest=S.quest||{};q.log=q.log||{};q.ptr=q.ptr||{};q.notes=q.notes||[];q.jobs=q.jobs||{};q.jobPtr=q.jobPtr||0;q.reports=q.reports||0;q.review=q.review||[];q.stats=q.stats||{done:0,right:0};return q};
-let qs=null,qMsg='',qEditDream=false,dreamDraft=null;
+let qs=null,qMsg='',qEditDream=false,dreamDraft=null,sj=null;   // sj: 고교 과목 고르기 연습 화면 상태
 const qDoneToday=()=>Object.keys(Q().log[todayKey()]||{}).length;
 const mkItem=a=>({t:a[0],learn:a[1],q:a[2],o:[a[3],a[4],a[5]],hint:a[6],exp:a[7]});
 function shuffled(item){const order=[0,1,2].sort((a,b)=>hash(item.t+a+todayKey())-hash(item.t+b+todayKey()));return {opts:order.map(i=>item.o[i]),ans:order.indexOf(0)}}
@@ -744,6 +758,7 @@ function dreamForm(){
   <p class="tiny">아직 꿈이 없다면 아래 탐색 퀘스트부터 해 봐요. 이름 같은 개인정보는 쓰지 마세요.</p></div>`;
 }
 function viewQuest(){
+  if(sj)return subjScreen();
   if(qs)return questSession();
   const q=Q(),t=todayKey(),log=q.log[t]||{},n=Object.keys(log).length;
   const msg=qMsg?`<div class="hint" aria-live="polite">${esc(qMsg)}</div>`:'';
@@ -757,6 +772,7 @@ function viewQuest(){
   ${S.dream&&S.dream.cat==='study'?`<div class="card gymc"><span class="gi" aria-hidden="true">💪</span><div style="flex:1;min-width:0"><p>꿈 퀘스트 · 공부 Gym</p><small>공부 꿈은 Gym의 PT실에서 과목 근육을 키워요${(w=>w?` · 추천: ${w.emo} ${esc(w.name)}`:'')(gymNow().weak)}</small></div><a class="btn" href="../gym/" style="text-decoration:none">Gym 가기</a></div>`:qcard('dream',S.dream?'내 꿈에 도움이 되는 5분 학습이에요. 영어 한마디, 개념, 상식을 배워요.':'먼저 위에서 꿈을 적으면 열려요.',!S.dream)}
   ${qcard('life','살아가는 데 필요한 것을 5분씩 익혀요. 돈, 잠, 마음, 안전을 다뤄요.')}
   ${qcard('explore',`하루에 직업 하나를 만나 봐요. ${explored?`지금까지 ${explored}개를 만났어요.`:'꿈이 없어도 괜찮아요.'}`)}
+  ${window.JD_SUBJ?`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">🏫 고교 과목 고르기 연습</h3>${S.subj?`<span class="pill">${esc((JD_SUBJ.fields.find(f=>f.id===S.subj.f)||{}).n||'')} · ${S.subj.picks.length}과목</span>`:''}</div><p class="muted" style="margin:6px 0 10px">고등학교에서는 진로에 맞춰 과목을 골라 들어요(고교학점제). 꿈에 맞는 과목 바구니를 미리 담아 봐요. 퀘스트 수에는 들어가지 않아요.</p><button class="btn ${S.subj?'ghost':''}" data-act="sj-open">${S.subj?'내 바구니 보기':'과목 담아 보기'}</button></div>`:''}
   ${q.review.length?`<div class="card"><h3 style="margin:0">복습</h3><p class="muted" style="margin:6px 0 10px">한 번에 못 맞힌 문제 ${q.review.length}개를 다시 풀어 봐요. 하루 퀘스트 수에는 들어가지 않아요.</p><button class="btn ghost" data-act="qstart" data-v="review">복습하기</button></div>`:''}
   ${likes.length?`<div class="card"><h3>내가 끌린 직업</h3><p class="muted">누르면 내 꿈으로 정할 수 있어요.</p><div class="chips">${likes.map(j=>`<button class="chip" data-act="dream-from-job" data-n="${esc(j.n)}">${esc(j.n)}</button>`).join('')}</div></div>`:''}
   ${notes.length?`<div class="card"><h3>나의 배움 노트</h3>${notes.map(x=>`<p class="muted" style="margin-bottom:6px"><b>${kdate(x.date)}</b> ${esc(x.title)}${x.note?` · ${esc(x.note)}`:''}</p>`).join('')}</div>`:''}</div>`;
@@ -785,6 +801,36 @@ function questSession(){
   ${qs.aiFail?'<p class="tiny">AI가 지금은 어려워서 준비된 문제로 계속해요.</p>':''}
   <div class="row" style="justify-content:space-between">${aiBtn}${qs.ai&&!qs.reported?'<button class="link" data-act="qreport">내용이 이상해요</button>':''}${qs.reported?'<span class="tiny">알려 주셔서 고마워요. 선생님께 확인을 부탁해 보세요.</span>':''}<button class="link" data-act="qexit">나가기</button></div>
   ${qs.ai?'<p class="tiny">AI가 만든 내용은 틀릴 수 있어요. 이상하면 꼭 확인해 보세요.</p>':''}</div>`;
+}
+
+/* 고교 과목 고르기 연습 (PLAN_지당연계 8단계) */
+function sjRecField(){
+  const J=JD_SUBJ,q=Q();
+  const liked=JOBS.filter(j=>q.jobs[j.n]==='like').map(j=>J.jobField[j.n]).filter(Boolean);
+  const fromDream=S.dream&&S.dream.from==='explore'?J.jobField[S.dream.text.replace(/ 되기$/,'')]:null;
+  const byCat=S.dream?J.fields.filter(f=>f.cat===S.dream.cat).map(f=>f.id):[];
+  return [...new Set([fromDream,...liked,...byCat].filter(Boolean))];
+}
+function subjScreen(){
+  const J=JD_SUBJ,rec=sjRecField();
+  if(!sj.f)return `<div class="stack"><div class="hero"><span class="qtag">고교 과목 고르기 연습</span><h1 style="margin-top:8px">어느 쪽 길이<br>끌리나요?</h1><p class="sub">${rec.length?'테두리가 진한 칸은 내 꿈·끌린 직업에서 찾은 추천이에요.':'아직 몰라도 괜찮아요. 끌리는 쪽을 골라 연습해 봐요.'}</p></div>
+  <div class="fgrid">${J.fields.map(f=>`<button class="${rec.includes(f.id)?'rec':''}" data-act="sj-field" data-v="${f.id}">${f.ic} ${esc(f.n)}<small>${esc(f.d)}</small></button>`).join('')}</div>
+  <button class="link" data-act="sj-exit">나가기</button></div>`;
+  const F=J.fields.find(f=>f.id===sj.f),pk=sj.picks,core=F.core,plus=F.plus;
+  const cls=s=>core.includes(s)?'core':plus.includes(s)?'plus':'';
+  const groups=Object.keys(J.groups).map(g=>{
+    const list=J.groups[g].filter(([s])=>sj.all||core.includes(s)||plus.includes(s)||pk.includes(s));
+    return list.length?`<div class="lab" style="margin:10px 0 0">${esc(g)}</div><div class="chips">${list.map(([s,k])=>`<button type="button" class="chip ${cls(s)} ${pk.includes(s)?'on':''}" data-act="sj-pick" data-v="${esc(s)}" aria-pressed="${pk.includes(s)}" title="${k==='일'?'일반선택':k==='진'?'진로선택':'융합선택'}">${esc(s)}</button>`).join('')}</div>`:'';
+  }).join('');
+  const got=core.filter(s=>pk.includes(s)).length;
+  return `<div class="stack sj"><div class="hero"><span class="qtag">${F.ic} ${esc(F.n)}</span><h1 style="margin-top:8px">2·3학년 과목 바구니</h1><p class="sub">★ 꼭 권하는 과목 · + 함께 보면 좋은 과목. 눌러서 담아요 (최대 ${J.max}개).</p></div>
+  <div class="card"><p class="tiny">1학년은 공통과목을 모두 배워요</p><div class="chips">${J.common.map(s=>`<span class="chip fixed">${esc(s)}</span>`).join('')}</div></div>
+  <div class="card"><div class="row" style="justify-content:space-between"><b>내 바구니 ${pk.length} / ${J.max}</b><span class="pill">★ ${got} / ${core.length}</span></div>${groups}
+  <button class="link" data-act="sj-all">${sj.all?'추천 과목만 보기':'다른 과목도 모두 보기'}</button>
+  ${got<core.length&&pk.length?`<div class="hint" style="margin-top:8px">${esc(F.n)} 쪽은 ★ 과목을 많이 배울수록 대학에서 공부하기 쉬워요. 빠진 ★: ${core.filter(s=>!pk.includes(s)).map(esc).join(', ')}</div>`:''}
+  <div class="err" id="err" aria-live="polite"></div></div>
+  <p class="tiny">${esc(J.note)}</p>
+  <div class="row"><button class="btn lamp" data-act="sj-save">바구니 저장하기</button><button class="btn ghost" data-act="sj-refield">계열 바꾸기</button><button class="link" data-act="sj-exit">나가기</button></div></div>`;
 }
 
 /* 보상 */
@@ -840,7 +886,7 @@ function reportCode(){
   const ks=keys(),q=Q();
   const last7=ks.slice(-7).map(k=>S.entries[k].energy).filter(x=>typeof x==='number');
   const o={n:S.nick,s:S.start,r:ks.length,st:streak(),lg:longest(),lv:level(ks.length).name,q:(q.stats&&q.stats.done)||0,
-    e:last7.length?Math.round(last7.reduce((a,b)=>a+b,0)/last7.length*10)/10:0,l:ks.length?ks[ks.length-1]:'',h:heartOf(ks.length).lv,gy:ks.filter(k=>S.entries[k].gym).length,cp:(S.capsule&&S.capsule.text)?1:0,g:Object.keys(S.gifts||{}).length,
+    e:last7.length?Math.round(last7.reduce((a,b)=>a+b,0)/last7.length*10)/10:0,l:ks.length?ks[ks.length-1]:'',h:heartOf(ks.length).lv,gy:ks.filter(k=>S.entries[k].gym).length,cp:(S.capsule&&S.capsule.text)?1:0,sf:S.subj?S.subj.f:'',sp:S.subj?S.subj.picks.length:0,sl:S.subj?S.subj.picks:[],g:Object.keys(S.gifts||{}).length,
     c:Object.keys((S.rewards&&S.rewards.coupons)||{}).map(d=>[Number(d),S.rewards.coupons[d].serial,S.rewards.coupons[d].issuedAt,S.rewards.coupons[d].usedAt||0]),t:Date.now()};
   return 'JD1.'+btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
@@ -879,7 +925,7 @@ document.addEventListener('click',e=>{
 });
 function err(m){const x=$('#err');if(x)x.textContent=m}
 async function act(a,b){
-  if(a==='nav'){view=b.dataset.v;qs=null;if(view!=='quest')qMsg='';justSaved=view==='today'?justSaved:null;render();window.scrollTo(0,0);return}
+  if(a==='nav'){view=b.dataset.v;qs=null;sj=null;if(view!=='quest')qMsg='';justSaved=view==='today'?justSaved:null;render();window.scrollTo(0,0);return}
   if(a==='chip'){ob[b.dataset.f]=b.dataset.v;const i=$('#'+b.dataset.f);if(i)i.value=b.dataset.v;return}
   if(a==='ob-back'){ob.step=1;render();return}
   if(a==='ob-check'){
@@ -936,6 +982,13 @@ async function act(a,b){
     else{S.gifts[g.code]=g.k;friendMsg=`${GIFTS[g.k][0]} "${GIFTS[g.k][1]}" 배지를 받았어요!`;save()}
     render();return;
   }
+  if(a==='sj-open'){sj=S.subj?{f:S.subj.f,picks:S.subj.picks.slice(),all:false}:{f:null,picks:[],all:false};render();window.scrollTo(0,0);return}
+  if(a==='sj-exit'){sj=null;render();return}
+  if(a==='sj-field'){const F=JD_SUBJ.fields.find(f=>f.id===b.dataset.v);sj={f:F.id,picks:F.core.slice(0,Math.min(F.core.length,JD_SUBJ.max)),all:false};render();window.scrollTo(0,0);return}
+  if(a==='sj-refield'){sj.f=null;render();window.scrollTo(0,0);return}
+  if(a==='sj-all'){sj.all=!sj.all;render();return}
+  if(a==='sj-pick'){const v=b.dataset.v,i=sj.picks.indexOf(v);if(i>=0)sj.picks.splice(i,1);else{if(sj.picks.length>=JD_SUBJ.max){err(`최대 ${JD_SUBJ.max}개까지 담을 수 있어요. 하나를 빼고 담아 봐요.`);return}sj.picks.push(v)}render();return}
+  if(a==='sj-save'){if(!sj.picks.length){err('과목을 하나 이상 담아 주세요.');return}const bb=badges().filter(x=>x.got).map(x=>x.n);S.subj={f:sj.f,picks:sj.picks.slice(),date:todayKey()};sj=null;save();const nb=badges().filter(x=>x.got&&!bb.includes(x.n)).map(x=>x.n);qMsg='과목 바구니를 저장했어요. 진학 상담 때 선생님과 함께 봐요!'+(nb.length?` 새 배지: ${nb.join(', ')}.`:'');render();window.scrollTo(0,0);return}
   if(a==='qstart'){startQuest(b.dataset.v);qMsg='';render();window.scrollTo(0,0);return}
   if(a==='qexit'){qs=null;render();return}
   if(a==='qans'){
