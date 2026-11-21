@@ -95,7 +95,7 @@
   #fWay summary{cursor:pointer;font-size:13px;color:var(--sub);font-weight:700;padding:2px 0}
   #fWay[open]{display:flex;flex-direction:column;gap:8px}
   .keep{display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:400;color:var(--sub);cursor:pointer;margin-top:4px}.keep input{width:auto!important}
-  .side .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}.side .field{font-size:12px}.side .field input{font-size:14px;padding:6px 9px}
+  .side .two{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:end}.side .field{font-size:12px}.side .field input{font-size:14px;padding:6px 9px}
   .opts{display:flex;flex-direction:column;gap:3px;font-size:12.5px}.opts label{display:flex;gap:5px;align-items:center;cursor:pointer;font-weight:400}.opts input{width:auto}
   .row2{display:flex;gap:6px}.row2 .btn.primary{flex:1}
   .upst{font-size:12.5px;color:var(--sub);background:#f4f7fa;border-radius:8px;padding:6px 8px;line-height:1.45}.upst b{color:var(--ink)}
@@ -230,9 +230,9 @@
     <div class="side">
       <h2>🔒 잠가서 보내기</h2>
       <p>학교 업무판에는 <b>잠긴 글자만</b> 올라가요. 학생 명렬은 아래 <b>비밀 문구</b>로 한 번 더 잠급니다. 비밀 문구는 따로(회의·쿨메신저) 알려 주세요.</p>
-      <div class="two"><label class="field">학생 명렬 비밀 문구 <small>(8자 이상)</small><input type="password" id="mPass" autocomplete="new-password"></label>
-      <label class="field">한 번 더<input type="password" id="mPass2" autocomplete="new-password"></label></div>
-      <label class="field">관리자 비밀번호 <small>(자료실 관리자와 같음)</small><input type="password" id="mAdm" autocomplete="off"></label>
+      <div class="two"><label class="field" title="8자 이상">학생 명렬 비밀 문구<input type="password" id="mPass" placeholder="8자 이상" autocomplete="new-password"></label>
+      <label class="field">한 번 더<input type="password" id="mPass2" placeholder="같게 한 번 더" autocomplete="new-password"></label></div>
+      <label class="field">관리자 비밀번호<input placeholder="자료실 관리자와 같음" type="password" id="mAdm" autocomplete="off"></label>
       <div class="opts"><label title="내 사이트 목록의 업무용·수업용 사이트와 ★ 자주 보는 문서를 학교 추천으로 함께 보냄 (선생님이 고친 것이 우선)"><input type="checkbox" id="mRec" checked> ⭐ 내 추천 사이트·★ 문서</label>
         <label title="선생님 PC·전자칠판이 쉬는 동안 내 교과·내 학년 교과서를 학교 드라이브에서 받아 둠 (와이파이일 때만, 휴대폰은 안 받음)"><input type="checkbox" id="mBooks" checked> 📘 교과서 자동 받기</label></div>
       <div class="row2"><button type="button" class="btn primary" id="mUp">☁ 학교 세팅 올리기</button><button type="button" class="btn" id="mExport" title="인터넷이 안 될 때: 파일로 내보내기">📤 파일로</button></div>
