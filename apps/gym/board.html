@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>공부 Gym · 교사용 (반 현황판 · 학생 안내문)</title>
 <link rel="manifest" href="../../manifest.webmanifest">
@@ -14,6 +14,7 @@
     코드에는 별명·주 시작일·출석 일수·공부 시간·강도·연속·과목별 레벨·마스터 %·훈련일만 들어 있음(이름·연락처 없음)
   · 📊 반 현황: 주별 표 · 평균 · 관심 필요(출석 2일 이하) · CSV 저장 — 이 기기 브라우저에만 저장(gymboard_v1)
   · 🖨️ 학생 안내문: QR + 사용법 한 장(A4) 인쇄
+  · 🔗 반 코드·진도 링크 (17·18단계): 🏫 반 코드 QR(학생 홈에 '우리 반 오늘 출석 ○명') · 📅 진도 따라가기(중1·2) 진도 링크 QR
 -->
 <style>
   :root{--ac:#2b4c9b;--ac2:#e8eefb;--ink:#1d2433;--sub:#667085;--line:#e3e7ee;--bg:#f5f7fb;--ok:#1d7a4f;--okb:#e3f4eb;--ng:#c0392b;--ngb:#fdeaea;--gy:#FF8A00}
@@ -49,6 +50,20 @@
   .flag{font-size:12px;font-weight:900;border-radius:8px;padding:2px 7px;background:var(--ngb);color:var(--ng)}
   .ok{font-size:12px;font-weight:900;border-radius:8px;padding:2px 7px;background:var(--okb);color:var(--ok)}
   .x{border:0;background:none;color:var(--sub);font-size:16px;cursor:pointer}
+  .lk{display:grid;grid-template-columns:1fr 1.25fr;gap:12px;min-height:0;flex:1}
+  .lk .card{display:flex;flex-direction:column;gap:8px;min-height:0}
+  .lk #cn{font:inherit;font-size:15px;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;width:9em}
+  .cl{display:flex;flex-direction:column;gap:6px;overflow:auto;min-height:0}
+  .cl div{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:7px 10px}
+  .cl b{font-size:16px}.cl .n{margin-left:auto;font-weight:900;color:var(--ok);font-size:14px}
+  .qrb{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center}.qrb svg{width:150px;height:150px}
+  .qrb .u{font-size:12px;word-break:break-all;color:var(--sub)}
+  .stab2{display:flex;gap:4px;flex-wrap:wrap}.stab2 button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:5px 10px;font:inherit;font-weight:800;font-size:14px;cursor:pointer}
+  .stab2 button[aria-pressed=true]{background:var(--ac2);color:var(--ac);border-color:var(--ac)}
+  .ul{display:flex;flex-wrap:wrap;gap:5px;overflow:auto;min-height:0;align-content:flex-start}
+  .ul label{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:9px;padding:4px 8px;font-size:13.5px;cursor:pointer;background:#fff}
+  .ul label.on{background:#FFF1D6;border-color:var(--gy)}.ul .g{width:100%;font-size:12px;font-weight:900;color:var(--sub);margin-top:2px}
+  @media (max-width:760px){ .lk{grid-template-columns:1fr} }
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1d2433;color:#fff;border-radius:999px;padding:10px 18px;font-weight:800;z-index:9}
   /* 학생 안내문 (A4) */
   .sheet{background:#fff;border:1px solid var(--line);border-radius:12px;width:min(100%,794px);margin:0 auto;padding:36px 44px;display:flex;flex-direction:column;gap:14px}
@@ -73,13 +88,15 @@
 <div id="app">
   <header>
     <h1>💪 공부 Gym · 교사용</h1>
-    <nav class="tabs" id="tabs"><button data-t="in">📥 결과 코드 넣기</button><button data-t="board">📊 반 현황</button><button data-t="guide">🖨️ 학생 안내문</button></nav>
+    <nav class="tabs" id="tabs"><button data-t="in">📥 결과 코드 넣기</button><button data-t="board">📊 반 현황</button><button data-t="guide">🖨️ 학생 안내문</button><button data-t="link">🔗 반 코드·진도 링크</button></nav>
     <span class="sp"></span>
     <a class="back" href="../stuprog/">← 학생 프로그램</a>
   </header>
   <main id="m"></main>
 </div>
 <script src="../../shared/qr.js"></script>
+<script src="map.js"></script>
+<script src="feedback.js"></script>
 <script>
 (function(){
   "use strict";
@@ -95,7 +112,7 @@
   function weeks(){ var w = {}; Object.keys(S.e).forEach(function(k){ w[S.e[k].w] = 1; }); return Object.keys(w).sort().reverse(); }
   function draw(){
     Array.prototype.forEach.call(tabs.children, function(b){ b.setAttribute("aria-current", b.dataset.t === TAB ? "true" : "false"); });
-    ({in: drawIn, board: drawBoard, guide: drawGuide})[TAB]();
+    ({in: drawIn, board: drawBoard, guide: drawGuide, link: drawLink})[TAB]();
   }
   /* 📥 코드 넣기 */
   function drawIn(){
@@ -153,12 +170,58 @@
       + '<div class="grid"><div><b>⏱️ 10분 = 출석</b>5분 세트 2개. 첫 세트는 늘 복습 먼저, 두 번째는 오늘 단원.</div><div><b>🏋️ 강도는 주마다</b>🙂 기본 60분 · 💪 권장 90분(방학) · 🔥 도전 120분+</div>'
       + '<div><b>🔁 틀린 문제는 다시 만나요</b>1·2·4·7·14일 뒤 다시 나오고, 14일 뒤에도 맞히면 \'완전히 내 것\'.</div><div><b>🗺️ 마스터 맵</b>단원마다 연습 → 숙달 → 7일 뒤 확인 → ⭐마스터. 100%면 중학교 마스터!</div>'
       + '<div><b>🎟️ 포기하지 않게</b>주 1번 휴식권, 힘든 날은 쉬운 문제, 3일 쉬면 준비운동 10분만.</div><div><b>🏆 측정과 인증</b>주말 종합 PT · 4·8주 검사 · 12주 최종 측정 → 성장 리포트와 인증서.</div></div>'
-      + '<p class="priv">🔒 기록은 내 휴대폰에만 저장돼요(서버 없음). 휴대폰을 바꿀 땐 📅 기록 → 💾 백업 코드. 🧾 결과 코드는 원할 때만 담임 선생님께 보여 줘요.</p>'
+      + '<p class="priv">🔒 기록은 내 휴대폰에만 저장돼요(서버 없음). 선생님이 준 반 코드를 넣으면 반 코드와 무작위 기기 번호만 보내 ‘우리 반 오늘 출석 ○명’을 함께 봐요. 휴대폰을 바꿀 땐 📅 기록 → 💾 백업 코드. 🧾 결과 코드는 원할 때만 담임 선생님께 보여 줘요.</p>'
       + '<p class="url">' + esc(url) + '</p></div>';
     document.getElementById("pr").onclick = function(){ window.print(); };
   }
-  var _draw = draw; draw = function(){ m.className = ""; _draw(); };
-  load(); if(location.hash === "#guide") TAB = "guide"; else if(!Object.keys(S.e).length) TAB = "in"; draw();
+  /* 🔗 반 코드 · 📅 진도 링크 */
+  var LSUB = "math", LSEL = {}, LCLS = "";
+  var SUBN = {kor: "📖 국어", math: "🧮 수학", eng: "🔤 영어", sci: "🔬 과학", soc: "🌏 사회"};
+  var FBU = typeof GYM_FEEDBACK !== "undefined" && GYM_FEEDBACK.url || "";
+  function gymUrl(q){ return new URL("./", location.href).href + (q ? "?" + q : ""); }
+  function qrSvg(u){ try{ return TTQR.svg(u); }catch(e){ return ""; } }
+  function ymd(){ var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function drawLink(){
+    if(!S.cls) S.cls = [];
+    var cls = S.cls, sel = Object.keys(LSEL).filter(function(k){ return LSEL[k]; });
+    var units = "";
+    if(typeof GYM_MAP !== "undefined" && GYM_MAP[LSUB]) GYM_MAP[LSUB].groups.forEach(function(g){
+      units += '<span class="g">' + esc(g.g) + "</span>" + g.f.map(function(f){ return '<label class="' + (LSEL[f[0]] ? "on" : "") + '"><input type="checkbox" data-u="' + f[0] + '"' + (LSEL[f[0]] ? " checked" : "") + ">" + esc(f[1]) + "</label>"; }).join("");
+    });
+    var pu = sel.length ? gymUrl("p=" + sel.join(",") + (LCLS ? "&c=" + encodeURIComponent(LCLS) : "")) : "";
+    m.innerHTML = '<div class="lk">'
+      + '<div class="card"><b>🏫 반 코드 · 반 함께 운동</b><p class="muted">반 코드 QR을 찍은 학생은 홈에 “우리 반 오늘 출석 ○명” 한 줄이 보여요(등수·점수 없음). 보내는 것은 반 코드와 무작위 기기 번호뿐이에요.</p>'
+      + '<div class="row"><input id="cn" maxlength="6" placeholder="반 이름 (예: 3-3)"><button class="btn" id="cmk">만들기</button></div>'
+      + '<div class="cl">' + (cls.length ? cls.map(function(c, i){ return '<div><b>' + esc(c.code) + '</b><button class="btn sub" data-cq="' + i + '">QR</button><span class="n" data-cn="' + esc(c.code) + '">' + (FBU ? "…" : "") + '</span><button class="x" data-cx="' + i + '" title="지우기">✕</button></div>'; }).join("") : '<p class="muted">아직 반 코드가 없어요.</p>') + "</div>"
+      + '<div id="cqv"></div>'
+      + (FBU ? '<p class="muted" style="font-size:12.5px">건의함 스크립트를 v2.30.0 코드로 바꿔야 출석 수가 모여요 (GYM_FEEDBACK_SETUP.md).</p>' : '<p class="muted" style="font-size:12.5px">건의함(구글 시트)을 연결해야 출석 수가 모여요.</p>') + "</div>"
+      + '<div class="card"><b>📅 진도 링크 · 진도 따라가기 모드(중1·2)</b><p class="muted">이번 주에 배운 단원을 고르고 QR을 보여 주세요. 학생 마스터 맵에 그 단원이 열려요(받은 단원은 계속 쌓여요).</p>'
+      + '<div class="row"><div class="stab2">' + Object.keys(SUBN).map(function(k){ return '<button data-ls="' + k + '" aria-pressed="' + (k === LSUB) + '">' + SUBN[k] + "</button>"; }).join("") + '</div><select id="lc"><option value="">반 코드 없이</option>' + cls.map(function(c){ return '<option' + (c.code === LCLS ? " selected" : "") + ">" + esc(c.code) + "</option>"; }).join("") + "</select></div>"
+      + '<div class="ul">' + units + "</div>"
+      + (pu ? '<div class="qrb"><div>' + qrSvg(pu) + '</div><div><b>고른 단원 ' + sel.length + '개</b><p class="u">' + esc(pu) + '</p><div class="row" style="margin-top:6px"><button class="btn sub" id="lcp">주소 복사</button><button class="btn gray" id="lclr">고른 단원 지우기</button></div></div></div>' : '<p class="muted">단원을 고르면 QR이 생겨요.</p>')
+      + "</div></div>";
+    m.className = "grow";
+    document.getElementById("cmk").onclick = function(){
+      var n = (document.getElementById("cn").value || "").replace(/[^0-9A-Za-z가-힣]/g, "").slice(0, 6);
+      if(!n){ toast("반 이름을 적어 주세요 (예: 3-3)"); return; }
+      var r = ""; for(var i = 0; i < 4; i++) r += "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".charAt(Math.floor(Math.random() * 32));
+      cls.push({code: n + "-" + r}); save(); drawLink(); toast("🏫 " + n + "-" + r + " 만들었어요");
+    };
+    m.onclick = function(e){
+      var t = e.target;
+      if(t.dataset.cq != null){ var c = cls[+t.dataset.cq], u = gymUrl("c=" + encodeURIComponent(c.code)); document.getElementById("cqv").innerHTML = '<div class="qrb"><div>' + qrSvg(u) + '</div><div><b>🏫 ' + esc(c.code) + '</b><p class="u">' + esc(u) + "</p></div></div>"; return; }
+      if(t.dataset.cx != null){ if(confirm("반 코드 " + cls[+t.dataset.cx].code + "를 지울까요? (학생 기기의 코드는 그대로예요)")){ cls.splice(+t.dataset.cx, 1); save(); drawLink(); } return; }
+      if(t.dataset.ls){ LSUB = t.dataset.ls; drawLink(); return; }
+      if(t.id === "lcp"){ var tx = (m.querySelector(".qrb .u") || {}).textContent || ""; try{ navigator.clipboard.writeText(tx).then(function(){ toast("📋 복사했어요"); }); }catch(er){ toast(tx); } return; }
+      if(t.id === "lclr"){ LSEL = {}; drawLink(); }
+    };
+    m.onchange = function(e){ var t = e.target; if(t.dataset.u){ LSEL[t.dataset.u] = t.checked; drawLink(); } else if(t.id === "lc"){ LCLS = t.value; drawLink(); } };
+    if(FBU) Array.prototype.forEach.call(m.querySelectorAll("[data-cn]"), function(el){
+      fetch(FBU + (FBU.indexOf("?") < 0 ? "?" : "&") + "cls=" + encodeURIComponent(el.dataset.cn) + "&d=" + ymd()).then(function(r){ return r.json(); }).then(function(j){ el.textContent = j && typeof j.n === "number" && j.cls === el.dataset.cn ? "오늘 " + j.n + "명" : "—"; }).catch(function(){ el.textContent = "—"; });
+    });
+  }
+  var _draw = draw; draw = function(){ m.className = ""; m.onclick = null; m.onchange = null; _draw(); };
+  load(); if(location.hash === "#guide") TAB = "guide"; else if(location.hash === "#link") TAB = "link"; else if(!Object.keys(S.e).length) TAB = "in"; draw();
 })();
 </script>
 </body>

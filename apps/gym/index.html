@@ -317,6 +317,9 @@
   .seg{display:flex;flex-wrap:wrap;gap:6px}
   .seg button{flex:1 1 auto;border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 8px;font:inherit;font-size:14px;font-weight:900}
   .seg button[aria-pressed=true]{background:#FFD84D;border-color:#2B2111}
+  .mseg button{display:flex;flex-direction:column;align-items:center;gap:1px;flex:1 1 0;min-width:0;padding:8px 4px;font-size:13.5px}
+  .mseg button small{font-size:11px;font-weight:700;color:var(--sub)}
+  .bub small.cls{color:#7A4B00}
   .stars{display:flex;justify-content:center;gap:6px}
   .stars button{border:0;background:none;font-size:32px;line-height:1;color:#C9B98F}.stars button.on{color:#FFB000}
   .fbt{width:100%;min-height:96px;font:inherit;font-size:15.5px;border:2px solid #2B2111;border-radius:12px;padding:10px 12px;background:#fff;resize:vertical}
@@ -370,6 +373,7 @@
 <script src="coach.js"></script>
 <script src="core.js"></script>
 <script src="feedback.js"></script>
+<script src="base.js"></script>
 <script src="rooms.js"></script>
 <script src="map.js"></script>
 <script src="../../shared/sbart.js"></script>
@@ -396,7 +400,7 @@
 
   /* ── 저장 (이 기기에만) ── */
   var S;
-  function blank(){ return {v: 1, nick: "", start: TODAY, week: null, days: {}, xp: {}, lv: {}, rx: {}, cards: {}, ptr: {}, conf: [], restUsed: {}, last: null, fib: {}, cur: {}, intake: {}, kp: null, kpDone: {}, kr: [], dsDone: {}}; }
+  function blank(){ return {v: 1, nick: "", start: TODAY, week: null, days: {}, xp: {}, lv: {}, rx: {}, cards: {}, ptr: {}, conf: [], restUsed: {}, last: null, fib: {}, cur: {}, intake: {}, kp: null, kpDone: {}, kr: [], dsDone: {}, mode: "m3", prog: [], cls: null}; }
   function load(){ try{ S = JSON.parse(localStorage.getItem(KEY)) || blank(); }catch(e){ S = blank(); } var b = blank(); for(var k in b) if(S[k] == null) S[k] = b[k]; }
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast("저장 공간이 부족해요"); } }
   function day(s){ s = s || TODAY; var d = S.days[s]; if(!d){ d = S.days[s] = {sec: {}, xp: 0, sets: {}, n: {}, ok: {}, t: {}, rev: {}}; } return d; }
@@ -496,11 +500,17 @@
   function newItem(room){
     var r0 = R[room];
     if(r0.listen && TTS && ((S.week && S.week.int) || "base") !== "base" && (day().sets[room] || 0) >= 1 && Math.random() < .3) return pick(r0.listen);   // 🎧 듣기(권장·도전)
-    if(r0.vocab){   // 첫 세트: 새 어휘 하루 6개 → 카드 / 두 번째: 카드 / 추가 세트: 어휘 반 카드 반
+    var cfb = curFiber(room);
+    if(r0.vocab && !(cfb && FIB[cfb].base)){   // 첫 세트: 새 어휘 하루 6개 → 카드 / 두 번째: 카드 / 추가 세트: 어휘 반 카드 반
       var si = day().sets[room] || 0, kv = day().kv || 0, cf0 = curFiber(room);
       if(!cf0 || (si === 0 ? kv < (r0.vocabDaily || 6) : si >= 2 && Math.random() < .5)) return nextVocab(room);
     }
     var cf = curFiber(room); if(cf){ var ui = unitItem(cf); if(ui) return ui; }
+    if(mode() === "prog" && FORDER[room]){   // 📅 진도 따라가기: 배운 단원의 문제(또는 단원이 없는 문제)만
+      var okb = (R[room].bank || []).filter(function(x){ var f = fiberOf(room, x); return !f || modeOk(f); });
+      if(okb.length) return pick(okb);
+      if(R[room].vocab) return nextVocab(room);
+    }
     var r = R[room], bank = r.bank || [], useGen = r.gen && (!bank.length || Math.random() < (r.mix || 0));
     if(useGen) return r.gen(diffLv(room));
     var p = S.ptr[room] || 0;
@@ -530,14 +540,26 @@
       gr.f.forEach(function(f){ FIB[f[0]] = {id: f[0], n: f[1], s: f[2], hs: f[3] || "", g: gr.g, room: room, pool: pool}; FORDER[room].push(f[0]); });
     });
   });
+  /* 18·19단계: 모드 — m3 중3 마스터(기본) · prog 진도 따라가기(중1·2, 선생님 진도 링크로 받은 단원만) · base 기초 다지기(초등·중1 기초 근섬유 먼저)
+     기초 근섬유는 FORDER(마스터 %)에 넣지 않고 BASEF 에 따로 둡니다. */
+  var BASEF = {}, BASEB = {}, MODES = {m3: ["🎓", "중3 마스터", "중학교 전 단원 · 12주"], prog: ["📅", "진도 따라가기", "중1·2 · 선생님 진도대로"], base: ["🌱", "기초 다지기", "초등·중1 기초부터"]};
+  if(typeof GYM_BASE !== "undefined") Object.keys(GYM_BASE.F).forEach(function(room){
+    if(!R[room]) return;
+    BASEF[room] = []; BASEB[room] = GYM_BASE.bank[room] || [];
+    GYM_BASE.F[room].forEach(function(f){ FIB[f[0]] = {id: f[0], n: f[1], s: 0, hs: f[3] || "", g: "🌱 기초 다지기", room: room, pool: false, base: true}; BASEF[room].push(f[0]); });
+  });
+  function mode(){ return MODES[S.mode] ? S.mode : "m3"; }
+  function modeOk(fid){ var f = FIB[fid]; if(!f) return false; if(f.base) return mode() === "base"; return mode() !== "prog" || (S.prog || []).indexOf(fid) >= 0; }
+  function fOrder(room){ return (FORDER[room] || []).concat(mode() === "base" ? BASEF[room] || [] : []); }
+  function baseLeft(){ var n = 0; Object.keys(BASEF).forEach(function(r){ BASEF[r].forEach(function(f){ if(fs(f).st < 2) n++; }); }); return n; }
   function fiberOf(room, it){ return it.u || ((R[room] || {}).unitOf || {})[it.tag] || null; }
-  function genTagsFor(fid){ var r = R[FIB[fid].room]; return r.gen ? (r.genTags || []).filter(function(t){ return (r.unitOf || {})[t] === fid; }) : []; }
-  function bankFor(fid){ var room = FIB[fid].room; return (R[room].bank || []).filter(function(it){ return fiberOf(room, it) === fid; }); }
+  function genTagsFor(fid){ if(FIB[fid] && FIB[fid].base) return GYM_BASE.genTags.filter(function(t){ return GYM_BASE.unitOf[t] === fid; }); var r = R[FIB[fid].room]; return r.gen ? (r.genTags || []).filter(function(t){ return (r.unitOf || {})[t] === fid; }) : []; }
+  function bankFor(fid){ var room = FIB[fid].room; if(FIB[fid].base) return (BASEB[room] || []).filter(function(it){ return it.u === fid; }); return (R[room].bank || []).filter(function(it){ return fiberOf(room, it) === fid; }); }
   function avail(fid){ return genTagsFor(fid).length ? 99 : bankFor(fid).length; }
   function open(fid){ return avail(fid) >= MIN_AV; }
   function unitItem(fid, used){
     var room = FIB[fid].room, gt = genTagsFor(fid), b = bankFor(fid).filter(function(x){ return !used || !used[x.id]; });
-    if(gt.length && (!b.length || Math.random() < (R[room].genRatio || .6))){ var it = R[room].gen(diffLv(room), pick(gt)); it.u = fid; return it; }
+    if(gt.length && (!b.length || Math.random() < (R[room].genRatio || .6))){ var it = FIB[fid].base ? GYM_BASE.gen(pick(gt)) : R[room].gen(diffLv(room), pick(gt)); it.u = fid; return it; }
     return b.length ? pick(b) : null;
   }
   function fs(fid){ return S.fib[fid] || {st: 0}; }
@@ -547,12 +569,16 @@
   function curFiber(room){
     if(!FORDER[room]) return null;
     var c = S.cur[room];
-    if(c && FIB[c] && !FIB[c].pool && fs(c).st < 2 && open(c)) return c;
-    var l = FORDER[room].filter(function(f){ return !FIB[f].pool && fs(f).st < 2 && open(f); }), sn = stageNow();
+    if(mode() === "base" && BASEF[room]){   // 🌱 기초 다지기: 숙달 전인 기초 근섬유가 먼저
+      var bl = BASEF[room].filter(function(f){ return fs(f).st < 2 && open(f); });
+      if(bl.length){ if(bl.indexOf(c) >= 0) return c; S.cur[room] = bl[0]; return bl[0]; }
+    }
+    if(c && FIB[c] && !FIB[c].pool && fs(c).st < 2 && open(c) && modeOk(c)) return c;
+    var l = FORDER[room].filter(function(f){ return !FIB[f].pool && fs(f).st < 2 && open(f) && modeOk(f); }), sn = mode() === "prog" ? 9 : stageNow();
     var f1 = l.filter(function(f){ return fs(f).st === 1 && FIB[f].s <= sn; })[0] || l.filter(function(f){ return FIB[f].s <= sn; })[0] || l[0] || null;
     S.cur[room] = f1; return f1;
   }
-  function dueChecks(room){ return (FORDER[room] || []).filter(function(f){ var x = fs(f); return x.st >= 2 && x.ck && x.ck <= TODAY && open(f); }); }
+  function dueChecks(room){ return fOrder(room).filter(function(f){ var x = fs(f); return x.st >= 2 && x.ck && x.ck <= TODAY && open(f); }); }
   function counts(room){ var o = {0: 0, 1: 0, 2: 0, 3: 0, all: 0}; (room ? [room] : SUBJ).forEach(function(r){ FORDER[r].forEach(function(f){ o[fs(f).st]++; o.all++; }); }); return o; }
   function masterPct(room){ var c = counts(room); return c.all ? Math.round(c[3] / c.all * 100) : 0; }
   function allPct(){ var t = 0; SUBJ.forEach(function(r){ t += FORDER[r].length ? counts(r)[3] / FORDER[r].length : 0; }); return Math.round(t / SUBJ.length * 100); }
@@ -606,6 +632,8 @@
   /* 🧪 입소 진단: 1단계 단원마다 3문제 → 3/3 진단 통과(숙달, 7일 뒤 확인만) · 2/3 연습 · 0~1/3 처방(먼저 연습) */
   var INTAKE_PER = 3;
   function intakeList(room){
+    if(mode() === "prog") return (FORDER[room] || []).filter(function(f){ return open(f) && !FIB[f].pool && modeOk(f); }).slice(0, 10);   // 진도 따라가기: 배운 단원만
+    if(mode() === "base" && baseLeft()) return [];   // 기초 다지기 중에는 중3 입소 진단을 미룸(기초를 숙달한 뒤에)
     var l = (FORDER[room] || []).filter(function(f){ return open(f) && !FIB[f].pool && FIB[f].s === 1; });
     return (l.length ? l : (FORDER[room] || []).filter(open)).slice(0, 10);
   }
@@ -629,6 +657,8 @@
     S.intake[room] = {d: TODAY, r: rows.map(function(w){ return [w[0], w[1], w[2]]; })};
     var first = list.filter(function(f){ return fs(f).st < 2 && fs(f).rx; })[0] || list.filter(function(f){ return fs(f).st < 2; })[0];
     if(first) S.cur[room] = first;
+    var ipc = rows.reduce(function(o, w){ return o + w[1]; }, 0) / Math.max(1, rows.reduce(function(o, w){ return o + w[2]; }, 0));
+    if(mode() === "m3" && BASEF[room] && ipc < .4) S.baseHint = room;   // 🌱 진단에서 막혔으면 기초 다지기를 권함
     return {intake: true, rows: rows, up: pass ? 2 : 1, msg: "🧪 입소 진단 끝! 진단 통과 <b>" + pass + "개</b>" + (rx ? " · 처방 <b>" + rx + "개</b>" : "") + "<br>" + (first ? "📍 오늘 단원: <b>" + FIB[first].n + "</b>부터" : "1단계 단원을 모두 통과! 7일 뒤 확인만 하면 마스터")};
   }
   function diffLv(room){ return Math.max(0, lv(room) - (day().cond === "hard" ? 1 : 0)); }   // 힘듦 = 한 단계 쉽게
@@ -805,10 +835,13 @@
   function home(){
     header("💪 공부 Gym");
     var d = day(), cl = coachLine(); if(d.vow && !d.back) cl[1] = "☀️ 오늘의 다짐: " + esc(d.vow);
+    if(mode() === "m3" && S.baseHint && BASEF[S.baseHint]){ cl[0] = "🌱 " + R[S.baseHint].name + " 기초부터 다지면 더 빨리 늘어!"; cl[1] = '<button class="chip hot" data-a="modedlg">기초 다지기 보기 ›</button>'; }
+    else if(mode() === "base" && baseLeft() === 0 && !S.baseGrad){ cl[0] = "🎉 기초 근섬유를 모두 숙달했어! 이제 중3 마스터로 가자"; cl[1] = '<button class="chip hot" data-a="gom3">🎓 중3 마스터로 ›</button>'; }
+    var cln = clsLine();
     var wk = (S.week && S.week.int) || "base", tm = totalMin(), g = totalGoal();
     var att = IDS.map(function(k){ return '<i class="' + (mins(k) >= 10 ? "on" : "") + '">' + (mins(k) >= 10 ? "✓" : "") + "</i>"; }).join("");
     var wm = mins("warm"), wg = goalMin("warm");
-    m.innerHTML = '<div class="coach"><span class="sb" data-a="poke">' + sb(96) + '</span><div class="bub">' + cl[0] + "<small>" + cl[1] + "</small></div></div>"
+    m.innerHTML = '<div class="coach"><span class="sb" data-a="poke">' + sb(96) + '</span><div class="bub">' + cl[0] + "<small>" + cl[1] + "</small>" + (cln ? '<small class="cls">' + cln + "</small>" : "") + "</div></div>"
       + '<div class="card today">' + ring(tm, g)
       + '<div class="tinfo"><div class="int" role="group" aria-label="이번 주 강도">' + Object.keys(INT).map(function(k){ return '<button data-int="' + k + '" aria-pressed="' + (wk === k) + '">' + INT[k].emo + " " + INT[k].name + "<small>" + INT[k].sub + "</small></button>"; }).join("") + "</div>"
       + '<div class="attend">출석 ' + att + "</div>"
@@ -820,6 +853,7 @@
           return '<button class="door' + (gl && mn >= gl ? " done" : "") + '" style="--c:' + r.col + '" data-room="' + k + '">' + (gl && mn >= gl ? '<span class="ck">✅</span>' : "") + (rx ? '<span class="rx">+' + S.rx[k].plus + "</span>" : "") + (dc ? '<span class="dc">⭐' + dc + "</span>" : "")
             + '<span class="e">' + r.emo + "</span><b>" + r.name.replace("통합", "통합<br>") + "</b><small>" + r.part + " · " + masterPct(k) + '%</small><span class="bar"><i style="width:' + (gl ? Math.min(100, mn / gl * 100) : (mn ? 100 : 0)) + '%"></i></span><span class="mn">' + mn + (gl ? "/" + gl : "") + "분</span></button>";
         }).join("") + "</div>";
+    clsSync();
   }
   m.addEventListener("click", function(e){
     var t = e.target.closest("[data-room],[data-int],[data-a],[data-start],[data-r],[data-sub],[data-fib]"); if(!t) return;
@@ -1191,20 +1225,22 @@
     header("🗺️ 마스터 맵");
     var c = counts(), r = R[MAPSUB], ap = allPct(), cf = curFiber(MAPSUB);
     var seg = function(o){ var t = o.all || 1; return '<span class="sbar"><i class="s3" style="width:' + o[3] / t * 100 + '%"></i><i class="s2" style="width:' + o[2] / t * 100 + '%"></i><i class="s1" style="width:' + o[1] / t * 100 + '%"></i></span>'; };
-    var grid = "";
-    GYM_MAP[MAPSUB].groups.forEach(function(gr){
+    var grid = "", groups = GYM_MAP[MAPSUB].groups, md = mode();
+    if(BASEF[MAPSUB] && (md === "base" || BASEF[MAPSUB].some(function(f){ return fs(f).st; }))) groups = [{g: "🌱 기초 다지기 (마스터 %에는 안 들어가요)", f: BASEF[MAPSUB].map(function(f){ return [f, FIB[f].n]; })}].concat(groups);
+    groups.forEach(function(gr){
       grid += '<div class="fg">' + esc(gr.g) + "</div>";
       gr.f.forEach(function(f){
-        var x = fs(f[0]), op = open(f[0]), due = x.st >= 2 && x.ck && x.ck <= TODAY && op;
-        grid += '<button class="fb2 st' + x.st + (op ? "" : " lock") + (f[0] === cf ? " cur" : "") + '" data-fib="' + f[0] + '">' + esc(f[1]) + (x.st === 3 && !due ? "<i>⭐</i>" : due ? '<i class="due">⭐?</i>' : "") + "</button>";
+        var x = fs(f[0]), op = open(f[0]), due = x.st >= 2 && x.ck && x.ck <= TODAY && op, mo = modeOk(f[0]) || (FIB[f[0]].base && x.st);
+        grid += '<button class="fb2 st' + x.st + (op && mo ? "" : " lock") + (f[0] === cf ? " cur" : "") + '" data-fib="' + f[0] + '">' + esc(f[1]) + (x.st === 3 && !due ? "<i>⭐</i>" : due ? '<i class="due">⭐?</i>' : "") + "</button>";
       });
     });
+    var pl = (S.prog || []).filter(function(f){ return FIB[f] && FIB[f].room === MAPSUB; }), plm = pl.filter(function(f){ return fs(f).st === 3; }).length;
     m.innerHTML = '<div class="mtop"><div class="mbig"><b>' + ap + '%</b><span>중학교 마스터</span></div><div class="msum">' + seg(c)
       + '<span class="muted">⭐ 마스터 ' + c[3] + " · 숙달 " + c[2] + " · 연습 " + c[1] + " / 근섬유 " + c.all + "</span>"
-      + '<span class="muted">' + weekNo() + "주차 · " + ["", "1단계 기초 체력", "2단계 근력 강화", "3단계 실전·연결"][stageNow()] + "</span></div></div>"
+      + '<span class="muted">' + (md === "prog" ? "📅 진도 따라가기 · " + R[MAPSUB].name.replace("통합", "") + " 배운 단원 " + pl.length + "개 중 ⭐ " + plm + "개" : (md === "base" ? "🌱 기초 다지기 · " : "") + weekNo() + "주차 · " + ["", "1단계 기초 체력", "2단계 근력 강화", "3단계 실전·연결"][stageNow()]) + "</span></div></div>"
       + '<div class="stab">' + SUBJ.map(function(k){ return '<button style="--c:' + R[k].col + '" aria-pressed="' + (k === MAPSUB) + '" data-sub="' + k + '"><b>' + R[k].emo + " " + R[k].name.replace("통합", "") + "</b><span>" + masterPct(k) + "%</span></button>"; }).join("") + "</div>"
       + '<div class="fgrid grow sc" style="--c:' + r.col + '">' + grid + "</div>"
-      + '<div class="legend" style="--c:' + r.col + '"><span><i class="st0"></i>미진단</span><span><i class="st1"></i>연습 중</span><span><i class="st2"></i>숙달</span><span><i class="st3"></i>⭐ 마스터</span><span><i class="lock"></i>문항 준비 중</span><span>▢ 오늘 단원</span></div>';
+      + '<div class="legend" style="--c:' + r.col + '"><span><i class="st0"></i>미진단</span><span><i class="st1"></i>연습 중</span><span><i class="st2"></i>숙달</span><span><i class="st3"></i>⭐ 마스터</span><span><i class="lock"></i>' + (md === "prog" ? "아직 안 배움" : "문항 준비 중") + '</span><span>▢ 오늘 단원</span></div>';
   }
   function fibDlg(fid){
     var f = FIB[fid], x = fs(fid), r = R[f.room], op = open(fid), due = x.st >= 2 && x.ck && x.ck <= TODAY;
@@ -1213,11 +1249,12 @@
       x.ck ? "마스터! 14일 뒤 한 번 더 확인 · " + (x.ck <= TODAY ? "지금 확인할 수 있어요!" : "D-" + diff(TODAY, x.ck)) : "완전히 내 근섬유! 중학교 마스터 %에 들어갔어요"][x.st];
     var steps = ["진단", "연습", "숙달", "7일 확인", "마스터"], on = [x.st >= 1 || x.dg != null, x.st >= 1, x.st >= 2, x.st >= 3, x.st >= 3];
     dlg('<div class="fdh" style="--c:' + r.col + '"><span class="ft st' + x.st + '">' + STN[x.st] + "</span><h3>" + r.emo + " " + esc(f.n) + "</h3></div>"
-      + '<p class="muted">' + esc(f.g) + " · " + f.s + "단계(" + ["", "1~4주", "5~8주", "9~12주"][f.s] + ")" + (f.hs ? " · 고등 연결: " + esc(f.hs) : "") + "</p>"
+      + '<p class="muted">' + esc(f.g) + (f.base ? " · 이어지는 중학교 단원: " + esc(f.hs) : " · " + f.s + "단계(" + ["", "1~4주", "5~8주", "9~12주"][f.s] + ")" + (f.hs ? " · 고등 연결: " + esc(f.hs) : "")) + "</p>"
       + (CORE[fid] ? "<details class=\"cored\"" + (x.st === 1 ? " open" : "") + "><summary>📝 핵심 한 장 <span class=\"muted\">30초</span></summary>" + coreHtml(fid) + "</details>" : "")
       + '<div class="fsteps" style="--c:' + r.col + '">' + steps.map(function(t, i){ return '<span class="' + (on[i] ? "on" : "") + '">' + t + "</span>"; }).join("<em>›</em>") + "</div>"
       + '<div class="win" style="text-align:left">' + rule + (x.h && x.h.length ? '<br><span class="muted">최근 기록 ' + x.h.map(function(h){ return h[1] + "%"; }).join(" · ") + "</span>" : "") + "</div>"
-      + (!op ? '<div class="win">🛠️ 이 단원 문항은 ' + ({kor: 4, math: 3, eng: 5, sci: 7, soc: 8})[f.room] + "단계에서 채워져요</div>"
+      + (op && !modeOk(fid) && !(f.base && x.st) ? '<div class="win">' + (f.base ? "🌱 기초 다지기 모드에서 열려요 · 📅 기록 → 🎯 모드·반" : "📅 아직 진도 링크로 받지 않은 단원이에요. 선생님이 이 단원 진도 링크를 주면 열려요.") + "</div>"
+        : !op ? '<div class="win">🛠️ 이 단원 문항은 ' + ({kor: 4, math: 3, eng: 5, sci: 7, soc: 8})[f.room] + "단계에서 채워져요</div>"
         : (due ? '<button class="btn" data-a2="quiz" data-fid="' + fid + '" data-kind="' + (x.st === 3 ? "re" : "check") + '">⭐ ' + (x.st === 3 ? "마스터 확인 (" + RE_N : "7일 확인 세트 (" + Math.min(QUIZ_N, avail(fid))) + "문제)</button>" : "")
           + (x.st < 2 ? '<div class="row"><button class="btn sub" data-a2="quiz" data-fid="' + fid + '" data-kind="diag">🧪 진단 ' + Math.min(QUIZ_N, avail(fid)) + '문제</button><button class="btn" data-a2="setcur" data-fid="' + fid + '">📍 오늘 단원으로</button></div>' : ""))
       + '<button class="btn sub" data-x="1">닫기</button>');
@@ -1237,7 +1274,7 @@
     m.innerHTML = '<div class="card" style="display:flex;flex-direction:column;gap:6px"><div class="glab"><span>최근 4주 · 진할수록 오래 함</span><span>🎟 = 휴식권</span></div><div class="cal">' + cells + "</div></div>"
       + '<div class="kv"><div class="stat"><b>' + trainDays() + '일</b><span>훈련일</span></div><div class="stat"><b>🔥 ' + streak() + '</b><span>연속 출석</span></div><div class="stat"><b>' + totalXP() + '</b><span>전체 XP</span></div>'
       + '<div class="stat"><b>' + (diff(S.start, TODAY) + 1) + '일째</b><span>12주 중</span></div><div class="stat"><b>' + wrongCount() + '</b><span>오답 카드</span></div><div class="stat"><b>' + mineCount() + '</b><span>완전히 내 것</span></div></div>'
-      + '<div class="chips"><button class="chip" data-a="nick">🏷️ ' + esc(S.nick || "별명") + '</button><button class="chip" data-a="intdlg">' + INT[wk].emo + " " + INT[wk].name + '</button><button class="chip" data-a="cond">' + (day().cond ? COND[day().cond][0] + " " + COND[day().cond][1] : "🙂 컨디션") + '</button><button class="chip" data-a="help">❓ 사용법</button><button class="chip" data-a="howto" data-room2="base">🧭 공부법</button><button class="chip hot" data-a="fbopen">💬 건의·후기</button></div>'
+      + '<div class="chips"><button class="chip" data-a="nick">🏷️ ' + esc(S.nick || "별명") + '</button><button class="chip" data-a="intdlg">' + INT[wk].emo + " " + INT[wk].name + '</button><button class="chip" data-a="cond">' + (day().cond ? COND[day().cond][0] + " " + COND[day().cond][1] : "🙂 컨디션") + '</button><button class="chip" data-a="modedlg">' + MODES[mode()][0] + " " + MODES[mode()][1] + (S.cls && S.cls.code ? " · 🏫" : "") + '</button><button class="chip" data-a="help">❓ 사용법</button><button class="chip" data-a="howto" data-room2="base">🧭 공부법</button><button class="chip hot" data-a="fbopen">💬 건의·후기</button></div>'
       + '<div class="lnk two"><button data-a="wcode">🧾 이번 주 결과 코드<span class="muted">담임에게 보여 주기 ›</span></button>'
       + '<button data-a="bcode">💾 백업 코드 만들기<span class="muted">휴대폰 바꿀 때 ›</span></button>'
       + '<button data-a="bload">📥 백업 코드 넣기<span class="muted">새 휴대폰에서 ›</span></button>'
@@ -1245,6 +1282,72 @@
       + '<p class="credit">🔒 별명만 쓰고, 기록은 이 휴대폰에만 저장돼요 · jidangmath가 Claude와 함께 제작</p>';
   }
   handlers.nick = function(){ nickDlg(false); };
+  /* ══ 17~19단계: 🎯 모드 · 🏫 반 함께 운동 ══ */
+  var CLS_RE = /^[0-9A-Za-z가-힣\-]{2,16}$/;
+  function rid(){ return Date.now().toString(36).slice(-4) + Math.random().toString(36).slice(2, 7); }
+  function modeSeg(cur){ return '<div class="seg mseg">' + Object.keys(MODES).map(function(k){ return '<button data-a2="mdpick" data-md="' + k + '" aria-pressed="' + (k === cur) + '">' + MODES[k][0] + " " + MODES[k][1] + "<small>" + MODES[k][2] + "</small></button>"; }).join("") + "</div>"; }
+  handlers.mdpick = function(t){ Array.prototype.forEach.call(t.parentNode.children, function(b){ b.setAttribute("aria-pressed", b === t ? "true" : "false"); }); var x = D && D.querySelector("#mdx"); if(x) x.innerHTML = modeNote(t.dataset.md); };
+  function modeNote(k){
+    return k === "prog" ? "📅 선생님이 주는 <b>진도 링크(QR)</b>를 열면 그 주에 배운 단원이 마스터 맵에 열려요. 지금까지 받은 단원 <b>" + (S.prog || []).length + "개</b>"
+      : k === "base" ? "🌱 분수·소수·곱셈구구·문장 읽기·기초 영어부터! 기초 근섬유 " + Object.keys(BASEF).reduce(function(n, r){ return n + BASEF[r].length; }, 0) + "개를 숙달하면 쌤비가 중3 마스터로 안내해요"
+      : "🎓 중학교 전 단원을 12주 동안 마스터하는 기본 모드예요";
+  }
+  handlers.modedlg = function(){
+    var cur = mode() === "m3" && S.baseHint ? "base" : mode();
+    dlg("<h3>🎯 모드 · 🏫 반</h3><p class=\"muted\">모드를 바꿔도 기록은 그대로! 달라지는 건 마스터 맵에서 열리는 단원과 순서뿐이에요.</p>" + modeSeg(cur)
+      + '<div id="mdx" class="win" style="text-align:left;font-size:13.5px">' + modeNote(cur) + "</div>"
+      + '<h3 style="font-size:16px">🏫 반 함께 운동 <span class="muted" style="font-size:12.5px">선택</span></h3><p class="muted">선생님이 준 반 코드를 넣으면 홈에 “우리 반 오늘 출석 ○명”이 보여요. 이름·점수·등수는 보내지 않아요.</p>'
+      + '<input id="clsin" maxlength="16" placeholder="반 코드 (예: 33-K7Q2)" value="' + esc(S.cls && S.cls.code || "") + '" autocomplete="off">'
+      + '<div class="row"><button class="btn sub" data-x="1">닫기</button><button class="btn" data-a2="modeSave">저장</button></div>');
+  };
+  handlers.modeSave = function(){
+    var b = D.querySelector("[data-md][aria-pressed=true]"), md = b ? b.dataset.md : mode(), c = (D.querySelector("#clsin").value || "").trim();
+    if(c && !CLS_RE.test(c)) return toast("반 코드는 글자·숫자·- 2~16자예요");
+    var was = mode(); S.mode = md; S.baseHint = null; if(md !== "base") S.baseGrad = S.baseGrad || (was === "base" ? 1 : 0);
+    if(!c) S.cls = null; else if(!S.cls || S.cls.code !== c) S.cls = {code: c, id: rid()};
+    save(); closeDlg();
+    if(md !== was) toast(MODES[md][0] + " " + MODES[md][1] + " 모드! " + (md === "prog" && !(S.prog || []).length ? "진도 링크를 열면 단원이 열려요" : "오늘 단원이 바뀌었어요"));
+    else if(c) toast("🏫 반 코드 저장");
+    redraw();
+  };
+  handlers.gom3 = function(){ S.mode = "m3"; S.baseGrad = 1; save(); sparkle("🎓"); toast("🎓 중3 마스터 모드! 기초 기록은 그대로 남아요"); go("home"); };
+  /* 🏫 반 함께 운동: 오늘 출석(PT실 10분)하면 반 코드 + 기기 번호(무작위)만 보내고, 우리 반 오늘 출석 수만 받아 옴 — 등수·점수 없음 */
+  function clsLine(){ var c = S.cls; if(!c || !c.code || c.d !== TODAY || typeof c.n !== "number") return ""; return "🏫 우리 반 오늘 출석 <b>" + c.n + "</b>명" + (attCount(TODAY) ? " · 나도 ✓" : " · 10분이면 나도 출석!"); }
+  function clsSync(){
+    var c = S.cls; if(!c || !c.code || !FBC.url) return;
+    var u = FBC.url + (FBC.url.indexOf("?") < 0 ? "?" : "&");
+    var get = function(){
+      fetch(u + "cls=" + encodeURIComponent(c.code) + "&d=" + TODAY).then(function(r){ return r.json(); }).then(function(j){
+        if(!j || j.cls !== c.code || typeof j.n !== "number" || S.cls !== c) return;
+        c.n = j.n; c.d = TODAY; c.at = Date.now(); save();
+        var el = V === "home" && m.querySelector(".bub"), ln = clsLine(); if(!el || !ln) return;
+        var sm = el.querySelector(".cls"); if(!sm){ sm = document.createElement("small"); sm.className = "cls"; el.appendChild(sm); } sm.innerHTML = ln;
+      }).catch(function(){});
+    };
+    if(attCount(TODAY) && c.sent !== TODAY){
+      c.sent = TODAY; save();
+      fetch(FBC.url, {method: "POST", mode: "no-cors", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify({type: "class", code: c.code, id: c.id, d: TODAY})})
+        .then(function(){ setTimeout(get, 1500); }).catch(function(){ c.sent = null; });
+      return;
+    }
+    if(c.d !== TODAY || !c.at || Date.now() - c.at > 600000) get();
+  }
+  /* 링크로 받은 반 코드(?c=)·진도(?p=단원,단원) */
+  function applyLink(){
+    var q = new URLSearchParams(location.search), c = q.get("c"), p = q.get("p"), msg = [];
+    if(c && CLS_RE.test(c) && (!S.cls || S.cls.code !== c)){ S.cls = {code: c, id: rid()}; msg.push("🏫 반 코드 " + c + " 연결!"); }
+    if(p){
+      var ids = p.split(",").filter(function(f){ return FIB[f] && !FIB[f].base; }), nw = ids.filter(function(f){ return S.prog.indexOf(f) < 0; });
+      if(ids.length){
+        S.prog = S.prog.concat(nw);
+        if(mode() !== "prog"){ S.mode = "prog"; msg.push("📅 진도 따라가기 모드"); }
+        msg.push(nw.length ? "📅 새 진도 " + nw.length + "단원 열림" : "📅 이미 받은 진도예요");
+        if(nw.length) S.cur[FIB[nw[0]].room] = nw[0];
+      }
+    }
+    if(c || p){ save(); try{ history.replaceState(null, "", location.pathname + (/[?&]fast=1/.test(location.search) ? "?fast=1" : "")); }catch(e){} }
+    return msg.join(" · ");
+  }
   handlers.intdlg = function(){ startDlg(true); };
   handlers.help = function(){
     dlg('<h3>💪 공부 Gym 사용법</h3><div class="muted" style="font-size:14.5px;line-height:1.65;color:var(--ink)">'
@@ -1402,7 +1505,9 @@
     if(S.cur[room] && open(S.cur[room]) && l.indexOf(S.cur[room]) < 0) l.push(S.cur[room]);
     return l.length ? l : stageFibs(room, stageNow());
   }
-  function stageFibs(room, sn){ var l = (FORDER[room] || []).filter(function(f){ return open(f) && FIB[f].s <= sn; }); return l.length ? l : (FORDER[room] || []).filter(open); }
+  function stageFibs(room, sn){
+    if(mode() === "prog"){ var lp = (FORDER[room] || []).filter(function(f){ return open(f) && modeOk(f); }); if(lp.length) return lp; }
+    var l = (FORDER[room] || []).filter(function(f){ return open(f) && FIB[f].s <= sn; }); return l.length ? l : (FORDER[room] || []).filter(open); }
   function testList(kind){
     var L = [];
     IDS.forEach(function(room){
@@ -1633,6 +1738,7 @@
     if(t.dataset.a2 === "nickOk"){
       var v = (D.querySelector("input").value || "").trim().slice(0, 10);
       if(!v){ toast("별명을 적어 주세요"); return; }
+      var mdb = D.querySelector("[data-md][aria-pressed=true]"); if(mdb) S.mode = mdb.dataset.md;
       S.nick = v; save(); closeDlg();
       if(D_next) { var f = D_next; D_next = null; f(); } else redraw();
     }
@@ -1643,6 +1749,7 @@
     dlg((first ? '<div style="display:flex;justify-content:center">' + sb(120, {item: "stamp"}) + "</div><h3>공부 Gym에 온 걸 환영해! 나는 트레이너 쌤비야.</h3>" : "<h3>🏷️ 별명 바꾸기</h3>")
       + '<p class="muted">진짜 이름 말고 <b>별명</b>만 적어 주세요. 기록은 이 휴대폰에만 저장돼요.</p>'
       + '<input maxlength="10" placeholder="예) 수학근육왕" value="' + esc(S.nick) + '" autocomplete="off">'
+      + (first ? '<p class="muted" style="margin:0">어떤 모드로 시작할까? <span style="font-size:12px">(나중에 📅 기록에서 바꿀 수 있어요)</span></p>' + modeSeg(mode()) : "")
       + '<button class="btn" data-a2="nickOk">' + (first ? "입소하기 💪" : "저장") + "</button>");
     setTimeout(function(){ var i = D && D.querySelector("input"); if(i && !first) i.focus(); }, 50);
   }
@@ -1661,7 +1768,7 @@
 
   function boot(){
     load();
-    var msg = dailyCheck();
+    var lm = applyLink(), msg = dailyCheck(); if(lm) msg = msg ? lm + " · " + msg : lm;
     go("home");
     if(!S.nick) nickDlg(true, function(){ go("home"); startDlg(false); });
     else if(!day().cond || !S.week || S.week.start !== monday(TODAY)) startDlg(false);

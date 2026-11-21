@@ -37,7 +37,7 @@
 > 시트 메뉴의 Apps Script가 열리지 않으면 script.google.com 에서 새 프로젝트를 만들고, 코드의 `SpreadsheetApp.getActiveSpreadsheet()` 를 `SpreadsheetApp.openById('시트 ID')` 로 바꿔 쓰면 됩니다(시트 주소 /d/ 와 /edit 사이가 ID).
 
 ```javascript
-/* 공부 Gym 건의·후기 받는 곳 (v2.25.0) — jidangmath가 Claude와 함께 제작
+/* 공부 Gym 건의·후기 받는 곳 (v2.25.0 · 🏫 반 함께 운동 v2.30.0) — jidangmath가 Claude와 함께 제작
    학생 앱이 보낸 글을 '건의함' 시트에 쌓고, 공개(O)한 글과 그 학생 글의 답변만 돌려줍니다. */
 var SHEET = '건의함';
 var HEAD = ['받은 때', '종류', '별명', '별점', '내용', '공개 희망', '문제 번호', '문제', '주차', 'id', '공개(O)', '답변', '처리'];
@@ -49,6 +49,7 @@ function sh_(){
 function clip_(v, n){ v = String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').slice(0, n); return /^[=+\-@]/.test(v) ? "'" + v : v; }   // 수식 넣기 막기
 function doPost(e){
   var d = {}; try{ d = JSON.parse(e.postData.contents || '{}'); }catch(er){ return ContentService.createTextOutput('bad'); }
+  if(d.type === 'class') return classPost_(d);   // 🏫 반 함께 운동 (v2.30.0)
   var lock = LockService.getScriptLock(); lock.waitLock(10000);
   try{
     sh_().appendRow([new Date(), clip_(d.type, 10), clip_(d.nick, 12) || '익명', Number(d.stars) || '', clip_(d.text, 600), clip_(d.pub, 4),
@@ -57,7 +58,9 @@ function doPost(e){
   return ContentService.createTextOutput('ok');
 }
 function doGet(e){
-  var p = (e && e.parameter) || {}, rows = sh_().getDataRange().getValues().slice(1);
+  var p = (e && e.parameter) || {};
+  if(p.cls) return classGet_(p);   // 🏫 반 함께 운동 (v2.30.0)
+  var rows = sh_().getDataRange().getValues().slice(1);
   var mine = String(p.mine || '').split(',').filter(String).slice(0, 20), out = {ok: 1, items: [], mine: []};
   rows.forEach(function(r){
     if(String(r[10]).trim().toUpperCase() === 'O') out.items.push({date: Utilities.formatDate(new Date(r[0]), 'Asia/Seoul', 'M/d'), type: r[1], nick: r[2], stars: r[3], text: r[4], reply: r[11]});
@@ -66,4 +69,36 @@ function doGet(e){
   out.items = out.items.slice(-30).reverse();
   return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
 }
+/* 🏫 반 함께 운동: '반 출석' 시트에 [날짜, 반 코드, 기기 번호(무작위)]만 쌓고, 그 반 그날 출석한 기기 수만 돌려줍니다. 이름·별명·점수는 받지 않음 */
+var CLS = '반 출석', CLS_RE = /^[0-9A-Za-z가-힣\-]{2,16}$/, DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+function cls_(){
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), s = ss.getSheetByName(CLS);
+  if(!s){ s = ss.insertSheet(CLS); s.appendRow(['날짜', '반 코드', '기기']); s.setFrozenRows(1); s.getRange(1, 1, 1, 3).setFontWeight('bold').setBackground('#FFE7A3'); }
+  return s;
+}
+function classPost_(d){
+  var code = String(d.code || ''), id = String(d.id || '').slice(0, 16), day = String(d.d || '');
+  if(!CLS_RE.test(code) || !id || !DAY_RE.test(day)) return ContentService.createTextOutput('bad');
+  var key = 'c|' + code + '|' + id + '|' + day, cache = CacheService.getScriptCache();
+  if(cache.get(key)) return ContentService.createTextOutput('ok');
+  var lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try{ cls_().appendRow(["'" + day, clip_(code, 16), clip_(id, 16)]); cache.put(key, '1', 21600); } finally { lock.releaseLock(); }
+  return ContentService.createTextOutput('ok');
+}
+function classGet_(p){
+  var code = String(p.cls || ''), day = String(p.d || ''), out = {ok: 1, cls: code, n: 0};
+  if(CLS_RE.test(code) && DAY_RE.test(day)){
+    var s = cls_(), last = s.getLastRow(), from = Math.max(2, last - 4000), seen = {};
+    if(last >= 2) s.getRange(from, 1, last - from + 1, 3).getDisplayValues().forEach(function(r){ if(r[0] === day && r[1] === code) seen[r[2]] = 1; });
+    out.n = Object.keys(seen).length;
+  }
+  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+}
 ```
+
+## 🏫 반 함께 운동 켜기 (v2.30.0 · 이미 건의함을 만든 선생님)
+1. 건의함 Apps Script 편집기를 열고, 위 **코드 전체**로 바꿔 붙여 넣은 뒤 💾 저장
+2. **배포 → 배포 관리 → ✏ 수정 → 버전: 새 버전 → 배포** (주소는 그대로)
+3. 교사용 반 현황판(`apps/gym/board.html`) → **🔗 반 코드·진도 링크** 탭에서 반 코드를 만들고 QR을 학생에게 보여 주면 끝
+- 시트에 '반 출석' 탭이 자동으로 생기고 [날짜, 반 코드, 기기 번호]만 쌓여요(기기 번호는 학생 휴대폰이 만든 무작위 글자).
+- 스크립트를 바꾸기 전에는 학생 홈에 반 출석 줄이 나오지 않을 뿐, 나머지는 그대로 동작해요.
