@@ -72,7 +72,7 @@ function doGet(e){
 /* 🏫 반 함께 운동: '반 출석' 시트에 [날짜, 반 코드, 기기 번호(무작위)]만 쌓고, 그 반 그날 출석한 기기 수만 돌려줍니다. 이름·별명·점수는 받지 않음 */
 var CLS = '반 출석', CLS_RE = /^[0-9A-Za-z가-힣\-]{2,16}$/, DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 function cls_(){
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), s = ss.getSheetByName(CLS);
+  var ss = sh_().getParent(), s = ss.getSheetByName(CLS);   // 건의함과 같은 스프레드시트
   if(!s){ s = ss.insertSheet(CLS); s.appendRow(['날짜', '반 코드', '기기']); s.setFrozenRows(1); s.getRange(1, 1, 1, 3).setFontWeight('bold').setBackground('#FFE7A3'); }
   return s;
 }
