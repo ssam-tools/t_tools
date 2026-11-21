@@ -34,6 +34,8 @@
 - 공개하는 글은 다시 한번 읽고, 친구를 놀리거나 개인정보가 섞인 글은 공개하지 마세요.
 
 ## 코드 (전체 복사)
+> 시트 메뉴의 Apps Script가 열리지 않으면 script.google.com 에서 새 프로젝트를 만들고, 코드의 `SpreadsheetApp.getActiveSpreadsheet()` 를 `SpreadsheetApp.openById('시트 ID')` 로 바꿔 쓰면 됩니다(시트 주소 /d/ 와 /edit 사이가 ID).
+
 ```javascript
 /* 공부 Gym 건의·후기 받는 곳 (v2.25.0) — jidangmath가 Claude와 함께 제작
    학생 앱이 보낸 글을 '건의함' 시트에 쌓고, 공개(O)한 글과 그 학생 글의 답변만 돌려줍니다. */
