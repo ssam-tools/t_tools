@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/ssambi3-192.png">
+<script src="../../shared/early.js"></script>
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>고1 수학 노트 · 쌤 노트</title>
+<!--
+  📐 고1 수학 노트 (교사용) — 중학생이 고1 내용을 물어볼 때 바로 답할 수 있게 준비하는 교사용 노트. 수업용(선행 교육) 자료가 아닙니다.
+  · 자료: apps/hmath/data.js (2022 개정 공통수학1·2). 견본: 공통수학1 Ⅰ. 다항식
+  · 소단원 한 화면: 🔗 중학교에서(개념지도 ../concept/?u=코드) · 📈 무엇이 달라지나 · 📌 핵심 · 💬 학생 질문+30초 설명 · 🧑‍🏫 중3에게 답할 때 · ✏️ 대표 유형 · ⚠️ 실수 · 🎯 학평 연결
+  · 🖥️ 크게 보기(전자칠판) · 🔎 찾기 · ✔ 검토 표시 · 📝 내 메모(학생이 물어본 것) — 저장 "tt_hmath_v1"(이 기기에만)
+  · 나중에 학생용 시즌 2(고1 입학 후)를 같은 자료로 엽니다. PLAN: 고1 수학 노트 견본 검토 후 결정
+  jidangmath가 Claude와 함께 제작
+-->
+<style>
+  header{align-items:center}
+  .bar{flex-wrap:wrap;gap:6px;align-items:center}
+  .bar input{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:7px 11px;width:210px}
+  main{display:grid;grid-template-columns:230px minmax(0,1fr);gap:10px;padding:10px!important;min-height:0}
+  /* 왼쪽: 단원 목록 */
+  nav.tree{display:flex;flex-direction:column;gap:4px;min-height:0;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px}
+  .tree h2{margin:6px 0 2px;font-size:13px;color:var(--sub);letter-spacing:.02em}
+  .tree .u{font-weight:800;font-size:14.5px;padding:5px 6px;border-radius:8px;display:flex;align-items:center;gap:6px}
+  .tree .u .s{margin-left:auto;font-size:11px;font-weight:800;color:#fff;background:#e07a00;border-radius:6px;padding:0 6px}
+  .tree .u.off{color:var(--sub);font-weight:600}
+  .tree button{font:inherit;text-align:left;font-size:14px;border:0;background:none;border-radius:8px;padding:5px 8px 5px 22px;cursor:pointer;color:var(--ink);display:flex;gap:6px;align-items:center}
+  .tree button:hover{background:var(--accent-soft)}
+  .tree button[aria-current=true]{background:var(--accent);color:#fff;font-weight:800}
+  .tree button:disabled{color:#b3bac2;cursor:default;background:none}
+  .tree button .ck{margin-left:auto;font-size:12px}
+  .tree button.hit{outline:2px solid var(--star)}
+  /* 오른쪽: 소단원 한 화면 */
+  .view{display:flex;flex-direction:column;gap:8px;min-height:0}
+  .vtop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .vtop h1{margin:0;font-size:clamp(20px,2.2vw,28px)}
+  .vtop .path{color:var(--sub);font-size:13px;font-weight:700}
+  .vtop .tag{font-size:12px;font-weight:800;background:#fff3e0;color:#b85c00;border:1px solid #ffd59e;border-radius:999px;padding:2px 10px}
+  .vtop .sp{flex:1}
+  .rv{font:inherit;font-size:13.5px;font-weight:800;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;cursor:pointer}
+  .rv[aria-pressed=true]{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+  .diff{background:linear-gradient(90deg,#eef4fb,#fff);border:1px solid #cfe0f3;border-radius:12px;padding:8px 12px;font-size:clamp(14px,1.3vw,17px)}
+  .diff .mid{display:inline-flex;gap:6px;margin-right:8px;vertical-align:middle}
+  .diff .mid a{font-size:12.5px;font-weight:800;text-decoration:none;color:var(--accent);background:#fff;border:1.5px solid var(--accent);border-radius:999px;padding:1px 9px}
+  .grid{flex:1;min-height:0;display:grid;grid-template-columns:1.05fr 1fr 1fr;gap:8px}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-height:0;overflow:auto}
+  .box h3{margin:0;font-size:14.5px;display:flex;align-items:center;gap:6px}
+  .box h3 small{margin-left:auto;font-weight:600;color:var(--sub);font-size:12px}
+  .core{margin:0;padding-left:1.1em;font-size:clamp(13.5px,1.15vw,16px);line-height:1.6}
+  .core li{margin:0 0 .25em}
+  .qa{display:flex;flex-direction:column;gap:5px}
+  .qa button{font:inherit;text-align:left;font-size:14px;font-weight:700;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:7px 10px;cursor:pointer;line-height:1.45}
+  .qa button[aria-expanded=true]{border-color:var(--accent);background:var(--accent-soft)}
+  .qa .a{font-size:14px;line-height:1.55;background:#fffbea;border-left:4px solid var(--star);border-radius:0 10px 10px 0;padding:7px 10px}
+  .qa .a b.t{color:#a36d00;font-size:12px;display:block}
+  .m3{font-size:13.5px;line-height:1.55;background:#f2f8f3;border-radius:10px;padding:7px 10px;color:#1f5a35}
+  .ex{border:1.5px dashed var(--line);border-radius:10px;padding:7px 10px;font-size:14px;line-height:1.55}
+  .ex .p{font-weight:700}
+  .ex .sol{margin-top:4px;color:#334}
+  .ex .sol ol{margin:0;padding-left:1.2em}
+  .ex .ans{margin-top:4px;font-weight:800;color:var(--danger)}
+  .ex .sb{font:inherit;font-size:12.5px;font-weight:800;border:1px solid var(--line);background:#fff;border-radius:8px;padding:2px 9px;cursor:pointer;margin-top:4px}
+  .mist{margin:0;padding-left:1.1em;font-size:13.5px;line-height:1.5;color:#7a2a1e}
+  .exam{font-size:13.5px;line-height:1.5;background:#fff6f3;border-radius:10px;padding:7px 10px}
+  .exam a{font-weight:800;color:#c2432a}
+  textarea.memo{font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:10px;padding:6px 9px;min-height:54px;resize:vertical}
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--sub);text-align:center}
+  .empty b{font-size:20px;color:var(--ink)}
+  /* 크게 보기 */
+  #big{position:fixed;inset:0;z-index:400;background:#fff;display:none;flex-direction:column;padding:2.4vh 4vw;gap:1.4vh}
+  #big.on{display:flex}
+  #big .top{display:flex;align-items:center;gap:12px}
+  #big .top .x,#big .top .nv{font:inherit;font-size:18px;font-weight:800;border:2px solid #222;border-radius:12px;background:#fff;padding:5px 14px;cursor:pointer}
+  #big .top .x{margin-left:auto}
+  #big h1{margin:0;font-size:clamp(30px,4vw,58px);color:var(--accent)}
+  #big .bd{flex:1;min-height:0;display:grid;grid-template-columns:1.2fr 1fr;gap:3vw;overflow:auto}
+  #big ul{margin:0;padding-left:1.1em;font-size:clamp(20px,2.3vw,36px);line-height:1.55}
+  #big .bex{font-size:clamp(18px,2vw,30px);line-height:1.55}
+  #big .bex .ans{color:var(--danger);font-weight:800}
+  #big .bex button{font:inherit;font-size:.7em;font-weight:800;border:2px solid #222;border-radius:12px;background:#fff;padding:4px 14px;cursor:pointer}
+  @media (max-width:900px){
+    body{height:auto!important;min-height:100dvh;overflow:auto!important}
+    main{grid-template-columns:1fr}
+    nav.tree{max-height:none}
+    .grid{grid-template-columns:1fr}
+    .box{overflow:visible}
+    #big .bd{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>📐 고1 수학 노트 <span class="lead" style="display:inline">교사용 · 학생 질문에 바로 답하기 · 2022 개정 공통수학</span></h1>
+  </div>
+  <div class="bar">
+    <input id="q" type="search" placeholder="🔎 찾기 (예: 나머지, 조립제법)" aria-label="찾기">
+    <button class="btn" id="bBig" title="전자칠판용 큰 글씨 (B)">🖥️ 크게 보기</button>
+    <a class="btn" href="../concept/">🗺️ 중학 개념지도</a>
+  </div>
+</header>
+<main class="panel">
+  <nav class="tree" id="tree" aria-label="단원"></nav>
+  <section class="view" id="view"></section>
+</main>
+<footer>
+  <span>학생이 고1 내용을 물어볼 때 → 💬 질문 → 30초 설명 · 🧑‍🏫 중학교 말로 답하기 (키보드 ← → 소단원 이동 · B 크게 보기 · Esc)</span>
+  <span class="priv">🔒 검토 표시·메모는 이 기기에만 · 선행 수업 자료가 아닌 교사 준비용</span>
+</footer>
+<div id="big" aria-label="크게 보기"></div>
+<script src="../../shared/tt.js"></script>
+<script src="data.js"></script>
+<script>
+(function(){
+  "use strict";
+  var KEY = "tt_hmath_v1", H = window.HMATH, $ = function(id){ return document.getElementById(id); };
+  var S = (function(){ try{ return JSON.parse(localStorage.getItem(KEY) || "null") || {}; }catch(e){ return {}; } })();
+  S.rv = S.rv || {}; S.memo = S.memo || {};
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]; }); }
+  function strip(h){ return String(h || "").replace(/<[^>]+>/g, ""); }
+  var MIDN = {POLY: "식의 계산", FACT: "인수분해", LE: "일차방정식", QE: "이차방정식"};
+  /* 소단원 펼친 목록 */
+  var ALL = [];
+  H.books.forEach(function(b){ b.units.forEach(function(u){ u.topics.forEach(function(t){ ALL.push({b: b, u: u, t: t, k: b.id + "." + u.id + "." + t.id, ok: !!t.core}); }); }); });
+  var READY = ALL.filter(function(x){ return x.ok; });
+  var cur = (function(){ var h = location.hash.slice(1); return READY.some(function(x){ return x.k === h; }) ? h : (S.last && READY.some(function(x){ return x.k === S.last; }) ? S.last : READY[0].k); })();
+  var openQ = 0, showSol = {}, query = "";
+  function item(k){ return ALL.filter(function(x){ return x.k === k; })[0]; }
+  function hits(x){ if(!query || !x.ok) return false; var t = x.t, s = [t.name, t.diff, (t.core || []).join(" "), (t.qa || []).map(function(q){ return q.q + q.a; }).join(" "), (t.mist || []).join(" "), (t.ex || []).map(function(e){ return e.p + " " + e.s.join(" "); }).join(" "), t.mid3 || ""].join(" "); return strip(s).replace(/\s/g, "").indexOf(query.replace(/\s/g, "")) >= 0; }
+
+  function drawTree(){
+    var h = "";
+    H.books.forEach(function(b){
+      h += "<h2>" + esc(b.name) + "</h2>";
+      b.units.forEach(function(u){
+        var ready = u.topics.some(function(t){ return t.core; });
+        h += '<div class="u' + (ready ? "" : " off") + '">' + esc(u.no + ". " + u.name) + (u.sample ? '<span class="s">견본</span>' : "") + "</div>";
+        u.topics.forEach(function(t){
+          var k = b.id + "." + u.id + "." + t.id, x = item(k);
+          h += '<button data-k="' + k + '"' + (t.core ? "" : " disabled title=\"준비 중\"") + ' aria-current="' + (k === cur) + '"' + (hits(x) ? ' class="hit"' : "") + ">" + esc(t.name) + '<span class="ck">' + (S.rv[k] ? "✔" : t.core ? "" : "…") + "</span></button>";
+        });
+      });
+    });
+    $("tree").innerHTML = h;
+  }
+  function exHtml(e, i){
+    var k = cur + "." + i, on = !!showSol[k];
+    return '<div class="ex"><div class="p">' + (i + 1) + ". " + e.p + "</div>"
+      + (on ? '<div class="sol"><ol>' + e.s.map(function(s){ return "<li>" + s + "</li>"; }).join("") + '</ol></div><div class="ans">답: ' + e.ans + "</div>" : "")
+      + '<button class="sb" data-sol="' + i + '">' + (on ? "풀이 접기" : "풀이 보기") + "</button></div>";
+  }
+  function drawView(){
+    var x = item(cur), t = x.t;
+    S.last = cur; save();
+    if(location.hash.slice(1) !== cur) history.replaceState(null, "", "#" + cur);
+    $("view").innerHTML =
+      '<div class="vtop"><span class="path">' + esc(x.b.name + " › " + x.u.no + ". " + x.u.name) + "</span><h1>" + esc(t.name) + "</h1>" + (x.u.sample ? '<span class="tag">견본 · 선생님 검토 필요</span>' : "")
+      + '<span class="sp"></span><button class="rv" id="rv" aria-pressed="' + !!S.rv[cur] + '" title="내용을 검토했으면 표시">' + (S.rv[cur] ? "✔ 검토함" : "검토 표시") + "</button></div>"
+      + '<div class="diff"><span class="mid">🔗 ' + t.mid.map(function(m){ return '<a href="../concept/?u=' + m[0] + '" title="중학 개념지도에서 열기">' + esc(m[1]) + "</a>"; }).join("") + "</span>📈 " + t.diff + "</div>"
+      + '<div class="grid">'
+      + '<div class="box"><h3>📌 핵심</h3><ul class="core">' + t.core.map(function(c){ return "<li>" + c + "</li>"; }).join("") + "</ul>"
+      + '<h3 style="margin-top:4px">⚠️ 자주 하는 실수</h3><ul class="mist">' + t.mist.map(function(c){ return "<li>" + c + "</li>"; }).join("") + "</ul></div>"
+      + '<div class="box"><h3>💬 학생이 자주 묻는 질문 <small>눌러서 30초 설명</small></h3><div class="qa">'
+        + t.qa.map(function(q, i){ return '<button data-q="' + i + '" aria-expanded="' + (openQ === i) + '">Q. ' + q.q + "</button>" + (openQ === i ? '<div class="a"><b class="t">⏱ 30초 설명</b>' + q.a + "</div>" : ""); }).join("") + "</div>"
+        + '<h3 style="margin-top:4px">🧑‍🏫 중3에게 답할 때</h3><div class="m3">' + t.mid3 + "</div>"
+        + '<h3 style="margin-top:4px">📝 내 메모 <small>학생이 물어본 것·보탤 설명</small></h3><textarea class="memo" id="memo" maxlength="600" placeholder="예: 3반 학생이 조립제법을 물어봄 → 세로 나눗셈과 비교해서 설명">' + esc(S.memo[cur] || "") + "</textarea></div>"
+      + '<div class="box"><h3>✏️ 대표 유형</h3>' + t.ex.map(exHtml).join("")
+        + '<h3 style="margin-top:4px">🎯 학평 연결</h3><div class="exam">' + t.exam.t + ' <a href="../concept/?u=' + t.exam.u + '">개념지도에서 도전 문제 보기 ›</a></div></div>'
+      + "</div>";
+  }
+  function draw(){ drawTree(); drawView(); if($("big").classList.contains("on")) drawBig(); }
+  function go(d){ var i = READY.map(function(x){ return x.k; }).indexOf(cur); i = (i + d + READY.length) % READY.length; cur = READY[i].k; openQ = 0; draw(); }
+
+  /* 크게 보기 (전자칠판) */
+  var bigSol = false;
+  function drawBig(){
+    var x = item(cur), t = x.t, e = t.ex[0];
+    $("big").innerHTML = '<div class="top"><button class="nv" data-b="-1">◀</button><button class="nv" data-b="1">▶</button><span style="color:#888;font-weight:700">' + esc(x.u.name + " · " + t.name) + '</span><button class="x" data-b="x">닫기 Esc</button></div>'
+      + "<h1>" + esc(t.name) + '</h1><div class="bd"><ul>' + t.core.map(function(c){ return "<li>" + c + "</li>"; }).join("") + "</ul>"
+      + '<div class="bex"><b>✏️ ' + e.p + "</b>" + (bigSol ? '<ol style="padding-left:1.1em">' + e.s.map(function(s){ return "<li>" + s + "</li>"; }).join("") + '</ol><div class="ans">답: ' + e.ans + "</div>" : "") + '<div style="margin-top:12px"><button data-b="s">' + (bigSol ? "풀이 접기" : "풀이 보기") + "</button></div></div></div>";
+  }
+  function openBig(){ bigSol = false; drawBig(); $("big").classList.add("on"); }
+  function closeBig(){ $("big").classList.remove("on"); }
+
+  document.addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    if(b.dataset.k && !b.disabled){ cur = b.dataset.k; openQ = 0; draw(); return; }
+    if(b.dataset.q != null){ var i = +b.dataset.q; openQ = openQ === i ? -1 : i; drawView(); return; }
+    if(b.dataset.sol != null){ var k = cur + "." + b.dataset.sol; showSol[k] = !showSol[k]; drawView(); return; }
+    if(b.id === "rv"){ if(S.rv[cur]) delete S.rv[cur]; else S.rv[cur] = new Date().toISOString().slice(0, 10); save(); draw(); return; }
+    if(b.id === "bBig"){ openBig(); return; }
+    if(b.dataset.b){ if(b.dataset.b === "x") closeBig(); else if(b.dataset.b === "s"){ bigSol = !bigSol; drawBig(); } else { go(+b.dataset.b); bigSol = false; drawBig(); } }
+  });
+  document.addEventListener("input", function(e){
+    if(e.target.id === "memo"){ var v = e.target.value.trim(); if(v) S.memo[cur] = v.slice(0, 600); else delete S.memo[cur]; save(); }
+    if(e.target.id === "q"){ query = e.target.value.trim(); drawTree(); }
+  });
+  $("q").addEventListener("keydown", function(e){ if(e.key === "Enter"){ var f = READY.filter(hits)[0]; if(f){ cur = f.k; openQ = 0; draw(); } } });
+  document.addEventListener("keydown", function(e){
+    if(/INPUT|TEXTAREA/.test((document.activeElement || {}).tagName || "")) return;
+    if(e.key === "Escape") closeBig();
+    else if(e.key === "ArrowRight"){ go(1); } else if(e.key === "ArrowLeft"){ go(-1); }
+    else if(e.key === "b" || e.key === "B"){ if($("big").classList.contains("on")) closeBig(); else openBig(); }
+  });
+  draw();
+})();
+</script>
+</body>
+</html>
