@@ -141,6 +141,7 @@
 </footer>
 <script>if(window.top !== window) document.documentElement.classList.add("inframe");</script>
 <script src="../../shared/tt.js"></script>
+<script src="../../shared/libcache.js"></script>
 <script>
 (function(){
   "use strict";
@@ -160,10 +161,26 @@
       : /DriveApp|auth\/drive|권한/.test(m) ? "업무판 계정이 구글 드라이브 사용을 아직 허락하지 않았습니다. 업무판 담당자가 앱스 스크립트 편집기에서 '드라이브권한승인' 함수를 한 번 실행해 [허용]을 누른 뒤, [배포 → 배포 관리 → 수정 → 새 버전]으로 다시 배포해 주세요." : m; }
 
   /* ---------- 목록 ---------- */
+  /* v2.39.1 빠르게: 저장해 둔 목록을 먼저 보여 주고 뒤에서 새로 확인 · 주소에 자료(id)가 있으면 목록을 기다리지 않고 파일부터 받기 */
+  function keepItems(r){ return (r.items || []).filter(function(x){ return !/^ttbook__/.test(String(x.name || "")); }); }   /* 교과서 조각(교과서 띄우기용)은 목록에서 숨김 */
   function load(){
+    var shown = false, sig = "";
+    var uid = new URLSearchParams(location.search).get("id"); if(uid && !opened) fetchFile(uid).catch(function(){});
     $("body").innerHTML = '<div class="empty"><div class="big">⏳</div><div>자료 목록을 불러오는 중…</div></div>';
-    post({action: "liblist"}).then(function(r){ items = (r.items || []).filter(function(x){ return !/^ttbook__/.test(String(x.name || "")); });   /* 교과서 조각(교과서 띄우기용)은 목록에서 숨김 */ drawNav(); drawList(); openFromUrl(); }).catch(function(e){ $("body").innerHTML = '<div class="empty"><div class="big">⚠️</div><div><b>자료실을 열지 못했습니다.</b><br>' + esc(err(e)) + "</div></div>"; });
+    TT_LIBC.listGet("lib").then(function(v){
+      if(!v || shown || items.length) return;
+      items = v.items; sig = JSON.stringify(items); shown = true; drawNav(); drawList(); openFromUrl(true);
+    });
+    post({action: "liblist"}).then(function(r){
+      var fresh = keepItems(r), fs = JSON.stringify(fresh);
+      TT_LIBC.listPut("lib", fresh); TT_LIBC.prune("lib", (r.items || []).map(function(x){ return x.id; }));
+      if(shown && fs === sig) return;
+      items = fresh;
+      if(shown && $("q").value.trim()) return;                    // 찾기 결과를 보고 있으면 그대로 둠(다음에 반영)
+      shown = true; drawNav(); drawList(); openFromUrl();
+    }).catch(function(e){ if(!shown) $("body").innerHTML = '<div class="empty"><div class="big">⚠️</div><div><b>자료실을 열지 못했습니다.</b><br>' + esc(err(e)) + "</div></div>"; else TT.ui.toast("자료 목록을 새로 확인하지 못했어요 — 저장해 둔 목록입니다."); });
     post({action: "aiinfo"}).then(function(r){ canAsk = !!r.enabled; $("ask").hidden = !canAsk; }).catch(function(){});
+    setTimeout(function(){ TT_LIBC.warmViewer(TT.BASE); }, 1500);
   }
   function drawNav(){
     var c = {"전체": 0}; items.forEach(function(x){ if(onlyNew && !x.latest) return; c["전체"]++; c[x.cat] = (c[x.cat] || 0) + 1; });
@@ -206,12 +223,13 @@
      apps/lib/?find=2026 문제 -해설&page=9   자료 이름에 2026·문제가 있고 해설은 없는 최신 자료
      side=l / side=r : 두 단으로 된 쪽에서 왼쪽·오른쪽 단을 크게 */
   var opened = false;
-  function openFromUrl(){
+  function openFromUrl(early){
     if(opened) return; opened = true;
     var u = new URLSearchParams(location.search), id = u.get("id"), find = u.get("find"), page = parseInt(u.get("page"), 10) || 1, side = u.get("side"), qq = u.get("q");
     if(!id && !find){ if(qq){ $("q").value = qq; $("sf").requestSubmit ? $("sf").requestSubmit() : $("sf").onsubmit(new Event("submit")); } return; }   // v2.7: 왼쪽 검색창 "자료실에서 찾기"
     if(qq) DF.want = qq;                                                // v2.7: 쌤비 "○○에서 △△ 찾아 줘" → 그 문서를 열고 바로 찾기
     var x = id ? items.filter(function(i){ return i.id === id; })[0] : pick(find);
+    if(!x && early){ opened = false; return; }                         // 저장해 둔 목록에 없으면 새 목록이 올 때 다시
     if(!x){ TT.ui.toast("자료실에서 " + (find ? "'" + find + "'" : "그 자료") + "을(를) 찾지 못했습니다. 자료 이름에 연도와 '문제'·'해설'을 넣어 올려 주세요."); return; }
     if(!isPdf(x.name)){ TT.ui.toast("PDF가 아니라 바로 볼 수 없습니다. ⬇ 내려받기를 눌러 주세요."); return; }
     view(x.id, page, null, side);
@@ -232,12 +250,20 @@
   }
 
   function isPdf(n){ return /\.pdf$/i.test(String(n || "")); }
-  function fetchFile(id){
+  /* v2.39.1: 한 번 받은 파일은 이 기기에 넣어 두고 바로 꺼내 씀(shared/libcache.js) · 같은 파일을 두 번 받지 않음 · 받는 만큼 진행 표시 */
+  var pend = {}, progFn = {};
+  function fetchFile(id, onProg){
+    if(onProg) progFn[id] = onProg;
     if(last && last.id === id) return Promise.resolve(last);
-    return post({action: "libget", id: id}).then(function(r){
-      var bin = atob(r.data), u8 = new Uint8Array(bin.length); for(var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-      last = {id: id, name: r.name, mime: r.mime, u8: u8}; return last;
-    });
+    if(pend[id]) return pend[id];
+    var x = items.filter(function(i){ return i.id === id; })[0] || {};
+    pend[id] = TT_LIBC.get("lib:" + id).then(function(f){
+      if(f) return f;
+      return TT_LIBC.fetchB64(B.url, {pw: B.pw, action: "libget", id: id}, +x.size || 0, function(g, t){ if(progFn[id]) progFn[id](g, t); })
+        .then(function(f2){ TT_LIBC.put("lib:" + id, f2, ""); return f2; });
+    }).then(function(f){ last = {id: id, name: f.name, mime: f.mime, u8: f.u8}; return last; })
+      .finally(function(){ delete pend[id]; delete progFn[id]; });
+    return pend[id];
   }
   function saveFile(f){
     var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([f.u8], {type: f.mime || "application/octet-stream"})); a.download = f.name; document.body.appendChild(a); a.click();
@@ -341,7 +367,7 @@
     P.d.querySelector("#pvC").textContent = x.pages || "…"; P.d.querySelector("#pvN").value = "";
     P.B.innerHTML = '<div class="pvmsg">⏳ 자료를 받는 중…</div>'; P.wraps = []; P.z = 1;
     if(!P.d.open) P.d.showModal();
-    fetchFile(id).then(async function(f){
+    fetchFile(id, function(g, t){ if(task === P.task){ var m = P.B.querySelector(".pvmsg"); if(m) m.textContent = TT_LIBC.progText(g, t); } }).then(async function(f){
       if(task !== P.task) return;
       P.B.innerHTML = '<div class="pvmsg">⏳ 쪽을 준비하는 중…</div>';
       var base = new URL("../../shared/vendor/pdfjs/", location.href).href;

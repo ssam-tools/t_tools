@@ -45,7 +45,13 @@
     return out;
   }
   /* 파일 받기: 바로 보기(새 창에 PDF) · 내려받기(원본 이름 그대로) */
-  function fetchFile(id){ return post({action: "drget", id: id}).then(function(j){ var b = atob(j.data), u = new Uint8Array(b.length); for(var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return {name: j.name, blob: new Blob([u], {type: j.mime || "application/octet-stream"})}; }); }
+  function fetchRaw(id){ return post({action: "drget", id: id}).then(function(j){ var b = atob(j.data), u = new Uint8Array(b.length); for(var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return {name: j.name, mime: j.mime, u8: u}; }); }
+  /* v2.39.1: 한 번 받은 파일은 이 기기에 넣어 두고 바로 씀(shared/libcache.js가 있을 때). 드라이브 파일은 고친 시각이 바뀌면 새로 받음 */
+  function fetchFile(id){
+    var C = window.TT_LIBC, x = (list || []).filter(function(i){ return i.view === id || i.orig === id || i.id === id; })[0] || {}, ver = String(x.at || "");
+    var p = C ? C.get("dr:" + id, ver).then(function(f){ return f || fetchRaw(id).then(function(f2){ C.put("dr:" + id, f2, ver); return f2; }); }) : fetchRaw(id);
+    return p.then(function(f){ return {name: f.name, blob: new Blob([f.u8], {type: f.mime || "application/octet-stream"})}; });
+  }
   function view(id){
     var w = window.open("", "_blank");                                    // 누른 순간 창을 열어 두어야 막히지 않음
     if(w) w.document.write('<p style="font:16px sans-serif;padding:20px">자료를 여는 중…</p>');
