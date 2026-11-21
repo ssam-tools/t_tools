@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "지당 노트 · 지금 당장, 한 줄부터",
+  "short_name": "지당 노트",
+  "description": "쌤비 코치와 함께 목표를 세우고 매일 한 줄로 기록하는 100일 습관 노트",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FFF3C4",
+  "theme_color": "#FFD84D",
+  "icons": [
+    {"src": "../../assets/ssambi3-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "../../assets/ssambi3-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "../../assets/ssambi3-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

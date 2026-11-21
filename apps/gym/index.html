@@ -377,6 +377,7 @@
 <script src="rooms.js"></script>
 <script src="map.js"></script>
 <script src="../../shared/sbart.js"></script>
+<script src="../../shared/jdgym.js"></script>
 <script>
 (function(){
   "use strict";
@@ -810,11 +811,14 @@
   /* ── 화면 ── */
   var V = "home", hd = document.getElementById("hd"), m = document.getElementById("m"), nav = document.getElementById("nav");
   function sb(size, opts){ return window.TT_SBART ? TT_SBART.svg(Object.assign({acc: "trainer", size: size}, opts || {})) : "🦉"; }
+  /* 지당 노트 문 (PLAN_지당연계 2단계): 오늘 지당을 했는지 · 끈기 심장 */
+  function jdInfo(){ try{ return window.JDGYM ? JDGYM.jd() : null; }catch(e){ return null; } }
+  function jdChip(){ var j = jdInfo(); if(!j) return ""; return '<a class="chip' + (j.has && !j.today ? " hot" : "") + '" href="../jidang/" style="text-decoration:none" title="지당 노트 · 지금 당장, 한 줄부터">📝 ' + (!j.has ? "지당" : j.today ? "지당 ✓" : "오늘 지당") + "</a>"; }
   function header(title, back){
     var st = streak();
     hd.innerHTML = (back ? '<button class="ib" data-go="' + back + '" aria-label="뒤로">←</button>' : "")
       + "<h1>" + title + (S.nick && !back ? "<small>· " + esc(S.nick) + "</small>" : "") + "</h1>"
-      + (back ? "" : '<span class="chip hot" title="연속 출석">🔥 ' + st + '</span><span class="chip" title="이번 주 휴식권">🎟️ ' + restLeft() + "</span>");
+      + (back ? "" : jdChip() + '<span class="chip hot" title="연속 출석">🔥 ' + st + '</span><span class="chip" title="이번 주 휴식권">🎟️ ' + restLeft() + "</span>");
   }
   function go(v, arg){
     V = v; document.body.classList.toggle("focus", v === "room" || v === "train" || v === "result" || v === "report");
@@ -856,7 +860,8 @@
     clsSync();
   }
   m.addEventListener("click", function(e){
-    var t = e.target.closest("[data-room],[data-int],[data-a],[data-start],[data-r],[data-sub],[data-fib]"); if(!t) return;
+    var t = e.target.closest("[data-room],[data-int],[data-a],[data-start],[data-r],[data-sub],[data-fib],[data-jd]"); if(!t) return;
+    if(t.dataset.jd){ location.href = "../jidang/"; return; }
     if(t.dataset.fib) return fibDlg(t.dataset.fib);
     if(t.dataset.sub && !t.dataset.a) return mapV(t.dataset.sub);
     if(t.dataset.room) return go("room", t.dataset.room);
@@ -1205,6 +1210,7 @@
       + [0, 1, 2].map(function(i){ return '<rect x="80" y="' + (90 + i * 17) + '" width="19" height="14" rx="5" ' + f("math") + '/><rect x="101" y="' + (90 + i * 17) + '" width="19" height="14" rx="5" ' + f("math") + "/>"; }).join("")
       + '<rect x="38" y="72" width="17" height="46" rx="8" transform="rotate(10 46 95)" ' + f("kor") + '/><rect x="145" y="72" width="17" height="46" rx="8" transform="rotate(-10 154 95)" ' + f("kor") + "/>"
       + '<rect x="30" y="118" width="15" height="44" rx="7" transform="rotate(4 37 140)" ' + f("kor") + '/><rect x="155" y="118" width="15" height="44" rx="7" transform="rotate(-4 162 140)" ' + f("kor") + "/>"
+      + (function(){ var j = jdInfo(), lv = j ? j.heart.lv : 0; return '<path d="M100 84 C88 74 90 62 100 68 C110 62 112 74 100 84Z" fill="' + (lv ? "#FF3D6E" : "#fff") + '" fill-opacity="' + (lv ? (0.45 + lv * 0.14).toFixed(2) : 0.9) + '" stroke="#C2185B" stroke-width="1.6" data-jd="1"><title>끈기 심장</title></path>'; })()
       + '<rect x="76" y="141" width="48" height="20" rx="6" fill="#2B2111"/>'
       + '<rect x="77" y="160" width="21" height="54" rx="9" ' + f("eng") + '/><rect x="102" y="160" width="21" height="54" rx="9" ' + f("eng") + "/>"
       + '<rect x="79" y="216" width="17" height="42" rx="8" ' + f("eng") + '/><rect x="104" y="216" width="17" height="42" rx="8" ' + f("eng") + "/>"
@@ -1213,7 +1219,8 @@
     m.innerHTML = '<div class="coach"><span class="sb">' + sb(70) + '</span><div class="bub">' + (totalXP() ? "근육을 눌러 봐! 그 PT실로 바로 가." : "아직 근육이 연해. 오늘 첫 세트로 색을 채워 보자!") + "<small>XP가 쌓일수록 색이 진해져요</small></div></div>"
       + '<div class="body">' + svg + "</div>"
       + '<div class="card grow2" style="padding:9px 12px"><div class="glab"><span>🔥 공부 체력 (준비운동) ' + (ws + 1) + "단계</span><span>연속 " + streak() + "일 · " + wx + " XP</span></div>"
-      + '<div class="gbar"><i style="width:' + Math.round(stageBar(wx) * 100) + '%;background:linear-gradient(90deg,#FF7A45,#FFB000)"></i></div></div>'
+      + '<div class="gbar"><i style="width:' + Math.round(stageBar(wx) * 100) + '%;background:linear-gradient(90deg,#FF7A45,#FFB000)"></i></div>'
+      + (function(){ var j = jdInfo(); if(!j) return ""; var h = j.heart; return '<a class="glab" href="../jidang/" style="text-decoration:none;color:inherit;margin-top:6px"><span>' + (h.lv ? "💗" : "🤍") + " 끈기 심장 · " + h.name + "</span><span>" + (j.has ? "지당 " + j.n + "번" + (h.next ? " · " + h.left + "번 더" : "") : "지당 노트에서 키워요 ›") + "</span></a>"; })() + "</div>"
       + '<div class="mlist">' + IDS.slice(1).map(function(k){ return '<button class="ml' + (k === weak ? " weak" : "") + '" style="--c:' + R[k].col + '" data-room="' + k + '"><b>' + R[k].emo + " " + R[k].part + "<em>Lv." + lv(k) + '</em></b><span class="gbar"><i style="width:' + Math.round(stageBar(x[k]) * 100) + "%;background:" + R[k].col + '"></i></span><span class="muted" style="font-size:11px">' + (k === weak ? "약한 근육 → 가기" : (stage(x[k]) + 1) + "단계 · " + x[k] + " XP") + "</span></button>"; }).join("")
       + '<div class="ml" style="--c:#2B2111"><b>⭐ 합계</b><span class="muted" style="font-size:12px;font-weight:900">' + totalXP() + " XP</span><span class=\"muted\" style=\"font-size:11px\">완전히 내 것 " + mineCount() + "</span></div></div>";
   }

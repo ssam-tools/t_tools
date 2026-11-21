@@ -6,7 +6,8 @@
    ③ ⏱️ 아껴 준 시간 — 쌤 노트가 만든 파일 내려받기·인쇄를 할 때마다 그 일을 손으로 할 때 걸리는 시간을 대략 더함, 금요일 오후 한 주 결산
    ④ 🌳 우리 반 나무 — ⚡ 빠른 지도의 '칭찬'이 쌓이면 우리 반 메뉴의 나무가 자람
    ⑤ 📅 D-day 한 줄 — 학사일정에서 가장 가까운 시험·방학·졸업
-   ⑥ 🏅 숨은 배지 — 처음 받기 전에는 ❔ */
+   ⑥ 🏅 숨은 배지 — 처음 받기 전에는 ❔
+   ⑦ 📝 나의 지당 (PLAN_지당연계 6단계) — 교사 본인의 지당 프로젝트: 목표 한 줄 + 오늘의 지당 ✔ (도장판 안, J.jd) */
 (function(){
   "use strict";
   if(!window.TT || TT.joy || TT.classroom) return;
@@ -267,6 +268,15 @@
   })();
 
   /* ---------- 도장판·배지 창 ---------- */
+  /* 📝 나의 지당 — 지금 당장, 한 줄부터 (학생 지당 노트와 같은 마음으로 선생님도) */
+  function jdBlock(){
+    var jd = J.jd || {days: {}}, n = Object.keys(jd.days || {}).length, did = !!(jd.days || {})[ymd()];
+    if(!jd.goal || jd.edit) return '<h3>📝 나의 지당 <small>지금 당장, 한 줄부터 · 선생님도 100일 도전</small></h3><div style="display:flex;gap:6px"><input id="jdGoal" maxlength="60" value="' + esc(jd.goal || "") + '" placeholder="예: 매일 팔굽혀펴기 30개" style="flex:1;font:inherit;padding:6px 10px;border:1.5px solid var(--t-line,#dde3ea);border-radius:10px"><button type="button" data-jd="set" style="font:inherit;font-weight:800;border:0;border-radius:10px;padding:6px 14px;background:#FFD84D;cursor:pointer">' + (jd.goal ? "바꾸기" : "시작") + "</button></div>";
+    return '<h3>📝 나의 지당 <small>' + n + "번째" + (n >= 100 ? " · 💯 백일 지당!" : " · 100일까지 " + (100 - n) + "번") + ' · <a href="#" data-jd="edit" style="color:inherit">목표 바꾸기</a></small></h3>'
+      + '<div style="display:flex;align-items:center;gap:8px"><span style="flex:1;font-weight:700">' + esc(jd.goal) + "</span>"
+      + (did ? '<button type="button" data-jd="undo" title="다시 누르면 취소" style="font:inherit;font-weight:800;border:2px solid #c62828;color:#c62828;background:#fff;border-radius:10px;padding:5px 12px;cursor:pointer;transform:rotate(-4deg)">✔ 오늘 지당</button>'
+        : '<button type="button" data-jd="do" style="font:inherit;font-weight:800;border:0;border-radius:10px;padding:6px 14px;background:#FFD84D;cursor:pointer">오늘 지당 ✔</button>') + "</div>";
+  }
   var dlg = null;
   function open(focus){
     J = load();
@@ -275,6 +285,15 @@
       dlg.addEventListener("change", function(e){ if(e.target.id === "hidOn"){ var u = TT.store.get("tt_ui_v1", {}) || {}; if(e.target.checked) delete u.hidOff; else u.hidOff = true; TT.store.set("tt_ui_v1", u); return; } if(e.target.id === "joyOn"){ J = load(); J.off = !e.target.checked; save(J); refresh(); open(); } });
       dlg.addEventListener("click", function(e){ var s = e.target.closest && e.target.closest("[data-stamp]"); if(s){ e.preventDefault(); dlg.close(); stamp(); } });
       dlg.addEventListener("click", function(e){ var a = e.target.closest && e.target.closest("[data-acc]"); if(a && !a.disabled){ setAcc(a.dataset.acc); open(); } });
+      dlg.addEventListener("click", function(e){                       // 📝 나의 지당
+        var a = e.target.closest && e.target.closest("[data-jd]"); if(!a) return; e.preventDefault();
+        J = load(); var jd = J.jd = J.jd || {days: {}}, k = a.dataset.jd;
+        if(k === "set"){ var v = ((document.getElementById("jdGoal") || {}).value || "").trim().slice(0, 60); if(!v) return; if(!jd.start) jd.start = ymd(); jd.goal = v; jd.edit = false; }
+        else if(k === "do"){ jd.days[ymd()] = 1; }
+        else if(k === "undo"){ delete jd.days[ymd()]; }
+        else if(k === "edit"){ jd.edit = true; }
+        save(J); open();
+      });
     }
     var d = new Date(), y = d.getFullYear(), m = d.getMonth(), first = new Date(y, m, 1), last = new Date(y, m + 1, 0).getDate(), cells = "", t = ymd();
     var lead = (first.getDay() + 6) % 7; if(lead > 4) lead = 0;
@@ -285,6 +304,7 @@
     dlg.innerHTML = '<h2>🎈 도장판 · 배지<button type="button" class="x" data-x>닫기 Esc</button></h2>'
       + '<h3>✅ ' + (m + 1) + '월 퇴근 도장 <small>' + ms + "개" + (sk >= 2 ? " · 🔥 " + sk + "일 연속" : "") + (canStamp ? ' · <a href="#" data-stamp style="color:#c62828;font-weight:800">오늘 도장 찍기</a>' : "") + "</small></h3>"
       + '<div class="joyCal"><b>월</b><b>화</b><b>수</b><b>목</b><b>금</b>' + cells + "</div>"
+      + jdBlock()
       + '<div class="joyRow" style="margin-top:10px"><div>⏱️ 이번 주 아낀 시간<b>' + (ws ? hm(ws) : "0분") + "</b></div><div>🚀 지금까지<b>" + (al ? hm(al) : "0분") + "</b></div><div" + (focus === "tree" ? ' style="outline:2px solid #2f6b1f"' : "") + ">" + T.ic + " 우리 반 나무<b>" + T.nm + " · 칭찬·청소 " + n + "</b>" + (T.next ? T.nnm + "까지 " + T.next + "번" : "") + "</div></div>"
       + '<h3>🏅 배지 <small>' + Object.keys(J.badges).length + " / " + BADGES.length + " · 받기 전에는 숨겨져 있어요</small></h3>"
       + '<div class="joyBd">' + BADGES.map(function(b){ var g = J.badges[b[0]]; return '<div class="' + (g ? "got" : "") + '"' + (g ? ' title="' + new Date(g).toLocaleDateString("ko-KR") + '"' : "") + "><i>" + (g ? b[1] : "❔") + "</i>" + (g ? esc(b[2]) : "숨은 배지") + "</div>"; }).join("") + "</div>"
