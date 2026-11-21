@@ -22,7 +22,7 @@
     ],
     tools: [
       {id:"concept",icon:"🗺️", short:"개념지도", name:"개념지도", old:"개념지도·도전 문제", desc:"중학교 단원 카드 25장 + 세부 개념 51개(큰 글씨) · 카드마다 고1 3월 모의고사 기출 도전 문제 — 누를 때마다 문제 → 정답 → 해설.", href:"apps/concept/", room:true, cat:"math"},
-      {id:"hmath",  icon:"📐", short:"고1 수학 노트", name:"고1 수학 노트 (교사용)", desc:"학생이 고1 내용을 물어볼 때 — 공통수학 소단원별 중학교 연결 · 달라지는 점 · 핵심 · 학생 질문 30초 설명 · 중3에게 답하는 법 · 대표 유형 (견본: 다항식).", href:"apps/hmath/", cat:"math"},
+      {id:"hmath",  icon:"📐", short:"고1 수학 노트", name:"고1 수학 노트 (교사용)", desc:"학생이 고1 내용을 물어볼 때 — 공통수학 소단원별 중학교 연결 · 달라지는 점 · 핵심 · 학생 질문 30초 설명 · 중3에게 답하는 법 · 대표 유형 (공통수학1·2 전체 17개 소단원).", href:"apps/hmath/", cat:"math"},
       {id:"mgen",   icon:"🔢", short:"문항 생성", name:"문항 생성기", desc:"중1~3 48개 영역 계산형 문항 · 기초·보통·심화·섞기 · 학년별·진도까지 섞기 · 오답 복습 · 고교 준비 · 답칸형 · QR 스스로 채점 · 학생별 다른 숫자.", href:"apps/mgen/", cat:"math"},
       {id:"mcheck", icon:"✅", short:"형성평가", name:"형성평가·보충", desc:"빠른 채점 · 문항별 정답률 · 틀린 유형만 보충 학습지 · 해결 → 세특 근거.", href:"apps/mcheck/", cat:"math"},
       {id:"play",   icon:"🎮", short:"수학 놀이터", name:"수학 놀이터", desc:"보물 상자·숫자 폭탄·돌림판·퀴즈 배틀·빙고·스도쿠·몬티 홀 등 41가지 수학 게임·퍼즐.", href:"apps/play/", room:true, cat:"math"}

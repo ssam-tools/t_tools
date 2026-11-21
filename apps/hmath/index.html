@@ -14,7 +14,7 @@
 <title>고1 수학 노트 · 쌤 노트</title>
 <!--
   📐 고1 수학 노트 (교사용) — 중학생이 고1 내용을 물어볼 때 바로 답할 수 있게 준비하는 교사용 노트. 수업용(선행 교육) 자료가 아닙니다.
-  · 자료: apps/hmath/data.js (2022 개정 공통수학1·2). 견본: 공통수학1 Ⅰ. 다항식
+  · 자료: apps/hmath/data.js (2022 개정 공통수학1·2, 7단원 소단원 17개)
   · 소단원 한 화면: 🔗 중학교에서(개념지도 ../concept/?u=코드) · 📈 무엇이 달라지나 · 📌 핵심 · 💬 학생 질문+30초 설명 · 🧑‍🏫 중3에게 답할 때 · ✏️ 대표 유형 · ⚠️ 실수 · 🎯 학평 연결
   · 🖥️ 크게 보기(전자칠판) · 🔎 찾기 · ✔ 검토 표시 · 📝 내 메모(학생이 물어본 것) — 저장 "tt_hmath_v1"(이 기기에만)
   · 나중에 학생용 시즌 2(고1 입학 후)를 같은 자료로 엽니다. PLAN: 고1 수학 노트 견본 검토 후 결정
@@ -71,6 +71,7 @@
   .exam{font-size:13.5px;line-height:1.5;background:#fff6f3;border-radius:10px;padding:7px 10px}
   .exam a{font-weight:800;color:#c2432a}
   textarea.memo{font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:10px;padding:6px 9px;min-height:54px;resize:vertical}
+.mx{display:inline-flex;flex-direction:column;vertical-align:middle;border-left:2px solid currentColor;border-right:2px solid currentColor;border-radius:7px;padding:0 6px;line-height:1.25;text-align:center;word-spacing:.5em;margin:1px 2px}
   .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--sub);text-align:center}
   .empty b{font-size:20px;color:var(--ink)}
   /* 크게 보기 */
@@ -163,7 +164,7 @@
     S.last = cur; save();
     if(location.hash.slice(1) !== cur) history.replaceState(null, "", "#" + cur);
     $("view").innerHTML =
-      '<div class="vtop"><span class="path">' + esc(x.b.name + " › " + x.u.no + ". " + x.u.name) + "</span><h1>" + esc(t.name) + "</h1>" + (x.u.sample ? '<span class="tag">견본 · 선생님 검토 필요</span>' : "")
+      '<div class="vtop"><span class="path">' + esc(x.b.name + " › " + x.u.no + ". " + x.u.name) + "</span><h1>" + esc(t.name) + "</h1>" + (S.rv[cur] ? "" : '<span class="tag">선생님 검토 전</span>')
       + '<span class="sp"></span><button class="rv" id="rv" aria-pressed="' + !!S.rv[cur] + '" title="내용을 검토했으면 표시">' + (S.rv[cur] ? "✔ 검토함" : "검토 표시") + "</button></div>"
       + '<div class="diff"><span class="mid">🔗 ' + t.mid.map(function(m){ return '<a href="../concept/?u=' + m[0] + '" title="중학 개념지도에서 열기">' + esc(m[1]) + "</a>"; }).join("") + "</span>📈 " + t.diff + "</div>"
       + '<div class="grid">'
