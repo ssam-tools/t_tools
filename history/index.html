@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko" data-ui="ssambi">
+<head>
+<meta charset="utf-8">
+<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../assets/ssambi3-192.png">
+<script src="../shared/early.js"></script>
+<link rel="stylesheet" href="../shared/look.css">
+<link rel="stylesheet" href="../shared/fonts.css">
+<link rel="stylesheet" href="../shared/v2.css?v=2.39.0">
+<title>제작 히스토리 · 쌤 노트</title>
+<!--
+  🕰️ 쌤 노트 제작 히스토리 — 맨 아래 제작자 표기(쌤 노트 v… · 제작 jidangmath × Claude)를 누르면 열립니다.
+  · 큰 변화: history/data.js(손으로 정리) + history/auto.json(version.json 의 "big" → GitHub가 저절로 기록)
+  · 모든 버전: history/versions.json (GitHub가 올릴 때마다 git 기록에서 만듦)
+  · 그림: history/shots/ — 그 시절 화면을 자료 없이 처음 연 모습(개인정보 없음)
+  · 조작: ↑↓ 또는 ←→ 이정표 이동 · 그림 누르면 크게 · Esc 닫기
+  jidangmath가 Claude와 함께 제작
+-->
+<style>
+  :root{--t-accent:#2F6FB5;--t-accent-soft:#E8F0F9;--t-bg:#FBFAF7;--t-card:#fff;--t-ink:#1F2328;--t-sub:#5B6370;--t-faint:#8A919C;--t-line:#E6E3DC;--t-chip:#F2F0EB}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:var(--t-bg);color:var(--t-ink);font-family:var(--t-font,"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif);font-size:15px;display:flex;flex-direction:column;overflow:hidden}
+  button{font:inherit;color:inherit;cursor:pointer}
+  /* 머리 */
+  header{display:flex;align-items:center;gap:12px;padding:14px 20px 10px;flex:none}
+  header h1{margin:0;font-size:20px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .stat{color:var(--t-sub);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stat b{color:var(--t-ink);font-weight:700}
+  .tabs{margin-left:auto;display:flex;gap:4px;background:var(--t-chip);border-radius:12px;padding:3px;flex:none}
+  .tabs button{border:0;background:none;border-radius:9px;padding:7px 14px;font-size:14px;color:var(--t-sub);white-space:nowrap}
+  .tabs button.on{background:var(--t-card);color:var(--t-accent);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .x{border:1px solid var(--t-line);background:var(--t-card);border-radius:12px;width:40px;height:40px;font-size:18px;flex:none}
+  .x:hover{background:var(--t-accent-soft);color:var(--t-accent)}
+  /* 걸어온 길 띠 */
+  .road{position:relative;height:46px;margin:0 32px 6px;flex:none}
+  .road:before{content:"";position:absolute;left:0;right:0;top:22px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--t-line),var(--t-accent))}
+  .road button{position:absolute;top:8px;transform:translateX(-50%);width:30px;height:30px;border-radius:50%;border:2px solid var(--t-line);background:var(--t-card);font-size:15px;line-height:1;padding:0;transition:transform .15s}
+  .road button:hover{transform:translateX(-50%) scale(1.18);z-index:2}
+  .road button.on{border-color:var(--t-accent);box-shadow:0 0 0 4px var(--t-accent-soft);transform:translateX(-50%) scale(1.22);z-index:3}
+  .road .day{position:absolute;top:36px;transform:translateX(-50%);font-size:11px;color:var(--t-faint);white-space:nowrap;pointer-events:none}
+    /* 본문 2단 */
+  main{flex:1;min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr);gap:14px;padding:6px 20px 8px}
+  .list{min-height:0;overflow:auto;background:var(--t-card);border:1px solid var(--t-line);border-radius:16px;padding:8px}
+  .it{display:grid;grid-template-columns:28px 1fr;gap:2px 8px;align-items:center;width:100%;text-align:left;border:0;background:none;border-radius:12px;padding:8px 10px}
+  .it:hover{background:var(--t-accent-soft)}
+  .it.on{background:var(--t-accent);color:#fff}
+  .it .e{grid-row:span 2;font-size:20px;text-align:center}
+  .it .t{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .it .m{font-size:12px;color:var(--t-sub)}
+  .it.on .m{color:rgba(255,255,255,.85)}
+  .chip{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px;background:var(--t-chip);color:var(--t-sub);margin-right:4px}
+  .it.on .chip{background:rgba(255,255,255,.2);color:#fff}
+  .chip.auto{background:#E9F6EE;color:#2E7D4F}
+  /* 오른쪽: 이정표 하나 */
+  .card{min-height:0;background:var(--t-card);border:1px solid var(--t-line);border-radius:16px;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(250px,1fr);overflow:hidden}
+  .pic{min-height:0;background:#F4F2EE;display:flex;align-items:center;justify-content:center;padding:16px;border-right:1px solid var(--t-line);position:relative}
+  .pic img{max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 6px 24px rgba(31,35,40,.16);cursor:zoom-in;background:#fff}
+  .pic .none{color:var(--t-faint);text-align:center;line-height:1.7}
+  .pic .none b{display:block;font-size:56px}
+  .pic .cap{position:absolute;left:16px;bottom:8px;font-size:11px;color:var(--t-faint)}
+  .txt{min-height:0;overflow:auto;padding:20px 22px;display:flex;flex-direction:column;gap:10px}
+  .txt .vv{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--t-sub)}
+  .txt .vv .chip{font-size:13px;background:var(--t-accent-soft);color:var(--t-accent)}
+  .txt h2{margin:0;font-size:22px;line-height:1.35}
+  .txt .sum{margin:0;color:var(--t-sub);line-height:1.6;font-size:15px}
+  .txt ul{margin:4px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+  .txt li{position:relative;padding-left:16px;line-height:1.55;font-size:15px}
+  .txt li:before{content:"";position:absolute;left:2px;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--t-accent)}
+  .nav{margin-top:auto;display:flex;gap:8px;padding-top:8px}
+  .nav button{flex:1;border:1px solid var(--t-line);background:var(--t-card);border-radius:12px;padding:10px;font-size:14px}
+  .nav button:hover:not(:disabled){background:var(--t-accent-soft);color:var(--t-accent)}
+  .nav button:disabled{opacity:.35;cursor:default}
+  /* 모든 버전 */
+  .all{min-height:0;overflow:auto;background:var(--t-card);border:1px solid var(--t-line);border-radius:16px;padding:6px 16px 12px}
+  .all h3{position:sticky;top:0;background:var(--t-card);margin:0;padding:10px 0 6px;font-size:14px;color:var(--t-accent);border-bottom:1px solid var(--t-line);z-index:1}
+  .all h3 small{color:var(--t-faint);font-weight:400;margin-left:6px}
+  .row{display:grid;grid-template-columns:82px 46px 1fr;gap:10px;padding:7px 0;border-bottom:1px dashed var(--t-line);font-size:14px;line-height:1.5}
+  .row .v{font-weight:700}
+  .row .tm{color:var(--t-faint);font-size:13px}
+  .row.big .v{color:var(--t-accent)}
+  .row.big .v:after{content:" ★";font-size:11px}
+  .row a{color:var(--t-accent);cursor:pointer;text-decoration:none}
+  .find{display:flex;gap:8px;align-items:center;margin:0 0 0 auto}
+  .find input{font:inherit;font-size:14px;border:1px solid var(--t-line);border-radius:999px;padding:7px 14px;width:200px;background:var(--t-card)}
+  footer{flex:none;text-align:center;font-size:12px;color:var(--t-faint);padding:2px 0 10px}
+  /* 그림 크게 */
+  #zoom{border:0;padding:0;background:transparent;max-width:96vw;max-height:96vh}
+  #zoom::backdrop{background:rgba(20,22,26,.78)}
+  #zoom img{display:block;max-width:96vw;max-height:92vh;border-radius:10px;cursor:zoom-out}
+  [hidden]{display:none!important}
+  @media (max-width:760px){
+    body{overflow:auto}
+    header{flex-wrap:wrap;padding:12px 14px 6px}
+    .stat{order:3;width:100%}
+    .road{display:none}
+    main,main.allv{display:flex;flex-direction:column;flex:none;padding:6px 12px}
+    .list{max-height:30vh;flex:none}
+    .card{display:block;overflow:visible}
+    .pic{border-right:0;border-bottom:1px solid var(--t-line);height:44vh}
+    .txt{overflow:visible}
+    .all{max-height:none;overflow:visible}
+    .all h3{position:static}
+    .row{grid-template-columns:64px 40px 1fr;gap:6px;font-size:13px}
+    .find input{width:140px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1><span aria-hidden="true">🕰️</span> 쌤 노트 제작 히스토리</h1>
+  <span class="stat" id="stat"></span>
+  <div class="tabs" role="tablist">
+    <button type="button" class="on" data-tab="big" role="tab">큰 변화</button>
+    <button type="button" data-tab="all" role="tab">모든 버전</button>
+  </div>
+  <button type="button" class="x" id="close" title="닫기 (Esc)" aria-label="닫기">✕</button>
+</header>
+<div class="road" id="road" aria-label="걸어온 길"></div>
+<main id="bigv">
+  <nav class="list" id="list" aria-label="이정표"></nav>
+  <article class="card" id="card"></article>
+</main>
+<main id="allv" class="allv" hidden style="grid-template-columns:1fr">
+  <section class="all" id="all"></section>
+</main>
+<footer>그림은 그 시절 화면을 자료 없이 처음 연 모습이에요 · jidangmath가 Claude와 함께 제작</footer>
+<dialog id="zoom"><img alt=""></dialog>
+<script src="data.js"></script>
+<script>
+(function(){
+  "use strict";
+  var H = window.TT_HISTORY || {marks: []}, MARKS = H.marks.slice(), VERS = [], cur = MARKS.length - 1;
+  var EMBED = /[?&]embed=1/.test(location.search);
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]; }); }
+  function get(url, done){   // file:// 에서도 되게 XHR
+    try{ var x = new XMLHttpRequest(); x.open("GET", url + "?t=" + Date.now()); x.onload = function(){ try{ done(JSON.parse(x.responseText)); }catch(e){ done(null); } }; x.onerror = function(){ done(null); }; x.send(); }catch(e){ done(null); }
+  }
+  function day(d){ var m = /(\d{4})-(\d\d)-(\d\d)/.exec(d || ""); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
+  function md(d){ var t = day(d); return t ? (t.getMonth() + 1) + "." + t.getDate() : (d || ""); }
+  var WK = "일월화수목금토";
+
+  /* 이정표 목록 */
+  function list(){
+    $("list").innerHTML = MARKS.map(function(m, i){
+      return '<button type="button" class="it' + (i === cur ? " on" : "") + '" data-i="' + i + '"><span class="e">' + esc(m.emoji || "•") + '</span>'
+        + '<span class="t">' + esc(m.title) + '</span><span class="m"><span class="chip' + (m.auto ? " auto" : "") + '">' + (m.v === "준비" ? "준비" : "v" + esc(m.v)) + "</span>" + esc(md(m.date) || m.date) + "</span></button>";
+    }).join("");
+    var on = $("list").querySelector(".on"); if(on && on.scrollIntoView) on.scrollIntoView({block: "nearest"});
+  }
+  function card(){
+    var m = MARKS[cur]; if(!m) return;
+    var pic = m.shot ? '<img src="shots/' + esc(m.shot) + '" alt="v' + esc(m.v) + ' 화면" title="누르면 크게">' + '<span class="cap">' + (m.phone ? "📱 휴대폰 화면" : "🖥️ PC 화면") + " · v" + esc(m.v) + "</span>"
+      : '<div class="none"><b>' + esc(m.emoji || "🦉") + "</b>" + (m.v === "준비" ? "쌤 노트 이전 — 따로 만든 프로그램들" : "그림이 없는 기록이에요") + "</div>";
+    $("card").innerHTML = '<div class="pic">' + pic + "</div>"
+      + '<div class="txt"><div class="vv"><span class="chip">' + (m.v === "준비" ? "준비" : "v" + esc(m.v)) + "</span>" + esc(m.date) + (m.auto ? ' <span class="chip auto">자동 기록</span>' : "") + "</div>"
+      + "<h2>" + esc(m.emoji ? m.emoji + " " : "") + esc(m.title) + "</h2>"
+      + (m.sum ? '<p class="sum">' + esc(m.sum) + "</p>" : "")
+      + (m.pts && m.pts.length ? "<ul>" + m.pts.map(function(p){ return "<li>" + esc(p) + "</li>"; }).join("") + "</ul>" : "")
+      + '<div class="nav"><button type="button" data-go="-1"' + (cur ? "" : " disabled") + '>← 이전</button><button type="button" data-go="1"' + (cur < MARKS.length - 1 ? "" : " disabled") + ">다음 →</button></div></div>";
+  }
+  /* 걸어온 길: 날짜 위치에 이정표 점 */
+  function road(){
+    var seen = {}, out = "", n = Math.max(1, MARKS.length - 1);
+    var pos = MARKS.map(function(m, i){ return 0.012 + 0.976 * i / n; });   // 고르게 놓고, 날짜는 그날 첫 이정표 아래에
+    MARKS.forEach(function(m, i){
+      out += '<button type="button" data-i="' + i + '" class="' + (i === cur ? "on" : "") + '" style="left:' + (pos[i] * 100).toFixed(2) + '%" title="v' + esc(m.v) + " " + esc(m.title) + '">' + esc(m.emoji || "•") + "</button>";
+      var d = day(m.date); if(d){ var k2 = d.toDateString(); if(!seen[k2]){ seen[k2] = 1; out += '<span class="day" style="left:' + (pos[i] * 100).toFixed(2) + '%">' + (d.getMonth() + 1) + "." + d.getDate() + "</span>"; } }
+    });
+    $("road").innerHTML = out;
+  }
+  function pick(i){ cur = Math.max(0, Math.min(MARKS.length - 1, i)); list(); card(); road(); }
+
+  /* 모든 버전 */
+  var Q = "";
+  function all(){
+    var bigV = {}; MARKS.forEach(function(m){ var a = String(m.v).split(" ~ ")[0]; bigV[a] = bigV[a + ".0"] = 1; });   // 큰 변화가 시작된 버전에 ★
+    if(!VERS.length){ $("all").innerHTML = '<p style="color:var(--t-faint);padding:20px">모든 버전 기록은 GitHub에 올라간 뒤에 보여요.</p>'; return; }
+    var q = Q.trim().toLowerCase(), groups = [], g = null, n = 0;
+    VERS.forEach(function(r){
+      var txt = (r.v + " " + r.msgs.join(" ")).toLowerCase(); if(q && txt.indexOf(q) < 0) return;
+      var d = r.date.slice(0, 10); if(!g || g.d !== d){ g = {d: d, rows: []}; groups.push(g); } g.rows.push(r); n++;
+    });
+    $("all").innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 2px"><b style="font-size:14px">버전 ' + n + "개</b>"
+      + '<label class="find">🔎 <input id="q" type="search" placeholder="찾기 (예: 쌤비, 출결)" value="' + esc(Q) + '"></label></div>'
+      + groups.map(function(gr){
+        var t = day(gr.d);
+        return "<h3>" + (t.getMonth() + 1) + "월 " + t.getDate() + "일 (" + WK[t.getDay()] + ")<small>" + gr.rows.length + "개</small></h3>"
+          + gr.rows.map(function(r){
+            var isBig = bigV[r.v];
+            return '<div class="row' + (isBig ? " big" : "") + '"><span class="v">v' + esc(r.v) + '</span><span class="tm">' + esc(r.date.slice(11, 16)) + "</span><span>" + r.msgs.map(esc).join("<br>") + "</span></div>";
+          }).join("");
+      }).join("");
+    var qi = $("q"); qi.oninput = function(){ Q = qi.value; var p = qi.selectionStart; all(); var q2 = $("q"); q2.focus(); try{ q2.setSelectionRange(p, p); }catch(e){} };
+  }
+
+  function stat(){
+    var s = day(H.start), days = s ? Math.floor((new Date() - s) / 864e5) + 1 : 0;
+    var latest = VERS[0] ? VERS[0].v : (MARKS[MARKS.length - 1] || {}).v;
+    $("stat").innerHTML = "2026.11.10 시작 · <b>" + days + "일째</b> · 큰 변화 <b>" + MARKS.length + "</b>"
+      + (VERS.length ? " · 버전 <b>" + VERS.length + "</b>개" : "") + (latest ? " · 지금 v" + esc(latest) : "");
+  }
+  function tab(t){
+    [].forEach.call(document.querySelectorAll(".tabs button"), function(b){ b.classList.toggle("on", b.dataset.tab === t); });
+    $("bigv").hidden = t !== "big"; $("road").hidden = t !== "big"; $("allv").hidden = t !== "all";
+    if(t === "all") all();
+  }
+
+  /* 누르기·키 */
+  document.addEventListener("click", function(e){
+    var b = e.target.closest("[data-i]"); if(b){ pick(+b.dataset.i); return; }
+    var g = e.target.closest("[data-go]"); if(g){ pick(cur + +g.dataset.go); return; }
+    var t = e.target.closest("[data-tab]"); if(t){ tab(t.dataset.tab); return; }
+    if(e.target.matches(".pic img")){ var z = $("zoom"); z.querySelector("img").src = e.target.src; z.showModal(); return; }
+    if(e.target.closest("#zoom")){ $("zoom").close(); }
+  });
+  $("close").onclick = function(){ if(EMBED) parent.postMessage({tt: "history-close"}, "*"); else if(history.length > 1) history.back(); else location.href = "../"; };
+  if(!EMBED && !document.referrer) $("close").title = "쌤 노트로";
+  document.addEventListener("keydown", function(e){
+    if(e.target.tagName === "INPUT") return;
+    if($("zoom").open) return;
+    if(e.key === "Escape"){ $("close").click(); e.preventDefault(); }
+    else if(!$("bigv").hidden && (e.key === "ArrowDown" || e.key === "ArrowRight")){ pick(cur + 1); e.preventDefault(); }
+    else if(!$("bigv").hidden && (e.key === "ArrowUp" || e.key === "ArrowLeft")){ pick(cur - 1); e.preventDefault(); }
+  });
+
+  /* 자료 모으기: 손으로 정리한 이정표 + 자동 기록 + 모든 버전 */
+  pick(cur); stat();
+  get("auto.json", function(a){
+    if(a && a.length){
+      var have = {}; MARKS.forEach(function(m){ have[m.v] = 1; });
+      a.forEach(function(x){ if(!have[x.v]) MARKS.push(x); });
+      cur = MARKS.length - 1; pick(cur); stat();
+    }
+  });
+  get("versions.json", function(v){ if(v && v.length){ VERS = v; stat(); if(!$("allv").hidden) all(); } });
+  if(/[?&]tab=all/.test(location.search)) tab("all");
+  var mi = /[?&]m=(\w+)/.exec(location.search); if(mi){ MARKS.forEach(function(m, i){ if(m.id === mi[1]) pick(i); }); }
+})();
+</script>
+</body>
+</html>

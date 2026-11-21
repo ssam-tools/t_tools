@@ -1,0 +1,37 @@
+# 쌤 노트 제작 히스토리 자동 기록
+# 올릴 때마다: history/versions.json(모든 버전) 갱신
+# version.json 에 "big" 이 있으면: 그 화면을 찍어 history/shots/ + history/auto.json 에 큰 변화로 기록
+name: 제작 히스토리
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["history/**"]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: history
+  cancel-in-progress: false
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 준비
+        run: pip install playwright pillow
+      - name: 기록 만들기
+        run: python .github/scripts/history_build.py
+      - name: 기록 올리기
+        run: |
+          git config user.name "ssam-history-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add history
+          if git diff --cached --quiet; then echo "바뀐 기록 없음"; exit 0; fi
+          git commit -m "제작 히스토리 자동 기록"
+          git pull --rebase origin main
+          git push
