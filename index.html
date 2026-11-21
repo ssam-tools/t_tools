@@ -21,6 +21,31 @@ try{ var snG = /[?&]legacy=(on|off)\b/.exec(location.search);   /* v2.8: 쌤비 
 /* v2.8.1: 쌤비 홈이 준비되기 전에는 예전 업무판 부분을 아예 그리지 않음(잠깐 보였다 바뀌지 않게) */
 html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #today,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) .toprow,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #tbar,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #mview,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #mnav,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > footer,html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) #sbBtn{display:none!important}</style>
 <script>setTimeout(function(){ document.documentElement.classList.add("sbLate", "sbReady"); }, 8000);   /* 혹시 쌤비 홈이 못 뜨면 8초 뒤 예전 화면이라도 보이게 */</script><!-- 쌤비 홈이 다 그려질 때까지 감춤(업무판이 잠깐 보이지 않게) -->
+<!-- v2.38.1 빠르게 열기: 아래쪽에 있는 화면 파일들을 처음부터 한꺼번에 받아 둡니다(예전에는 하나 받고 → 다음 하나 받는 식이라 첫 화면이 6초쯤 걸렸음).
+     <body> 아래 <script src> 를 더하거나 빼면 여기 목록도 같이 고쳐 주세요. -->
+<link rel="preload" as="script" href="shared/tools.js">
+<link rel="preload" as="script" href="subjects/math.js">
+<link rel="preload" as="script" href="subjects/korean.js">
+<link rel="preload" as="script" href="shared/tt.js">
+<link rel="preload" as="script" href="shared/guidelogic.js">
+<link rel="preload" as="script" href="shared/board.js">
+<link rel="preload" as="script" href="shared/peek.js">
+<link rel="preload" as="script" href="shared/mytodo.js">
+<link rel="preload" as="script" href="shared/auto.js">
+<link rel="preload" as="script" href="shared/follow.js">
+<link rel="preload" as="script" href="shared/fill.js">
+<link rel="preload" as="script" href="shared/clean.js">
+<link rel="preload" as="script" href="shared/today.js">
+<link rel="preload" as="script" href="shared/clock.js">
+<link rel="preload" as="script" href="shared/meal.js">
+<link rel="preload" as="script" href="shared/libd.js">
+<link rel="preload" as="script" href="shared/voice.js">
+<link rel="preload" as="script" href="shared/sbart.js">
+<link rel="preload" as="script" href="shared/ssambi.js">
+<link rel="preload" as="script" href="shared/quick.js">
+<link rel="preload" as="script" href="shared/sbbar.js">
+<link rel="preload" as="script" href="shared/sbhome.js">
+<link rel="preload" as="script" href="shared/talk.js?v=2.13.0">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/ssambi3-32.png" sizes="32x32">
 <link rel="icon" href="assets/ssambi3-192.png" sizes="192x192">

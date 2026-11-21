@@ -5,6 +5,10 @@
 <style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
 <!-- 외부로 자료를 보내는 통로를 막습니다. 예외: 학교 업무판(구글 앱스 스크립트) — 업무판 화면을 이 안에 띄우고, 내선번호를 읽어 옵니다. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; frame-src 'self' https://script.google.com https://*.googleusercontent.com; form-action 'none'; base-uri 'none'">
+<!-- v2.38.1 빠르게 열기: 화면 파일을 처음부터 한꺼번에 받아 둠 (아래 <script src>를 바꾸면 여기도 같이) -->
+<link rel="preload" as="script" href="../../shared/early.js">
+<link rel="preload" as="script" href="../../shared/tt.js">
+<link rel="preload" as="script" href="../../shared/libd.js">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>학교 업무판 · 쌤 노트</title>
 <script src="../../shared/early.js"></script>
