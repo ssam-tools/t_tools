@@ -132,13 +132,13 @@ var TTSet = (function(){
       } else R = TT.roster.clean(R);
       TT.roster.save(R); done.push("학생 " + want.length + "개 반 " + n + "명");
     }
-    /* 학사일정: 담당자가 넣은 일정(src:"set")만 바꿈 · 내가 넣은 일정은 그대로 · 나이스 일정이 있는 학년도는 나이스가 우선 */
+    /* 학사일정: 담당자가 넣은 일정(src:"set")만 바꿈 · 내가 넣은 일정·나이스 일정은 그대로(같은 일정은 한 번만) */
     if(what.cal && D.calendar && D.calendar.events){
       var C = TT.store.get("tt_calendar_v1", null) || {}, ev = Array.isArray(C.events) ? C.events : [];
-      var neisY = S.neisY || {}, yOf = function(d){ var y = +d.slice(0, 4), m = +d.slice(5, 7); return m >= 3 ? y : y - 1; };
       if(!up && !ev.some(function(e){ return e.src; })) ev = [];                // 예전 방식(세팅 파일)처럼 처음에는 새것으로
       ev = ev.filter(function(e){ return e.src !== "set"; });
-      var add = D.calendar.events.filter(function(e){ return !neisY[yOf(e.d)]; }).map(function(e){ return {d: e.d, t: e.t, k: e.k, src: "set"}; });
+      var nk2 = function(e){ return e.d + "|" + String(e.t).replace(/\s+/g, ""); }, have = {}; ev.forEach(function(e){ have[nk2(e)] = 1; });   // 나이스에 이미 있는 같은 일정은 한 번만
+      var add = D.calendar.events.filter(function(e){ return !have[nk2(e)]; }).map(function(e){ return {d: e.d, t: e.t, k: e.k, src: "set"}; });
       C.v = 1; C.y = D.calendar.y || C.y; C.events = ev.concat(add).sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; }); C.at = Date.now();
       TT.store.set("tt_calendar_v1", C); done.push("학사일정 " + D.calendar.events.length + "개");
     }
@@ -259,10 +259,10 @@ var TTSet = (function(){
       if(!list.length) return null;
       var C = TT.store.get("tt_calendar_v1", null) || {v: 1, events: []}, ev = Array.isArray(C.events) ? C.events : [];
       var from = Y + "-03-01", to = (Y + 1) + "-02-31", inY = function(e){ return e.d >= from && e.d <= to; };
-      var mine = ev.filter(function(e){ return !(inY(e) && (e.src === "neis" || e.src === "set")); });
-      var own = {}; mine.forEach(function(e){ own[e.d + "|" + e.t] = 1; });
+      var mine = ev.filter(function(e){ return !(inY(e) && e.src === "neis"); });       // 담당자가 넣은 일정·내 일정은 그대로 두고 나이스 것만 새로
+      var nk = function(e){ return e.d + "|" + String(e.t).replace(/\s+/g, ""); }, own = {}; mine.forEach(function(e){ own[nk(e)] = 1; });
       var before = ev.filter(function(e){ return inY(e) && e.src === "neis"; }).length;
-      C.events = mine.concat(list.filter(function(e){ return !own[e.d + "|" + e.t]; })).sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+      C.events = mine.concat(list.filter(function(e){ return !own[nk(e)]; })).sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
       C.v = 1; C.y = Y; C.at = Date.now(); TT.store.set("tt_calendar_v1", C);
       var S = state(); S.neisY = S.neisY || {}; S.neisY[Y] = Date.now(); saveState(S);
       if(before !== list.length) refresh();
