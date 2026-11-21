@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
 <!-- 학생용 · 외부로 자료를 보내는 통로를 막습니다(이 사이트 안의 파일만). 기록은 이 기기 브라우저에만 저장(gym_v1). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FFD84D">
 <link rel="manifest" href="manifest.webmanifest">
@@ -288,6 +288,41 @@
   @keyframes fall{to{transform:translateY(105vh) rotate(260deg);opacity:.3}}
   .soon{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
   .soon b{font-size:18px}
+  /* v2.25 공부법 · 건의·후기 */
+  .lnk.two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .lnk.two button{flex-direction:column;align-items:flex-start;gap:1px;padding:9px 11px;font-size:14px}
+  .lnk.two .muted{font-size:11.5px}
+  .hlink{border:0;background:#FFE7A3;border-radius:999px;padding:1px 8px;font:inherit;font-size:12px;font-weight:900;color:#8A5A00;margin-left:2px}
+  .tipb{animation:none}
+  .flag{display:block;margin:6px 0 0 auto;border:0;background:none;font:inherit;font-size:12px;font-weight:800;color:#9A8B6E;text-decoration:underline}
+  .htabs{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .htabs button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:5px 0;font-size:19px;display:flex;flex-direction:column;align-items:center;gap:1px}
+  .htabs button small{font-size:11px;font-weight:800}
+  .htabs button[aria-pressed=true]{background:#FFD84D;border-color:#2B2111}
+  .howc{display:flex;flex-direction:column;gap:6px;font-size:14.5px;line-height:1.5}
+  .howc .hh,.fbl .hh{font-weight:900;font-size:15px;margin-top:2px}
+  .hsteps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:4px}
+  .hsteps b{display:block}.hsteps span{color:#6B5A3A;font-size:13.5px}
+  .howc details{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 11px}
+  .howc summary{font-weight:900;cursor:pointer}
+  .howc details ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+  .howc details[open]{border-color:#FFB000;background:#FFFBEA}
+  .seg{display:flex;flex-wrap:wrap;gap:6px}
+  .seg button{flex:1 1 auto;border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 8px;font:inherit;font-size:14px;font-weight:900}
+  .seg button[aria-pressed=true]{background:#FFD84D;border-color:#2B2111}
+  .stars{display:flex;justify-content:center;gap:6px}
+  .stars button{border:0;background:none;font-size:32px;line-height:1;color:#C9B98F}.stars button.on{color:#FFB000}
+  .fbt{width:100%;min-height:96px;font:inherit;font-size:15.5px;border:2px solid #2B2111;border-radius:12px;padding:10px 12px;background:#fff;resize:vertical}
+  .fbo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weight:800}
+  .fbo input{width:auto;margin-right:4px;transform:scale(1.2)}
+  .fbq{display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:13.5px}
+  .fbq em{font-style:normal;color:#8A5A00;font-weight:800}
+  .lnkb{border:0;background:none;font:inherit;font-size:14px;font-weight:900;color:#8A5A00;padding:4px}
+  .fbl{display:flex;flex-direction:column;gap:7px;max-height:58dvh;overflow:auto}
+  .fbi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 11px;display:flex;flex-direction:column;gap:2px;font-size:14px}
+  .fbi b{font-size:12.5px;color:#6B5A3A}.fbi .st{font-style:normal;color:#FFB000}
+  .fbi em{font-style:normal;background:#FFF5D6;border-radius:8px;padding:4px 8px;margin-top:3px;font-size:13.5px}
+  .fbi.me{border-color:#FFB000}
   @media (max-height:690px){
     .ring{width:94px;height:94px}.ring .in b{font-size:23px}
     .coach .sb svg{width:74px;height:74px}.bub{font-size:14px;padding:7px 10px}
@@ -318,6 +353,8 @@
 <script src="warm.js"></script>
 <script src="sci.js"></script>
 <script src="soc.js"></script>
+<script src="coach.js"></script>
+<script src="feedback.js"></script>
 <script src="rooms.js"></script>
 <script src="map.js"></script>
 <script src="../../shared/sbart.js"></script>
@@ -817,7 +854,7 @@
         + (dc.length ? '<button class="ckbtn" data-a="quiz" data-fid="' + dc[0] + '" data-kind="' + (fs(dc[0]).st === 3 ? "re" : "check") + '">⭐ ' + (fs(dc[0]).st === 3 ? "마스터 확인" : "7일 확인 세트") + " · " + esc(FIB[dc[0]].n) + (dc.length > 1 ? " 외 " + (dc.length - 1) : "") + " ›</button>" : "");
     }
     m.innerHTML = '<div class="coach"><span class="sb">' + sb(78) + '</span><div class="bub">' + (inl.length && sets === 0 ? "처음이지? 입소 진단부터! 아는 단원은 건너뛰자." : sets === 0 ? (rc ? "복습부터 끝내야 새 문제가 열려! 5분씩 2세트면 출석." : "5분 세트 2개면 오늘 출석이야. 가 보자!") : mn >= gl && gl ? "출석 완료! 한 세트 더 하면 " + r.part + " 근육 보너스." : "좋아, 이어서 " + (sets + 1) + "번째 세트!")
-      + "<small>" + r.part + " 근육 · Lv." + lv(id) + (d.cond === "hard" ? " · 😮‍💨 한 단계 쉽게" : "") + "</small></div></div>"
+      + "<small>" + r.part + " 근육 · Lv." + lv(id) + (d.cond === "hard" ? " · 😮‍💨 한 단계 쉽게" : "") + (CO ? ' <button class="hlink" data-a="howto" data-room2="' + id + '">🧭 막힐 땐?</button>' : "") + "</small></div></div>"
       + '<div class="sets">' + setsHtml.map(function(s, i){ var dn = sets > i; return '<div class="set' + (dn ? " done" : "") + '"><span class="n">' + (dn ? "✓" : i + 1) + "</span><div><b>" + s[0] + " · 5분</b><span>" + s[1] + "</span></div></div>"; }).join("")
       + "</div>" + (sets >= 2 || r.deep || r.listen ? '<div class="muted" style="text-align:center;font-weight:800">' + (sets >= 2 ? "💪 추가 세트 " + (sets - 2) + "개" + (r.deep ? "" : " · 더 하면 할수록 근육이 진해져요") : "") + (r.deep ? (sets >= 2 ? " · " : "") + (((S.week && S.week.int) || "base") === "base" ? "🎯 권장·도전 강도면 '한 문제 깊게'가 열려요" : "🎯 세 번째 세트부터 '한 문제 깊게'(학평형)") : "") + "</div>" : "")
       + (r.listen ? '<div class="muted" style="text-align:center;font-weight:800">' + (!TTS ? "🎧 이 기기는 영어 음성이 없어 듣기는 쉬어요" : ((S.week && S.week.int) || "base") === "base" ? "🎧 권장·도전 강도면 듣기 문제가 열려요" : "🎧 두 번째 세트부터 듣기 문제가 섞여 나와요 (소리 켜기)") + "</div>" : "") + fibHtml
@@ -1009,7 +1046,7 @@
     else {
       qc.classList.add("ng");
       var right = it.spell ? it.spell : it.chunk ? it.chunk.t.map(function(w, i){ return w + (it.chunk.cut.indexOf(i) >= 0 ? " /" : ""); }).join(" ") : it.verb ? it.verb.v.map(function(j){ return it.verb.t[j]; }).join(" ") : it.num ? (it.fr ? frStr(it.fr) : String(it.n).replace("-", "−")) : T.choices[T.ans];
-      qc.insertAdjacentHTML("beforeend", '<div class="fb"><b>정답: ' + fmt(right) + "</b>" + fmtE(it.e || "") + (it.nosrs ? "" : '<br><span class="muted">📌 오답은 내일 다시 나와요</span>') + "</div>");
+      qc.insertAdjacentHTML("beforeend", '<div class="fb"><b>정답: ' + fmt(right) + "</b>" + fmtE(it.e || "") + (it.nosrs ? "" : '<br><span class="muted">📌 오답은 내일 다시 나와요</span>') + '<button class="flag" data-a="qflag" aria-label="문제 신고">🚩 문제가 이상해요</button></div>');
       document.getElementById("pad").innerHTML = '<button class="btn dark" data-next="1">다음 ▶</button>';
     }
   }
@@ -1074,6 +1111,7 @@
       + '<div class="stats"><div class="stat"><b>' + r.n + '</b><span>푼 문제</span></div><div class="stat"><b>' + acc + '%</b><span>정확도</span></div><div class="stat"><b>' + (r.n ? (d.t[id] / d.n[id]).toFixed(1) + "초" : "-") + "</b><span>한 문제 평균</span></div></div>")
       + evHtml + (qz ? "" : '<div class="win">' + win + (r.wrong.length ? '<br><span class="muted">📌 틀린 ' + r.wrong.length + "문제는 복습 상자에 저장했어요</span>" : "") + "</div>")
       + (opts.length && !qz ? '<div class="card meta"><div class="h">🤔 30초 · 오늘 가장 헷갈린 것은? <i>내일 준비운동에 먼저 나와요</i></div><div class="mopts">' + opts.map(function(o){ var p = o.split("|"); return '<button data-a="conf" data-v="' + esc(o) + '" aria-pressed="false">' + (p[0] !== id ? R[p[0]].emo + " " : "") + esc(p[1]) + "</button>"; }).join("") + '<button data-a="conf" data-v="" aria-pressed="false">없어요 👍</button></div></div>' : "")
+      + (qz ? "" : resultTip(id, r, acc))
       + '<div class="grow"></div>'
       + (qz && TESTK[qz.kind] ? '<div class="row"><button class="btn sub" data-a="tomeas">🏆 측정으로</button><button class="btn" data-a="report">📈 성장 리포트</button></div>'
          : qz ? '<div class="row"><button class="btn sub" data-a="tomap">🗺️ 마스터 맵</button><button class="btn" data-room="' + id + '">' + room.emo + " PT실로 ▶</button></div>"
@@ -1183,11 +1221,11 @@
     m.innerHTML = '<div class="card" style="display:flex;flex-direction:column;gap:6px"><div class="glab"><span>최근 4주 · 진할수록 오래 함</span><span>🎟 = 휴식권</span></div><div class="cal">' + cells + "</div></div>"
       + '<div class="kv"><div class="stat"><b>' + trainDays() + '일</b><span>훈련일</span></div><div class="stat"><b>🔥 ' + streak() + '</b><span>연속 출석</span></div><div class="stat"><b>' + totalXP() + '</b><span>전체 XP</span></div>'
       + '<div class="stat"><b>' + (diff(S.start, TODAY) + 1) + '일째</b><span>12주 중</span></div><div class="stat"><b>' + wrongCount() + '</b><span>오답 카드</span></div><div class="stat"><b>' + mineCount() + '</b><span>완전히 내 것</span></div></div>'
-      + '<div class="chips"><button class="chip" data-a="nick">🏷️ ' + esc(S.nick || "별명") + '</button><button class="chip" data-a="intdlg">' + INT[wk].emo + " " + INT[wk].name + '</button><button class="chip" data-a="cond">' + (day().cond ? COND[day().cond][0] + " " + COND[day().cond][1] : "🙂 컨디션") + '</button><button class="chip" data-a="help">❓ 사용법</button></div>'
-      + '<div class="lnk grow sc"><button data-a="wcode">🧾 이번 주 결과 코드 <span class="muted">담임에게 ›</span></button>'
-      + '<button data-a="bcode">💾 백업 코드 만들기 <span class="muted">휴대폰 바꿀 때 ›</span></button>'
-      + '<button data-a="bload">📥 백업 코드 넣기 <span class="muted">›</span></button>'
-      + '<button data-a="reset">🗑️ 처음부터 다시 <span class="muted">›</span></button></div>'
+      + '<div class="chips"><button class="chip" data-a="nick">🏷️ ' + esc(S.nick || "별명") + '</button><button class="chip" data-a="intdlg">' + INT[wk].emo + " " + INT[wk].name + '</button><button class="chip" data-a="cond">' + (day().cond ? COND[day().cond][0] + " " + COND[day().cond][1] : "🙂 컨디션") + '</button><button class="chip" data-a="help">❓ 사용법</button><button class="chip" data-a="howto" data-room2="base">🧭 공부법</button><button class="chip hot" data-a="fbopen">💬 건의·후기</button></div>'
+      + '<div class="lnk two"><button data-a="wcode">🧾 이번 주 결과 코드<span class="muted">담임에게 보여 주기 ›</span></button>'
+      + '<button data-a="bcode">💾 백업 코드 만들기<span class="muted">휴대폰 바꿀 때 ›</span></button>'
+      + '<button data-a="bload">📥 백업 코드 넣기<span class="muted">새 휴대폰에서 ›</span></button>'
+      + '<button data-a="reset">🗑️ 처음부터 다시<span class="muted">기록 지우기 ›</span></button></div><div class="grow"></div>'
       + '<p class="credit">🔒 별명만 쓰고, 기록은 이 휴대폰에만 저장돼요 · jidangmath가 Claude와 함께 제작</p>';
   }
   handlers.nick = function(){ nickDlg(false); };
@@ -1198,11 +1236,133 @@
       + "② 첫 세트는 늘 <b>복습 먼저</b>. 틀린 문제는 1·2·4·7·14일 뒤에 다시 나와요. 14일 뒤에도 맞히면 <b>완전히 내 것</b>!<br>"
       + "③ 월요일마다 강도를 골라요: 🙂 기본 60분 · 💪 권장 90분 · 🔥 도전 120분+. 중간에 낮춰도 괜찮아요.<br>"
       + "④ 힘든 날은 컨디션 <b>😮‍💨 힘듦</b> → 쉬운 문제로. 하루 빠져도 <b>🎟 휴식권</b>(주 1번)이 연속 기록을 지켜 줘요.<br>"
-      + "⑤ 세트가 끝나면 <b>오늘 가장 헷갈린 것</b>을 골라요. 내일 준비운동에 먼저 나와요."
+      + "⑤ 세트가 끝나면 <b>오늘 가장 헷갈린 것</b>을 골라요. 내일 준비운동에 먼저 나와요.<br>"
+      + "⑥ 막히면 PT실의 <b>🧭 막힐 땐?</b>, 하고 싶은 말은 기록 화면의 <b>💬 건의·후기</b>. 이상한 문제는 틀렸을 때 <b>🚩</b>로 알려 줘요."
       + '</div><button class="btn" data-x="1">알았어요!</button>');
   };
   handlers.reset = function(){
     dlg('<h3>🗑️ 처음부터 다시 할까요?</h3><p class="muted">이 휴대폰에 저장된 공부 Gym 기록(출석·XP·복습 상자)이 모두 지워져요. 되돌릴 수 없어요.</p><div class="row"><button class="btn sub" data-x="1">아니요</button><button class="btn dark" data-a2="doReset">지우기</button></div>');
+  };
+
+  /* ══ v2.25.0: 🧭 쌤비 공부법 · 💬 건의·후기 · 🚩 문제 신고 ══ */
+  var CO = typeof GYM_COACH !== "undefined" ? GYM_COACH : null;
+  var FBC = typeof GYM_FEEDBACK !== "undefined" ? GYM_FEEDBACK : {url: ""};
+  /* 틀린 유형(tag)으로 가장 알맞은 '막힐 때' 상황 고르기 */
+  function coachPick(room, tags){
+    var c = CO && CO[room]; if(!c || !c.stuck.length) return null;
+    var best = 0, bi = -1;
+    c.stuck.forEach(function(s, i){
+      var n = 0; tags.forEach(function(t){ if((s.tags || []).some(function(h){ return String(t).indexOf(h) >= 0; })) n++; });
+      if(n > best){ best = n; bi = i; }
+    });
+    return bi < 0 ? null : {room: room, i: bi, s: c.stuck[bi]};
+  }
+  function resultTip(id, r, acc){
+    if(!CO || !r.n || r.n < 5 || acc >= 60) return "";
+    var tags = r.wrong.filter(function(w){ return w.room === id; }).map(function(w){ return w.tag; });
+    var p = coachPick(id, tags) || (CO[id] && CO[id].stuck.length ? {room: id, i: 0, s: CO[id].stuck[0]} : {room: "base", i: 1, s: CO.base.stuck[1]});
+    return '<button class="ckbtn tipb" data-a="howto" data-room2="' + p.room + '" data-k="' + p.i + '">🧭 오늘 좀 어려웠지? · ' + esc(p.s.t) + "<small>" + esc(p.s.tips[0]) + " ›</small></button>";
+  }
+  function howtoDlg(room, open){
+    if(!CO) return toast("공부법 자료를 불러오지 못했어요");
+    if(!CO[room]) room = "base";
+    var c = CO[room], keys = ["base"].concat(IDS);
+    var tabs = keys.map(function(k){ var e = k === "base" ? CO.base.emo : R[k].emo, n = k === "base" ? "기본" : R[k].name.replace("통합", ""); return '<button data-a2="howto" data-room2="' + k + '" aria-pressed="' + (k === room) + '">' + e + "<small>" + n + "</small></button>"; }).join("");
+    dlg('<h3>🧭 쌤비 공부법 <span class="muted" style="font-size:13px">· ' + (room === "base" ? "공부 Gym 기본기" : R[room].emo + " " + R[room].name + " PT") + "</span></h3>"
+      + '<div class="htabs">' + tabs + "</div>"
+      + '<div class="howc"><div class="hh">💪 이렇게 공부해요</div><ol class="hsteps">' + c.order.map(function(o){ return "<li><b>" + esc(o[0]) + "</b><span>" + esc(o[1]) + "</span></li>"; }).join("") + "</ol>"
+      + '<div class="hh">😵 막힐 때 <span class="muted">눌러 보기</span></div>'
+      + c.stuck.map(function(s, i){ return "<details" + (i === open ? " open" : "") + "><summary>" + esc(s.t) + "</summary><ul>" + s.tips.map(function(t){ return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></details>"; }).join("")
+      + '<p class="muted" style="margin-top:6px">그래도 막히면 → 🗺️ 마스터 맵에서 그 단원의 <b>앞 단계</b>부터 진단해 보고, 친구나 선생님께 물어봐요. 묻는 것도 실력이에요!</p></div>'
+      + '<div class="row"><button class="btn sub" data-a2="fbopen">💬 건의하기</button><button class="btn" data-x="1">알았어요!</button></div>');
+  }
+  handlers.howto = function(t){ howtoDlg(t.dataset.room2 || "base", t.dataset.k != null && t.dataset.k !== "" ? +t.dataset.k : -1); };
+
+  /* 💬 건의·후기 (선생님이 연결한 구글 시트로 보냄 · 연결 전이면 복사해서 보여 주기) */
+  var FK = {idea: ["💡", "건의"], bug: ["🐞", "불편·오류"], review: ["⭐", "사용 후기"], q: ["🚩", "문제 신고"]};
+  var QR4 = ["정답이 틀린 것 같아요", "보기가 이상해요", "해설이 이해가 안 돼요", "오타·띄어쓰기"];
+  var FBS = {kind: "idea", stars: 0, item: null, why: ""};
+  function fbMine(){ if(!S.fbMine) S.fbMine = []; return S.fbMine; }
+  function fbDlg(kind, item){
+    FBS = {kind: kind || "idea", stars: 0, item: item || null, why: ""};
+    var q = FBS.kind === "q", ph = {idea: "이런 기능이 있으면 좋겠어요, 이렇게 바꿔 주세요…", bug: "어느 화면에서 무엇을 눌렀을 때 어떻게 됐는지 적어 주세요", review: "써 보니 어땠나요? 도움이 된 점, 아쉬운 점", q: "더 알려 줄 내용이 있으면 적어 주세요 (안 적어도 돼요)"};
+    dlg("<h3>" + (q ? "🚩 이 문제가 이상해요" : "💬 공부 Gym에 한마디") + "</h3>"
+      + (q ? '<div class="fbq"><b>' + esc(R[item.room] ? R[item.room].emo + " " + R[item.room].name : "") + " · " + esc(item.tag || "") + "</b><span>" + esc(String(item.q).replace(/[\[\]*]/g, "").slice(0, 120)) + "</span><em>정답으로 나온 것: " + esc(String(item.ans)) + "</em></div>"
+          + '<div class="seg fbr">' + QR4.map(function(w){ return '<button data-a2="fbwhy" data-v="' + w + '" aria-pressed="false">' + w + "</button>"; }).join("") + "</div>"
+        : '<div class="seg fbk">' + ["idea", "bug", "review"].map(function(k){ return '<button data-a2="fbk" data-v="' + k + '" aria-pressed="' + (k === FBS.kind) + '">' + FK[k][0] + " " + FK[k][1] + "</button>"; }).join("") + "</div>"
+          + '<div class="stars" id="fbst"' + (FBS.kind === "review" ? "" : ' hidden') + ">" + [1, 2, 3, 4, 5].map(function(n){ return '<button data-a2="fbst" data-v="' + n + '" aria-label="별 ' + n + '개">☆</button>'; }).join("") + "</div>")
+      + '<textarea id="fbt" class="fbt" maxlength="500" placeholder="' + ph[FBS.kind] + '"></textarea>'
+      + '<div class="fbo">' + (q ? "" : '<label id="fbpubl"' + (FBS.kind === "bug" ? " hidden" : "") + '><input type="checkbox" id="fbpub"> 친구들에게 보여도 돼요 <span class="muted">(선생님 확인 뒤)</span></label>')
+      + '<label><input type="checkbox" id="fban"' + (S.nick ? "" : " checked") + "> 별명 숨기기(익명)</label></div>"
+      + '<p class="muted">🔒 이름·전화번호·학교·반·번호는 적지 마세요. 별명(또는 익명)과 적은 글만 선생님께 가요.</p>'
+      + '<div class="row"><button class="btn sub" data-x="1">닫기</button><button class="btn" data-a2="fbsend">보내기 ▶</button></div>'
+      + (q ? "" : '<button class="lnkb" data-a2="fblist">👀 친구들 후기 · 내 건의 답변 보기 ›</button>'));
+  }
+  handlers.fbopen = function(t){ fbDlg(t && t.dataset.kind || "idea"); };
+  handlers.fbk = function(t){
+    FBS.kind = t.dataset.v;
+    Array.prototype.forEach.call(t.parentNode.children, function(b){ b.setAttribute("aria-pressed", b === t ? "true" : "false"); });
+    var st = D.querySelector("#fbst"); if(st) st.hidden = FBS.kind !== "review";
+    var pl = D.querySelector("#fbpubl"); if(pl) pl.hidden = FBS.kind === "bug";
+    D.querySelector("#fbt").placeholder = {idea: "이런 기능이 있으면 좋겠어요, 이렇게 바꿔 주세요…", bug: "어느 화면에서 무엇을 눌렀을 때 어떻게 됐는지 적어 주세요", review: "써 보니 어땠나요? 도움이 된 점, 아쉬운 점"}[FBS.kind];
+  };
+  handlers.fbst = function(t){
+    FBS.stars = +t.dataset.v;
+    Array.prototype.forEach.call(t.parentNode.children, function(b, i){ b.textContent = i < FBS.stars ? "★" : "☆"; b.classList.toggle("on", i < FBS.stars); });
+  };
+  handlers.fbwhy = function(t){
+    FBS.why = t.dataset.v;
+    Array.prototype.forEach.call(t.parentNode.children, function(b){ b.setAttribute("aria-pressed", b === t ? "true" : "false"); });
+  };
+  function privacyBad(tx){
+    if(/01[016789][\s.\-]?\d{3,4}[\s.\-]?\d{4}/.test(tx) || /\d{2,3}[\s.\-]\d{3,4}[\s.\-]\d{4}/.test(tx)) return "🔒 전화번호는 적지 마세요";
+    if(/\d\s*학년\s*\d+\s*반|\d+\s*반\s*\d+\s*번|\d{5}\s*번/.test(tx)) return "🔒 학년·반·번호는 적지 마세요";
+    if(/[\w.\-]+@[\w\-]+\.[\w.]+/.test(tx)) return "🔒 이메일 주소는 적지 마세요";
+    return "";
+  }
+  handlers.fbsend = function(){
+    var tx = (D.querySelector("#fbt").value || "").trim(), q = FBS.kind === "q";
+    if(q && !FBS.why && tx.length < 2) return toast("어떤 점이 이상한지 하나 골라 주세요");
+    if(!q && tx.length < 5) return toast("다섯 글자 이상 적어 주세요");
+    if(FBS.kind === "review" && !FBS.stars) return toast("별점을 골라 주세요 ⭐");
+    var bad = privacyBad(tx); if(bad) return toast(bad);
+    S.fbLog = S.fbLog || {}; if((S.fbLog[TODAY] || 0) >= 5) return toast("오늘은 5번까지 보낼 수 있어요. 내일 또 보내 주세요!");
+    var an = D.querySelector("#fban"), pb = D.querySelector("#fbpub");
+    var id = Date.now().toString(36).slice(-5) + Math.random().toString(36).slice(2, 6);
+    var data = {id: id, type: FK[FBS.kind][1], nick: an && an.checked ? "익명" : (S.nick || "익명"), stars: FBS.kind === "review" ? FBS.stars : "",
+      text: (q ? "[" + (FBS.why || "기타") + "] " : "") + tx, pub: pb && pb.checked ? "희망" : "", wk: weekNo() + 1,
+      qid: q ? FBS.item.id : "", q: q ? String(FBS.item.q).replace(/[\[\]*]/g, "").slice(0, 160) + " / 정답: " + String(FBS.item.ans) : ""};
+    var done = function(){
+      var fn = (S.fbLog[TODAY] || 0) + 1; S.fbLog = {}; S.fbLog[TODAY] = fn;
+      fbMine().unshift({id: id, d: TODAY, t: data.type, x: tx.slice(0, 60)}); S.fbMine = S.fbMine.slice(0, 20); save();
+      closeDlg(); toast(q ? "🚩 알려 줘서 고마워요! 선생님이 확인할게요" : "💌 보냈어요! 공부 Gym이 더 좋아질 거예요"); sparkle("💌");
+    };
+    if(FBC.url){
+      fetch(FBC.url, {method: "POST", mode: "no-cors", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(data)})
+        .then(done).catch(function(){ fbCopy(data, "인터넷이 연결되지 않아 보내지 못했어요."); });
+    } else fbCopy(data, "아직 선생님이 받는 곳을 연결하지 않았어요.");
+  };
+  function fbCopy(data, why){
+    var c = "[공부 Gym " + data.type + "] " + (data.stars ? "★".repeat(data.stars) + " " : "") + data.text + (data.q ? "\n(문제: " + data.q + ")" : "") + "\n- " + data.nick;
+    dlg("<h3>📋 복사해서 선생님께 보여 주세요</h3><p class=\"muted\">" + why + " 아래 글을 복사해 선생님께 보내면 돼요.</p><textarea class=\"code\" readonly>" + esc(c) + '</textarea><div class="row"><button class="btn sub" data-x="1">닫기</button><button class="btn" data-a2="copy">📋 복사</button></div>');
+  }
+  handlers.fblist = function(){
+    if(!FBC.url) return toast("아직 선생님이 후기 게시판을 연결하지 않았어요");
+    dlg('<h3>👀 친구들 후기 · 선생님 답변</h3><div id="fbl" class="fbl"><p class="muted">불러오는 중… 🦉</p></div><div class="row"><button class="btn sub" data-a2="fbopen">💬 나도 쓰기</button><button class="btn" data-x="1">닫기</button></div>');
+    var mine = fbMine().map(function(x){ return x.id; }).join(",");
+    fetch(FBC.url + (FBC.url.indexOf("?") < 0 ? "?" : "&") + "list=1&mine=" + encodeURIComponent(mine)).then(function(r){ return r.json(); }).then(function(j){
+      var el = D && D.querySelector("#fbl"); if(!el) return;
+      var rep = {}; (j.mine || []).forEach(function(x){ if(x.reply) rep[x.id] = x.reply; });
+      var my = fbMine().filter(function(x){ return rep[x.id]; });
+      el.innerHTML = (my.length ? '<div class="hh">📬 내 글에 온 답변</div>' + my.map(function(x){ return '<div class="fbi me"><b>' + esc(x.t) + " · " + esc(x.d.slice(5)) + "</b><span>" + esc(x.x) + '</span><em>🦉 ' + esc(rep[x.id]) + "</em></div>"; }).join("") : "")
+        + '<div class="hh">💬 친구들 이야기</div>'
+        + ((j.items || []).length ? j.items.map(function(x){ return '<div class="fbi"><b>' + (x.stars ? '<i class="st">' + "★".repeat(+x.stars) + "</i> " : FK.idea[1] === x.type ? "💡 " : "") + esc(x.nick || "익명") + " · " + esc(x.date || "") + "</b><span>" + esc(x.text) + "</span>" + (x.reply ? "<em>🦉 " + esc(x.reply) + "</em>" : "") + "</div>"; }).join("") : '<p class="muted">아직 공개된 글이 없어요. 첫 후기를 남겨 볼까요?</p>');
+    }).catch(function(){ var el = D && D.querySelector("#fbl"); if(el) el.innerHTML = '<p class="muted">불러오지 못했어요. 인터넷 연결을 확인해 주세요.</p>'; });
+  };
+  handlers.qflag = function(){
+    if(!T || !T.cur) return;
+    var it = T.cur.it, ans = it.spell ? it.spell : it.num ? (it.fr ? frStr(it.fr) : String(it.n)) : T.choices ? T.choices[T.ans] : "";
+    fbDlg("q", {id: it.id, room: T.cur.room, tag: it.tag, q: it.q || "", ans: String(ans || "").replace(/<[^>]+>/g, "")});
   };
 
   /* ══ 9단계: 체력 측정 · 성장 리포트 · 인증서 · 주간 카드 · 결과/백업 코드 ══ */
