@@ -288,6 +288,13 @@
   @keyframes fall{to{transform:translateY(105vh) rotate(260deg);opacity:.3}}
   .soon{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
   .soon b{font-size:18px}
+  /* v2.26 핵심 한 장 */
+  .core{background:#fff;border:2px solid var(--c,#FFB000);border-radius:14px;padding:10px 12px 8px;font-size:14.5px;line-height:1.5}
+  .core ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+  .core li::marker{font-weight:900;color:var(--c,#FFB000)}
+  .core .trap{margin:7px 0 0;background:#FFF1E0;border-radius:9px;padding:5px 9px;font-size:13.5px;font-weight:800;color:#9A4A00}
+  .cored{border:1px solid var(--line);background:#FFFBEA;border-radius:12px;padding:7px 10px}
+  .cored summary{font-weight:900;cursor:pointer}.cored[open] summary{margin-bottom:6px}
   /* v2.25 공부법 · 건의·후기 */
   .lnk.two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
   .lnk.two button{flex-direction:column;align-items:flex-start;gap:1px;padding:9px 11px;font-size:14px}
@@ -354,6 +361,7 @@
 <script src="sci.js"></script>
 <script src="soc.js"></script>
 <script src="coach.js"></script>
+<script src="core.js"></script>
 <script src="feedback.js"></script>
 <script src="rooms.js"></script>
 <script src="map.js"></script>
@@ -848,7 +856,7 @@
       fibHtml = '<div class="fibc" style="--c:' + r.col + '">'
         + (cf ? '<span class="ft st' + x.st + '">' + STN[x.st] + "</span><div><b>오늘 단원 · " + esc(FIB[cf].n) + "</b><span>" + (x.st === 0 ? "첫 세트 90% 이상이면 바로 숙달(테스트 아웃)" : "세트 정확도 90% 연속 2번 → 숙달 (" + (x.run || 0) + "/2)") + "</span></div>"
           : '<span class="ft">준비</span><div><b>오늘 단원 · 견본 문항</b><span>이 과목 단원 문항은 다음 단계에서 채워져요</span></div>')
-        + '<button class="mini" data-a="tomap" data-sub="' + id + '">🗺️ ' + masterPct(id) + "%</button></div>"
+        + (cf && CORE[cf] ? '<button class="mini" data-a="core" data-fid="' + cf + '" aria-label="핵심 한 장">📝</button>' : "") + '<button class="mini" data-a="tomap" data-sub="' + id + '">🗺️ ' + masterPct(id) + "%</button></div>"
         + (r.passages && [0, 6].indexOf(new Date().getDay()) >= 0 && pickPassage([3]) ? '<button class="ckbtn" data-a="longp">📚 주말 긴 지문 PT (선택 · 약 20분)<small>수능 길이 지문 1편 · 문단 요지 → 문항 → 한 줄 요약</small></button>' : "")
         + (inl.length ? '<button class="ckbtn" data-a="intake" data-room2="' + id + '">🧪 입소 진단 · ' + inl.length + "단원 × " + INTAKE_PER + "문제 (약 " + Math.round(inl.length * INTAKE_PER * 15 / 60) + "분)<small>아는 단원은 통과 → 연습 없이 7일 뒤 확인만</small></button>" : "")
         + (dc.length ? '<button class="ckbtn" data-a="quiz" data-fid="' + dc[0] + '" data-kind="' + (fs(dc[0]).st === 3 ? "re" : "check") + '">⭐ ' + (fs(dc[0]).st === 3 ? "마스터 확인" : "7일 확인 세트") + " · " + esc(FIB[dc[0]].n) + (dc.length > 1 ? " 외 " + (dc.length - 1) : "") + " ›</button>" : "");
@@ -1111,7 +1119,7 @@
       + '<div class="stats"><div class="stat"><b>' + r.n + '</b><span>푼 문제</span></div><div class="stat"><b>' + acc + '%</b><span>정확도</span></div><div class="stat"><b>' + (r.n ? (d.t[id] / d.n[id]).toFixed(1) + "초" : "-") + "</b><span>한 문제 평균</span></div></div>")
       + evHtml + (qz ? "" : '<div class="win">' + win + (r.wrong.length ? '<br><span class="muted">📌 틀린 ' + r.wrong.length + "문제는 복습 상자에 저장했어요</span>" : "") + "</div>")
       + (opts.length && !qz ? '<div class="card meta"><div class="h">🤔 30초 · 오늘 가장 헷갈린 것은? <i>내일 준비운동에 먼저 나와요</i></div><div class="mopts">' + opts.map(function(o){ var p = o.split("|"); return '<button data-a="conf" data-v="' + esc(o) + '" aria-pressed="false">' + (p[0] !== id ? R[p[0]].emo + " " : "") + esc(p[1]) + "</button>"; }).join("") + '<button data-a="conf" data-v="" aria-pressed="false">없어요 👍</button></div></div>' : "")
-      + (qz ? "" : resultTip(id, r, acc))
+      + (qz ? (r.fid && CORE[r.fid] && acc < 90 && /^(diag|check|re)$/.test(qz.kind) ? '<button class="ckbtn tipb" data-a="core" data-fid="' + r.fid + '">📝 30초 핵심 한 장 · ' + esc(FIB[r.fid].n) + "<small>" + esc(CORE[r.fid][3]) + " ›</small></button>" : "") : resultTip(id, r, acc))
       + '<div class="grow"></div>'
       + (qz && TESTK[qz.kind] ? '<div class="row"><button class="btn sub" data-a="tomeas">🏆 측정으로</button><button class="btn" data-a="report">📈 성장 리포트</button></div>'
          : qz ? '<div class="row"><button class="btn sub" data-a="tomap">🗺️ 마스터 맵</button><button class="btn" data-room="' + id + '">' + room.emo + " PT실로 ▶</button></div>"
@@ -1199,6 +1207,7 @@
     var steps = ["진단", "연습", "숙달", "7일 확인", "마스터"], on = [x.st >= 1 || x.dg != null, x.st >= 1, x.st >= 2, x.st >= 3, x.st >= 3];
     dlg('<div class="fdh" style="--c:' + r.col + '"><span class="ft st' + x.st + '">' + STN[x.st] + "</span><h3>" + r.emo + " " + esc(f.n) + "</h3></div>"
       + '<p class="muted">' + esc(f.g) + " · " + f.s + "단계(" + ["", "1~4주", "5~8주", "9~12주"][f.s] + ")" + (f.hs ? " · 고등 연결: " + esc(f.hs) : "") + "</p>"
+      + (CORE[fid] ? "<details class=\"cored\"" + (x.st === 1 ? " open" : "") + "><summary>📝 핵심 한 장 <span class=\"muted\">30초</span></summary>" + coreHtml(fid) + "</details>" : "")
       + '<div class="fsteps" style="--c:' + r.col + '">' + steps.map(function(t, i){ return '<span class="' + (on[i] ? "on" : "") + '">' + t + "</span>"; }).join("<em>›</em>") + "</div>"
       + '<div class="win" style="text-align:left">' + rule + (x.h && x.h.length ? '<br><span class="muted">최근 기록 ' + x.h.map(function(h){ return h[1] + "%"; }).join(" · ") + "</span>" : "") + "</div>"
       + (!op ? '<div class="win">🛠️ 이 단원 문항은 ' + ({kor: 4, math: 3, eng: 5, sci: 7, soc: 8})[f.room] + "단계에서 채워져요</div>"
@@ -1273,9 +1282,21 @@
       + '<div class="howc"><div class="hh">💪 이렇게 공부해요</div><ol class="hsteps">' + c.order.map(function(o){ return "<li><b>" + esc(o[0]) + "</b><span>" + esc(o[1]) + "</span></li>"; }).join("") + "</ol>"
       + '<div class="hh">😵 막힐 때 <span class="muted">눌러 보기</span></div>'
       + c.stuck.map(function(s, i){ return "<details" + (i === open ? " open" : "") + "><summary>" + esc(s.t) + "</summary><ul>" + s.tips.map(function(t){ return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></details>"; }).join("")
-      + '<p class="muted" style="margin-top:6px">그래도 막히면 → 🗺️ 마스터 맵에서 그 단원의 <b>앞 단계</b>부터 진단해 보고, 친구나 선생님께 물어봐요. 묻는 것도 실력이에요!</p></div>'
+      + '<p class="muted" style="margin-top:6px">그래도 막히면 → 🗺️ 마스터 맵에서 단원을 눌러 <b>📝 핵심 한 장</b>을 보고, <b>앞 단계</b> 단원부터 진단해 보고, 친구나 선생님께 물어봐요. 묻는 것도 실력이에요!</p></div>'
       + '<div class="row"><button class="btn sub" data-a2="fbopen">💬 건의하기</button><button class="btn" data-x="1">알았어요!</button></div>');
   }
+  /* 📝 단원 핵심 한 장 (13단계) */
+  var CORE = typeof GYM_CORE !== "undefined" ? GYM_CORE : {};
+  function coreHtml(fid){
+    var c = CORE[fid]; if(!c) return "";
+    return '<div class="core" style="--c:' + R[FIB[fid].room].col + '"><ol>' + c.slice(0, 3).map(function(t){ return "<li>" + esc(t) + "</li>"; }).join("") + '</ol><p class="trap">⚠️ ' + esc(c[3]) + "</p></div>";
+  }
+  function coreDlg(fid){
+    var f = FIB[fid]; if(!f || !CORE[fid]) return;
+    dlg('<h3>📝 핵심 한 장 · ' + R[f.room].emo + " " + esc(f.n) + '</h3><p class="muted">30초만 소리 내어 읽고, 다시 풀어 봐요!</p>' + coreHtml(fid)
+      + '<div class="row"><button class="btn sub" data-a2="howto" data-room2="' + f.room + '">🧭 공부법</button><button class="btn" data-x="1">알았어요! 💪</button></div>');
+  }
+  handlers.core = function(t){ coreDlg(t.dataset.fid); };
   handlers.howto = function(t){ howtoDlg(t.dataset.room2 || "base", t.dataset.k != null && t.dataset.k !== "" ? +t.dataset.k : -1); };
 
   /* 💬 건의·후기 (선생님이 연결한 구글 시트로 보냄 · 연결 전이면 복사해서 보여 주기) */
