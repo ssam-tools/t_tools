@@ -1312,7 +1312,7 @@
   };
   handlers.gom3 = function(){ S.mode = "m3"; S.baseGrad = 1; save(); sparkle("🎓"); toast("🎓 중3 마스터 모드! 기초 기록은 그대로 남아요"); go("home"); };
   /* 🏫 반 함께 운동: 오늘 출석(PT실 10분)하면 반 코드 + 기기 번호(무작위)만 보내고, 우리 반 오늘 출석 수만 받아 옴 — 등수·점수 없음 */
-  function clsLine(){ var c = S.cls; if(!c || !c.code || c.d !== TODAY || typeof c.n !== "number") return ""; return "🏫 우리 반 오늘 출석 <b>" + c.n + "</b>명" + (attCount(TODAY) ? " · 나도 ✓" : " · 10분이면 나도 출석!"); }
+  function clsLine(){ var c = S.cls; if(!c || !c.code || c.d !== TODAY || typeof c.n !== "number") return ""; return "🏫 우리 반 오늘 출석 <b>" + c.n + "</b>명" + (attCount(TODAY) ? " · 나도 ✓" : " · 10분 하면 나도!"); }
   function clsSync(){
     var c = S.cls; if(!c || !c.code || !FBC.url) return;
     var u = FBC.url + (FBC.url.indexOf("?") < 0 ? "?" : "&");
