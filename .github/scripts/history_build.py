@@ -50,6 +50,8 @@ def build_versions():
 def shoot(page, out, phone):
     from playwright.sync_api import sync_playwright
     path, _, qs = page.partition("?")
+    if not path or path.endswith("/"):
+        path += "index.html"                      # 폴더 주소는 index.html 로 (폴더 목록이 찍히지 않게)
     url = (ROOT / path).resolve().as_uri() + ("?" + qs if qs else "")
     w, h = (390, 844) if phone else (1440, 900)
     with sync_playwright() as p:
