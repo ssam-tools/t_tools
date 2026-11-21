@@ -11,7 +11,8 @@ var GYM_KOR = (function(){
   var KR = typeof KR_DATA !== "undefined" ? KR_DATA : {words: [], passages: []};
 
   /* 어휘 (id 는 1단계 견본과 같게 'kor:낱말') */
-  var W = KR.words || [];
+  var ADD = typeof GYM_KOR_ADD !== "undefined" ? GYM_KOR_ADD : {words: [], passages: []};   // 15단계: kor2.js 어휘 · kor3~5.js 지문
+  var W = (KR.words || []).concat(ADD.words.filter(function(a){ return !(KR.words || []).some(function(b){ return b.w === a.w; }); }));
   var vocab = W.map(function(v){
     return {id: "kor:" + v.w, tag: "어휘", q: v.ex, ask: "밑줄 친 말의 뜻으로 알맞은 것은?",
       mk: function(){ var o = shuffle(W.filter(function(x){ return x.m !== v.m; })).slice(0, 3).map(function(x){ return x.m; }); return {c: [v.m].concat(o), a: 0}; },
@@ -61,7 +62,7 @@ var GYM_KOR = (function(){
           {k: "ox", q: "글쓴이는 기술자들만 모여 기준을 정하면 된다고 본다.", a: false, e: "5문단: 시민·윤리학자·법률가가 함께."},
           {k: "apply", q: "3문단에서 '생명을 숫자로 비교할 수 없다'는 입장과 가장 가까운 생각은?", c: ["어떤 결과가 나오더라도 일부러 누군가를 해치는 행동은 옳지 않다.", "더 많은 사람을 살리는 쪽이 언제나 옳다.", "책임은 차를 산 사람에게 있다.", "자율 주행차는 개발하지 말아야 한다."], a: 0, e: "결과보다 행위의 옳고 그름을 중시하는 입장."}]}
   ];
-  var P = (KR.passages || []).filter(function(p){ return !p.lit && p.lv < 9 && p.gist && p.gist.length === p.paras.length; }).concat(P2);
+  var P = (KR.passages || []).filter(function(p){ return !p.lit && p.lv < 9 && p.gist && p.gist.length === p.paras.length; }).concat(P2, ADD.passages.filter(function(p){ return p.gist.length === p.paras.length; }));
   var KMAP = {main: "k.main", struct: "k.struct", ox: "k.fact", apply: "k.infer"}, KTAG = {main: "중심 내용", struct: "글의 구조", ox: "사실 확인", apply: "추론"};
   var pitems = [], PX = {};
   P.forEach(function(p){
