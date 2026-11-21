@@ -86,6 +86,11 @@
   .done{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;font-size:15px;line-height:1.6}
   .done .big{font-size:46px}
   /* v2.40 PLAN_세팅공유: 인터넷으로 받기 · 올리기 */
+  .tile h2 .sedit{margin-left:auto;font-size:12px;padding:3px 9px}
+  .schsum{display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:1.5;background:#f4f9f4;border:1px solid #cfe6cf;border-radius:10px;padding:8px 10px}
+  .schsum b{font-size:15px}.schsum .ok{color:var(--ok);font-weight:800}.schsum .no{color:var(--danger);font-weight:700}
+  .upst .btn{font-size:12px;padding:3px 9px;margin-top:4px}
+
   .cloud{display:flex;flex-direction:column;gap:8px;border:1px solid #9cc3ea;background:#fff;border-radius:12px;padding:10px}
   .dev{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
   #s1{overflow-x:hidden}.steps{grid-template-columns:1.15fr .9fr 1.15fr}
@@ -191,7 +196,9 @@
     <div class="drop wdrop" id="mDrop" tabindex="0" role="button"><span class="ic">📂</span><span><b>학교 원본 파일 한꺼번에 넣기</b><small>학생 명렬(엑셀) · 교직원 명렬 · 내선번호·좌석배치도 · 주간시간표 · 학사일정(한글 .hwpx) — 여기에 끌어다 놓거나 누르세요</small></span><span class="msg" id="mDropMsg"></span></div>
     <div class="tiles">
       <div class="tile on sch">
-        <h2>🏷️ 학교 정보</h2>
+        <h2>🏷️ 학교 정보<button type="button" class="btn sedit" id="schEdit" hidden>✏️ 고치기</button></h2>
+        <div class="schsum" id="schS" hidden></div>
+        <div class="schf" id="schF">
         <div class="two"><label class="field">학교 이름<input type="text" id="mName" maxlength="20" placeholder="예: 마산서중학교" autocomplete="off"></label>
         <label class="field">교장<input type="text" id="mPrin" maxlength="10" autocomplete="off"></label></div>
         <label class="field">주소<input type="text" id="mAddr" maxlength="60" autocomplete="off"></label>
@@ -201,6 +208,7 @@
           <div class="nrow" title="나이스 급식 — 한 번 연결하면 세팅 파일로 모든 선생님께 적용"><span class="nl">🍚 급식</span><span class="nst" id="mNeisSt"></span><button type="button" class="btn" id="mNeisFind">🔎 학교 찾기</button></div>
           <div class="nres" id="mNeisL" hidden></div>
           <label class="nrow" title="학교 업무판(앱스 스크립트) 주소 — 업무판·자료실이 이 주소를 씀. 비밀번호는 따로 알려 주세요."><span class="nl">🗂️ 업무판</span><input type="url" id="mBoardUrl" placeholder="업무판 주소 (…/exec)" autocomplete="off" spellcheck="false"></label></div>
+        </div>
         <div class="field" id="mHid"><span title="화면에는 안 보이고 마우스를 올리면(휴대폰은 누르면) 나오는 말풍선 · 켠 것만 선생님들께 적용">🧭 숨은 정보 <small>(올려 보면 나오는 말풍선)</small></span>
           <div id="mHidL" class="hidL"></div></div>
       </div>
@@ -233,6 +241,7 @@
       <div class="two"><label class="field" title="8자 이상">학생 명렬 비밀 문구<input type="password" id="mPass" placeholder="8자 이상" autocomplete="new-password"></label>
       <label class="field">한 번 더<input type="password" id="mPass2" placeholder="같게 한 번 더" autocomplete="new-password"></label></div>
       <label class="field">관리자 비밀번호<input placeholder="자료실 관리자와 같음" type="password" id="mAdm" autocomplete="off"></label>
+      <label class="keep" id="mKeepW" title="교무실 PC처럼 나만 쓰는 기기에서만 · 백업·동기화에는 들어가지 않아요"><input type="checkbox" id="mKeep"> 🔑 이 기기에서 두 비밀번호 기억 <small>(다음엔 바로 올리기)</small></label>
       <div class="opts"><label title="내 사이트 목록의 업무용·수업용 사이트와 ★ 자주 보는 문서를 학교 추천으로 함께 보냄 (선생님이 고친 것이 우선)"><input type="checkbox" id="mRec" checked> ⭐ 내 추천 사이트·★ 문서</label>
         <label title="선생님 PC·전자칠판이 쉬는 동안 내 교과·내 학년 교과서를 학교 드라이브에서 받아 둠 (와이파이일 때만, 휴대폰은 안 받음)"><input type="checkbox" id="mBooks" checked> 📘 교과서 자동 받기</label></div>
       <div class="row2"><button type="button" class="btn primary" id="mUp">☁ 학교 세팅 올리기</button><button type="button" class="btn" id="mExport" title="인터넷이 안 될 때: 파일로 내보내기">📤 파일로</button></div>
@@ -255,6 +264,7 @@
 <script src="../../shared/hwpx.js"></script>
 <script src="../../shared/schoolset.js"></script>
 <script src="../../shared/qr.js"></script>
+<script src="../../g/schools.js"></script>
 <script>
   /* v2.9 숨은 정보: 담당자가 켤 것을 고름 (세팅 파일 school.hid 로 선생님 기기에 그대로) */
   var HIDK = [["meal","날짜 → 급식", "날짜 → 급식"],["time","시각 → 교시", "시각 → 교시"],["staff","선생님 → 내선", "선생님 이름 → 내선·수업 중"],["cls","반 → 담임", "반 → 담임·지금 수업"],["owl","쌤비 → 오늘", "쌤비 → 오늘·이번 주"],["stu","학생 → 출결", "학생 이름 → 출결·기록"],["tree","반 나무 → 칭찬", "우리 반 나무 → 칭찬왕"],["trip","업무판 → 출장", "업무판 날짜 → 출장"]];
@@ -369,6 +379,20 @@
   function neisAutoTry(){ var s = TT.school.load(); if(neisAuto || (s.neisA && s.neisS)) return; neisAuto = true; neisFind(true); }   // 처음 만들기 화면을 열면 학교 이름으로 저절로 찾아 둠
   var BOARD_RE = /^https:\/\/script\.google\.com\/(?:a\/macros\/[^\/?#\s]+|macros)\/s\/[\w-]+\/exec$/;
   neisShow();
+
+  /* v2.40.4 ③ 학교 정보가 다 채워져 있으면 한 줄로 접기 (처음 쓰는 학교는 펼친 채로) */
+  function schReady(){ var s = TT.school.load(); return !!($("mName").value.trim() && BOARD_RE.test($("mBoardUrl").value.trim()) && s.neisA && s.neisS); }
+  function schView(auto){
+    var fold = auto ? schReady() : false, s = TT.school.load();
+    $("schF").hidden = fold; $("schS").hidden = !fold; $("schEdit").hidden = !fold;
+    if(fold) $("schS").innerHTML = "<b>" + esc($("mName").value.trim()) + "</b>"
+      + "<span>" + esc([$("mPrin").value.trim() && "교장 " + $("mPrin").value.trim(), $("mTel").value.trim()].filter(Boolean).join(" · ") || "") + "</span>"
+      + '<span><span class="ok">✔</span> 급식·학사일정 연결 · <span class="ok">✔</span> 업무판 연결' + ($("mComci").value.trim() ? ' · <span class="ok">✔</span> 컴시간' : ' · <span class="no">컴시간 코드 없음</span>') + "</span>";
+  }
+  $("schEdit").onclick = function(){ schView(false); $("mName").focus(); };
+  /* v2.40.4 ④ 업무판 주소가 비어 있으면 우리 학교 기본 주소(g/schools.js)를 미리 */
+  if(!$("mBoardUrl").value.trim() && window.TT_GO_SCHOOLS && TT_GO_SCHOOLS[""]) $("mBoardUrl").value = TT_GO_SCHOOLS[""];
+  schView(true);
 
   /* 파일 고르기 */
   function pick(accept, cb){
@@ -583,13 +607,57 @@
     var el = $("mUpSt");
     if(!m){ el.innerHTML = "학교 업무판이 연결되어 있지 않아요 · ⋯ → 학교 업무판 연결"; return; }
     el.innerHTML = m.ver ? "☁ 올라간 판: <b>" + new Date(m.ver).toLocaleString("ko-KR", {month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit"}) + "</b>" + (m.sum ? "<br>" + esc(m.sum) : "") + (m.hasB ? "" : "<br>학생 명렬 없음")
+        + '<br><button type="button" class="btn" id="mPull" title="올라간 학교 세팅으로 이 화면의 칸을 모두 채움 (다른 기기에서 이어서 고칠 때)">☁ 올라간 세팅 불러와 채우기</button>'
       : "아직 올린 학교 세팅이 없어요. 칸을 채우고 [☁ 학교 세팅 올리기]를 누르세요.";
+    var pb = $("mPull"); if(pb) pb.onclick = pullFill;
+  }
+  /* v2.40.4 ① 올라간 세팅 불러와 채우기 — 어느 기기에서든 단추 하나로 (파일·USB 없이) */
+  function pullFill(){
+    var c = TTSet.board(), bk = $("mPass").value, msg = $("mMsg");
+    TT.ui.confirm("☁ 올라간 세팅 불러오기", "학교 업무판에 올라간 학교 세팅으로 이 기기의 학교 정보·교직원·학사일정·전체 시간표" + (bk ? "·학생 명렬" : "") + "을 채웁니다. 이 기기에서 고치던 내용은 올라간 것으로 바뀌어요." + (bk ? "" : " (학생 명렬도 채우려면 먼저 '학생 명렬 비밀 문구'를 넣으세요.)"), "불러오기", function(){
+      msg.className = "msg"; msg.textContent = "불러오는 중…";
+      TTSet.pull(c, bk).then(function(r){
+        if(!r.A){ msg.className = "msg err"; msg.textContent = "올라간 학교 세팅이 없어요."; return; }
+        var A = r.A, done = [];
+        if(A.school){ TT.school.save(A.school); var sc = TT.school.load(); $("mName").value = sc.name; $("mPrin").value = sc.principal; $("mAddr").value = sc.addr; $("mTel").value = sc.tel; $("mComci").value = sc.comci;
+          if(A.school.hid) HIDK.forEach(function(k){ var x = document.querySelector('[data-hidk="' + k[0] + '"]'); if(x) x.checked = A.school.hid[k[0]] !== false; }); done.push("학교 정보"); }
+        if(A.board && A.board.url) $("mBoardUrl").value = A.board.url;
+        if(A.staff){ saveStaff(A.staff, A.staffMain || []); done.push("교직원 " + A.staff.length + "명"); }
+        if(A.calendar && A.calendar.events){ var C = TT.store.get("tt_calendar_v1", null) || {v: 1, events: []}; C.events = (C.events || []).filter(function(e){ return e.src === "neis"; }).concat(A.calendar.events.map(function(e){ return {d: e.d, t: e.t, k: e.k}; })); C.events.sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; }); C.y = A.calendar.y || C.y; C.at = Date.now(); TT.store.set("tt_calendar_v1", C); done.push("일정 " + A.calendar.events.length + "개"); }
+        if(A.alltt){ ALL = {v: 1, periods: A.alltt.periods, teachers: A.alltt.teachers, at: Date.now()}; TT.store.set("tt_alltt_v1", ALL); $("mTimes").value = ALL.periods.map(function(p){ return p.t; }).join(" "); done.push("시간표 " + ALL.teachers.length + "명"); }
+        if(r.B && r.B.roster){
+          var R = TT.roster.load();
+          r.B.roster.forEach(function(w){ var ex = R.classes.filter(function(x){ return x.grade === w.grade && x.cls === w.cls; })[0]; var st = w.students.map(function(q){ return {no: q.no, name: q.name}; });
+            if(ex){ ex.students = st; ex.name = w.name; } else R.classes.push({id: "g" + w.grade + "c" + w.cls, name: w.name, grade: w.grade, cls: w.cls, students: st}); });
+          TT.roster.save(TT.roster.clean(R)); done.push("학생 " + r.B.roster.length + "개 반");
+        } else if(r.meta.hasB && bk) done.push("학생 명렬은 비밀 문구가 맞지 않아 그대로");
+        if(A.rec) $("mRec").checked = true;
+        $("mBooks").checked = !!r.meta.books;
+        drawMake(); neisShow(); schView(true);
+        msg.className = "msg ok"; msg.textContent = "✔ 불러왔어요 · " + done.join(" · ") + ". 고친 뒤 [올리기]만 누르세요.";
+      }).catch(function(e){ msg.className = "msg err"; msg.textContent = TTSet.errText(e); });
+    });
   }
   function upCheck(){
     var c = TTSet.board(); if(!c.url || !c.pw){ upStatus(null); return; }
     TTSet.api("setver").then(upStatus, function(e){ $("mUpSt").textContent = TTSet.errText(e); });
   }
-  function admPw(){ var a = $("mAdm").value; try{ sessionStorage.setItem("ttset_adm", a); }catch(e){} return a; }
+  function admPw(){ var a = $("mAdm").value; try{ sessionStorage.setItem("ttset_adm", a); }catch(e){} keepSave(); return a; }
+  /* v2.40.4 ② 담당자 기기에서 두 비밀번호 기억 — localStorage 'ttset_keep'(tt_ 밖: 전체 백업·동기화에 안 들어감) · 교실 기기에서는 숨김 */
+  var KEEP = "ttset_keep";
+  function keepGet(){ try{ return JSON.parse(localStorage.getItem(KEEP) || "null"); }catch(e){ return null; } }
+  function keepSave(){
+    try{
+      if($("mKeep").checked && !TTSet.room()) localStorage.setItem(KEEP, JSON.stringify({adm: $("mAdm").value, bk: $("mPass").value === $("mPass2").value ? $("mPass").value : ""}));
+      else localStorage.removeItem(KEEP);
+    }catch(e){}
+  }
+  (function(){
+    if(TTSet.room()){ $("mKeepW").hidden = true; return; }
+    var k = keepGet(); if(!k) return;
+    $("mKeep").checked = true; if(k.adm) $("mAdm").value = k.adm; if(k.bk){ $("mPass").value = $("mPass2").value = k.bk; }
+  })();
+  $("mKeep").onchange = keepSave;
   $("mUp").onclick = function(){
     var msg = $("mMsg"), btn = this; function err(t){ msg.className = "msg err"; msg.textContent = t; }
     var c = TTSet.board(); if(!c.url || !c.pw) return err("먼저 ⋯ → 학교 업무판 연결에서 주소와 공용 비밀번호를 넣어 주세요.");
@@ -613,7 +681,7 @@
         msg.textContent = "올리는 중…";
         return TTSet.api("setput", {admin: adm, a: L[0], b: L[1], keepB: !Bd, sum: sum, books: books});
       }).then(function(r){
-        var S = TTSet.state(); S.ver = r.ver; S.sum = sum; S.books = books; if(bk && withB) S.bk = bk; TTSet.saveState(S);
+        var S = TTSet.state(); S.ver = r.ver; S.sum = sum; S.books = books; if(bk && withB) S.bk = bk; TTSet.saveState(S); keepSave(); schView(true);
         msg.className = "msg ok"; msg.textContent = "✔ 올렸어요 · " + sum + ". 선생님 기기가 켤 때 저절로 반영됩니다.";
         upCheck();
       });

@@ -47,6 +47,7 @@ var TTSet = (function(){
   function board(){
     var B = {}; try{ B = JSON.parse(LS("tt_board_v1") || "null") || {}; }catch(e){}
     if(!B.pw || !B.url){ var s = {}; try{ s = JSON.parse(LS("ttv_server") || "null") || {}; }catch(e){} if(s.url && s.pw && (!B.url || B.url === s.url)){ B = {url: s.url, pw: s.pw}; } }   // 교실 기기: 보관함 연결 정보
+    if(!B.url && window.TT_GO_SCHOOLS && TT_GO_SCHOOLS[""]) B = Object.assign({}, B, {url: TT_GO_SCHOOLS[""]});   // 우리 학교 업무판 기본 주소 (g/schools.js)
     return B;
   }
   function api(action, extra, cfg){
