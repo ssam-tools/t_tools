@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
 <!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: file:; connect-src 'self' blob: https://script.google.com https://script.googleusercontent.com; worker-src 'self' blob:; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: file:; connect-src 'self' blob: https://script.google.com https://script.googleusercontent.com; worker-src 'self' blob:; frame-src 'self' https://www.geogebra.org https://www.desmos.com https://www.algeomath.kr; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2f6fb5">
 <link rel="manifest" href="../../manifest.webmanifest">
@@ -110,6 +110,33 @@
   .lbot button small{display:block;font-size:.55em;font-weight:700;color:#777}
   .lbot button.on{background:#222;color:#fff}.lbot button.on small{color:#ccc}
   .lbot .end{flex:.9;background:#2d8a5b;border-color:#2d8a5b;color:#fff}
+  /* PLAN_수업길: 🛤️ 수업 길 줄 · 🧰 도구 */
+  .lroad{position:relative;gap:4px;padding:4px 7px 6px;border-top:2px solid #222;background:#fafafa;align-items:stretch}
+  .lroad .rl{flex:none;font-size:20px;align-self:center}
+  .lroad .rt{flex:none;align-self:center;font-weight:900;font-size:clamp(13px,1.2vw,17px);color:#2f6fb5;min-width:3em;text-align:right;font-variant-numeric:tabular-nums}
+  .lroad button{font:inherit;font-size:clamp(11px,1.05vw,15px);font-weight:800;border:2px solid #cdc6f3;background:#fff;color:#333;border-radius:10px;padding:4px 2px;cursor:pointer;line-height:1.15;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lroad button.st{border-color:#9fd8c3}
+  .lroad button small{display:block;font-size:.75em;font-weight:600;color:#888}
+  .lroad button.on{background:#222;border-color:#222;color:#fff}.lroad button.on small{color:#ccc}
+  .lroad .needle{position:absolute;bottom:1px;width:3px;height:5px;background:#c2432a;border-radius:2px;transition:left .5s}
+  .lpane.road,.lpane.tool{padding:1.2vh 1.3vw;background:#f6f7f9}
+  .lpane.road ul,.lpane.road ol{font-size:inherit;line-height:inherit}.lpane.road li{margin:0 0 .3em}
+  .tbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .tbar b{font-size:clamp(18px,1.8vw,26px)}.tbar .sp{flex:1}
+  .tbar button,.tbar a{font:inherit;font-size:clamp(14px,1.2vw,18px);font-weight:800;border:2px solid #222;background:#fff;border-radius:12px;padding:6px 12px;cursor:pointer;color:#111;text-decoration:none}
+  .tcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+  .tcard{background:#fff;border:2px solid #dde3ea;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px}
+  .tcard b{font-size:clamp(16px,1.5vw,21px)}.tcard span{font-size:13.5px;color:#555;line-height:1.45}
+  .tcard .rw{display:flex;gap:6px;flex-wrap:wrap}.tcard .rw button{font:inherit;font-weight:800;border:2px solid #222;background:#fff;border-radius:10px;padding:5px 10px;cursor:pointer}
+  .tcard .rw button.p{background:#ffe066;border-color:#c99a00}
+  .tcard.lab{border-style:dashed;border-color:#cdc6f3}
+  .tframe{flex:1;min-height:0;width:100%;border:2px solid #dde3ea;border-radius:12px;background:#fff}
+  .tlabh{flex:1;min-height:0;display:flex;flex-direction:column;background:#fff;border:2px solid #dde3ea;border-radius:12px;padding:10px}
+  .stu .in{max-width:min(92vw,900px)}
+  .stu .code{font-size:clamp(36px,6vw,90px);font-weight:900;letter-spacing:.08em;color:#2f6fb5}
+  .stu input{font:inherit;font-size:20px;border:2px solid #222;border-radius:12px;padding:6px 12px;width:14em;text-align:center}
+  .stu .note{font-size:clamp(16px,1.8vw,24px);font-weight:800;color:#c2432a}
+  .stu .x{position:absolute;top:14px;right:14px;font:inherit;font-size:18px;font-weight:800;border:2px solid #222;background:#fff;border-radius:12px;padding:6px 14px;cursor:pointer}
   .lpane{position:absolute;inset:0;z-index:5;background:#fff;display:none;flex-direction:column;padding:2.5vh 4vw;overflow:auto}
   .lpane.on{display:flex}
   .lpane h1{margin:0 0 1.2vh;font-size:clamp(30px,4.4vw,64px);color:var(--c,#2f6fb5)}
@@ -159,7 +186,7 @@
   #goalBn.on{display:block}
   .sw{position:relative}
   .ltop .rmc{font-size:20px;opacity:.25;filter:grayscale(1)}.ltop .rmc[data-s="on"]{opacity:1;filter:none}.ltop .rmc[data-s="err"]{opacity:.6}.ltop .rmc[data-s="rtc"]{opacity:1;filter:none;text-shadow:0 0 8px #2d8a5b}
-  .ltop #lres.has{background:#e9f2fc;border-color:#2f6fb5;color:#2f6fb5}
+  .ltop #lres.has,.ltop #ltool.has{background:#e9f2fc;border-color:#2f6fb5;color:#2f6fb5}
   .ctl #bRes.has{background:var(--accent-soft,#e9f2fc);border-color:var(--accent,#2f6fb5);color:var(--accent,#2f6fb5)}
   .ltop #lgoal:disabled{opacity:1}
   .where .cmp{font-size:.5em;color:var(--sub);font-weight:700;margin-left:6px}
@@ -196,6 +223,7 @@
     <span class="tm" id="tm"></span>
     <span id="lrm" class="rmc" data-s="off">📱</span>
     <button id="lgoal" title="오늘 목표를 칠판 위에 크게">🎯<span class="lb"> 목표</span></button><button id="lres" title="이 쪽 차시 자료 · QR">📎<span class="lb"> 자료</span></button><button id="lsc" title="수업 시작 한 장 다시 보기">🏁</button>
+    <button id="ltool" title="이 차시 수학 도구 · 실험실 (T)">🧰<span class="lb"> 도구</span></button><button id="lgraph" title="빈 그래프판 (G)">📈<span class="lb"> 그래프판</span></button>
     <button id="lrec" title="학생 활동 한 줄 기록 (수업 기록장으로)">✍️ 기록</button><button id="lpen" title="판서 (펜·형광펜·작도·각도기)">✏️ 판서</button>
     <button id="lzo" title="작게">－</button><button id="lzi" title="크게">＋</button>
     <button id="lprev">◀</button><button id="lnext">▶</button>
@@ -215,6 +243,7 @@
     <button id="bRes" title="이 쪽 차시 자료 · QR">📎 자료</button>
     <button id="bLesson" class="go">▶ 수업 모드</button>
   </div>
+  <div class="lx lroad" id="lroad" aria-label="수업 길 6단계"></div>
   <div class="lx lbot" id="lbot">
     <button data-m="1">① 따라오기<small>교과서</small></button>
     <button data-m="2">② 개념 정리<small>큰 글씨 한 장</small></button>
@@ -234,6 +263,11 @@
 <script src="../../shared/exam-data.js"></script>
 <script src="../../shared/challenge.js"></script>
 <script src="../../shared/concepts.js"></script>
+<script src="../../shared/mathgen.js"></script>
+<script src="../../shared/lessonkit.js"></script>
+<script src="../../shared/mathlab.js"></script>
+<script src="../../shared/mathtools.js"></script>
+<script src="../../shared/lessonroad.js"></script>
 <script>
 (function(){
   "use strict";
@@ -382,7 +416,7 @@
       + '<span class="p">p.' + bookP() + (l ? " <small>지난 시간 p." + l.p + " (" + l.d.slice(5).replace("-", "/") + ")</small>" : "") + "</span>";
     $("lt").innerHTML = '<b class="cp">' + (st.c ? (st.c % 100) + "반 · " : "") + "p." + bookP() + "</b>" + (u ? '<span class="u">' + esc(u.name) + "</span>" : "");   // 쪽 번호는 늘 보이게, 단원 이름만 줄임
     $("pin").value = bookP();
-    resChip(); if(RM.on) rState();
+    resChip(); toolChip(); if(RM.on) rState();
     var cm = st.c ? cmpText(st.c) : ""; if(cm) $("where").insertAdjacentHTML("beforeend", ' <small class="cmp">' + cm + "</small>");
     var n = u && u.code ? CH.count(u.code) : 0;
     $("bCh").textContent = "🔥 도전 " + n; $("bCh").disabled = !n; $("bCon").disabled = !(u && u.code);
@@ -589,10 +623,12 @@
     P.innerHTML = '<div class="rq"><h1>✍️ ' + cname(c) + ' 학생 활동 기록 <span class="muted">— 번호(여럿 가능) → 꼬리표 → [저장] · 화면에는 번호만 나옵니다</span></h1>'
       + '<div class="nos">' + nos.map(function(n){ return '<button data-n="' + n + '" class="' + (RQ.nos.indexOf(n) >= 0 ? "on" : "") + '">' + n + (cnt[n] ? "<i>오늘 " + cnt[n] + "</i>" : "") + "</button>"; }).join("") + "</div>"
       + '<div class="tgs">' + POS.map(function(g){ return '<button data-t="' + g + '" class="' + (RQ.tags.indexOf(g) >= 0 ? "on" : "") + '">' + g + "</button>"; }).join("") + "</div>"
+      + ((st.used || []).length ? '<div class="tgs"><span style="align-self:center;font-weight:800">🧰 오늘 쓴 도구 →</span>' + st.used.map(function(x){ return '<button data-ut="' + esc(toolLine(x)) + '">' + esc(x.n) + "</button>"; }).join("") + "</div>" : "")
       + '<div class="row"><input id="rqT" placeholder="한 줄 메모 (선택) — 예: 이차함수 꼭짓점을 두 가지 방법으로 설명" maxlength="120"><button class="btn primary" id="rqS">저장</button><button class="btn" id="rqX">닫기</button></div>'
       + '<div class="muted">오늘 이 반 기록 ' + recs.length + '개 · 수업 기록장 → 학생 탭, 생기부 도우미에서 학생별로 모아 볼 수 있습니다 (내부 참고 꼬리표는 교무실에서 수업 기록장으로)</div></div>';
     [].forEach.call(P.querySelectorAll(".nos button"), function(b){ b.onclick = function(){ var n = +b.dataset.n, i = RQ.nos.indexOf(n); if(i >= 0) RQ.nos.splice(i, 1); else RQ.nos.push(n); b.classList.toggle("on"); }; });
     [].forEach.call(P.querySelectorAll(".tgs button"), function(b){ b.onclick = function(){ var g = b.dataset.t, i = RQ.tags.indexOf(g); if(i >= 0) RQ.tags.splice(i, 1); else RQ.tags.push(g); b.classList.toggle("on"); }; });
+    [].forEach.call(P.querySelectorAll("[data-ut]"), function(b){ b.onclick = function(){ $("rqT").value = b.dataset.ut; $("rqT").focus(); }; });
     $("rqX").onclick = function(){ setMode(st.mode || 1); };
     $("rqS").onclick = function(){
       var txt = $("rqT").value.trim();
@@ -612,16 +648,17 @@
   /* ── 수업 모드 (5단계) ── */
   function setLesson(on){
     st.lesson = on; document.body.classList.toggle("lesson", on); document.documentElement.classList.toggle("tt-lesson", on); setPen(false); st.zoom = 1;
-    if(on){ setMode(1); startCard(); rStart(); } else { $("lpane").classList.remove("on"); timer(0); st.goalOn = false; }
+    if(on){ st.t0 = Date.now(); st.used = []; setMode(1); startCard(); rStart(); clearInterval(st.rIv); st.rIv = setInterval(roadDraw, 30000); } else { $("lpane").classList.remove("on", "road", "tool"); timer(0); st.goalOn = false; clearInterval(st.rIv); }
     goalBn();
     try{ history.replaceState(null, "", on ? "?lesson=1&c=" + st.c : "?c=" + st.c); }catch(e){}
     show();
   }
   function setMode(m){
-    st.mode = m; st.sc = false;
+    st.mode = m; st.sc = false; $("lpane").classList.remove("road", "tool"); st.road = m <= 2 ? 3 : 6;
     [].forEach.call($("lbot").querySelectorAll("button[data-m]"), function(b){ b.classList.toggle("on", +b.dataset.m === m); });
     $("tmb").classList.toggle("on", m === 3); document.body.classList.toggle("tm3", m === 3);
     if(m === 2 || m === 4){ setPen(false); drawPane(); $("lpane").classList.add("on"); } else $("lpane").classList.remove("on");
+    roadDraw();
   }
   function recommend(code){
     var L = CH.list(code), G = S.given[st.c] || [], fresh = L.filter(function(it){ return G.indexOf(it.id) < 0 && st.shown.indexOf(it.id) < 0; });
@@ -669,7 +706,8 @@
     }
     tick(); T.iv = setInterval(tick, 250);
   }
-  function endLesson(){
+  function endLesson(info){
+    if(!info || info.code === undefined) info = null;
     var r = done(); if(!r) return;
     timer(0); setPen(false);
     var js = journalSync(r), nrec = todayRecs(st.c).length;
@@ -679,9 +717,88 @@
       + "<br>도전 문제 <b>" + r.ch.length + "개</b>" + (r.ch.length ? " <small>(" + r.ch.map(function(id){ return id.replace("-", "년 ").replace(/^(\d+년 )0?/, "$1") + "번"; }).join(", ") + ")</small>" : "")
       + "<br>📒 수업 기록장: " + (js.ok ? "<b>" + esc(js.msg) + "</b>" : '<small style="color:#8a5a00">' + esc(js.msg) + "</small>")
       + (nrec ? "<br>✍️ 오늘 학생 기록 <b>" + nrec + "개</b>" : "")
+      + (info ? "<br>🛤️ 수업 길 <b>" + info.st.length + "/6단계</b> · ⭐ 할 수 있어요 <b>" + info.can + "/" + info.canN + "</b>" + (info.ppl.length ? " · 만난 수학자 <b>" + esc(info.ppl.join(", ")) + "</b>" : "") : "")
+      + ((st.used || []).length ? "<br>🧰 쓴 도구 <small>" + esc(st.used.map(function(x){ return x.n; }).join(", ")) + "</small>" : "")
+      + (function(){ var m = window.TT_ROAD ? TT_ROAD.summary(st.c) : null; return m && m.lessons ? '<br><small style="color:#777">이번 학기 이 반: 수업 길 ' + m.lessons + "시간 · 만난 수학자 " + m.people.length + "명 · 해 보기 " + m.labs + "번</small>" : ""; })()
       + '<br><small style="color:#777">다음 시간에는 이 쪽에서 이어서 열립니다</small><div class="row"><a class="btn" href="../../">🍎 쌤 노트로</a><button class="btn" id="sumBack">계속 보기</button></div></div>';
     $("sumBack").onclick = function(){ st.shown = []; setMode(1); };
     st.shown = [];
+  }
+
+  /* ── 🛤️ 수업 길 (PLAN_수업길 2~6단계) ── */
+  function roadDraw(){
+    var R = $("lroad"); if(!R || !window.TT_ROAD) return;
+    var el = st.t0 ? (Date.now() - st.t0) / 60000 : 0;
+    R.innerHTML = '<span class="rl" title="수업 길 · Shift+1~6">🛤️</span>' + TT_ROAD.steps.map(function(s){ return '<button data-r="' + s.id + '" class="' + (s.who === "학생" ? "st" : "te") + (st.road === s.id ? " on" : "") + '" style="flex:' + (s.m + 6) + '" title="Shift+' + s.id + '">' + s.ic + " " + s.id + " " + s.n + "<small>" + s.m + "분</small></button>"; }).join("")
+      + '<span class="rt" title="수업 모드를 켠 뒤 지난 시간">' + Math.floor(el) + "분</span>" + '<i class="needle" style="left:calc(34px + (100% - 100px) * ' + Math.min(1, el / 45).toFixed(3) + ')"></i>';
+  }
+  function roadCtx(){
+    var u = curUnit(), code = u && u.code ? u.code : "";
+    return {code: code, step: st.road, cls: st.c, nos: st.c ? studentNos(st.c) : [], past: TT_ROAD.past(S.log.filter(function(x){ return x.c === st.c; }), code), tools: toolsNow(),
+      onTool: toolDo, onMode: function(m){ setMode(m); }, onEnd: function(info){ endLesson(info); }, redraw: roadPane};
+  }
+  function roadPane(){
+    var P = $("lpane"); P.classList.remove("tool"); P.classList.add("on", "road"); P.style.setProperty("--c", "#2f6fb5"); setPen(false);
+    [].forEach.call($("lbot").querySelectorAll("button[data-m]"), function(b){ b.classList.remove("on"); });
+    TT_ROAD.render(P, roadCtx()); roadDraw();
+  }
+  function setRoad(n){ if(!window.TT_ROAD) return; if(n === 3){ setMode(1); return; } st.road = n; st.mode = 0; roadPane(); }
+
+  /* ── 🧰 이 차시 도구 (PLAN_수업길 7~11단계) ── */
+  function toolsNow(){ var u = curUnit(); return window.TT_MTOOLS ? TT_MTOOLS.forPage(u && u.code || "", resAt(), {}) : []; }
+  function classSites(){ try{ if(window.TT_SITES_SEED) TT_SITES_SEED(); var D = TT.store.get("tt_sites_v1", null); return (D && D.items || []).filter(function(x){ return x.c === "class" && x.u; }); }catch(e){ return []; } }
+  function toolChip(){ var b = $("ltool"); if(!b) return; var n = toolsNow().length; b.innerHTML = '🧰<span class="lb"> 도구</span>' + (n ? " " + n : ""); b.classList.toggle("has", !!n); }
+  function markUsed(x){ st.used = st.used || []; if(!st.used.some(function(y){ return y.n === x.n; })) st.used.push({n: x.n, how: x.how || ""}); }
+  function josa(w, a, b){ var c = String(w).charCodeAt(String(w).length - 1); return w + (c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 ? a : b); }
+  function toolLine(x){ var u = curUnit(), un = u ? u.name : "수업 내용"; return josa(x.n, "을", "를") + " 활용하여 " + josa(un, "을", "를") + " 탐구함"; }
+  function tpane(){ var P = $("lpane"); P.classList.remove("road"); P.classList.add("on", "tool"); P.style.setProperty("--c", "#2f6fb5"); setPen(false); [].forEach.call($("lbot").querySelectorAll("button[data-m]"), function(b){ b.classList.remove("on"); }); return P; }
+  function toolPane(){
+    var P = tpane(), L = toolsNow(), u = curUnit();
+    P.innerHTML = '<div class="tbar"><b>🧰 이 차시 도구</b><span class="muted">' + (u ? esc(u.name) + " · " : "") + "p." + bookP() + '</span><span class="sp"></span><button id="tRes">📎 이 차시에 도구 넣기</button><button id="tX">✕ 닫기</button></div>'
+      + (L.length ? '<div class="tcards">' + L.map(function(x, i){ return '<div class="tcard"><b>' + esc(x.ic + " " + x.n) + "</b><span>" + esc(x.how) + (x.embed ? "" : " · 새 창으로 열려요") + '</span><div class="rw"><button class="p" data-ti="' + i + '">' + (x.embed ? "▶ 안에 띄우기" : "↗ 새 창") + '</button>' + (x.embed ? '<button data-tw="' + i + '">↗ 새 창</button>' : "") + '<button data-tq="' + i + '">📱 학생에게</button></div></div>'; }).join("") + "</div>"
+        : '<div class="muted" style="font-size:16px">이 쪽에 연결된 도구가 없어요. [📎 이 차시에 도구 넣기]로 지오지브라·데스모스 자료 주소를 넣으면 이 쪽을 펼 때마다 여기에 떠요.</div>')
+      + (function(){ var CS = classSites(); return CS.length ? '<div class="tbar" style="margin-top:14px"><b style="font-size:18px">🌐 내 수업용 사이트 <small style="font-weight:600;color:#777">' + (TT.classroom ? "공용 기기에서는 수업용만 보여요" : "사이트 메뉴에서 '수업용'으로 등록한 것") + '</small></b></div><div class="tbar">' + CS.slice(0, 16).map(function(x, i){ return '<a href="' + esc(x.u) + '" target="_blank" rel="noopener" data-cs="' + i + '">↗ ' + esc(x.t || x.u) + "</a>"; }).join("") + "</div>" : ""; })()
+      + '<div class="tbar" style="margin-top:14px"><b style="font-size:18px">🧪 수학 실험실 <small style="font-weight:600;color:#777">인터넷 없이</small></b></div><div class="tcards">'
+      + (window.TT_LAB ? TT_LAB.list.map(function(l){ return '<div class="tcard lab"><b>' + l.ic + " " + esc(l.n) + "</b><span>" + esc(l.d) + '</span><div class="rw"><button class="p" data-tl="' + l.id + '">▶ 열기</button></div></div>'; }).join("") : "") + "</div>";
+    $("tX").onclick = function(){ setMode(1); };
+    $("tRes").onclick = resDlg;
+    [].forEach.call(P.querySelectorAll("[data-ti]"), function(b){ b.onclick = function(){ toolDo(+b.dataset.ti, "open"); }; });
+    [].forEach.call(P.querySelectorAll("[data-tw]"), function(b){ b.onclick = function(){ var x = L[+b.dataset.tw]; markUsed(x); window.open(x.u, "_blank", "noopener"); }; });
+    [].forEach.call(P.querySelectorAll("[data-tq]"), function(b){ b.onclick = function(){ toolDo(+b.dataset.tq, "qr"); }; });
+    [].forEach.call(P.querySelectorAll("[data-tl]"), function(b){ b.onclick = function(){ labView(b.dataset.tl); }; });
+    [].forEach.call(P.querySelectorAll("[data-cs]"), function(a){ a.addEventListener("click", function(){ markUsed({n: a.textContent.replace("↗ ", ""), how: "수업용 사이트"}); }); });
+  }
+  function toolDo(i, mode){
+    var x = toolsNow()[i]; if(!x) return;
+    if(mode === "qr"){ stuShow(x.u, x.n); return; }
+    markUsed(x);
+    if(!x.embed){ window.open(x.u, "_blank", "noopener"); return; }
+    var P = tpane();
+    P.innerHTML = '<div class="tbar"><b>' + esc(x.ic + " " + x.n) + '</b><span class="muted">' + esc(x.how) + ' · 화면이 비어 있으면 [↗ 새 창]</span><span class="sp"></span><a href="' + esc(x.u) + '" target="_blank" rel="noopener">↗ 새 창</a><button id="tQ">📱 학생에게</button><button id="tB">🧰 도구 목록</button><button id="tX">✕ 닫기</button></div>'
+      + '<iframe class="tframe" src="' + esc(x.u) + '" allow="fullscreen" referrerpolicy="no-referrer" title="' + esc(x.n) + '"></iframe>';
+    $("tQ").onclick = function(){ stuShow(x.u, x.n); }; $("tB").onclick = toolPane; $("tX").onclick = function(){ setMode(1); };
+  }
+  function labView(id){
+    if(!window.TT_LAB) return;
+    var P = tpane(), l = TT_LAB.list.filter(function(z){ return z.id === id; })[0] || {ic: "🧪", n: id};
+    markUsed({n: l.n, how: "쌤 노트 수학 실험실"});
+    P.innerHTML = '<div class="tbar"><b>' + l.ic + " " + esc(l.n) + '</b><span class="muted">예상 → 실험 → 이유 말하기</span><span class="sp"></span>'
+      + (id === "graph" ? '<button id="tG1">지오지브라로</button><button id="tG2">데스모스로</button>' : "") + '<button id="tB">🧰 도구 목록</button><button id="tX">✕ 닫기</button></div><div class="tlabh" id="tLab"></div>';
+    TT_LAB.mount($("tLab"), id);
+    $("tB").onclick = toolPane; $("tX").onclick = function(){ setMode(1); };
+    if(id === "graph"){ var A = TT_MTOOLS.APPS, op = function(a){ var x = {n: a.n, ic: a.ic, u: a.u, how: "빈 그래프판", embed: true}; markUsed(x); var P2 = tpane(); P2.innerHTML = '<div class="tbar"><b>' + esc(a.ic + " " + a.n) + '</b><span class="muted">화면이 비어 있으면 [↗ 새 창]</span><span class="sp"></span><a href="' + esc(a.u) + '" target="_blank" rel="noopener">↗ 새 창</a><button id="tB">← 내장 그래프판</button><button id="tX">✕ 닫기</button></div><iframe class="tframe" src="' + esc(a.u) + '" allow="fullscreen" referrerpolicy="no-referrer"></iframe>'; $("tB").onclick = function(){ labView("graph"); }; $("tX").onclick = function(){ setMode(1); }; };
+      $("tG1").onclick = function(){ op(A.ggbG); }; $("tG2").onclick = function(){ op(A.desmos); }; }
+  }
+  /* 📱 학생에게: QR · 주소 · 활동 코드 크게 + 번호만 안내 */
+  function stuShow(u, t){
+    if(!window.TTQR){ alert("QR을 만들 수 없습니다."); return; }
+    var o = document.createElement("div"); o.className = "qrbig stu";
+    o.innerHTML = '<div class="in">' + TTQR.svg(u, {size: Math.round(Math.min(innerWidth, innerHeight) * 0.5)}) + "<b>" + esc(t || "휴대폰 카메라로 찍어 보세요") + "</b><small>" + esc(u.length > 70 ? u.slice(0, 67) + "…" : u) + '</small>'
+      + '<div class="code" id="stuC"></div><input id="stuI" placeholder="활동 코드 (있으면)" maxlength="20"><div class="note">🙋 이름 대신 <u>번호만</u> 입력해요</div></div><button class="x" id="stuX">✕ 닫기</button>';
+    document.body.appendChild(o);
+    o.querySelector("#stuI").oninput = function(){ o.querySelector("#stuC").textContent = this.value.trim(); };
+    o.querySelector("#stuX").onclick = function(){ o.remove(); };
+    o.onclick = function(e){ if(e.target === o) o.remove(); };
   }
 
   /* ── 대화상자 ── */
@@ -1087,7 +1204,10 @@
   $("bSet").onclick = function(){ setDlg(); };
   $("bLesson").onclick = function(){ if(st.c) setLesson(true); };
   $("lx").onclick = function(){ setLesson(false); };
-  $("lend").onclick = endLesson;
+  $("lend").onclick = function(){ endLesson(null); };
+  $("ltool").onclick = function(){ toolPane(); };
+  $("lgraph").onclick = function(){ labView("graph"); };
+  $("lroad").onclick = function(e){ var b = e.target.closest("[data-r]"); if(b) setRoad(+b.dataset.r); };
   $("lgoal").onclick = function(){ st.goalOn = !st.goalOn; if(st.goalOn && st.c && !goalOf(st.c)){ startCard(); st.goalOn = false; setTimeout(function(){ var i = $("gIn"); if(i) i.focus(); }, 50); } goalBn(); };
   $("lres").onclick = $("bRes").onclick = resDlg;
   $("lsc").onclick = function(){ if(st.c) startCard(); };
@@ -1101,7 +1221,10 @@
   document.addEventListener("keydown", function(e){
     if($("ov").classList.contains("on") || CH.isOpen() || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
     if(e.key === "ArrowLeft" || e.key === "PageUp") turn(-1); else if(e.key === "ArrowRight" || e.key === "PageDown") turn(1);
+    else if(st.lesson && e.shiftKey && /^Digit[1-6]$/.test(e.code)) setRoad(+e.code.slice(5));
     else if(st.lesson && /^[1-4]$/.test(e.key)) setMode(+e.key);
+    else if(st.lesson && (e.key === "t" || e.key === "T")) toolPane();
+    else if(st.lesson && (e.key === "g" || e.key === "G")) labView("graph");
     else if(st.lesson && (e.key === "+" || e.key === "=")) zoom(1.25); else if(st.lesson && e.key === "-") zoom(1 / 1.25);
   });
   var rt; addEventListener("resize", function(){ clearTimeout(rt); rt = setTimeout(show, 200); });

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
+<!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/ssambi3-192.png">
+<script src="../../shared/early.js"></script>
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>수학 실험실 · 쌤 노트</title>
+<!--
+  🧪 수학 실험실 (PLAN_수업길 5단계) — 인터넷 없이 전자칠판에서 움직이는 실험 5개 (shared/mathlab.js)
+  · 수업 길 ④ 해 보기에서도 단원에 맞는 실험이 자동으로 열립니다
+  jidangmath가 Claude와 함께 제작
+-->
+<style>
+  main{display:grid;grid-template-columns:220px minmax(0,1fr);gap:10px;padding:10px!important;min-height:0}
+  nav.labs{display:flex;flex-direction:column;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;overflow:auto}
+  nav.labs button{font:inherit;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:8px 10px;cursor:pointer}
+  nav.labs button b{display:block;font-size:15px}
+  nav.labs button small{color:var(--sub);font-size:12px}
+  nav.labs button[aria-current=true]{border-color:var(--accent);background:var(--accent-soft)}
+  #host{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:0;display:flex;flex-direction:column}
+  @media (max-width:800px){ body{height:auto!important;overflow:auto!important} main{grid-template-columns:1fr} #host{min-height:520px} }
+</style>
+</head>
+<body>
+<header>
+  <div><a class="back" href="../../">← 쌤 노트</a><h1>🧪 수학 실험실 <span class="lead" style="display:inline">예상 → 실험 → 이유 말하기 · 인터넷 없이 동작</span></h1></div>
+  <div class="bar"><a class="btn" href="../lessonkit/">🛤️ 수업 길</a></div>
+</header>
+<main class="panel"><nav class="labs" id="labs"></nav><section id="host"></section></main>
+<footer><span>실험 전에 "어떻게 될까요?" 먼저 묻기 → 학생이 직접 조작 → "왜 그럴까요?"</span><span class="priv">🔒 아무것도 저장·전송하지 않아요</span></footer>
+<script src="../../shared/tt.js"></script>
+<script src="../../shared/mathlab.js"></script>
+<script>
+(function(){
+  var L = TT_LAB.list, cur = (location.hash.slice(1) || L[0].id);
+  function draw(){
+    document.getElementById("labs").innerHTML = L.map(function(x){ return '<button data-id="' + x.id + '" aria-current="' + (x.id === cur) + '"><b>' + x.ic + " " + x.n + "</b><small>중" + x.g + " · " + x.d + "</small></button>"; }).join("");
+    TT_LAB.mount(document.getElementById("host"), cur); history.replaceState(null, "", "#" + cur);
+  }
+  document.getElementById("labs").onclick = function(e){ var b = e.target.closest("[data-id]"); if(b){ cur = b.dataset.id; draw(); } };
+  addEventListener("hashchange", function(){ var h = location.hash.slice(1); if(h && h !== cur && L.some(function(x){ return x.id === h; })){ cur = h; draw(); } });
+  draw();
+})();
+</script>
+</body>
+</html>

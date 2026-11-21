@@ -13,9 +13,9 @@
 <link rel="stylesheet" href="../../shared/tt.css">
 <title>수업 길 · 쌤 노트</title>
 <!--
-  🛤️ 수업 길 (PLAN_수업길 1단계: 자료 검토용 화면) — 45분 6단계 수업 자료를 단원별로 미리 보고 검토
+  🛤️ 수업 길 — 45분 6단계 수업 자료를 단원별로 미리 보고 검토·준비 (화면은 shared/lessonroad.js, 교과서·수업 모드와 같은 화면)
   · 자료: shared/lessonkit.js (견본: 중1 소인수분해 PRIME · 중2 피타고라스 PYTH · 중3 이차방정식 QE)
-  · 2단계에서 교과서·수업 모드 아래쪽 단추로 들어갑니다. 이 화면은 수업 준비·검토용으로 계속 씁니다.
+  · 교과서·수업 모드 아래쪽 🛤️ 수업 길 줄(Shift+1~6)과 같은 화면입니다. 이 화면은 수업 준비·검토용.
   · 숫자키 1~6 단계 · ← → 단계 이동 · 답은 눌러야 보임(수업 중 실수로 정답이 보이지 않게)
   · 저장 "tt_lessonkit_v1" { u: 마지막 단원, s: 마지막 단계, rv: {단원: 검토 날짜} } — 이 기기에만
   jidangmath가 Claude와 함께 제작
@@ -85,7 +85,6 @@
   .can button[aria-pressed=true]{background:#fff8e1;border-color:#e0a526}
   .can button[aria-pressed=true]::before{content:"⭐ "}
   .line{font-size:clamp(17px,1.8vw,24px);font-weight:800;line-height:1.5;background:linear-gradient(90deg,#fff8e1,#fff);border-left:5px solid #e0a526;padding:10px 14px;border-radius:0}
-  .lab{border:2px dashed #cdc6f3;border-radius:12px;padding:10px;color:#5b4fb0;font-size:14px;font-weight:700}
   @media (max-width:900px){
     body{height:auto!important;min-height:100dvh;overflow:auto!important}
     main{grid-template-columns:1fr}
@@ -111,10 +110,17 @@
 </main>
 <footer>
   <span>숫자키 1~6 단계 · ← → 이동 · 답·정답은 눌러야 보여요 · 🟩 학생이 직접 하는 단계 · 🟪 선생님이 여는 단계</span>
-  <span class="priv">🔒 검토 표시는 이 기기에만 · 1단계 견본(자료 검토용) — 2단계에서 수업 모드에 들어가요</span>
+  <span class="priv">🔒 검토 표시는 이 기기에만 · 실제 수업은 교과서·수업 모드에서 (아래쪽 🛤️ 수업 길 줄)</span>
 </footer>
 <script src="../../shared/tt.js"></script>
+<script src="../../shared/exam-data.js"></script>
+<script src="../../shared/challenge.js"></script>
+<script src="../../shared/concepts.js"></script>
+<script src="../../shared/mathgen.js"></script>
 <script src="../../shared/lessonkit.js"></script>
+<script src="../../shared/mathlab.js"></script>
+<script src="../../shared/mathtools.js"></script>
+<script src="../../shared/lessonroad.js"></script>
 <script>
 (function(){
   "use strict";
@@ -126,59 +132,23 @@
   var CODES = Object.keys(K.units).sort(function(a, b){ return K.units[a].g - K.units[b].g; });
   var q = (location.search.match(/[?&]u=([A-Z0-9]+)/) || [])[1];
   var cur = q && K.units[q] ? q : (S.u && K.units[S.u] ? S.u : CODES[0]), step = S.s || 1;
-  var open = {}, words = {}, can = {}, tmr = null, left = 60;
-  var LAB = {sieve: "🧮 에라토스테네스의 체 (1~100 숫자판에서 배수 지우기)", pyth: "🟦 피타고라스 넓이 퍼즐 (꼭짓점을 끌면 세 정사각형 넓이가 함께 바뀜)", qe: "🟨 정사각형 완성하기 + 이차함수 그래프 슬라이더"};
 
-  function reveal(id, label, html){ return open[id] ? '<div class="ansv">' + html + "</div>" : '<button class="ans" data-open="' + id + '">' + (label || "답 보기") + "</button>"; }
   function drawUnits(){
     $("units").innerHTML = CODES.map(function(c){ var u = K.units[c]; return '<button data-u="' + c + '" aria-current="' + (c === cur) + '"><small>중' + u.g + (S.rv[c] ? " · ✔ 검토함" : "") + "</small><b>" + esc(u.title) + "</b></button>"; }).join("")
-      + '<div class="soon">견본 3단원이에요.<br>검토 뒤 중학교 25단원을 같은 틀로 채워요.</div>';
+      + '<div class="soon">견본 3단원이에요.<br>검토 뒤 중학교 25단원을 같은 틀로 채워요.<br><br><a href="../mlab/">🧪 수학 실험실 전체 보기</a></div>';
   }
   function road(){
     return '<div class="road" role="tablist">' + K.steps.map(function(s){ return '<button role="tab" data-s="' + s.id + '" class="' + (s.who === "학생" ? "st" : "te") + '" aria-current="' + (s.id === step) + '"><span class="tm">' + s.m + "분</span><b>" + s.ic + " " + s.id + "</b><small>" + s.n + "</small></button>"; }).join("") + "</div>";
   }
-  function stepPane(u){
-    switch(step){
-      case 1: return '<div class="pane" style="grid-template-columns:1.4fr 1fr"><div class="box"><h3>🔁 다시 꺼내기 <small>공책 덮고, 머릿속으로만 30초</small></h3><div class="big">' + esc(u.s1.q) + "</div>" + reveal("s1", "정답 보기", esc(u.s1.a))
-        + '</div><div class="box"><h3>🎤 이렇게 말해요</h3><div class="talk"><p class="T"><b>선생님</b>공책은 덮고, 30초 동안 머릿속으로만 떠올려 볼게요.</p><p class="T"><b>선생님</b>(정답 뒤) 틀려도 괜찮아요. 떠올리려고 애쓴 그 순간에 기억이 단단해져요.</p></div><p class="sm">2단계에서는 수업 기록장 진도를 보고 하루·일주일·한 달 전 단원 문제를 자동으로 골라요.</p></div></div>';
-      case 2: return '<div class="pane" style="grid-template-columns:1.25fr 1fr"><div class="box"><h3>📜 역사 속 한 장면 <small>약 3분</small></h3><div class="big" style="font-size:clamp(18px,1.9vw,26px)">❓ ' + esc(u.hook.q) + '</div><div class="scene">' + u.story.scene.map(function(p){ return "<p>" + esc(p) + "</p>"; }).join("") + "</div>"
-        + '<h3>🎤 이렇게 열어요</h3><div class="talk">' + u.s2.map(function(l){ return '<p class="' + l[0] + '"><b>' + (l[0] === "T" ? "선생님" : "예상 반응") + "</b>" + esc(l[1]) + "</p>"; }).join("") + "</div></div>"
-        + '<div class="box"><h3>🤔 왜 배우나</h3><div class="why"><b>생활 속</b> ' + esc(u.why.life) + "<br><b>다음에는</b> " + esc(u.why.next) + "</div>"
-        + "<h3>👤 수학자 카드</h3>" + u.people.map(function(p){ return '<div class="pp"><b>' + esc(p.n) + '</b> <span class="w">' + esc(p.when) + "</span><br>" + esc(p.one) + "<br>💡 " + esc(p.fun) + "</div>"; }).join("")
-        + "<h3>🔎 근거</h3>" + u.story.facts.map(function(f){ return '<div class="fact"><i class="' + (f.k === "기록" ? "r" : "l") + '">' + esc(f.k) + "</i><span>" + esc(f.t) + "</span></div>"; }).join("") + "</div></div>";
-      case 3: var T = {predict: ["예측", "#7a5cc2"], why: ["왜", "#c2432a"], compare: ["비교", "#2d8a5b"]};
-        return '<div class="pane" style="grid-template-columns:repeat(3,1fr)">' + ["predict", "why", "compare"].map(function(k){ var x = u.s3[k]; return '<div class="box"><h3>📘 생각을 여는 질문</h3><div class="q3"><span class="k" style="background:' + T[k][1] + '">' + T[k][0] + '</span><div class="big" style="font-size:clamp(17px,1.8vw,24px)">' + esc(x.q) + "</div>" + reveal("s3" + k, "생각한 뒤 답 보기", esc(x.a)) + "</div>"
-          + (k === "predict" ? '<p class="sm">먼저 공책에 예상을 적게 한 뒤 답을 보여 주세요.</p>' : "") + (k === "compare" ? '<div class="row" style="flex-wrap:wrap;gap:6px"><a class="btn" href="../book/?lesson=1">📘 교과서 수업 모드</a><a class="btn" href="../concept/?u=' + cur + '">🗺️ 개념 카드</a></div>' : "") + "</div>"; }).join("") + "</div>";
-      case 4: return '<div class="pane" style="grid-template-columns:1.3fr 1fr"><div class="box"><h3>🔬 손으로 해 보기 <small>약 8분 · 짝과 함께</small></h3><ol class="steps">' + u.s4.paper.map(function(p){ return "<li>" + esc(p) + "</li>"; }).join("") + "</ol></div>"
-        + '<div class="box"><h3>🧪 수학 실험실</h3><div class="lab">' + esc(LAB[u.s4.lab] || "") + "<br><small>5단계에서 쌤 노트 안에 만들어요 (인터넷 없이 전자칠판에서 동작)</small></div>"
-        + (u.s4.sw.length ? '<h3>💻 바깥 소프트웨어 (새 창)</h3><div class="sw">' + u.s4.sw.map(function(s){ return '<div><a href="' + esc(s[1]) + '" target="_blank" rel="noopener">' + esc(s[0]) + " ↗</a> — " + esc(s[2]) + "</div>"; }).join("") + "</div>" : '<p class="sm">이 단원은 종이 활동이 가장 좋아요.</p>') + "</div></div>";
-      case 5: var m = u.s5.mission, mm = Math.floor(left / 60), ss = left % 60;
-        return '<div class="pane" style="grid-template-columns:1fr 1.25fr"><div class="box"><h3>💬 짝 토의 <small>2~3분</small></h3><div class="big" style="font-size:clamp(17px,1.8vw,24px)">' + esc(u.s5.talk) + "</div>"
-          + '<h3>🎤 이렇게 이어가요</h3><div class="talk"><p class="T"><b>선생님</b>짝과 30초씩 번갈아 말해 볼게요. 정답보다 이유가 중요해요.</p><p class="T"><b>선생님</b>(발표 뒤) 방금 설명에서 가장 좋았던 한마디는 무엇이었나요?</p></div></div>'
-          + '<div class="box"><h3>🧑‍🏫 1분 설명 미션 <small>짝 A가 설명 → 역할 바꾸기</small></h3><div class="big" style="font-size:clamp(17px,1.8vw,24px)">' + esc(m.task) + "</div>"
-          + '<div class="timer"><b id="tm">' + mm + ":" + (ss < 10 ? "0" : "") + ss + '</b><button data-t="go">' + (tmr ? "⏸ 멈춤" : "▶ 1분 시작") + '</button><button data-t="re">↺</button></div>'
-          + '<p class="sm">듣는 친구는 아래 말이 나오면 손가락을 하나씩 펴요.</p><div class="words">' + m.words.map(function(w, i){ return '<button data-w="' + i + '" aria-pressed="' + !!words[cur + i] + '">' + esc(w) + "</button>"; }).join("") + "</div>" + reveal("s5", "풀이 보기", esc(m.ans)) + "</div></div>";
-      case 6: return '<div class="pane" style="grid-template-columns:1fr 1.1fr"><div class="box"><h3>✏️ 출구 질문 <small>교과서 문제·도전 문제 뒤 마지막 1문제</small></h3><div class="big">' + esc(u.s6.exit.q) + "</div>" + reveal("s6", "정답 보기", esc(u.s6.exit.a))
-          + '<h3>📌 오늘의 한 줄</h3><div class="line">' + esc(u.s6.line) + "</div></div>"
-          + '<div class="box"><h3>⭐ 나는 이제 할 수 있어요 <small>할 수 있으면 손 들기 → 누르기</small></h3><div class="can">' + u.s6.can.map(function(c, i){ return '<button data-c="' + i + '" aria-pressed="' + !!can[cur + i] + '">' + esc(c) + "</button>"; }).join("") + "</div>"
-          + '<h3>🔙 처음 질문으로 돌아가기</h3><div class="mid">' + esc(u.hook.back) + "</div></div></div>";
-    }
-    return "";
-  }
   function draw(){
     var u = K.units[cur]; S.u = cur; S.s = step; save(); drawUnits();
-    $("view").innerHTML = '<div class="head"><span class="g">중' + u.g + "</span><h1>" + esc(u.title) + '</h1><span class="sp"></span><button class="rv" id="rv" aria-pressed="' + !!S.rv[cur] + '">' + (S.rv[cur] ? "✔ 검토함" : "검토 표시") + "</button></div>" + road() + stepPane(u);
+    $("view").innerHTML = '<div class="head"><span class="g">중' + u.g + "</span><h1>" + esc(u.title) + '</h1><span class="sp"></span><button class="rv" id="rv" aria-pressed="' + !!S.rv[cur] + '">' + (S.rv[cur] ? "✔ 검토함" : "검토 표시") + "</button></div>" + road() + '<div id="rdHost" style="flex:1;min-height:0"></div>';
+    TT_ROAD.render($("rdHost"), {code: cur, step: step, redraw: draw});
   }
-  function tick(){ left--; if(left <= 0){ left = 0; clearInterval(tmr); tmr = null; } var e = $("tm"); if(e) e.textContent = Math.floor(left / 60) + ":" + (left % 60 < 10 ? "0" : "") + left % 60; if(!tmr) draw(); }
   document.addEventListener("click", function(e){
     var b = e.target.closest("button"); if(!b) return;
-    if(b.dataset.u){ cur = b.dataset.u; open = {}; left = 60; if(tmr){ clearInterval(tmr); tmr = null; } draw(); return; }
+    if(b.dataset.u){ cur = b.dataset.u; draw(); return; }
     if(b.dataset.s){ step = +b.dataset.s; draw(); return; }
-    if(b.dataset.open){ open[b.dataset.open] = 1; draw(); return; }
-    if(b.dataset.w != null){ words[cur + b.dataset.w] = !words[cur + b.dataset.w]; draw(); return; }
-    if(b.dataset.c != null){ can[cur + b.dataset.c] = !can[cur + b.dataset.c]; draw(); return; }
-    if(b.dataset.t === "go"){ if(tmr){ clearInterval(tmr); tmr = null; } else { if(left <= 0) left = 60; tmr = setInterval(tick, 1000); } draw(); return; }
-    if(b.dataset.t === "re"){ if(tmr){ clearInterval(tmr); tmr = null; } left = 60; draw(); return; }
     if(b.id === "rv"){ if(S.rv[cur]) delete S.rv[cur]; else S.rv[cur] = new Date().toISOString().slice(0, 10); save(); draw(); return; }
   });
   document.addEventListener("keydown", function(e){
