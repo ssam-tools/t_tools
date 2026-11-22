@@ -1233,6 +1233,12 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
         copyTxt(msg).then(function(ok){ $("fbErr").textContent = (/지원하지 않는/.test(String(err.message)) ? "업무판이 아직 의견 받기를 지원하지 않아요." : /AUTH/.test(String(err.message)) ? "업무판 비밀번호가 바뀌었어요. ⋯ → 학교 업무판 연결에서 다시 넣어 주세요." : "보내지 못했어요.") + (ok ? " 내용을 복사해 두었으니 쿨메신저로 보내 주세요." : " 내용 칸의 글을 복사해 쿨메신저로 보내 주세요."); });
       });
   });
+  /* v2.41 도구 화면 맨 위 ⋯ 에서 넘어옴: ?m=mSchool → 홈에서 그 메뉴 창을 바로 열기 */
+  (function(){
+    var m = /[?&]m=(m[A-Za-z]+)\b/.exec(location.search); if(!m) return;
+    try{ history.replaceState(null, "", location.pathname + location.hash); }catch(e){}
+    setTimeout(function(){ var b = $(m[1]); if(b && b.closest("#more")) b.click(); }, 400);
+  })();
   /* v2.8.1 선생님 초대 링크: ?invite=… 로 열면 학교 이름 · 업무판 주소를 넣고 비밀번호만 묻기 */
   (function(){
     var m = /[?&]invite=([A-Za-z0-9_-]+)/.exec(location.search); if(!m) return;

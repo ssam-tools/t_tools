@@ -225,7 +225,43 @@
       return '<a class="si' + (here ? " on" : "") + '" href="' + esc(BASE + t.href) + '" title="' + esc(t.name) + '"' + (here ? ' aria-current="page"' : "") + ">" + (ART ? ART.toolIcon(t.id, t.icon, 16) : esc(t.icon || "")) + "<span>" + esc(t.short || t.name) + "</span></a>";
     }).join("");
   }
+  /* v2.41 도구 화면 맨 위 줄: 홈·설정과 똑같이 [학교 · 날짜 · 시각 · 날씨 ……… ☆ ⋯] — 어느 화면에서나 같은 자리
+     ⋯ 메뉴는 홈의 ⋯ 와 같은 순서. 이 화면에서 바로 되는 것(단축키·도장판·학기초 세팅·백업)은 바로, 나머지는 홈으로 가서 그 창을 엽니다(?m=) */
+  var TOPM = [["안내"], ["mHelp", "❓", "처음 사용 안내"], ["mKeys", "⌨️", "단축키 안내"], ["mFeedback", "💬", "의견 보내기"], ["mJoy", "🎈", "도장판·배지"],
+    ["설정"], ["setup", "🧳", "학기초 세팅"], ["mSchool", "🏫", "학교·선생님 설정"], ["mAuto", "✨", "자동 준비 설정"], ["mFont", "🎨", "화면 꾸미기"], ["mBoard", "📅", "학교 업무판 연결"], ["mTalk", "📣", "쌤비 이야기"], ["mInstall", "📲", "앱 설치하기"],
+    ["백업"], ["mBackup", "💾", "전체 백업 저장"], ["mRestore", "📂", "백업 불러오기"], ["-"], ["mNewYear", "🌱", "새 학년 시작"]];
+  function topMenuHTML(){
+    return TOPM.map(function(x){
+      if(x[0] === "-") return "<hr>";
+      if(x.length === 1) return (x[0] === "안내" ? "" : "<hr>") + '<div class="mh">' + x[0] + "</div>";
+      var ic = '<span class="mi">' + (ART && ART.toolIcon ? ART.toolIcon(null, x[1], 16) : esc(x[1])) + "</span>";
+      if(x[0] === "setup") return '<a href="' + esc(BASE + "apps/setup/") + '" data-e="' + x[1] + '">' + ic + x[2] + "</a>";
+      return '<button type="button" data-top="' + x[0] + '"' + (x[0] === "mNewYear" ? ' class="danger"' : "") + ' data-e="' + x[1] + '">' + ic + x[2] + "</button>";
+    }).join("");
+  }
+  var topEl = null;
+  function drawTop(){
+    if(HOME) return;
+    if(!topEl){
+      topEl = document.createElement("div"); topEl.id = "sbTop"; topEl.className = "top";
+      topEl.innerHTML = '<span class="sp"></span><button type="button" class="fav" id="sbFav" aria-label="자주 가는 사이트 (Alt+S)" title="자주 가는 사이트 (Alt+S)" aria-expanded="false" aria-haspopup="dialog">' + icon("star", 18) + "</button>"
+        + (CRM ? "" : '<details class="more" id="sbMore"><summary aria-label="더 보기" title="안내 · 설정 · 백업">⋯</summary><div class="menu">' + topMenuHTML() + "</div></details>");
+      document.body.insertBefore(topEl, document.body.firstChild); document.body.classList.add("sbTopOn");
+      topEl.addEventListener("click", function(e){
+        var b = e.target.closest("[data-top]"); if(!b) return;
+        var id = b.getAttribute("data-top"), md = document.getElementById("sbMore"); if(md) md.open = false;
+        if(id === "mKeys" && window.TT_KEYS && TT_KEYS.help){ TT_KEYS.help(); return; }
+        if(id === "mJoy"){ if(TT.joy) TT.joy.open(); else TT.ui.toast("교실 기기에서는 재미 요소가 꺼져 있어요."); return; }
+        if(id === "mBackup" && TT.backup && TT.backup.save){ TT.backup.save(); return; }
+        if(id === "mRestore" && TT.backup && TT.backup.pick){ TT.backup.pick(); return; }
+        location.href = BASE + "index.html?m=" + id;                     // 나머지는 홈의 같은 창으로
+      });
+      document.addEventListener("click", function(e){ var md = document.getElementById("sbMore"); if(md && md.open && !e.target.closest("#sbMore")) md.open = false; });
+    }
+    topEl.querySelector(".sp").innerHTML = dateHTML();
+  }
   function drawApp(){
+    drawTop();
     if(!rail){
       rail = document.createElement("aside"); rail.id = "sbRail"; rail.setAttribute("aria-label", "쌤비와 메뉴");
       rail.innerHTML = '<div class="rt"></div><div class="rs">' + fboxHTML("R") + '<div class="fr" id="sbRr" hidden></div></div><div class="rn"></div>';
@@ -234,7 +270,7 @@
     if(!bar){
       bar = document.createElement("div"); bar.id = "sbBar";
       bar.innerHTML = '<div class="in"><span class="bo"></span>' + fboxHTML("B") + '<button type="button" class="ib" data-mic aria-label="말로 기록">' + icon("mic", 18) + '</button></div><div class="fr" id="sbBr" hidden></div><nav class="sbTabs" aria-label="메뉴"></nav><nav class="sbSubs" aria-label="이 메뉴의 도구"></nav>';
-      document.body.insertBefore(bar, document.body.firstChild); document.body.classList.add("sbBarOn");
+      document.body.insertBefore(bar, topEl && topEl.parentNode === document.body ? topEl.nextSibling : document.body.firstChild); document.body.classList.add("sbBarOn");
       F.wire("R"); F.wire("B");
     }
     rail.querySelector(".rt").innerHTML = railTop(); rail.querySelector(".rn").innerHTML = railHTML();
