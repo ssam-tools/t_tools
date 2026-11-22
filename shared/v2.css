@@ -504,8 +504,11 @@ html[data-room="on"] #sbHero .srow,html[data-room="on"] #sbBar [data-mic]{displa
 /* ---------- v2.41 도구 화면 맨 위 줄 (홈·설정의 위 줄과 같은 모양) — 학교 · 날짜 · 시각 · 날씨 ……… ☆ ⋯ ----------
    새 줄이 생긴 만큼 원래 화면이 내려가지 않도록: 화면 위 여백을 이 줄이 대신하고, 제목 글자를 조금 줄임 */
 #sbTop{display:none}
-html[data-ui="ssambi"] body.sbTopOn > #sbTop{display:flex;position:relative;flex:none;align-items:center;justify-content:flex-end;gap:4px;height:34px;margin:0 0 -4px;font-family:var(--t-font);z-index:30}
+html[data-ui="ssambi"] body.sbTopOn > #sbTop{display:flex;position:relative;flex:none;align-items:center;justify-content:flex-end;gap:4px;height:34px;margin:0;font-family:var(--t-font);z-index:30}
 html[data-ui="ssambi"] body.sbTopOn{padding-top:2px!important}
+/* 화면 전체 높이를 쓰는 도구(.app · #app)는 위 줄만큼 줄여 아래가 잘리지 않게 (휴대폰 위쪽 줄과 같은 방식) */
+html[data-ui="ssambi"] body.sbTopOn:has(> .app),html[data-ui="ssambi"] body.sbTopOn:has(> #app){display:flex!important;flex-direction:column}
+html[data-ui="ssambi"] body.sbTopOn > .app,html[data-ui="ssambi"] body.sbTopOn > #app{height:auto!important;flex:1 1 0;min-height:0;width:100%}
 html[data-ui="ssambi"] body.sbTopOn > header h1,html[data-ui="ssambi"] body.sbTopOn > .app > header h1,html[data-ui="ssambi"] body.sbTopOn > #app > header h1{font-size:clamp(18px,2.8vh,23px)}
 #sbTop .sp{flex:1;min-width:0;font-size:13.5px;color:var(--t-sub);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #sbTop .sp .st{display:none}
@@ -513,7 +516,7 @@ html[data-ui="ssambi"] body.sbTopOn > header h1,html[data-ui="ssambi"] body.sbTo
 #sbTop .fav:hover,#sbTop .fav.on{background:var(--t-chip);color:var(--t-accent)}
 #sbTop .fav.on svg{fill:currentColor}
 #sbTop .fav:focus-visible{outline:2px solid var(--t-accent);outline-offset:2px}
-#sbTop details.more{position:relative}
+#sbTop details.more{position:relative;margin:0!important;padding:0!important;display:block!important;flex:none;align-self:center}
 #sbTop details.more > summary{display:grid;place-items:center;min-width:34px!important;min-height:34px!important;width:34px;height:34px;padding:0;border:0;border-radius:10px;background:transparent;font-size:17px;color:var(--t-sub);cursor:pointer}
 #sbTop details.more > summary:hover,#sbTop details.more[open] > summary{background:var(--t-chip)}
 #sbTop details.more .menu{right:0;left:auto;z-index:41;max-height:calc(100dvh - 50px);overflow-y:auto;font-family:var(--t-font)}
