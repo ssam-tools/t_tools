@@ -1,0 +1,203 @@
+/* 쌤 노트 v2.45 · 홈 오른쪽 칸 (넓은 화면 PC만) — 오늘의 흐름을 한눈에
+   ① 내 시간표: [오늘 | 이번 주] · 지금 교시 강조 · 기록한 교시 ✓ · 기록 안 한 교시 '기록' · 교체된 칸 표시 · 누르면 그 수업 자료
+      [나이스로 확인]: 나이스(open.neis.go.kr) 학급 시간표에서 내 반·내 교과 칸을 읽어 이번 주 교체를 찾아 줌 → 바뀐 곳만 보여 주고, [반영]을 눌러야 바뀜
+   ② 작은 달력: 학교 업무판(월간) · 학사일정 · 연간 업무 · 내 할 일 마감을 점으로 — 마우스를 올리면 그날 내용, 누르면 아래에 그날 목록
+   - 학생 이름은 쓰지 않습니다. 업무판에는 날짜·공용 비밀번호만, 나이스에는 학교 코드·학년·반·날짜만 보냅니다. */
+(function(){
+  "use strict";
+  if(!window.TT || window.TT_SBSIDE || TT.classroom) return;
+  var R = document.documentElement, DOW = "일월화수목금토", side = null;
+  var st = {view: "", mon: 0, pick: "", neis: null, busy: false};
+  var BMK = "tt_board_month_v1";
+  function pad(n){ return (n < 10 ? "0" : "") + n; }
+  function ymd(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function add(d, n){ var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() + n); return x; }
+  function toMin(t){ var a = String(t).split(":"); return (+a[0]) * 60 + (+a[1]); }
+  function clsTxt(s){ var c = +s.cls; return c > 100 ? Math.floor(c / 100) + "-" + (c % 100) : String(s.code || ""); }
+  function view(){ if(st.view) return st.view; try{ return localStorage.getItem("sb_side_view") || "day"; }catch(e){ return "day"; } }
+  function on(){
+    return R.getAttribute("data-ui") === "ssambi" && document.body.classList.contains("sbOn") && !document.body.classList.contains("inmenu")
+      && window.innerWidth >= 1280 && !(TT.classroom);
+  }
+
+  /* ── ① 내 시간표 ── */
+  function taught(){ var J = TT.store.get("tt_journal_v1", null); return (J && J.taught) || {}; }
+  function dayHTML(){
+    var t = TT.timetable.load(), d = new Date(), w = d.getDay(), m = d.getHours() * 60 + d.getMinutes(), td = ymd(d), tg = taught();
+    if(!t) return '<p class="sdE">내 시간표를 넣으면 여기에 나와요.<br><a href="apps/timetable/">시간표 넣기</a></p>';
+    var weekend = w < 1 || w > 5, day = weekend ? add(d, w === 6 ? 2 : 1) : d, S = TT.timetable.day(day), by = {};
+    S.forEach(function(s){ by[s.n] = s; });
+    var h = weekend ? '<div class="sdNote">월요일 시간표</div>' : "", prevEnd = 0;
+    t.periods.forEach(function(p){
+      var st0 = toMin(p.t), s = by[p.n];
+      if(prevEnd && st0 - prevEnd >= 30) h += '<div class="sdGap"><span>점심</span>' + (!weekend && m >= prevEnd && m < st0 ? '<b>지금</b>' : "") + "</div>";
+      prevEnd = st0 + 45;
+      var now = !weekend && m >= st0 && m < st0 + 45, past = !weekend && m >= st0 + 45, done = s && tg[td + "|" + p.n];
+      var cls = "sdP" + (now ? " now" : "") + (past ? " past" : "") + (s ? "" : " free") + (s && s.chg ? " chg" : "");
+      var miss = s && past && !done, tail = !s ? "" : now ? "<em>지금</em>" : done ? '<em class="ok">✓</em>' : miss ? '<span class="miss">기록</span>' : "<em>" + p.t + "</em>";
+      var main = s ? "<b>" + esc(clsTxt(s)) + "</b><small>" + esc(s.subj || "") + (s.chg ? " · 교체" : "") + "</small>" : '<small>공강</small>';
+      var href = miss ? "apps/journal/" : s && +s.cls > 100 ? "apps/book/?lesson=1&c=" + (+s.cls) : "";
+      h += (href ? '<a class="' + cls + '" href="' + href + '" title="' + p.n + "교시 " + esc(clsTxt(s)) + (miss ? " 수업 기록하기" : " 자료 열기") + '">' : '<div class="' + cls + '">')
+        + '<span class="n">' + p.n + "</span>" + '<span class="c">' + main + "</span>" + tail + (href ? "</a>" : "</div>");
+    });
+    return h;
+  }
+  function weekHTML(){
+    var t = TT.timetable.load(); if(!t) return dayHTML();
+    var d = new Date(), w = d.getDay(), monD = add(d, w === 0 ? 1 : w === 6 ? 2 : 1 - w), mon = ymd(monD), S = TT.timetable.week(mon), B = t.slots, td = ymd(d);
+    var h = '<table class="sdW"><thead><tr><th></th>';
+    for(var i = 0; i < 5; i++){ var di = add(monD, i); h += "<th" + (ymd(di) === td ? ' class="td"' : "") + ">" + DOW[i + 1] + "<small>" + di.getDate() + "</small></th>"; }
+    h += "</tr></thead><tbody>";
+    t.periods.forEach(function(p){
+      h += "<tr><th>" + p.n + "</th>";
+      for(var i = 1; i <= 5; i++){
+        var k = i + "-" + p.n, s = S[k], chg = !TT.timetable.same(s, B[k]);
+        h += "<td" + (ymd(add(monD, i - 1)) === td ? ' class="td' + (chg ? " chg" : "") + '"' : chg ? ' class="chg"' : "") + (chg ? ' title="이번 주만 바뀐 칸"' : "") + ">" + (s ? esc(clsTxt(s)) : "") + "</td>";
+      }
+      h += "</tr>";
+    });
+    return h + "</tbody></table>";
+  }
+
+  /* 나이스 학급 시간표로 이번 주 교체 찾기 (중학교 misTimetable) — 바꾸기 전에 바뀐 곳을 보여 줌 */
+  function neisCheck(){
+    var s = TT.school.load() || {}, t = TT.timetable.load();
+    if(!t){ location.href = "apps/timetable/"; return; }
+    if(!s.neisA || !s.neisS){ st.neis = {msg: "⋯ → 학교·선생님 설정에서 급식(나이스) 학교를 먼저 골라 주세요."}; paint(); return; }
+    if(!s.neisKey){ st.neis = {msg: "나이스 인증키가 있어야 시간표를 읽을 수 있어요. 급식 창 → '나이스 인증키'에 넣어 주세요(open.neis.go.kr 무료)."}; paint(); return; }
+    var d = new Date(), w = d.getDay(), monD = add(d, w === 0 ? 1 : w === 6 ? 2 : 1 - w), mon = ymd(monD), base = t.slots, my = {};
+    Object.keys(base).forEach(function(k){ var x = base[k]; if(x && +x.cls > 100) my[+x.cls] = my[+x.cls] || x.subj || s.subject || ""; });
+    var C = Object.keys(my); if(!C.length){ st.neis = {msg: "시간표에 반(예: 304)이 들어 있어야 확인할 수 있어요."}; paint(); return; }
+    var ay = monD.getMonth() >= 2 ? monD.getFullYear() : monD.getFullYear() - 1, sem = monD.getMonth() >= 2 && monD.getMonth() <= 7 ? 1 : 2;
+    var f = ymd(monD).replace(/-/g, ""), to = ymd(add(monD, 4)).replace(/-/g, "");
+    function norm(x){ return String(x || "").replace(/[\s·*]/g, ""); }
+    function match(a, b){ a = norm(a); b = norm(b); return !!a && !!b && (a.indexOf(b) === 0 || b.indexOf(a) === 0); }
+    st.busy = true; st.neis = {msg: "나이스에서 " + C.length + "개 반 시간표를 읽는 중…"}; paint();
+    Promise.all(C.map(function(c){
+      var q = {Type: "json", KEY: s.neisKey, pIndex: 1, pSize: 100, ATPT_OFCDC_SC_CODE: s.neisA, SD_SCHUL_CODE: s.neisS, AY: ay, SEM: sem, TI_FROM_YMD: f, TI_TO_YMD: to, GRADE: Math.floor(c / 100), CLASS_NM: c % 100};
+      var url = "https://open.neis.go.kr/hub/misTimetable?" + Object.keys(q).map(function(k){ return k + "=" + encodeURIComponent(q[k]); }).join("&");
+      return fetch(url, {credentials: "omit", cache: "no-store"}).then(function(r){ return r.json(); }).then(function(j){
+        var A = j && j.misTimetable, rows = A && A[1] && A[1].row ? A[1].row : [];
+        return {c: +c, rows: rows};
+      });
+    })).then(function(res){
+      var got = {}, found = {};                                         // got[요일] = 그날 나이스 자료가 있음
+      res.forEach(function(r){ r.rows.forEach(function(x){
+        var y = String(x.ALL_TI_YMD || ""); if(y.length !== 8) return;
+        var dt = new Date(+y.slice(0, 4), +y.slice(4, 6) - 1, +y.slice(6, 8)), wd = dt.getDay(); if(wd < 1 || wd > 5) return;
+        got[wd] = 1; if(match(x.ITRT_CNTNT, my[r.c])) found[wd + "-" + (+x.PERIO)] = r.c;
+      }); });
+      if(!Object.keys(got).length){ st.neis = {msg: "나이스에 이번 주 시간표가 아직 없어요. 학교에서 입력한 뒤 다시 확인해 주세요."}; return; }
+      var cur = TT.timetable.week(mon), next = {}, diff = [];
+      Object.keys(cur).forEach(function(k){ next[k] = cur[k]; });
+      t.periods.forEach(function(p){ for(var i = 1; i <= 5; i++){
+        if(!got[i]) continue;                                           // 나이스에 없는 날은 그대로 둠
+        var k = i + "-" + p.n, c = found[k], was = cur[k];
+        var want = c ? (was && +was.cls === c ? was : {code: String(c), cls: c, subj: my[c]}) : null;
+        if(!TT.timetable.same(want, was)){ diff.push(DOW[i] + " " + p.n + "교시: " + (was ? clsTxt(was) : "공강") + " → " + (want ? clsTxt(want) : "공강")); }
+        if(want) next[k] = want; else delete next[k];
+      } });
+      st.neis = diff.length ? {msg: "이번 주 바뀐 곳 " + diff.length + "개", list: diff, apply: function(){ TT.timetable.setWeek(mon, next); TT.ui.toast("이번 주 시간표에 반영했어요"); window.dispatchEvent(new Event("tt-home-change")); }}
+        : {msg: "✓ 나이스 시간표와 같아요.", ok: 1};
+    }).catch(function(){ st.neis = {msg: "나이스에 연결하지 못했어요. 잠시 뒤 다시 해 주세요."}; })
+      .then(function(){ st.busy = false; paint(); });
+  }
+
+  /* ── ② 작은 달력 ── */
+  function mine(){                                                      // 이 기기 자료 (업무판으로 보내지 않음)
+    var out = [];
+    var Mt = TT.store.get("tt_mytodo_v1", null); if(Mt && Array.isArray(Mt.items)) Mt.items.forEach(function(x){ if(x.date && !x.done) out.push({d: x.date, t: x.text, k: "me"}); });
+    var Cal = TT.store.get("tt_calendar_v1", null); if(Cal && Array.isArray(Cal.events)) Cal.events.forEach(function(e){ out.push({d: e.d, t: e.t, k: /방학|휴업|공휴|재량|개교기념/.test(e.t) ? "off" : "sch"}); });
+    var Yr = TT.store.get("tt_year_v1", null), t0 = new Date(), ay = t0.getMonth() >= 2 ? t0.getFullYear() : t0.getFullYear() - 1;
+    if(Yr && Array.isArray(Yr.items)) Yr.items.forEach(function(it){ if(!it.d || (Yr.done || {})[ay + "|" + it.id]) return; var y = it.m <= 2 ? ay + 1 : ay; out.push({d: y + "-" + pad(it.m) + "-" + pad(it.d), t: it.title, k: "me"}); });
+    return out;
+  }
+  function boardCfg(){ var c = TT.store.get("tt_board_v1", {}) || {}; return c.url && c.pw && !c.hidden ? c : null; }
+  function monthKey(D){ return D.getFullYear() + "-" + pad(D.getMonth() + 1); }
+  function boardItems(D){
+    var c = boardCfg(), mk = monthKey(D), C = TT.store.get(BMK, null) || {};
+    var hit = c && C.url === c.url && C.m && C.m[mk];
+    if(c && (!hit || Date.now() - hit.at > 30 * 60000) && !boardItems.busy[mk]){
+      boardItems.busy[mk] = 1;
+      var a = new Date(D.getFullYear(), D.getMonth(), 1), b = new Date(D.getFullYear(), D.getMonth() + 1, 0);
+      fetch(c.url, {method: "POST", redirect: "follow", credentials: "omit", cache: "no-store", headers: {"Content-Type": "text/plain;charset=utf-8"},
+        body: JSON.stringify({action: "week", pw: c.pw, from: ymd(a), to: ymd(b)})})
+        .then(function(r){ return r.text(); }).then(function(tx){
+          var j = JSON.parse(tx); if(!j || !j.ok) throw 0;
+          var C2 = TT.store.get(BMK, null) || {}; if(C2.url !== c.url) C2 = {url: c.url, m: {}};
+          C2.m = C2.m || {}; C2.m[mk] = {at: Date.now(), items: (j.items || []).filter(function(x){ return x.date; }).map(function(x){ return {d: x.date, t: x.text || "", dept: x.dept || "", type: x.type || "item", imp: x.important === "1"}; })};
+          Object.keys(C2.m).sort().slice(0, -3).forEach(function(k){ delete C2.m[k]; });   // 석 달 치만
+          TT.store.set(BMK, C2); paint();
+        }).catch(function(){}).then(function(){ boardItems.busy[mk] = 0; });
+    }
+    return hit ? hit.items.map(function(x){ return {d: x.d, t: (x.dept ? "[" + String(x.dept).replace(/(부|실)$/, "") + "] " : "") + x.t, k: x.type === "day" ? (x.imp ? "off" : "sch") : "bd"}; }) : [];
+  }
+  boardItems.busy = {};
+  function calHTML(){
+    var t = new Date(), D = new Date(t.getFullYear(), t.getMonth() + st.mon, 1), td = ymd(t), L = mine().concat(boardItems(D)), by = {};
+    L.forEach(function(x){ (by[x.d] = by[x.d] || []).push(x); });
+    var h = '<div class="sdCh"><button type="button" data-cm="-1" aria-label="이전 달">‹</button><b>' + (D.getFullYear() !== t.getFullYear() ? D.getFullYear() + "년 " : "") + (D.getMonth() + 1) + '월</b><button type="button" data-cm="1" aria-label="다음 달">›</button>'
+      + (st.mon ? '<button type="button" class="tdb" data-cm="0">오늘</button>' : "") + "</div>";
+    h += '<div class="sdG">' + "일월화수목금토".split("").map(function(x, i){ return '<span class="hd' + (i === 0 ? " su" : i === 6 ? " sa" : "") + '">' + x + "</span>"; }).join("");
+    for(var i = 0; i < D.getDay(); i++) h += "<span></span>";
+    var last = new Date(D.getFullYear(), D.getMonth() + 1, 0).getDate();
+    for(var dd = 1; dd <= last; dd++){
+      var k = D.getFullYear() + "-" + pad(D.getMonth() + 1) + "-" + pad(dd), X = by[k] || [], wd = new Date(D.getFullYear(), D.getMonth(), dd).getDay();
+      var kinds = {}; X.forEach(function(x){ kinds[x.k] = 1; });
+      var tip = X.length ? (D.getMonth() + 1) + "/" + dd + " (" + DOW[wd] + ")\n" + X.slice(0, 6).map(function(x){ return "· " + x.t; }).join("\n") + (X.length > 6 ? "\n… " + (X.length - 6) + "개 더" : "") : "";
+      h += '<button type="button" class="d' + (k === td ? " td" : "") + (k === st.pick ? " pk" : "") + (k < td ? " past" : "") + (kinds.off || wd === 0 ? " off" : wd === 6 ? " sa" : "") + '" data-day="' + k + '"' + (tip ? ' title="' + esc(tip) + '"' : "") + ">" + dd
+        + '<span class="dots">' + ["off", "sch", "bd", "me"].filter(function(q){ return kinds[q]; }).map(function(q){ return '<span class="dt k-' + q + '"></span>'; }).join("") + "</span></button>";
+    }
+    h += "</div>";
+    /* 아래: 고른 날 → 그날 목록, 아니면 다가오는 일 (내 일·학사 먼저, 업무판은 그다음) */
+    var lst, head;
+    if(st.pick){ var pd = new Date(+st.pick.slice(0, 4), +st.pick.slice(5, 7) - 1, +st.pick.slice(8, 10)); head = (pd.getMonth() + 1) + "/" + pd.getDate() + " (" + DOW[pd.getDay()] + ")"; lst = (by[st.pick] || []).slice(); }
+    else{
+      head = "다가오는 일"; var rank = {me: 0, off: 1, sch: 1, bd: 2};
+      lst = L.filter(function(x){ return x.d >= td; }).sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : rank[a.k] - rank[b.k]; });
+      var seen = {}; lst = lst.filter(function(x){ var q = x.d + x.t; if(seen[q]) return false; seen[q] = 1; return true; });
+    }
+    h += '<div class="sdL"><div class="lh">' + esc(head) + (st.pick ? '<button type="button" data-day="">✕</button>' : "") + "</div>"
+      + (lst.length ? lst.map(function(x){ var dt = x.d.slice(5).replace(/^0/, "").replace("-", "/").replace("/0", "/"); return '<div class="li k-' + x.k + '">' + (st.pick ? "" : "<span>" + dt + "</span>") + esc(x.t) + "</div>"; }).join("") : '<div class="li none">' + (st.pick ? "일정이 없어요" : "가까운 일정이 없어요") + "</div>")
+      + "</div>"
+      + (boardCfg() ? "" : '<div class="sdHint">학교 업무판을 연결하면 월간 업무도 여기에 보여요 · ⋯ → 학교 업무판 연결</div>');
+    return h;
+  }
+
+  /* ── 그리기 ── */
+  function paint(){
+    if(!on()){ if(side){ side.hidden = true; } if(document.body.classList.contains("sbSideOn")) document.body.classList.remove("sbSideOn"); return; }
+    if(!side){
+      side = document.createElement("aside"); side.id = "sbSide"; side.setAttribute("aria-label", "오늘 한눈에");
+      document.body.appendChild(side);
+      side.addEventListener("click", function(e){
+        var b = e.target.closest("[data-v],[data-cm],[data-day],[data-neis],[data-napply],[data-nclose]"); if(!b) return;
+        if(b.hasAttribute("data-v")){ st.view = b.getAttribute("data-v"); try{ localStorage.setItem("sb_side_view", st.view); }catch(x){} }
+        else if(b.hasAttribute("data-cm")){ var v = +b.getAttribute("data-cm"); st.mon = v ? st.mon + v : 0; st.pick = ""; }
+        else if(b.hasAttribute("data-day")){ var k = b.getAttribute("data-day"); st.pick = st.pick === k ? "" : k; }
+        else if(b.hasAttribute("data-neis")){ if(!st.busy) neisCheck(); return; }
+        else if(b.hasAttribute("data-napply")){ if(st.neis && st.neis.apply) st.neis.apply(); st.neis = null; }
+        else if(b.hasAttribute("data-nclose")){ st.neis = null; }
+        paint();
+      });
+    }
+    side.hidden = false; if(!document.body.classList.contains("sbSideOn")) document.body.classList.add("sbSideOn");
+    var v = view(), N = st.neis;
+    side.innerHTML = '<section class="sdC sdT" aria-label="내 시간표"><div class="sdH"><b>내 시간표</b><span class="seg" role="group" aria-label="보기">'
+      + '<button type="button" data-v="day" aria-pressed="' + (v === "day") + '">오늘</button><button type="button" data-v="week" aria-pressed="' + (v === "week") + '">이번 주</button></span></div>'
+      + '<div class="sdB">' + (v === "week" ? weekHTML() : dayHTML()) + "</div>"
+      + '<div class="sdF"><button type="button" data-neis title="나이스 학급 시간표와 비교해 이번 주 교체를 찾아요"' + (st.busy ? " disabled" : "") + ">↻ 교체 확인</button><a href=\"apps/timetable/\">고치기</a></div>"
+      + (N ? '<div class="sdN' + (N.ok ? " ok" : "") + '"><p>' + esc(N.msg) + "</p>" + (N.list ? "<ul>" + N.list.slice(0, 8).map(function(x){ return "<li>" + esc(x) + "</li>"; }).join("") + (N.list.length > 8 ? "<li>… " + (N.list.length - 8) + "개 더</li>" : "") + "</ul>" : "")
+        + '<div class="na">' + (N.apply ? '<button type="button" class="p" data-napply>이번 주에 반영</button>' : "") + (st.busy ? "" : '<button type="button" data-nclose>닫기</button>') + "</div></div>" : "")
+      + "</section>"
+      + '<section class="sdC sdK" aria-label="달력">' + calHTML() + "</section>";
+  }
+  var rT = 0; function soon(){ clearTimeout(rT); rT = setTimeout(paint, 80); }
+  ["resize", "tt-home-change", "tt-mytodo-change", "hashchange", "focus", "load"].forEach(function(ev){ window.addEventListener(ev, soon); });
+  window.addEventListener("storage", function(e){ if(!e.key || /^tt_/.test(e.key)) soon(); });
+  new MutationObserver(soon).observe(document.body, {attributes: true, attributeFilter: ["class"]});
+  (function tick(){ setTimeout(function(){ if(document.visibilityState === "visible") paint(); tick(); }, 60500 - Date.now() % 60000); })();
+  window.TT_SBSIDE = {render: soon, check: neisCheck};
+  soon();
+})();

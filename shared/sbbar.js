@@ -11,6 +11,8 @@
   var R = document.documentElement, ART = window.TT_SBART, BASE = TT.BASE || "./";
   var HOME = !/\/apps\//.test(location.pathname);
   if(!HOME && R.getAttribute("data-ui") !== "ssambi") return;          // 도구 화면은 쌤비 홈 디자인일 때만 (첫 화면은 바꾸는 즉시 보이도록 늘 만들어 둠)
+  try{ if(localStorage.getItem("sb_rail_mini") === "1") R.classList.add("sbMini"); }catch(e){}   // v2.45 왼쪽 메뉴 접기(아이콘만) — 기억
+  function miniBtn(){ var m = R.classList.contains("sbMini"); return '<button type="button" class="rmin" data-rmini title="' + (m ? "메뉴 펼치기" : "메뉴 접기") + '" aria-label="' + (m ? "메뉴 펼치기" : "메뉴 접기") + '">' + (m ? "»" : "«") + "</button>"; }
   var MENUS = [["home", "홈"], ["class", "수업"], ["homeroom", "우리 반"], ["student", "학생"], ["school", "학교"], ["lib", "자료실"], ["settings", "설정"]];
   var KEYS = {home: "Alt+1", "class": "Alt+2", homeroom: "Alt+3", student: "Alt+4", school: "Alt+5", settings: "Alt+0"};
   var SUBK = "sbSub";                                                  // 자료실 = 학교 메뉴의 자료실 묶음 (이 창에서만 기억)
@@ -90,7 +92,7 @@
       + (b.lab || p.tag ? '<div class="lab">' + (p.tag ? '<span class="ttag">' + esc(p.tag) + "</span>" : "") + esc(b.lab || "") + "</div>" : "")
       + "<p>" + esc(b.head || "") + "</p>" + (b.sub ? "<small>" + esc(b.sub) + "</small>" : "") + "</div>"
       + (acts ? '<div class="acts">' + acts + "</div>" : "")
-      + (CRM ? "" : '<div class="bfoot">' + (b.next ? '<div class="bl"><span class="k">다음</span><span class="v">' + esc(b.next) + "</span></div>" : "")
+      + (CRM ? "" : '<div class="bfoot">' + (b.next ? '<div class="bl nx"><span class="k">다음</span><span class="v">' + esc(b.next) + "</span></div>" : "")
       + '<div class="bl"><span class="k">놓친 것</span><span class="v chips">' + miss + "</span></div></div>") + "</div>";
   }
   function hrowHTML(){
@@ -129,7 +131,24 @@
     var box = document.getElementById("sbBox"); if(box && hero.contains(box)) document.body.appendChild(box);   // 다시 그리는 동안 쌤비 창을 잠깐 비켜 둠
     hero.querySelector(".hrow").innerHTML = hrowHTML(); hero.querySelector(".top .sp").innerHTML = dateHTML();
     hero.querySelector(".circ").innerHTML = circHTML();
+    homeRail();
     seatMore(); seatBox();
+  }
+  /* v2.45 홈·설정에도 도구 화면과 같은 왼쪽 메뉴 (PC) — 위쪽 쌤비·검색창 자리는 쌤 노트 로고 (가운데에 큰 쌤비·검색창이 있으므로) */
+  var hrail = null;
+  function homeRail(){
+    var ok = R.getAttribute("data-ui") === "ssambi" && document.body.classList.contains("sbOn");
+    if(!hrail){
+      hrail = document.createElement("aside"); hrail.id = "sbRail"; hrail.className = "hm"; hrail.setAttribute("aria-label", "메뉴");
+      hrail.innerHTML = '<div class="rh"></div><div class="rn"></div><div class="rb"></div>';
+      document.body.appendChild(hrail);
+    }
+    hrail.hidden = !ok;
+    if(document.body.classList.contains("sbRailOn") !== ok) document.body.classList.toggle("sbRailOn", ok);
+    if(!ok) return;
+    hrail.querySelector(".rh").innerHTML = '<a class="lg" href="' + esc(BASE) + '" title="쌤 노트 홈">' + (ART && ART.logo ? ART.logo(28) : "") + "<b>쌤 노트</b></a>";
+    hrail.querySelector(".rn").innerHTML = railHTML();
+    hrail.querySelector(".rb").innerHTML = miniBtn();
   }
   function seatBox(){                                                   // 쌤비 창(#sbBox): 마이크 단추 바로 오른쪽(말풍선 높이에서) — 자리가 모자라면 마이크 아래에 띄움
     var box = document.getElementById("sbBox"); if(!box) return;
@@ -279,7 +298,7 @@
     drawTop();
     if(!rail){
       rail = document.createElement("aside"); rail.id = "sbRail"; rail.setAttribute("aria-label", "쌤비와 메뉴");
-      rail.innerHTML = '<div class="rt"></div><div class="rs">' + fboxHTML("R") + '<div class="fr" id="sbRr" hidden></div></div><div class="rn"></div>';
+      rail.innerHTML = '<div class="rt"></div><div class="rs">' + fboxHTML("R") + '<div class="fr" id="sbRr" hidden></div></div><div class="rn"></div><div class="rb"></div>';
       document.body.appendChild(rail); document.body.classList.add("sbRailOn");
     }
     if(!bar){
@@ -288,7 +307,7 @@
       document.body.insertBefore(bar, topEl && topEl.parentNode === document.body ? topEl.nextSibling : document.body.firstChild); document.body.classList.add("sbBarOn");
       F.wire("R"); F.wire("B");
     }
-    rail.querySelector(".rt").innerHTML = railTop(); rail.querySelector(".rn").innerHTML = railHTML();
+    rail.querySelector(".rt").innerHTML = railTop(); rail.querySelector(".rn").innerHTML = railHTML(); rail.querySelector(".rb").innerHTML = miniBtn();
     bar.querySelector(".bo").innerHTML = '<button type="button" class="owl" id="sbBarOwl2" title="쌤비 (Alt+B)" aria-label="쌤비 열기">' + owlSvg(46) + "</button>";
     bar.querySelector(".sbTabs").innerHTML = barTabs();
     var sbs = bar.querySelector(".sbSubs"), subH = barSubs();   // v2.24.1 휴대폰: 지금 메뉴의 도구(소메뉴)를 한 줄로 — 옆으로 밀어 다른 도구로
@@ -461,6 +480,7 @@
   }
   document.addEventListener("click", function(e){
     var host = e.target.closest && e.target.closest("#sbHero,#sbRail,#sbBar"); if(!host) return;
+    if(e.target.closest("[data-rmini]")){ e.preventDefault(); var mn = !R.classList.contains("sbMini"); R.classList.toggle("sbMini", mn); try{ localStorage.setItem("sb_rail_mini", mn ? "1" : "0"); }catch(x){} draw(); window.dispatchEvent(new Event("resize")); return; }   // v2.45 메뉴 접기
     if(e.target.closest("[data-tree]") && TT.joy){ e.preventDefault(); e.stopPropagation(); TT.joy.open("tree"); return; }   // v2.8 우리 반 나무
     var ba = e.target.closest(".bub [data-bact]"); if(ba && window.TT_SBHOME && TT_SBHOME.bact){ e.stopPropagation(); TT_SBHOME.bact(ba.getAttribute("data-bact")); return; }   // v2.44 브리핑 단추
     var bm = e.target.closest(".bub [data-bmiss]"); if(bm && window.TT_SBHOME && TT_SBHOME.bmiss){ e.stopPropagation(); TT_SBHOME.bmiss(bm.getAttribute("data-bmiss")); return; }   // v2.44 놓친 것
