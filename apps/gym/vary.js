@@ -81,6 +81,26 @@
     addGen("sci", function(u){ return "〈보기〉 고르기 · " + (FN[u] || u); }, cmk, .35);
   }
 
+  /* 📖 국어 문법·문학·화법·작문 카드 → 답 확인 OX · 〈보기〉 ㄱㄴㄷ (27단계, v2.43.0)
+     카드 하나(물음 + 정답)를 '사실'로 보고, 같은 단원의 오답 보기와 짝지어 다른 얼굴로 냅니다. 새 id = 원래 id + "#x" */
+  if(R.kor && R.kor.bank){
+    var KC = R.kor.bank.filter(function(it){ return /카드$/.test(it.tag || "") && it.u && it.c && it.c.length >= 2 && it.a === 0; });
+    var kadd = [], KU = {};
+    KC.forEach(function(it, i){
+      var tru = i % 2 === 0, w = it.c[1 + (i % (it.c.length - 1))], q = String(it.q).replace(/\s*[?？]\s*$/, "");
+      kadd.push({id: it.id + "#x", tag: it.tag.replace(/카드$/, "카드 · 답 확인"), u: it.u, q: it.q, ask: "「" + (tru ? it.c[0] : w) + "」이(가) 답이면 O, 아니면 X", c: ["O", "X"], ox: true, a: tru ? 0 : 1,
+        e: (tru ? "맞아요 · " : "답은 「" + it.c[0] + "」 · ") + (it.e || "")});
+      (KU[it.u] = KU[it.u] || []).push({q: q, t: it.c[0], f: it.c.slice(1), e: it.e});
+    });
+    R.kor.bank = R.kor.bank.concat(kadd);
+    var kmk = {};
+    Object.keys(KU).forEach(function(u){ if(KU[u].length >= 5) kmk[u] = function(){
+      var pool = KU[u].map(function(x){ return Math.random() < .5 ? {s: x.q + " → " + x.t, t: true} : {s: x.q + " → " + pick(x.f), t: false, e: "(→ " + x.t + ")"}; });
+      return boxItem("kor:bx:" + u + ":", "〈보기〉 고르기 · " + (FN[u] || "카드"), u, pool, "물음과 답이 바르게 짝지어진 것만을 〈보기〉에서 고른 것은?");
+    }; });
+    addGen("kor", function(u){ return "〈보기〉 고르기 · " + (FN[u] || u); }, kmk, .25);
+  }
+
   /* 🧮 수학 계산: 형식 바꾸기 (값 고르기 · 답 OX) — 같은 계산 근육, 다른 얼굴 */
   if(R.math && R.math.gen){
     var mg = R.math.gen;
@@ -90,8 +110,8 @@
       if(!o || !o.num || o.fr || typeof o.n !== "number" || !isFinite(o.n) || Math.random() > .22) return o;
       var n = o.n, cand = shuffle([n + 1, n - 1, -n, n + 2, n - 2, n * 2, n + 10, n - 10, Math.round(n / 2)]).filter(function(v, i, a){ return v !== n && a.indexOf(v) === i && isFinite(v); });
       var x = Object.assign({}, o); delete x.num; delete x.n;
-      if(Math.random() < .55){ x.id = o.id + "#c"; x.tag = o.tag; x.ask = "값으로 옳은 것은?"; x.c = [neg(n)].concat(cand.slice(0, 3).map(neg)); x.a = 0; }
-      else { var tru = Math.random() < .5, k = tru ? n : cand[0]; x.id = o.id + "#x" + neg(k); x.ask = "답이 " + neg(k) + "이면 O, 아니면 X"; x.c = ["O", "X"]; x.ox = true; x.a = tru ? 0 : 1; x.e = "답은 " + neg(n) + " · " + (o.e || ""); }
+      if(Math.random() < .55){ x.id = o.id + "#c"; x.tag = o.tag; x.ask = o.ask || "값으로 옳은 것은?"; x.c = [neg(n)].concat(cand.slice(0, 3).map(neg)); x.a = 0; }
+      else { var tru = Math.random() < .5, k = tru ? n : cand[0]; x.id = o.id + "#x" + neg(k); x.ask = (o.ask ? o.ask.replace(/\s*\(.*\)\s*$/, "").replace(/[?？]\s*$/, "") + " → " : "") + "답이 " + neg(k) + "이면 O"; x.c = ["O", "X"]; x.ox = true; x.a = tru ? 0 : 1; x.e = "답은 " + neg(n) + " · " + (o.e || ""); }
       return x;
     };
   }
