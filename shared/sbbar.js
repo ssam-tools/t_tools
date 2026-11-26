@@ -80,8 +80,22 @@
      쌤비를 누르거나 🎤를 누르면 따로 창을 띄우지 않고 쌤비 옆 말풍선이 그대로 쌤비 창이 됩니다(오늘 상황 · 말하기 · 듣는 중).
      검색창은 그 자리에서 적고 Enter → 결과는 메뉴 줄 아래(shared/sbhome.js). "종례: …" "할 일: …"은 Enter 한 번에 바로 넣음. */
   var hero = null;
+  function briefHTML(p){                                                // v2.44 쌤비 브리핑: [꼬리표] 큰 한 줄 · 작은 설명 · 단추 / 다음 · 놓친 것
+    var b = p.brief, ta = b.talkActs || (p.acts && p.talk ? p.acts : null);
+    var acts = b.acts.map(function(a){ var c = "sbBtn" + (a[1] ? " p" : ""); return a[2] ? '<a class="' + c + '" href="' + esc(a[2]) + '">' + esc(a[0]) + "</a>" : '<button type="button" class="' + c + '" data-bact="' + a[3] + '">' + esc(a[0]) + "</button>"; }).join("")
+      + (ta ? ta.map(function(a){ return '<button type="button" class="sbBtn" data-tact="' + esc(a[0]) + '">' + esc(a[1]) + "</button>"; }).join("") : "");
+    var miss = b.miss.length ? b.miss.map(function(x){ return '<button type="button" class="chip" data-bmiss="' + x[1] + '">' + esc(x[0]) + "</button>"; }).join("") : '<span class="ok">없어요 ✓</span>';
+    return '<div class="bub brief k-' + esc(b.kind) + (p.talk ? " talk" : "") + '" role="status"><div class="b0"' + (p.talk ? ' title="누르면 다음 이야기"' : "") + ">"
+      + (p.ev ? '<div class="when"><span class="ev">📌 ' + esc(p.ev) + "</span></div>" : "")
+      + (b.lab || p.tag ? '<div class="lab">' + (p.tag ? '<span class="ttag">' + esc(p.tag) + "</span>" : "") + esc(b.lab || "") + "</div>" : "")
+      + "<p>" + esc(b.head || "") + "</p>" + (b.sub ? "<small>" + esc(b.sub) + "</small>" : "") + "</div>"
+      + (acts ? '<div class="acts">' + acts + "</div>" : "")
+      + (CRM ? "" : '<div class="bfoot">' + (b.next ? '<div class="bl"><span class="k">다음</span><span class="v">' + esc(b.next) + "</span></div>" : "")
+      + '<div class="bl"><span class="k">놓친 것</span><span class="v chips">' + miss + "</span></div></div>") + "</div>";
+  }
   function hrowHTML(){
     var p = P(), d = new Date(), s = (TT.school && TT.school.load ? TT.school.load() : {}) || {};
+    if(p.brief) return '<button type="button" class="owl" id="sbBarOwl" title="쌤비 — 오늘 상황 · 말로 기록 (Alt+B)" aria-label="쌤비 열기 (Alt+B)">' + owlSvg(132) + "</button>" + briefHTML(p);
     return '<button type="button" class="owl" id="sbBarOwl" title="쌤비 — 오늘 상황 · 말로 기록 (Alt+B)" aria-label="쌤비 열기 (Alt+B)">' + owlSvg(132) + "</button>"
       + '<div class="bub' + (p.talk ? " talk" : "") + '" role="status"><div class="b0"' + (p.talk ? ' title="누르면 다음 이야기"' : "") + ">" + (p.ev ? '<div class="when"><span class="ev">📌 ' + esc(p.ev) + "</span></div>" : "") + (p.tag ? '<span class="ttag">' + esc(p.tag) + "</span>" : "") + "<p>" + esc(p.line || "") + "</p>" + (p.sub ? "<small>" + esc(p.sub) + "</small>" : "") + "</div>"
       + (p.acts && p.acts.length ? '<div class="acts">' + p.acts.map(function(a){ return '<button type="button" data-tact="' + esc(a[0]) + '">' + esc(a[1]) + "</button>"; }).join("") + "</div>" : "") + "</div>";   // v2.13 쌤비 이야기: 꼬리표 · 단추
@@ -92,7 +106,7 @@
     return '<span class="lg">' + (s.name ? '<span data-hid="school">' + esc(s.name) + "</span> · " : "") + '<span data-hid="meal">' + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + DOW[d.getDay()] + '요일</span> · <span data-hid="time">' + t + '</span>' + wxTag(" · ") + '</span><span class="st"><span data-hid="meal">' + (d.getMonth() + 1) + "/" + d.getDate() + "(" + DOW[d.getDay()] + ')</span> <span data-hid="time">' + t + "</span>" + wxTag(" ") + "</span>";   // v2.9 숨은 정보: 날짜 → 급식, 시각 → 교시
   }
   function srowHTML(){
-    return '<div class="q">' + icon("search", 20) + '<label for="sbQ2" class="sr">찾기 또는 한 줄 입력</label><input id="sbQ2" type="text" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="찾기 · 할 일 적기">'
+    return '<div class="q">' + icon("search", 20) + '<label for="sbQ2" class="sr">찾기 또는 한 줄 입력</label><input id="sbQ2" type="text" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="찾기 · 적기 — 예: 3번 지각, + 내일 회의">'
       + '<button type="button" class="qx" data-qx aria-label="지우기" hidden>✕</button><kbd title="어디서나 / 키로 여기에">/</kbd></div>'
       + '<button type="button" class="ib" data-mic title="말로 기록" aria-label="말로 기록">' + icon("mic", 20) + "</button>"
       + (window.TT_QUICK ? '<button type="button" class="ib plus" data-plus title="빠른 입력" aria-label="빠른 입력">' + icon("plus", 22) + "</button>" : "");
@@ -108,7 +122,7 @@
   function drawHero(){
     if(!hero){
       hero = document.createElement("div"); hero.id = "sbHero";
-      hero.innerHTML = '<div class="top"><span class="sp"></span><button type="button" class="fav" id="sbFav" aria-label="자주 가는 사이트 (Alt+S)" title="자주 가는 사이트 (Alt+S)" aria-expanded="false" aria-haspopup="dialog">' + icon("star", 19) + '</button></div><div class="hrow"></div><div class="srow">' + srowHTML() + '</div><nav class="circ" aria-label="메뉴"></nav>';
+      hero.innerHTML = '<div class="top"><span class="sp"></span><nav class="circ" aria-label="메뉴"></nav><button type="button" class="fav" id="sbFav" aria-label="자주 가는 사이트 (Alt+S)" title="자주 가는 사이트 (Alt+S)" aria-expanded="false" aria-haspopup="dialog">' + icon("star", 19) + '</button></div><div class="hrow"></div><div class="srow">' + srowHTML() + '</div>';   // v2.44 메뉴는 맨 위 줄에 작게 (휴대폰은 아래 탭 줄)
       document.body.insertBefore(hero, document.body.firstChild);
       wireSearch();
     }
@@ -156,6 +170,7 @@
       if(e.key !== "Enter") return;
       e.preventDefault();
       var v = q.value.trim(); if(!v){ h.search(""); return; }
+      if(h.parse && h.parse(v)){ q.value = ""; sync(); return; }          // v2.44 "3번 지각" → 말풍선에서 저장 확인
       if(v.charAt(0) === "+" && v.length > 1) v = "할 일: " + v.replace(/^\+\s*/, "");   // v2.7: "+ 할 일" = 할 일 넣기 (도구 화면 검색창과 같게)
       if(/^(종례|할\s*일|todo|소식)\s*[:：]/i.test(v) && window.TT_FIND && TT_FIND.rows){ var r = TT_FIND.rows(v).filter(function(r){ return !r.h && !r.bag && r.go; })[0]; if(r){ r.go(); q.value = ""; sync(); h.search(""); return; } }
       if(h.query() === v) h.run(); else h.search(v);
@@ -447,8 +462,10 @@
   document.addEventListener("click", function(e){
     var host = e.target.closest && e.target.closest("#sbHero,#sbRail,#sbBar"); if(!host) return;
     if(e.target.closest("[data-tree]") && TT.joy){ e.preventDefault(); e.stopPropagation(); TT.joy.open("tree"); return; }   // v2.8 우리 반 나무
+    var ba = e.target.closest(".bub [data-bact]"); if(ba && window.TT_SBHOME && TT_SBHOME.bact){ e.stopPropagation(); TT_SBHOME.bact(ba.getAttribute("data-bact")); return; }   // v2.44 브리핑 단추
+    var bm = e.target.closest(".bub [data-bmiss]"); if(bm && window.TT_SBHOME && TT_SBHOME.bmiss){ e.stopPropagation(); TT_SBHOME.bmiss(bm.getAttribute("data-bmiss")); return; }   // v2.44 놓친 것
     var ta = e.target.closest(".bub [data-tact]"); if(ta && window.TT_TALK){ e.stopPropagation(); TT_TALK.act(ta.getAttribute("data-tact")); return; }   // v2.13 쌤비 이야기 단추
-    if(e.target.closest(".bub.talk .b0") && window.TT_TALK){ TT_TALK.next(); return; }                                   // 말풍선을 누르면 다음 이야기
+    if(e.target.closest(".bub.talk .b0") && !e.target.closest(".bfoot") && window.TT_TALK){ TT_TALK.next(); return; }                                   // 말풍선을 누르면 다음 이야기
     if(e.target.closest(".bub .b0") && window.TT_SBHOME && TT_SBHOME.prepGo && document.querySelector("#prep .pi")){ TT_SBHOME.prepGo(); return; }   // 시작 준비 → 말풍선을 누르면 바로
     var t = e.target.closest("button,a"); if(!t || (t.closest("#more") && !t.dataset.m)) return;
     if(t.id === "sbBarOwl" || t.id === "sbBarOwl2"){ e.stopPropagation(); openSsambi(false); return; }

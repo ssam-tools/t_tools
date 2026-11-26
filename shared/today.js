@@ -902,7 +902,7 @@
         now.memo = P && P.memo ? P.memo.replace(/\s+/g, " ") : "";
         now.book = c0 && !TT.classroom ? "apps/book/?lesson=1&c=" + c0 : "";
       }
-      if(miss.length){ var lm = miss[miss.length - 1]; now.miss = {n: lm.n, cls: clsName(lm), count: miss.length}; }
+      if(miss.length){ var lm = miss[miss.length - 1], mp = null; try{ mp = progOf(J, lm, td); }catch(e){} now.miss = {n: lm.n, cls: clsName(lm), count: miss.length, end: lm.end, subj: lm.subj || "", now: mp && mp.now ? mp.now : ""}; }   // v2.44 브리핑: 방금 끝난 수업이면 쌤비가 진도를 물어봄
       now.list = today.map(function(s){ return {n: s.n, cls: clsName(s), start: s.start, end: s.end, chg: !!s.chg}; });
     }
     var md0 = null; try{ md0 = mode(); }catch(e){}

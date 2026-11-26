@@ -60,7 +60,7 @@
     if(nxt && nxt.left <= 15) return r("book", nxt.left + "분 뒤 " + nxt.n + "교시 " + nxt.cls + (nxt.subj ? " " + nxt.subj : "") + " 수업이에요.", nxt.prog && nxt.prog.now ? "이번 차시: " + nxt.prog.now : (nxt.unit ? "단원: " + nxt.unit : ""));
     if(wk && m >= 720 && m < 780){ var ml = ""; try{ ml = window.TTMeal ? TTMeal.todayText() : ""; }catch(e){} return r("spoon", "점심시간이에요. 맛있게 드세요!", ml || (cnt ? "오후에 챙길 일 " + cnt + "개" : "")); }
     /* v2.8: 새로 바뀐 점(업데이트 후 첫날) · 금요일 한 주 결산 · 백업 30일 */
-    var NEWS = {"2.41.0": ["🧭 모든 메뉴 화면 맨 위에도 학교·날짜·시각 · ☆ 자주 가는 사이트 · ⋯ 설정이 늘 보여요"], "2.39.0": ["🕰️ 제작 히스토리 — 맨 아래 '쌤 노트 v… · 제작 jidangmath × Claude'를 누르면 쌤 노트가 걸어온 길(큰 변화 화면·모든 버전)을 볼 수 있어요"], "2.38.0": ["교과서 수업 모드 아래 🛤️ 수업 길 6단계 줄(Shift+1~6) · 다시 꺼내기 자동 · 1분 설명 미션 · 발표 번호 뽑기", "수업 모드 위 🧰 도구(이 차시 앱 안에 띄우기·📱 학생에게 QR) · 📈 빈 그래프판 · 🧪 수학 실험실 6개 · ✍️ 기록에 오늘 쓴 도구 문구"], "2.37.0": ["수업 → 교과 칸(수학)에 🛤️ 수업 길 — 45분 6단계 수업 자료 견본 3단원 (소인수분해·피타고라스·이차방정식)"], "2.36.0": ["📐 고1 수학 노트: 공통수학1·2 전체(7단원 · 소단원 17개) 채움 — 왼쪽 목록에서 검토 표시 ✔"], "2.35.0": ["수업 → 교과 칸(수학)에 📐 고1 수학 노트(교사용) 견본 — 학생이 고1 내용을 물어볼 때 바로 답하기 (다항식 단원)"], "2.34.0": ["지당 노트 퀘스트에 🏫 고교 과목 고르기 연습 (꿈·끌린 직업 → 계열 → 과목 바구니)", "공부 Gym 반 현황판 📝 지당 노트 탭에 학생의 희망 계열·과목 수"], "2.33.0": ["새 학생 프로그램: 📝 지당 노트 — 지금 당장, 변화의 시작! (학생 프로그램에서 QR)", "⋯ → 도장판에 '나의 지당' · 공부 Gym 반 현황판에 지당 현황·선물 코드"], "2.13.0": ["새 기능: 쌤비 이야기 — 말풍선을 누르면 다음 이야기", "설정 → 쌤비 이야기에서 학교 소식을 모든 선생님께"], "2.10.3": ["학기초 세팅에서 급식(나이스)·학교 업무판 주소도 함께 배포", "문서 찾기가 찾은 글자를 정확히 칠해요"], "2.8.0": ["새 기능: 퇴근 도장은 급한 일만 없으면!", "쌤비 소품 · 연속 도장 · 우리 반 나무 · 앱 설치하기(쌤비 아이콘) — ⋯ 메뉴에서"], "2.10.2": ["새 도구: 학교 → 자료실 → 🔗 짧은 주소 (g/?수학1 · QR)", "문서 도우미 목록이 접혀서 한눈에 보여요"], "2.10.1": ["새 기능: 교실 전자칠판을 이름 + 숫자 6자리로 열어요", "⋯ → 기기 연결·동기화 → 교실 전자칠판에서 열기에서 번호를 정하세요"], "2.10.0": ["새 기능: 교실 전자칠판을 이름 + 숫자 6자리로 열어요", "⋯ → 기기 연결·동기화 → 교실 전자칠판에서 열기에서 번호를 정하세요"]}, nv = NEWS[TT.VERSION];
+    var NEWS = {"2.44.0": ["🦉 쌤비 브리핑 — 말풍선이 지금 할 일을 단추와 함께 알려 줘요", "검색창에 '3번 지각'처럼 적으면 바로 출결에 저장돼요"], "2.41.0": ["🧭 모든 메뉴 화면 맨 위에도 학교·날짜·시각 · ☆ 자주 가는 사이트 · ⋯ 설정이 늘 보여요"], "2.39.0": ["🕰️ 제작 히스토리 — 맨 아래 '쌤 노트 v… · 제작 jidangmath × Claude'를 누르면 쌤 노트가 걸어온 길(큰 변화 화면·모든 버전)을 볼 수 있어요"], "2.38.0": ["교과서 수업 모드 아래 🛤️ 수업 길 6단계 줄(Shift+1~6) · 다시 꺼내기 자동 · 1분 설명 미션 · 발표 번호 뽑기", "수업 모드 위 🧰 도구(이 차시 앱 안에 띄우기·📱 학생에게 QR) · 📈 빈 그래프판 · 🧪 수학 실험실 6개 · ✍️ 기록에 오늘 쓴 도구 문구"], "2.37.0": ["수업 → 교과 칸(수학)에 🛤️ 수업 길 — 45분 6단계 수업 자료 견본 3단원 (소인수분해·피타고라스·이차방정식)"], "2.36.0": ["📐 고1 수학 노트: 공통수학1·2 전체(7단원 · 소단원 17개) 채움 — 왼쪽 목록에서 검토 표시 ✔"], "2.35.0": ["수업 → 교과 칸(수학)에 📐 고1 수학 노트(교사용) 견본 — 학생이 고1 내용을 물어볼 때 바로 답하기 (다항식 단원)"], "2.34.0": ["지당 노트 퀘스트에 🏫 고교 과목 고르기 연습 (꿈·끌린 직업 → 계열 → 과목 바구니)", "공부 Gym 반 현황판 📝 지당 노트 탭에 학생의 희망 계열·과목 수"], "2.33.0": ["새 학생 프로그램: 📝 지당 노트 — 지금 당장, 변화의 시작! (학생 프로그램에서 QR)", "⋯ → 도장판에 '나의 지당' · 공부 Gym 반 현황판에 지당 현황·선물 코드"], "2.13.0": ["새 기능: 쌤비 이야기 — 말풍선을 누르면 다음 이야기", "설정 → 쌤비 이야기에서 학교 소식을 모든 선생님께"], "2.10.3": ["학기초 세팅에서 급식(나이스)·학교 업무판 주소도 함께 배포", "문서 찾기가 찾은 글자를 정확히 칠해요"], "2.8.0": ["새 기능: 퇴근 도장은 급한 일만 없으면!", "쌤비 소품 · 연속 도장 · 우리 반 나무 · 앱 설치하기(쌤비 아이콘) — ⋯ 메뉴에서"], "2.10.2": ["새 도구: 학교 → 자료실 → 🔗 짧은 주소 (g/?수학1 · QR)", "문서 도우미 목록이 접혀서 한눈에 보여요"], "2.10.1": ["새 기능: 교실 전자칠판을 이름 + 숫자 6자리로 열어요", "⋯ → 기기 연결·동기화 → 교실 전자칠판에서 열기에서 번호를 정하세요"], "2.10.0": ["새 기능: 교실 전자칠판을 이름 + 숫자 6자리로 열어요", "⋯ → 기기 연결·동기화 → 교실 전자칠판에서 열기에서 번호를 정하세요"]}, nv = NEWS[TT.VERSION];
     if(nv && m >= 300){ var sk = "sn_news_seen", sv0 = ""; try{ sv0 = localStorage.getItem(sk) || ""; }catch(e){}
       var td = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
       if(sv0.indexOf(TT.VERSION + "|") !== 0){ try{ localStorage.setItem(sk, TT.VERSION + "|" + td); }catch(e){} sv0 = TT.VERSION + "|" + td; }
@@ -78,6 +78,76 @@
     var line = cnt ? "오늘 챙길 일이 " + cnt + "개 있어요." : "지금 챙길 일은 없어요.";
     var sub = nxt ? "다음은 " + nxt.n + "교시 " + nxt.cls + " (" + nxt.t + ")" : (dd ? dd.t + "까지 D-" + dd.n : "");
     return r("", line, sub, {open: true});
+  }
+
+  /* ── v2.44 쌤비 브리핑: 말풍선 하나에 [지금 가장 중요한 한 가지 + 바로 누를 단추] · 다음 · 놓친 것 ──
+     우선순위: 듣는 중·시작 준비 > 지금 수업 > 방금 끝난 수업 진도 묻기 > 곧 수업(10분 안) > 급한 일 > 그 밖의 한마디(pick).
+     놓친 것으로 올린 할 일은 아래 '오늘 할 일' 목록에서 빼서 같은 일이 두 번 보이지 않게 합니다. */
+  var BA = [], BC = [], briefKeys = {};
+  var URG = /^(오늘|지남|종례|지금|D-[01])$/;
+  function tKey(x){ return x ? (x.kind || "") + "|" + (x.id || x.i || "") + "|" + x.t : ""; }
+  function clsLine(n, cls, subj){ return n + "교시 " + cls + (subj ? " " + subj : ""); }
+  function brief(H, P){
+    var d = new Date(), m = d.getHours() * 60 + d.getMinutes(), wk = d.getDay() >= 1 && d.getDay() <= 5, N = H.now || {}, T = H.tasks || [];
+    var J = TT.joy && TT.joy.on && TT.joy.on() ? TT.joy : null;
+    var b = {lab: "", head: P.line, sub: P.sub, acts: [], next: "", miss: [], kind: "say"}, used = null, headMiss = false;
+    BA = []; BC = []; briefKeys = {};
+    function act(t, fn, pri, href){ BA.push(fn || null); b.acts.push([t, pri ? 1 : 0, href || "", BA.length - 1]); }
+    function go(h){ return function(){ location.href = h; }; }
+    var urg = T.filter(function(x){ return x.lv === "hi" && URG.test(String(x.n)); });
+    var mi = N.miss, justEnded = mi && wk && mi.end && m - mi.end >= 0 && m - mi.end <= 15;
+    var nxt = N.has && !N.cur && N.n ? N : null;
+    if(st.pend){                                                         // 한 줄 입력 확인: 저장 전에 말풍선이 한 번 물어봄
+      var pd = st.pend; b.kind = "ask"; b.lab = "이렇게 적을까요?"; b.head = pd.line; b.sub = pd.sub || "";
+      act("저장", function(){ st.pend = null; try{ pd.save(); }catch(e){ TT.ui.toast("저장하지 못했어요."); } render(); }, 1);
+      act("취소", function(){ st.pend = null; render(); });
+    }else if(P.listen || P.talk || (P.item === "paper" && prepStep())){                        // 듣는 중 · 시작 준비 · 새 소식 · 백업 · 쌤비 이야기는 쌤비 말 그대로
+      b.lab = P.listen ? "말로 기록" : P.talk ? "" : "알림";
+      if(P.item === "paper" && prepStep()) act("지금 하기", function(){ prepGo(); }, 1);
+    }else if(N.cur){
+      b.kind = "class"; b.lab = "지금 수업 · 끝까지 " + N.left + "분" + (N.chg ? " · 수업 교체" : "");
+      b.head = clsLine(N.n, N.cls, N.subj);
+      b.sub = N.prog ? (N.prog.done ? "✔ 진행 완료 · " + N.prog.done : N.prog.skip ? "수업 없음 · " + N.prog.skip : (N.prog.last ? "지난 " + N.prog.last + " → " : "") + "이번 " + N.prog.now) : (N.unit ? "단원 " + N.unit : "");
+      if(N.page) b.sub += " · p." + N.page;
+      if(N.book) act("자료 열기", null, 1, N.book);
+      act("수업 기록", null, !N.book, "apps/journal/");
+    }else if(mi && justEnded && window.TTFollow){
+      b.kind = "ask"; headMiss = true; b.lab = nxt && nxt.left <= 15 ? "쉬는 시간 · 다음 수업 " + nxt.left + "분 뒤" : "방금 끝난 수업";
+      b.head = "방금 " + mi.n + "교시 " + mi.cls + ", 어디까지 했어요?";
+      b.sub = mi.now ? "이번 차시: " + mi.now : "수업 기록에 한 줄 남겨요.";
+      if(mi.now && mi.now !== "모든 차시 완료") act("‘" + mi.now + "’ 마침", function(){ TTFollow.plusOneNow(+mi.n); setTimeout(render, 250); }, 1);
+      act("직접 적기", null, !mi.now, "apps/journal/");
+    }else if(nxt && wk && nxt.left <= 10){
+      b.kind = "class"; b.lab = "곧 수업 · " + nxt.left + "분 뒤";
+      b.head = clsLine(nxt.n, nxt.cls, nxt.subj);
+      b.sub = nxt.prog && nxt.prog.now ? "이번 차시: " + nxt.prog.now : (nxt.unit ? "단원 " + nxt.unit : "");
+      if(nxt.book) act("자료 미리 열기", null, 1, nxt.book);
+      act("수업 기록", null, !nxt.book, "apps/journal/");
+    }else if(urg.length && P.item !== "stamp"){
+      used = urg[0]; b.kind = "urgent"; b.lab = "오늘 꼭 챙길 일";
+      b.head = used.t; b.sub = urg.length > 1 ? "급한 일이 " + urg.length + "개 있어요." : (used.tip || "");
+      act("지금 하기", function(){ TT_TODAY.act(used, document.getElementById("sbBarOwl")); }, 1);
+      if(used.kind === "todo" || used.kind === "bag"){ var u0 = used; act("끝냈어요", function(){ TT_TODAY.done(u0); }); }
+    }else{
+      b.lab = {paper: "알림", coffee: "좋은 아침", spoon: "점심시간", stamp: "오늘 마무리", night: "쉬어 가요", redpen: "시험 기간", calendar: "다가오는 날", alarm: "오늘 꼭"}[P.item] || "지금";
+      if(P.item === "stamp" && J && !J.stamped()) act("퇴근 도장 쾅", function(){ J.stamp(); setTimeout(render, 300); }, 1);
+      if(P.item === "stamp" && J && J.stamped()) act("도장판 보기", function(){ J.open(); });
+      if(P.item === "coffee" && wk && TT.roster && TT.roster.home && TT.roster.home()) act("결석·지각 적기", null, 0, "apps/tardy/");
+      if(P.item === "spoon" && window.TTMeal) act("급식 보기", function(){ TTMeal.open(); });
+    }
+    if(P.talk && P.acts) b.talkActs = P.acts;
+    /* 다음: 지금 말한 수업 다음의 수업 → 없으면 오늘 학사일정 */
+    var hc = b.kind === "class" ? (N.list || []).filter(function(s){ return s.n === N.n; })[0] : null, after = hc ? hc.end : m;
+    var L = (N.list || []).filter(function(s){ return s.start >= after && !(b.kind === "class" && s.n === N.n); });
+    if(wk && L.length){ var s0 = L[0]; b.next = clsLine(s0.n, s0.cls) + " · " + hm(s0.start) + (s0.chg ? " · 교체" : ""); }
+    else if(wk && N.has && N.count && m < 18 * 60) b.next = "오늘 수업은 여기까지예요";
+    if(wk && m < 12 * 60 + 40 && (!L.length || L[0].start >= 12 * 60 + 40) && N.count){ var ml = ""; try{ ml = window.TTMeal ? TTMeal.todayText() : ""; }catch(e){} if(ml) b.next = "🍚 " + ml; }
+    /* 놓친 것: 기록 안 한 수업 + 오늘 꼭 할 일 (머리에 올린 것 빼고, 3개까지) */
+    if(mi && !headMiss && wk){ BC.push(function(){ location.href = "apps/journal/"; }); b.miss.push([mi.n + "교시 " + mi.cls + " 기록" + (mi.count > 1 ? " 외 " + (mi.count - 1) : ""), BC.length - 1]); }
+    urg.forEach(function(x){ if(x === used || b.miss.length >= 3) return; BC.push(function(){ TT_TODAY.act(x, document.getElementById("sbBarOwl")); }); b.miss.push([x.t + (x.n && x.n !== "오늘" ? " · " + x.n : ""), BC.length - 1]); briefKeys[tKey(x)] = 1; });
+    if(used) briefKeys[tKey(used)] = 1;
+    if(TT.classroom){ b.miss = []; b.next = b.next || ""; }
+    return b;
   }
 
   /* ── 지금 카드 ── */
@@ -308,15 +378,15 @@
     }
     if(!ok){ host.hidden = true; host.textContent = ""; R.classList.add("sbReady"); return; }
     var H; try{ H = TT_TODAY.home(); }catch(e){ console.warn("쌤비 홈:", e); return; }
-    var P = lastP = extra(pick(H));
-    if(window.TT_SBAR) TT_SBAR.setOwl({item: P.item, open: P.open, sleep: P.sleep, listen: P.listen, line: P.line, sub: P.sub, ev: H.events.join(" · "), tag: P.tag || "", acts: P.acts || null, talk: P.talk || 0});
+    var P = lastP = extra(pick(H)), B = TT.classroom ? null : brief(H, P);
+    if(window.TT_SBAR) TT_SBAR.setOwl({item: P.item, open: P.open, sleep: P.sleep, listen: P.listen, line: P.line, sub: P.sub, ev: H.events.join(" · "), tag: P.tag || "", acts: P.acts || null, talk: P.talk || 0, brief: B});
     host.hidden = false;
     if(window.TT_SBAR && TT_SBAR.seatBox) TT_SBAR.seatBox();
     if(Q.q){ host.innerHTML = '<div class="sbWrap">' + resHTML() + "</div>"; var on1 = host.querySelector(".rr.on"); if(on1 && on1.scrollIntoView) on1.scrollIntoView({block: "nearest"}); return; }
     if(document.body.classList.contains("inmenu")){ host.innerHTML = '<div class="sbWrap mid">' + midHTML() + "</div>"; return; }
     host.innerHTML = '<div class="sbWrap">'
-      + '<div class="sbNowWrap">' + nowCard(H.now) + "</div>"
-      + (TT.classroom ? "" : '<section class="sbTasks" aria-label="오늘 할 일">' + tasks(H.tasks) + "</section>") + "</div>";
+      + (TT.classroom ? '<div class="sbNowWrap">' + nowCard(H.now) + "</div>" : "")      // v2.44: 지금 수업·놓친 기록은 쌤비 브리핑(말풍선)이 맡음
+      + (TT.classroom ? "" : '<section class="sbTasks" aria-label="오늘 할 일">' + tasks(H.tasks.filter(function(x){ return !briefKeys[tKey(x)]; })) + "</section>") + "</div>";
     var shown = Math.min(MAX, cur.length);
     if(!st.more && window.innerWidth > 760 && shown > 2 && document.documentElement.scrollHeight > window.innerHeight + 2){ MAX = shown - 1; render(); }   // 넘치면 한 줄씩 줄여 스크롤 없이
   }
@@ -386,7 +456,36 @@
   window.addEventListener("tt-menu-refresh", soon);
   window.addEventListener("tt-find-update", function(){ if(Q.q) render(); });
   window.addEventListener("hashchange", function(){ if(Q.q){ Q.q = ""; if(window.TT_SBAR) TT_SBAR.clearSearch(); } });
+
+  /* ── v2.44 한 줄 입력: "3번 지각" "김민준 결석" "12 인정결" → 우리 반 오늘 출결 (말풍선에서 저장 확인) ──
+     출결(apps/tardy)·빠른 입력과 같은 자료: 무단지각 {t:'L'}, 결석 {t:'A',k:'sick'}, 인정결 {t:'A',k:'ok'}. 못 알아들으면 그냥 찾기. */
+  var AK = {"지각": "L", "결석": "A", "병결": "A", "인정결": "R", "인정결석": "R"}, AN = {L: "지각", A: "결석", R: "인정결"};
+  function ymd0(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function parse(v){
+    var w = String(v || "").trim().split(/\s+/), k = AK[w[w.length - 1]]; if(!k || w.length < 2 || w.length > 3) return false;
+    var home = null; try{ home = TT.roster.home(); }catch(e){} if(!home || !home.students || !home.students.length) return false;
+    var G = TT.store.get("tt_guide_v1", null); if(!G || typeof G !== "object") return false;
+    var who = w[w.length - 2].replace(/번$/, ""), S = home.students;
+    var hit = /^\d{1,2}$/.test(who) ? S.filter(function(s){ return String(s.no) === String(+who); }) : S.filter(function(s){ return s.name === who; });
+    if(hit.length !== 1) return false;
+    var s0 = hit[0], no = String(s0.no), mask = !!(G.settings && G.settings.mask), nm = String(s0.name || "");
+    if(mask && nm) nm = nm[0] + "○".repeat(Math.max(1, nm.length - 1));
+    var td = ymd0(new Date()), had = ((G.att || {})[td] || {})[no];
+    st.pend = {line: no + "번 " + nm + " · 오늘 " + AN[k], sub: had ? "이미 적힌 기록을 바꿔요." : "출결에 저장돼요. 사유는 출결에서 더할 수 있어요.",
+      save: function(){
+        var G2 = TT.store.get("tt_guide_v1", null) || {}; G2.att = G2.att || {}; var T = G2.att[td] = G2.att[td] || {};
+        var before = T[no] ? JSON.parse(JSON.stringify(T[no])) : null;
+        T[no] = k === "L" ? {t: "L"} : k === "A" ? {t: "A", k: "sick"} : {t: "A", k: "ok"};
+        if(!TT.store.set("tt_guide_v1", G2)) throw new Error("save");
+        TT.ui.toast(no + "번 " + AN[k] + " 저장", function(){ var G3 = TT.store.get("tt_guide_v1", null); if(!G3) return; var T3 = (G3.att = G3.att || {})[td] = G3.att[td] || {}; if(before) T3[no] = before; else delete T3[no]; TT.store.set("tt_guide_v1", G3); soon(); });
+        window.dispatchEvent(new Event("tt-home-change"));
+      }};
+    Q.q = ""; render(); return true;
+  }
   window.TT_SBHOME = {render: render, pick: pick, prepGo: prepGo,
+    parse: parse,
+    bact: function(i){ var f = BA[+i]; if(f) try{ f(); }catch(e){ console.warn(e); } },     // v2.44 브리핑 단추
+    bmiss: function(i){ var f = BC[+i]; if(f) try{ f(); }catch(e){ console.warn(e); } },    // v2.44 놓친 것 칩
     search: function(q){ q = String(q || "").trim(); if(q === Q.q) return; Q.q = q; Q.sel = 0; render(); },
     query: function(){ return Q.q; },
     move: function(d){ var n = picks().length; if(!n) return; Q.sel = (Q.sel + d + n) % n; render(); },

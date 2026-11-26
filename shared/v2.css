@@ -533,3 +533,55 @@ html[data-ui="ssambi"] body.sbTopOn > header h1,html[data-ui="ssambi"] body.sbTo
 }
 @media (max-width:760px){ #sbTop .sp .lg{display:none} #sbTop .sp .st{display:inline} }
 @media print{#sbTop{display:none!important}}
+
+/* ---------- v2.44 쌤비 브리핑 홈: 말풍선이 주인공 · 메뉴는 맨 위 줄에 작게(휴대폰은 아래 탭 줄) · 검색은 말풍선 바로 아래 ---------- */
+#sbHero .top{gap:8px;border-bottom:1px solid var(--t-line);padding-bottom:6px}
+#sbHero .top .circ{display:flex;flex:none;width:auto;max-width:none;gap:2px;padding:0;border:0}
+#sbHero .top .circ a{flex-direction:column;gap:2px;padding:3px 7px;min-height:0;border-radius:10px;color:var(--t-sub)}
+#sbHero .top .circ a:hover{background:var(--t-chip)}
+#sbHero .top .circ .ci{width:30px;height:30px;background:transparent}
+#sbHero .top .circ a:hover .ci{background:transparent}
+#sbHero .top .circ a.on .ci{background:var(--t-accent);color:#fff}
+#sbHero .top .circ b{font-size:12px;font-weight:500}
+#sbHero .top .circ a.on b{color:var(--t-accent);font-weight:700}
+#sbHero .top .circ .ci .sbTree{font-size:12px;right:-6px;bottom:-4px}
+#sbHero .hrow:has(.brief){grid-template-columns:auto minmax(0,1fr);align-items:start;max-width:780px}
+#sbHero .hrow:has(.brief) .owl{width:clamp(84px,11vh,108px);height:clamp(84px,11vh,108px);margin-top:4px}
+#sbHero .bub.brief{justify-self:stretch;width:100%;min-height:0;padding:clamp(14px,2vh,18px) 22px;border-radius:20px;border-color:color-mix(in srgb,var(--t-accent) 22%,var(--t-line))}
+#sbHero .bub.brief::before{top:44px;border-color:color-mix(in srgb,var(--t-accent) 22%,var(--t-line))}
+#sbHero .bub.brief .lab{font-size:13px;font-weight:700;color:var(--t-accent);margin-bottom:2px}
+#sbHero .bub.brief.k-class .lab::before{content:"● "}
+#sbHero .bub.brief.k-urgent .lab{color:#C62828}
+#sbHero .bub.brief .lab .ttag{display:inline;margin-right:6px}
+#sbHero .bub.brief .b0 p{font-size:clamp(20px,2.9vh,24px);font-weight:800;line-height:1.35;margin-top:0}
+#sbHero .bub.brief .b0 small{font-size:15px;margin-top:4px}
+#sbHero .bub.brief .acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start;margin-top:12px}
+#sbHero .bub.brief .acts > *{margin:0!important;flex:0 0 auto}
+#sbHero .bub.brief .acts .sbBtn{min-height:40px;padding:0 16px;border-radius:12px;font-size:14.5px;font-weight:600;color:var(--t-ink);border:1px solid #DAD6CD;background:var(--t-card)}
+#sbHero .bub.brief .acts .sbBtn.p{background:var(--t-accent);border-color:var(--t-accent);color:#fff}
+#sbHero .bub.brief .acts .sbBtn:hover{border-color:var(--t-accent)}
+#sbHero .bub.brief .bfoot{display:flex;flex-direction:column;gap:6px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--t-line)}
+#sbHero .bub.brief .bl{display:flex;align-items:center;gap:10px;min-width:0;font-size:14px}
+#sbHero .bub.brief .bl .k{flex:none;width:50px;font-size:13px;color:var(--t-faint)}
+#sbHero .bub.brief .bl .v{min-width:0;color:var(--t-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sbHero .bub.brief .bl .chips{display:flex;flex-wrap:wrap;gap:6px;white-space:normal}
+#sbHero .bub.brief .chip{border:0;border-radius:999px;background:var(--t-accent-soft);color:var(--t-accent);font:inherit;font-size:13px;font-weight:600;padding:4px 12px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#sbHero .bub.brief .chip:hover{background:var(--t-accent);color:#fff}
+#sbHero .bub.brief .ok{color:var(--t-sub)}
+#sbHero:has(.brief) .q input::placeholder{color:var(--t-faint)}
+@media (min-width:761px) and (max-height:820px){ #sbHero .bub.brief .acts{margin-top:8px} #sbHero .bub.brief .bfoot{margin-top:8px;padding-top:8px} }
+@media (max-width:980px) and (min-width:761px){ #sbHero .top .circ b{display:none} #sbHero .top .circ a{padding:3px 4px} }
+@media (max-width:760px){
+  html[data-ui="ssambi"] body.sbOn{padding-bottom:calc(74px + env(safe-area-inset-bottom))!important}
+  #sbHero .top .circ{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));background:var(--t-card);border-top:1px solid var(--t-line);padding:4px 2px calc(4px + env(safe-area-inset-bottom))}
+  #sbHero .top .circ .ci{width:30px;height:30px}
+  #sbHero .top .circ b{display:block;font-size:11px}
+  #sbHero .hrow:has(.brief) .owl{width:64px;height:64px}
+  #sbHero .bub.brief{padding:12px 14px;border-radius:16px}
+  #sbHero .bub.brief::before{top:30px}
+  #sbHero .bub.brief .b0 p{font-size:18px}
+  #sbHero .bub.brief .b0 small{font-size:13.5px}
+  #sbHero .bub.brief .acts .sbBtn{flex:1 1 auto}
+  #sbHero .bub.brief .bl{font-size:13px}#sbHero .bub.brief .bl .k{width:44px}
+}
+@media print{#sbHero .top .circ{display:none}}
