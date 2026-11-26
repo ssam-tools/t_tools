@@ -25,8 +25,10 @@
 <link rel="preload" as="script" href="core.js">
 <link rel="preload" as="script" href="feedback.js">
 <link rel="preload" as="script" href="base.js">
-<link rel="preload" as="script" href="rooms.js">
 <link rel="preload" as="script" href="map.js">
+<link rel="preload" as="script" href="his.js">
+<link rel="preload" as="script" href="rooms.js">
+<link rel="preload" as="script" href="vary.js">
 <link rel="preload" as="script" href="../../shared/sbart.js">
 <link rel="preload" as="script" href="../../shared/jdgym.js">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -37,7 +39,7 @@
 <title>공부 Gym · 쌤비 PT</title>
 <!--
   💪 공부 Gym (쌤비 PT) — PLAN_공부Gym.md · 1단계 공통 틀
-  · 홈: 쌤비 트레이너 · 오늘 링(기본 60 / 권장 90 / 도전 120) · 이번 주 강도 · 준비운동 + PT실 5개
+  · 홈: 쌤비 트레이너 · 오늘 링(기본 70 / 권장 100 / 도전 130) · 이번 주 강도 · 준비운동 + PT실 6개(v2.42.0 한국사 추가)
   · PT실: 5분 미니 세트(첫 세트 복습 먼저 → 오늘 단원) · 끝나면 "오늘은 끝 / 한 세트 더"
   · 간격 반복 상자 1~5(1·2·4·7·14일) · 하루 복습 최대치 · XP · 출석(10분) · 휴식권(주 1회) · 복귀 루트(3일 이상 쉬면) · 컨디션
   · 2단계 마스터 시스템: 근섬유(단원) 미진단 → 연습 중 → 숙달(연속 2세트 90%) → 7일 뒤 확인 90% = 마스터⭐ (14일 뒤 다시 확인) · 마스터 맵
@@ -103,6 +105,8 @@
   .warm .m{margin-left:auto;text-align:right;font-weight:900;font-size:15px;white-space:nowrap}
   .warm.done{background:linear-gradient(135deg,#1F9D55,#45C27A);box-shadow:0 3px 0 #13703B}
   .doors{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;flex:1;min-height:0;max-height:190px}
+  .doors.d6{grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;max-height:232px;gap:6px}
+  .doors.d6 .door{padding:6px 2px 5px;gap:1px}.doors.d6 .door .e{font-size:21px;margin-top:3px}.doors.d6 .door b{font-size:13px}
   .door{position:relative;border:2px solid var(--line);background:#fff;border-radius:16px 16px 10px 10px;padding:8px 2px 7px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:3px;min-height:0;overflow:hidden}
   .door:before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:var(--c)}
   .door .e{font-size:25px;line-height:1;margin-top:4px}
@@ -141,6 +145,7 @@
   .qcard .tg.rv{background:#E6EEFF;color:#2F5BD3}
   .qq{font-size:19px;font-weight:800;line-height:1.6;text-align:center;word-break:keep-all}
   .qq.big{font-size:30px;font-variant-numeric:tabular-nums}
+  .qq.bx{white-space:pre-line;text-align:left;font-size:15px;line-height:1.5}
   .qq u{text-decoration:none;background:linear-gradient(transparent 58%,#FFD84D 58%);padding:0 2px}
   .qq sup,.ch sup,.fb sup{font-size:.62em}
   .frc{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.78em;line-height:1.08;margin:0 2px}
@@ -197,6 +202,7 @@
   textarea.code{width:100%;height:110px;font:12px/1.4 ui-monospace,monospace;border:2px solid #2B2111;border-radius:12px;padding:8px;word-break:break-all}
   /* 통합과학 PT (7단계) */
   .qcard.dsq{justify-content:flex-start;padding-top:32px;gap:6px}
+  .qcard.bxq{justify-content:flex-start;padding-top:32px;gap:6px}.qcard.bxq .qa{margin-top:2px}
   .dset{display:flex;flex-direction:column;gap:4px}
   .dtt{font-size:13.5px;font-weight:900;color:#2F5BD3}
   .chart{width:100%;max-height:min(24dvh,170px);background:#FFFDF6;border:1px solid var(--line);border-radius:12px}
@@ -257,7 +263,7 @@
   .msum{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.msum .muted{font-size:12px}
   .sbar{display:flex;height:12px;border-radius:7px;background:#F2EAD3;overflow:hidden}
   .sbar i{display:block;height:100%}.sbar .s3{background:linear-gradient(90deg,#FF8A00,#FFB000)}.sbar .s2{background:#FFC870}.sbar .s1{background:#FFE6B0}
-  .stab{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+  .stab{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}.stab.s6{grid-template-columns:repeat(6,1fr);gap:4px}.stab.s6 b{font-size:11.5px}
   .stab button{border:2px solid var(--line);background:#fff;border-radius:12px;padding:5px 2px;line-height:1.2;display:flex;flex-direction:column;align-items:center}
   .stab b{font-size:12.5px;font-weight:900;white-space:nowrap}.stab span{font-size:12px;font-weight:900;color:var(--c)}
   .stab button[aria-pressed=true]{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,#fff)}
@@ -398,8 +404,10 @@
 <script src="core.js"></script>
 <script src="feedback.js"></script>
 <script src="base.js"></script>
-<script src="rooms.js"></script>
 <script src="map.js"></script>
+<script src="his.js"></script>
+<script src="rooms.js"></script>
+<script src="vary.js"></script>
 <script src="../../shared/sbart.js"></script>
 <script src="../../shared/jdgym.js"></script>
 <script>
@@ -409,9 +417,9 @@
   var SET_SEC = 300, ATT_SEC = 600, REV_MAX = 30, BOX_DAYS = {1: 1, 2: 2, 3: 4, 4: 7, 5: 14};
   if(/[?&]fast=1/.test(location.search)) SET_SEC = +(new URLSearchParams(location.search).get("sec") || 15);   // 화면 점검용(세트 15초). 출석 시간은 실제로 한 시간만 셉니다.
   var INT = {
-    base: {name: "기본", emo: "🙂", sub: "60분", goal: {warm: 10, kor: 10, math: 10, eng: 10, sci: 10, soc: 10}, total: 60},
-    rec:  {name: "권장", emo: "💪", sub: "90분", goal: {warm: 10, kor: 20, math: 20, eng: 20, sci: 10, soc: 10}, total: 90},
-    ch:   {name: "도전", emo: "🔥", sub: "120분+", goal: {warm: 10, kor: 20, math: 20, eng: 20, sci: 10, soc: 10}, total: 120}
+    base: {name: "기본", emo: "🙂", sub: "70분", goal: {warm: 10, kor: 10, math: 10, eng: 10, sci: 10, soc: 10, his: 10}, total: 70},
+    rec:  {name: "권장", emo: "💪", sub: "100분", goal: {warm: 10, kor: 20, math: 20, eng: 20, sci: 10, soc: 10, his: 10}, total: 100},
+    ch:   {name: "도전", emo: "🔥", sub: "130분+", goal: {warm: 10, kor: 20, math: 20, eng: 20, sci: 10, soc: 10, his: 10}, total: 130}
   };
   var COND = {good: ["😆", "좋음"], ok: ["🙂", "보통"], hard: ["😮‍💨", "힘듦"]};
 
@@ -522,7 +530,7 @@
     var nm = v.filter(function(x){ var c = S.cards[x.id]; return !c || c.b <= 5; });
     return pick(nm.length ? nm : v);
   }
-  function newItem(room){
+  function newItem(room, used){
     var r0 = R[room];
     if(r0.listen && TTS && ((S.week && S.week.int) || "base") !== "base" && (day().sets[room] || 0) >= 1 && Math.random() < .3) return pick(r0.listen);   // 🎧 듣기(권장·도전)
     var cfb = curFiber(room);
@@ -530,14 +538,15 @@
       var si = day().sets[room] || 0, kv = day().kv || 0, cf0 = curFiber(room);
       if(!cf0 || (si === 0 ? kv < (r0.vocabDaily || 6) : si >= 2 && Math.random() < .5)) return nextVocab(room);
     }
-    var cf = curFiber(room); if(cf){ var ui = unitItem(cf); if(ui) return ui; }
+    var cf = curFiber(room); if(cf){ var ui = unitItem(cf, used); if(ui) return ui; }
     if(mode() === "prog" && FORDER[room]){   // 📅 진도 따라가기: 배운 단원의 문제(또는 단원이 없는 문제)만
-      var okb = (R[room].bank || []).filter(function(x){ var f = fiberOf(room, x); return !f || modeOk(f); });
-      if(okb.length) return pick(okb);
+      var okb = (R[room].bank || []).filter(function(x){ var f = fiberOf(room, x); return (!f || modeOk(f)) && !(used && used[x.id]); });
+      if(okb.length) return freshPick(okb);
       if(R[room].vocab) return nextVocab(room);
     }
     var r = R[room], bank = r.bank || [], useGen = r.gen && (!bank.length || Math.random() < (r.mix || 0));
     if(useGen) return r.gen(diffLv(room));
+    if(bank.length > 1){ var fb = bank.filter(function(x){ return !(used && used[x.id]); }); if(fb.length) return freshPick(fb); }   // 🔀 안 본 문항 먼저
     var p = S.ptr[room] || 0;
     if(r.shuffleBank && !S.ord) S.ord = {};
     if(r.shuffleBank && (!S.ord[room] || S.ord[room].length !== bank.length)){ S.ord[room] = shuffle(bank.map(function(_, i){ return i; })); }
@@ -582,10 +591,26 @@
   function bankFor(fid){ var room = FIB[fid].room; if(FIB[fid].base) return (BASEB[room] || []).filter(function(it){ return it.u === fid; }); return (R[room].bank || []).filter(function(it){ return fiberOf(room, it) === fid; }); }
   function avail(fid){ return genTagsFor(fid).length ? 99 : bankFor(fid).length; }
   function open(fid){ return avail(fid) >= MIN_AV; }
+  /* 🔀 21단계(3부): 같은 문제 줄이기 — 안 본 문항 먼저 → 오래전에 본 문항 → (오늘 본 문항은 되도록 다시 내지 않음).
+     복습 상자(틀린 문제)는 이 규칙과 따로 정해진 날에 다시 나옵니다. 본 날은 S.seen[id] 에 문항 id 만 적습니다. */
+  function seenAt(id){ return (S.seen && S.seen[id]) || ""; }
+  function markSeen(id){ if(!BANKIX[id]) return; if(!S.seen) S.seen = {}; S.seen[id] = TODAY; }
+  function freshPick(list){
+    if(!list.length) return null;
+    var un = list.filter(function(x){ return !seenAt(x.id); });
+    if(un.length) return pick(un);
+    var nt = list.filter(function(x){ return seenAt(x.id) !== TODAY; }), L = (nt.length ? nt : list).slice().sort(function(a, b){ var A = seenAt(a.id), B = seenAt(b.id); return A < B ? -1 : A > B ? 1 : 0; });
+    return pick(L.slice(0, Math.max(1, Math.ceil(L.length / 3))));
+  }
+  function genTagPick(gt){   // 오늘 덜 쓴 생성기 유형부터 (같은 모양 계산이 줄줄이 나오지 않게)
+    var g = day().gt = day().gt || {}, lo = Math.min.apply(null, gt.map(function(t){ return g[t] || 0; })), t = pick(gt.filter(function(t){ return (g[t] || 0) === lo; }));
+    g[t] = (g[t] || 0) + 1; return t;
+  }
   function unitItem(fid, used){
     var room = FIB[fid].room, gt = genTagsFor(fid), b = bankFor(fid).filter(function(x){ return !used || !used[x.id]; });
-    if(gt.length && (!b.length || Math.random() < (R[room].genRatio || .6))){ var it = FIB[fid].base ? GYM_BASE.gen(pick(gt)) : R[room].gen(diffLv(room), pick(gt)); it.u = fid; return it; }
-    return b.length ? pick(b) : null;
+    var fresh = b.filter(function(x){ return !seenAt(x.id); }).length;
+    if(gt.length && (!b.length || Math.random() < (fresh ? (R[room].genRatio || .6) : Math.max(.5, R[room].genRatio || .6)))){ var tg = genTagPick(gt), it = FIB[fid].base ? GYM_BASE.gen(tg) : R[room].gen(diffLv(room), tg); if(it){ it.u = fid; return it; } }
+    return freshPick(b);
   }
   function fs(fid){ return S.fib[fid] || {st: 0}; }
   function weekNo(){ return Math.floor(diff(S.start, TODAY) / 7) + 1; }
@@ -779,7 +804,7 @@
     if(R[room].passages && (day().sets[room] || 0) >= 1 && !day().kpd){ var pl = passPlan(); if(pl && !pl.wait) flow = passFlow(room, pl); }
     if(R[room].deep && ((S.week && S.week.int) || "base") !== "base" && (day().sets[room] || 0) >= 2) deep = pickDeep(room);
     if(room === "warm"){
-      /* 🔥 복습 루프: ① 어제 헷갈린 것(유형마다 2문제) → ② 6과목 오래된 오답(상자 3~5) + 🔀 숙달한 단원 섞어 풀기 (과목을 섞어서) */
+      /* 🔥 복습 루프: ① 어제 헷갈린 것(유형마다 2문제) → ② 전 과목 오래된 오답(상자 3~5) + 🔀 숙달한 단원 섞어 풀기 (과목을 섞어서) */
       var w0 = day().sets.warm || 0;
       if(!day().confDone) confList().forEach(function(x){ for(var k = 0; k < 2; k++){ var it = byTag(x.r, x.t); if(it) q.push({it: it, kind: "conf", room: x.r, ct: x.t}); } });
       var old = dueCards(null, 3).filter(function(id){ return S.cards[id].r !== "warm"; }).slice(0, 10).map(function(id){ return {it: itemFromCard(S.cards[id], id), kind: "rev", room: S.cards[id].r}; }).filter(function(o){ return o.it; });
@@ -797,7 +822,7 @@
           var due = dueCards(room).filter(function(id){ return !used[id]; });
           if(due.length){ var id = due[0], it = itemFromCard(S.cards[id], id); used[id] = 1; if(it) return {it: it, kind: "rev", room: room}; }
         }
-        for(var i = 0; i < 6; i++){ var n = newItem(room); if(n && !used[n.id]){ used[n.id] = 1; if(n.seq) pend = n.seq().map(function(s){ return {it: s, kind: "new2", room: room}; }); return {it: n, kind: "new", room: room}; } }
+        for(var i = 0; i < 6; i++){ var n = newItem(room, used); if(n && !used[n.id]){ used[n.id] = 1; if(n.seq) pend = n.seq().map(function(s){ return {it: s, kind: "new2", room: room}; }); return {it: n, kind: "new", room: room}; } }
         return {it: newItem(room), kind: "new", room: room};
       },
       revCount: function(){ return Math.min(revLeft(room), dueCards(room).length) + q.length; }
@@ -810,7 +835,7 @@
       if(it.nosrs) return;
       if(ok && (!R[room].srsNew || !BANKIX[id])) return;   // 생성 문항은 틀렸을 때만 복습 상자로
       c = S.cards[id] = {r: room, b: ok ? 2 : 1, d: add(TODAY, ok ? 2 : 1), w: ok ? 0 : 1, t: it.tag};
-      if(!BANKIX[id]) c.q = {tag: it.tag, q: it.q, n: it.n, fr: it.fr, num: it.num, c: it.c, a: it.a, e: it.e, ask: it.ask, ox: it.ox, keep: it.keep, u: it.u};
+      if(!BANKIX[id]) c.q = {tag: it.tag, q: it.q, n: it.n, fr: it.fr, num: it.num, c: it.c, a: it.a, e: it.e, ask: it.ask, ox: it.ox, keep: it.keep, u: it.u, bx: it.bx};
       return;
     }
     if(ok){ c.b++; c.d = c.b > 5 ? null : add(TODAY, BOX_DAYS[c.b]); }
@@ -876,7 +901,7 @@
       + '<div class="attend"><button class="chip" data-a="cond">' + (d.cond ? COND[d.cond][0] + " " + COND[d.cond][1] : "🙂 컨디션") + "</button>"
       + (d.back ? '<span class="chip hot">🔁 복귀 세트</span>' : "") + '<button class="chip" data-a="tomap" title="중학교 마스터">🗺️ 마스터 ' + allPct() + "%</button></div></div></div>"
       + '<button class="warm' + (wm >= wg ? " done" : "") + '" data-room="warm"><span class="e">' + (wm >= wg ? "✅" : "🔥") + '</span><div><b>준비운동 · 공부 체력</b><span>복습 루프 + 학습 도구어 · 먼저!</span></div><span class="m">' + wm + " / " + wg + "분</span></button>"
-      + '<div class="doors">' + IDS.slice(1).map(function(k){
+      + '<div class="doors' + (IDS.length > 6 ? " d6" : "") + '">' + IDS.slice(1).map(function(k){
           var r = R[k], mn = mins(k), gl = goalMin(k), rx = S.rx[k] && S.rx[k].until >= TODAY, dc = dueChecks(k).length;
           return '<button class="door' + (gl && mn >= gl ? " done" : "") + '" style="--c:' + r.col + '" data-room="' + k + '">' + (gl && mn >= gl ? '<span class="ck">✅</span>' : "") + (rx ? '<span class="rx">+' + S.rx[k].plus + "</span>" : "") + (dc ? '<span class="dc">⭐' + dc + "</span>" : "")
             + '<span class="e">' + r.emo + "</span><b>" + r.name.replace("통합", "통합<br>") + "</b><small>" + r.part + " · " + masterPct(k) + '%</small><span class="bar"><i style="width:' + (gl ? Math.min(100, mn / gl * 100) : (mn ? 100 : 0)) + '%"></i></span><span class="mn">' + mn + (gl ? "/" + gl : "") + "분</span></button>";
@@ -1013,11 +1038,12 @@
     var qtext = it.ds ? '<div class="qq qs">' + fmt(it.q) + "</div>" + dataHtml(it.ds) : it.chunk ? '<div class="toks">' + it.chunk.t.map(function(w, i){ return '<span class="tk">' + esc(w) + "</span>" + (i < it.chunk.t.length - 1 ? '<button class="gap" data-gap="' + i + '" aria-label="여기서 끊기"></button>' : ""); }).join("") + "</div>"
       : it.verb ? '<div class="toks vb">' + it.verb.t.map(function(w, i){ return '<button class="tk" data-vb="' + i + '">' + esc(w) + "</button>"; }).join(" ") + "</div>"
       : it.listen ? '<div class="lsn"><button class="spk" data-a="say" data-t="' + esc(it.listen) + '">🔊</button><button class="spk slow" data-a="say" data-t="' + esc(it.listen) + '" data-slow="1">🐢</button></div>' + (it.q !== "🔊" ? '<div class="qq">' + fmt(it.q) + "</div>" : "")
-      : '<div class="qq' + ((it.num && String(it.q).length < 18) || it.big ? " big" : "") + '">' + fmt(it.q) + "</div>";
+      : '<div class="qq' + ((it.num && String(it.q).length < 18) || it.big ? " big" : "") + (it.bx ? " bx" : "") + '">' + fmt(it.q) + "</div>";
     qc.innerHTML = tag + (it.p ? '<button class="pbtn" data-a="showp" data-p="' + esc(it.p) + '">📄 지문</button>' : it.say && !it.listen && TTS ? '<button class="pbtn" data-a="say" data-t="' + esc(it.say) + '">🔊</button>' : "") + qtext + (it.ask ? '<div class="qa">' + esc(it.ask) + "</div>" : "");
     if(it.listen) setTimeout(function(){ speak(it.listen); }, 250);
     T.chs = {};
     if(it.ds) qc.className = "qcard dsq";
+    else if(it.bx) qc.className = "qcard bxq";
     document.getElementById("tl").textContent = T.quiz && TESTK[T.quiz.kind] ? R[x.room].emo + " " + R[x.room].name + " · 시간 제한 없음" : x.ds ? (x.room === "eng" ? "📖 짧은 지문 · 세 문항은 끝까지" : "📊 자료 해석 · 세트 문항은 끝까지") : x.pf ? "📄 " + GYM_KOR.PX[x.pid].p.title + " · 지문 문항은 끝까지" : T.quiz ? "📍 " + FIB[x.fid || T.fid].n + " · 시간 제한 없음" : (T.fid && fiberOf(x.room, it) === T.fid ? "📍 오늘 단원 · " + FIB[T.fid].n + " · " : "") + (T.q.revCount() ? "🔁 복습 " + T.q.revCount() + "장 남음 · " : "") + "Lv." + lv(T.room) + (day().cond === "hard" ? " (쉽게)" : "");
     if(it.spell){
       var L = it.spell.toLowerCase().split(""), ab = "abcdefghijklmnopqrstuvwxyz";
@@ -1112,7 +1138,7 @@
     else if(x.fid){ var f2 = T.fr2[x.fid] = T.fr2[x.fid] || {n: 0, ok: 0}; f2.n++; if(ok) f2.ok++; }
     d.n[T.room] = (d.n[T.room] || 0) + 1; d.ok[T.room] = (d.ok[T.room] || 0) + (ok ? 1 : 0); d.t[T.room] = (d.t[T.room] || 0) + Math.min(dtq, 60);
     if(x.kind === "rev") d.rev[x.room] = (d.rev[x.room] || 0) + 1;
-    srs(x, ok);
+    srs(x, ok); markSeen(it.id);
     var g = 0;
     if(ok){ T.combo++; T.best = Math.max(T.best, T.combo); g = 10 + Math.min(T.combo, 5) * 2; }
     else { T.combo = 0; T.wrong.push({room: x.room, tag: it.tag}); if(navigator.vibrate) try{ navigator.vibrate(60); }catch(e){} }
@@ -1229,6 +1255,7 @@
     var svg = '<svg viewBox="0 0 200 270" aria-label="근육 몸 그림">'
       + '<circle cx="100" cy="26" r="18" fill="#FFE3B3" stroke="#2B2111" stroke-width="2"/><path d="M84 18 Q100 4 116 18" fill="none" stroke="#D9483B" stroke-width="6" stroke-linecap="round"/>'
       + '<rect x="92" y="42" width="16" height="10" fill="#FFE3B3"/>'
+      + (R.his ? '<path d="M70 58 L58 76 L66 122 L78 128 Z" ' + f("his") + '><title>등 · 한국사</title></path><path d="M130 58 L142 76 L134 122 L122 128 Z" ' + f("his") + '><title>등 · 한국사</title></path>' : "")
       + '<ellipse cx="62" cy="64" rx="18" ry="13" ' + f("sci") + '/><ellipse cx="138" cy="64" rx="18" ry="13" ' + f("sci") + "/>"
       + '<rect x="72" y="54" width="27" height="32" rx="10" ' + f("soc") + '/><rect x="101" y="54" width="27" height="32" rx="10" ' + f("soc") + "/>"
       + [0, 1, 2].map(function(i){ return '<rect x="80" y="' + (90 + i * 17) + '" width="19" height="14" rx="5" ' + f("math") + '/><rect x="101" y="' + (90 + i * 17) + '" width="19" height="14" rx="5" ' + f("math") + "/>"; }).join("")
@@ -1269,7 +1296,7 @@
     m.innerHTML = '<div class="mtop"><div class="mbig"><b>' + ap + '%</b><span>중학교 마스터</span></div><div class="msum">' + seg(c)
       + '<span class="muted">⭐ 마스터 ' + c[3] + " · 숙달 " + c[2] + " · 연습 " + c[1] + " / 근섬유 " + c.all + "</span>"
       + '<span class="muted">' + (md === "prog" ? "📅 진도 따라가기 · " + R[MAPSUB].name.replace("통합", "") + " 배운 단원 " + pl.length + "개 중 ⭐ " + plm + "개" : (md === "base" ? "🌱 기초 다지기 · " : "") + weekNo() + "주차 · " + ["", "1단계 기초 체력", "2단계 근력 강화", "3단계 실전·연결"][stageNow()]) + "</span></div></div>"
-      + '<div class="stab">' + SUBJ.map(function(k){ return '<button style="--c:' + R[k].col + '" aria-pressed="' + (k === MAPSUB) + '" data-sub="' + k + '"><b>' + R[k].emo + " " + R[k].name.replace("통합", "") + "</b><span>" + masterPct(k) + "%</span></button>"; }).join("") + "</div>"
+      + '<div class="stab' + (SUBJ.length > 5 ? " s6" : "") + '">' + SUBJ.map(function(k){ return '<button style="--c:' + R[k].col + '" aria-pressed="' + (k === MAPSUB) + '" data-sub="' + k + '"><b>' + R[k].emo + " " + R[k].name.replace("통합", "") + "</b><span>" + masterPct(k) + "%</span></button>"; }).join("") + "</div>"
       + '<div class="fgrid grow sc" style="--c:' + r.col + '">' + grid + "</div>"
       + '<div class="legend" style="--c:' + r.col + '"><span><i class="st0"></i>미진단</span><span><i class="st1"></i>연습 중</span><span><i class="st2"></i>숙달</span><span><i class="st3"></i>⭐ 마스터</span><span><i class="lock"></i>' + (md === "prog" ? "아직 안 배움" : "문항 준비 중") + '</span><span>▢ 오늘 단원</span></div>';
   }
@@ -1285,7 +1312,7 @@
       + '<div class="fsteps" style="--c:' + r.col + '">' + steps.map(function(t, i){ return '<span class="' + (on[i] ? "on" : "") + '">' + t + "</span>"; }).join("<em>›</em>") + "</div>"
       + '<div class="win" style="text-align:left">' + rule + (x.h && x.h.length ? '<br><span class="muted">최근 기록 ' + x.h.map(function(h){ return h[1] + "%"; }).join(" · ") + "</span>" : "") + "</div>"
       + (op && !modeOk(fid) && !(f.base && x.st) ? '<div class="win">' + (f.base ? "🌱 기초 다지기 모드에서 열려요 · 📅 기록 → 🎯 모드·반" : "📅 아직 진도 링크로 받지 않은 단원이에요. 선생님이 이 단원 진도 링크를 주면 열려요.") + "</div>"
-        : !op ? '<div class="win">🛠️ 이 단원 문항은 ' + ({kor: 4, math: 3, eng: 5, sci: 7, soc: 8})[f.room] + "단계에서 채워져요</div>"
+        : !op ? '<div class="win">🛠️ 이 단원 문항은 ' + ({kor: 4, math: 3, eng: 5, sci: 7, soc: 8, his: 22})[f.room] + "단계에서 채워져요</div>"
         : (due ? '<button class="btn" data-a2="quiz" data-fid="' + fid + '" data-kind="' + (x.st === 3 ? "re" : "check") + '">⭐ ' + (x.st === 3 ? "마스터 확인 (" + RE_N : "7일 확인 세트 (" + Math.min(QUIZ_N, avail(fid))) + "문제)</button>" : "")
           + (x.st < 2 ? '<div class="row"><button class="btn sub" data-a2="quiz" data-fid="' + fid + '" data-kind="diag">🧪 진단 ' + Math.min(QUIZ_N, avail(fid)) + '문제</button><button class="btn" data-a2="setcur" data-fid="' + fid + '">📍 오늘 단원으로</button></div>' : ""))
       + '<button class="btn sub" data-x="1">닫기</button>');
@@ -1382,9 +1409,9 @@
   handlers.intdlg = function(){ startDlg(true); };
   handlers.help = function(){
     dlg('<h3>💪 공부 Gym 사용법</h3><div class="muted" style="font-size:14.5px;line-height:1.65;color:var(--ink)">'
-      + "① 매일 <b>준비운동 → PT실 5개</b>를 10분씩. 10분 = 5분 세트 2개, 채우면 <b>출석</b>.<br>"
+      + "① 매일 <b>준비운동 → PT실 6개</b>를 10분씩. 10분 = 5분 세트 2개, 채우면 <b>출석</b>.<br>"
       + "② 첫 세트는 늘 <b>복습 먼저</b>. 틀린 문제는 1·2·4·7·14일 뒤에 다시 나와요. 14일 뒤에도 맞히면 <b>완전히 내 것</b>!<br>"
-      + "③ 월요일마다 강도를 골라요: 🙂 기본 60분 · 💪 권장 90분 · 🔥 도전 120분+. 중간에 낮춰도 괜찮아요.<br>"
+      + "③ 월요일마다 강도를 골라요: 🙂 기본 70분 · 💪 권장 100분 · 🔥 도전 130분+. 중간에 낮춰도 괜찮아요.<br>"
       + "④ 힘든 날은 컨디션 <b>😮‍💨 힘듦</b> → 쉬운 문제로. 하루 빠져도 <b>🎟 휴식권</b>(주 1번)이 연속 기록을 지켜 줘요.<br>"
       + "⑤ 세트가 끝나면 <b>오늘 가장 헷갈린 것</b>을 골라요. 내일 준비운동에 먼저 나와요.<br>"
       + "⑥ 막히면 PT실의 <b>🧭 막힐 땐?</b>, 하고 싶은 말은 기록 화면의 <b>💬 건의·후기</b>. 이상한 문제는 틀렸을 때 <b>🚩</b>로 알려 줘요."

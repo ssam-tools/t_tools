@@ -368,7 +368,7 @@ async function getSeeds(area,feels,note,round){
   let list=SEEDS[area]||SEEDS['생활습관'];
   if(area==='공부'){const g=gymNow(),w=g.weak;                         // 공부 Gym 진단에서 가장 키울 과목을 맨 앞에
     list=[w?[`100일 동안 매일 공부 Gym ${w.name} PT 10분 하기`,'count','분',10,w.tested?'입소 진단에서 가장 키울 근육이에요':'아직 가장 덜 키운 근육이에요']:['100일 동안 매일 공부 Gym 준비운동 10분 하기','count','분',10,'공부 체력부터 키워요'],
-      ['100일 동안 매일 공부 Gym 60분(기본 강도) 하기','count','분',60,'Gym 링을 매일 채워요']].concat(list)}
+      ['100일 동안 매일 공부 Gym 70분(기본 강도) 하기','count','분',70,'Gym 링을 매일 채워요']].concat(list)}
   const off=(((round||1)-1)*3)%list.length;
   const seeds=[0,1,2].map(i=>list[(off+i)%list.length]).map(([goal,type,unit,target,why])=>({goal,type,unit,target,why}));
   return {ai:false,seeds,question:'이 중에서 마음이 조금이라도 끌리는 것이 있나요? 끌리는 이유를 생각해 보세요.'};

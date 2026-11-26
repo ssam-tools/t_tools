@@ -126,7 +126,7 @@ var GYM_ROOMS = (function(){
   var SCIU = {"힘": "s.force", "빛과 파동": "s.light", "전기": "s.elec", "물질의 상태": "s.state", "기체": "s.gas", "물질의 구성": "s.matter", "식물과 에너지": "s.plant",
     "자극과 반응": "s.resp", "생식과 유전": "s.gene", "기권과 날씨": "s.air", "태양계": "s.solar", "에너지": "s.energy", "속력": "s.motion", "밀도": "s.prop"};
   return {
-    order: ["warm", "kor", "math", "eng", "sci", "soc"],
+    order: ["warm", "kor", "math", "eng", "sci", "soc"].concat(typeof GYM_HIS !== "undefined" ? ["his"] : []),
     warm: typeof GYM_WARM !== "undefined"   // 6단계: 학습 도구어는 warm.js
       ? {name: "준비운동", part: "공부 체력", emo: "🔥", col: "#FF7A45", bank: [], vocab: GYM_WARM.vocab, vocabDaily: 999, srsNew: true}
       : {name: "준비운동", part: "공부 체력", emo: "🔥", col: "#FF7A45", bank: vocab("warm:", "학습 도구어", TOOLW, "밑줄 친 말의 뜻은?"), srsNew: true},
@@ -150,6 +150,10 @@ var GYM_ROOMS = (function(){
     soc: typeof GYM_SOC !== "undefined"   // 8단계: 통합사회 PT 자료는 soc.js (개념어 · 자료 해석 · 관점 비교)
       ? {name: "통합사회", part: "가슴", emo: "🌏", col: "#E05BA8", bank: vocab("soc:", "개념어", SW, "밑줄 친 말의 뜻으로 알맞은 것은?").concat(GYM_SOC.words, GYM_SOC.ditems),
          srsNew: true, intake: true, dsets: GYM_SOC, setNames: ["개념어", "자료 해석 + 관점 비교"]}
-      : {name: "통합사회", part: "가슴", emo: "🌏", col: "#E05BA8", bank: vocab("soc:", "개념어", SW, "밑줄 친 말의 뜻으로 알맞은 것은?"), srsNew: true}
+      : {name: "통합사회", part: "가슴", emo: "🌏", col: "#E05BA8", bank: vocab("soc:", "개념어", SW, "밑줄 친 말의 뜻으로 알맞은 것은?"), srsNew: true},
+    his: typeof GYM_HIS !== "undefined"   // 22단계(3부): 한국사 PT 자료는 his.js (사실 카드 → 사료형·이름 찾기·OX + 순서 배열·〈보기〉 생성)
+      ? {name: "한국사", part: "등", emo: "📜", col: "#A0612B", bank: GYM_HIS.bank, gen: GYM_HIS.gen, genTags: GYM_HIS.genTags, unitOf: GYM_HIS.unitOf, mix: .25, genRatio: .3,
+         srsNew: true, intake: true, setNames: ["복습 + 오늘 시대", "사료형 · 순서 · 〈보기〉"]}
+      : null
   };
 })();

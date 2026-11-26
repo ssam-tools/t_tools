@@ -110,7 +110,7 @@
 (function(){
   "use strict";
   var KEY = "gymboard_v1", S, TAB = "board", WEEK = null, SORT = "p";
-  var R = {warm: ["🔥", "준비"], kor: ["📖", "국어"], math: ["🧮", "수학"], eng: ["🔤", "영어"], sci: ["🔬", "과학"], soc: ["🌏", "사회"]}, IDS = Object.keys(R), INT = {base: "🙂 기본", rec: "💪 권장", ch: "🔥 도전"};
+  var R = {warm: ["🔥", "준비"], kor: ["📖", "국어"], math: ["🧮", "수학"], eng: ["🔤", "영어"], sci: ["🔬", "과학"], soc: ["🌏", "사회"], his: ["📜", "한국사"]}, IDS = Object.keys(R), INT = {base: "🙂 기본", rec: "💪 권장", ch: "🔥 도전"};
   function load(){ try{ S = JSON.parse(localStorage.getItem(KEY)) || {e: {}}; }catch(e){ S = {e: {}}; } if(!S.e) S.e = {}; }
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]; }); }
@@ -178,9 +178,9 @@
     try{ q = TTQR.svg(url); }catch(e){ q = ""; }
     m.className = "sc";
     m.innerHTML = '<div class="row noprint" style="justify-content:center"><button class="btn" id="pr">🖨️ 인쇄 (A4 한 장)</button><span class="muted">반 게시판·가정 통신문에 붙이기 좋아요</span></div>'
-      + '<div class="sheet"><h2>💪 공부 Gym · 쌤비 PT</h2><p class="lead">하루 60분, 12주 동안 중학교 공부를 마스터하고 고등학교에 입학하자!</p>'
+      + '<div class="sheet"><h2>💪 공부 Gym · 쌤비 PT</h2><p class="lead">하루 70분, 12주 동안 중학교 공부를 마스터하고 고등학교에 입학하자!</p>'
       + '<div class="top"><div class="qr">' + q + '</div><ol><li>휴대폰 카메라로 QR을 찍어 <b>공부 Gym</b>을 열어요.</li><li>브라우저 메뉴에서 <b>홈 화면에 추가</b>를 누르면 앱처럼 쓸 수 있어요.</li><li><b>별명</b>만 정하고(진짜 이름 X), 오늘 컨디션과 이번 주 강도를 골라요.</li><li><b>🔥 준비운동 → 📖 국어 · 🧮 수학 · 🔤 영어 · 🔬 통합과학 · 🌏 통합사회</b> PT실을 10분씩!</li><li>처음 들어간 PT실에서는 <b>🧪 입소 진단</b>으로 이미 아는 단원을 건너뛰어요.</li></ol></div>'
-      + '<div class="grid"><div><b>⏱️ 10분 = 출석</b>5분 세트 2개. 첫 세트는 늘 복습 먼저, 두 번째는 오늘 단원.</div><div><b>🏋️ 강도는 주마다</b>🙂 기본 60분 · 💪 권장 90분(방학) · 🔥 도전 120분+</div>'
+      + '<div class="grid"><div><b>⏱️ 10분 = 출석</b>5분 세트 2개. 첫 세트는 늘 복습 먼저, 두 번째는 오늘 단원.</div><div><b>🏋️ 강도는 주마다</b>🙂 기본 70분 · 💪 권장 100분(방학) · 🔥 도전 130분+</div>'
       + '<div><b>🔁 틀린 문제는 다시 만나요</b>1·2·4·7·14일 뒤 다시 나오고, 14일 뒤에도 맞히면 \'완전히 내 것\'.</div><div><b>🗺️ 마스터 맵</b>단원마다 연습 → 숙달 → 7일 뒤 확인 → ⭐마스터. 100%면 중학교 마스터!</div>'
       + '<div><b>🎟️ 포기하지 않게</b>주 1번 휴식권, 힘든 날은 쉬운 문제, 3일 쉬면 준비운동 10분만.</div><div><b>🏆 측정과 인증</b>주말 종합 PT · 4·8주 검사 · 12주 최종 측정 → 성장 리포트와 인증서.</div></div>'
       + '<p class="priv">🔒 기록은 내 휴대폰에만 저장돼요(서버 없음). 선생님이 준 반 코드를 넣으면 반 코드와 무작위 기기 번호만 보내 ‘우리 반 오늘 출석 ○명’을 함께 봐요. 휴대폰을 바꿀 땐 📅 기록 → 💾 백업 코드. 🧾 결과 코드는 원할 때만 담임 선생님께 보여 줘요.</p>'
@@ -189,7 +189,7 @@
   }
   /* 🔗 반 코드 · 📅 진도 링크 */
   var LSUB = "math", LSEL = {}, LCLS = "";
-  var SUBN = {kor: "📖 국어", math: "🧮 수학", eng: "🔤 영어", sci: "🔬 과학", soc: "🌏 사회"};
+  var SUBN = {kor: "📖 국어", math: "🧮 수학", eng: "🔤 영어", sci: "🔬 과학", soc: "🌏 사회", his: "📜 한국사"};
   var FBU = typeof GYM_FEEDBACK !== "undefined" && GYM_FEEDBACK.url || "";
   function gymUrl(q){ return new URL("./", location.href).href + (q ? "?" + q : ""); }
   function qrSvg(u){ try{ return TTQR.svg(u); }catch(e){ return ""; } }

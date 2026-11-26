@@ -6,7 +6,7 @@
 (function(){
   "use strict";
   if(window.JDGYM) return;
-  var ROOMS = {warm: ["준비운동", "🔥"], kor: ["국어", "📖"], math: ["수학", "🧮"], eng: ["영어", "🔤"], sci: ["통합과학", "🔬"], soc: ["통합사회", "🌏"]};
+  var ROOMS = {warm: ["준비운동", "🔥"], kor: ["국어", "📖"], math: ["수학", "🧮"], eng: ["영어", "🔤"], sci: ["통합과학", "🔬"], soc: ["통합사회", "🌏"], his: ["한국사", "📜"]};
   var HEART = [0, 7, 21, 50, 100], HEARTN = ["작은 심장", "뛰는 심장", "튼튼한 심장", "강철 심장", "백일 심장"];
   function pad(n){ return (n < 10 ? "0" : "") + n; }
   function ymd(d){ d = d || new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
@@ -20,7 +20,7 @@
     var d = S.days[ymd()], rooms = {}, t = 0;
     Object.keys(ROOMS).forEach(function(k){ rooms[k] = mins(d, k); t += rooms[k]; });
     var weak = null, best = 1e9;
-    ["kor", "math", "eng", "sci", "soc"].forEach(function(k){                     // 입소 진단 정답률이 가장 낮은 과목, 진단 전이면 XP가 가장 적은 과목
+    ["kor", "math", "eng", "sci", "soc", "his"].forEach(function(k){                     // 입소 진단 정답률이 가장 낮은 과목, 진단 전이면 XP가 가장 적은 과목
       var it = S.intake && S.intake[k], v;
       if(it && it.r && it.r.length){ var o = 0, n = 0; it.r.forEach(function(w){ o += w[1]; n += w[2]; }); v = n ? o / n : 1; }
       else v = 2 + ((S.xp && S.xp[k]) || 0) / 1e6;

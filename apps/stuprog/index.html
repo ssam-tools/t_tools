@@ -55,7 +55,7 @@
   var ROOT = new URL("../../", location.href);
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   var P = [
-    {id: "g", ic: "💪", n: "공부 Gym · 쌤비 PT", d: "하루 60분 · 6개 PT실 · 중학교 마스터 12주", u: new URL("apps/gym/", ROOT).href,
+    {id: "g", ic: "💪", n: "공부 Gym · 쌤비 PT", d: "하루 70분 · 7개 PT실(한국사 포함) · 중학교 마스터 12주", u: new URL("apps/gym/", ROOT).href,
      x: [["📊 반 현황판", "../gym/board.html"], ["🔗 반 코드·진도 링크", "../gym/board.html#link"], ["🖨️ 학생 안내문", "../gym/board.html#guide"]]},
     {id: "j", ic: "📝", n: "지당 노트 · 쌤비 코치", d: "지금 당장, 변화의 시작! · 목표 → 매일 한 줄 → 100일", u: new URL("apps/jidang/", ROOT).href,
      x: [["📊 지당 현황·선물 코드", "../gym/board.html#jd"]]},
