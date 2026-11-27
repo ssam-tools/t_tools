@@ -2,7 +2,30 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
+<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}  .nb{font-style:normal;font-size:11px;font-weight:800;background:#e5484d;color:#fff;border-radius:999px;padding:0 6px;line-height:17px;margin-left:auto}
+  .nav button[aria-current=true] .nb{background:#fff;color:#e5484d}
+  .fbBar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex:none}
+  .fbBar input{font:inherit;font-size:13.5px;height:32px;border:1px solid var(--line);border-radius:999px;padding:0 12px;min-width:160px;flex:1;max-width:260px;background:var(--card,#fff);color:var(--ink)}
+  .fbBar .sp{flex:1}
+  .stabs button i{font-style:normal;font-size:11px;font-weight:800;margin-left:4px;opacity:.8}
+  .fbl{display:flex;flex-direction:column;gap:6px}
+  .fbi{background:var(--card,#fff);border:1px solid var(--line);border-radius:12px;padding:8px 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;font-size:13.5px}
+  .fbi.new{border-left:4px solid #e5484d}
+  .fbi .mt{font-size:12px;color:var(--sub);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .fbi .mt b{color:var(--ink)}
+  .fbi .tx{grid-column:1;white-space:pre-wrap;line-height:1.55;word-break:break-word}
+  .fbi .q{grid-column:1;font-size:12px;color:var(--sub);background:#f6f7f9;border-radius:8px;padding:3px 8px}
+  .fbi .rp{grid-column:1/-1;background:#eaf6ef;color:#1a5e3c;border-radius:9px;padding:5px 10px;white-space:pre-wrap;font-size:13px}
+  .fbi .ct{grid-column:2;grid-row:1/span 2;display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end}
+  .fbi select{font:inherit;font-size:12.5px;height:30px;border:1px solid var(--line);border-radius:8px;padding:0 6px;background:var(--card,#fff);color:var(--ink)}
+  .fbi .pub{font:inherit;font-size:12.5px;height:30px;border:1px solid var(--line);border-radius:8px;padding:0 9px;background:var(--card,#fff);cursor:pointer;color:var(--sub)}
+  .fbi .pub.on{background:#e8f0fb;border-color:#9dbbe6;color:#1f4f99;font-weight:700}
+  .fbi .wr{grid-column:1/-1;display:flex;gap:6px;align-items:flex-end}
+  .fbi .wr textarea{font:inherit;font-size:13.5px;flex:1;min-height:58px;border:1px solid var(--accent);border-radius:9px;padding:6px 9px;resize:vertical;background:var(--card,#fff);color:var(--ink)}
+  .fbi .btn.sm{font-size:12.5px;height:30px;padding:0 10px;min-height:0}
+  .fbi .st{font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px}
+  .st.n{background:#fde7e7;color:#a8262b} .st.d{background:#fff3d6;color:#7a5200} .st.c{background:#e2f4e9;color:#1a6a43}
+</style>
 <!-- 외부로 자료를 보내는 통로를 막습니다. 예외: 학교 업무판(구글 앱스 스크립트) — 잠긴 글자와 관리자 확인만 오갑니다. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://open.neis.go.kr https://api.open-meteo.com https://air-quality-api.open-meteo.com https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -101,7 +124,7 @@
   function toast(t){ if(TT.ui && TT.ui.toast) TT.ui.toast(t); }
   var SEC = [
     ["school", "🏫", "학교 정보"], ["staff", "👥", "교직원"], ["roster", "🧑‍🎓", "학생 명렬"], ["cal", "📅", "학사일정"],
-    ["safe", "🔐", "금고"], ["lib", "📚", "자료실·짧은 주소"], ["room", "📱", "교실 기기"], ["keys", "🔑", "비밀번호·열쇠", true], ["log", "🕘", "변경 기록"]
+    ["safe", "🔐", "금고"], ["lib", "📚", "자료실·짧은 주소"], ["room", "📱", "교실 기기"], ["fb", "💬", "의견함"], ["keys", "🔑", "비밀번호·열쇠", true], ["log", "🕘", "변경 기록"]
   ];
   var cur = (location.hash || "").replace(/^#/, "") || sessionStorage.getItem("ttadm_sec") || "staff";
   var SA = null;          // 학교 세팅 A 묶음 {A, ver, books, hasB}
@@ -133,12 +156,13 @@
     if(!s){ drawLock(); return; }
     if(!SEC.some(function(x){ return x[0] === cur; })) cur = "staff";
     $("nav").innerHTML = '<div class="who">' + (s.role === "super" ? "👑 <b>최고 관리자</b>" : "🛡️ <b>관리자</b>") + " · " + esc(s.name) + "</div>"
-      + SEC.map(function(x){ var lockd = x[3] && s.role !== "super"; return '<button type="button" data-s="' + x[0] + '" aria-current="' + (x[0] === cur) + '"' + (lockd ? ' title="최고 관리자만"' : "") + ">" + x[1] + " " + esc(x[2]) + (lockd ? "<small>👑</small>" : "") + "</button>"; }).join("")
+      + SEC.map(function(x){ var lockd = x[3] && s.role !== "super"; return '<button type="button" data-s="' + x[0] + '" aria-current="' + (x[0] === cur) + '"' + (lockd ? ' title="최고 관리자만"' : "") + ">" + x[1] + " " + esc(x[2]) + (lockd ? "<small>👑</small>" : "") + (x[0] === "fb" ? '<i class="nb" id="fbNb"' + (fbNew() ? "" : " hidden") + ">" + fbNew() + "</i>" : "") + "</button>"; }).join("")
       + '<hr><button type="button" id="endB">관리자 모드 끝내기</button>';
     $("endB").onclick = function(){ if(dirty && !confirm("올리지 않은 고친 내용이 있어요. 그래도 끝낼까요?")) return; dirty = false; AD.end(false); };
     try{ sessionStorage.setItem("ttadm_sec", cur); }catch(e){}
+    if(!FB && !fbAsked && cur !== "fb"){ fbAsked = true; AD.call("fblist").then(fbKeep, function(){}); }   // 새 의견 수만 살짝
     $("body").onclick = null;
-    ({school: secSchool, staff: secStaff, roster: secRoster, cal: secCal, safe: secSafe, lib: secLib, room: secRoom, keys: secKeys, log: secLog})[cur]();
+    ({school: secSchool, staff: secStaff, roster: secRoster, cal: secCal, safe: secSafe, lib: secLib, room: secRoom, fb: secFb, keys: secKeys, log: secLog})[cur]();
   }
   $("nav").addEventListener("click", function(e){
     var b = e.target.closest("[data-s]"); if(!b) return;
@@ -403,6 +427,85 @@
     }, function(e){ fail(e, secLog); });
   }
 
+
+  /* ───────── 💬 의견함 (v2.54) — 선생님 의견(업무판 '의견' 시트) + 학생 의견(공부 Gym 건의함) ─────────
+     · 새 글 = 처리 칸이 빈 글 · 답변을 쓰면 처리가 비어 있을 때 '완료'로 · 학생 글 [공개]를 켜면 공부 Gym 건의함에 모두에게 보임
+     · 학생 답변은 그 학생 기기의 '📬 내 글에 온 답변'에, 선생님 답변은 보낸 선생님 쌤 노트의 쌤비 쪽지에 나타남 */
+  var FB = null, fbAsked = false, fbTab = sessionStorage.getItem("ttadm_fbt") || "teach", fbF = "n", fbQ = "", fbOpen = null;
+  var GK = {idea: "💡 건의", bug: "🐞 불편·오류", review: "⭐ 사용 후기", q: "🚩 문제 신고"};
+  function fbNew(){ try{ return Number(localStorage.getItem("ttadm_fbnew") || 0); }catch(e){ return 0; } }
+  function stOf(x){ var t = String(x.st || "").trim(); return !t ? "n" : /완료|끝|답변함/.test(t) ? "c" : "d"; }
+  function fbKeep(r){
+    FB = {teach: r.teach || [], gym: r.gym || [], gymErr: r.gymErr || ""};
+    var n = FB.teach.concat(FB.gym).filter(function(x){ return stOf(x) === "n"; }).length;
+    try{ localStorage.setItem("ttadm_fbnew", String(n)); }catch(e){}
+    var b = $("fbNb"); if(b){ b.textContent = n; b.hidden = !n; }
+    return FB;
+  }
+  function secFb(force){
+    if(!FB || force === true){ busy("의견을 받는 중…"); AD.call("fblist").then(function(r){ fbKeep(r); paintFb(); }, function(e){ fail(e, function(){ secFb(true); }); }); return; }
+    paintFb();
+  }
+  function paintFb(){
+    var L = FB[fbTab], cnt = function(arr, f){ return arr.filter(function(x){ return f === "all" || stOf(x) === f; }).length; };
+    var q = fbQ.toLowerCase(), rows = L.filter(function(x){ return (fbF === "all" || stOf(x) === fbF) && (!q || [x.text, x.name, x.nick, x.reply, x.q, x.page].join(" ").toLowerCase().indexOf(q) >= 0); });
+    var tabs = [["teach", "👩‍🏫 선생님 의견"], ["gym", "🧑‍🎓 학생 의견 · 공부 Gym"]].map(function(t){ var nn = cnt(FB[t[0]], "n"); return '<button type="button" data-ft="' + t[0] + '" class="' + (fbTab === t[0] ? "on" : "") + '">' + t[1] + (nn ? "<i>새 " + nn + "</i>" : "") + "</button>"; }).join("");
+    var fil = [["new", "🔴 새 글", "n"], ["doing", "🟡 처리 중", "d"], ["done", "🟢 완료", "c"], ["all", "전체", "all"]].map(function(f){ return '<button type="button" data-ff="' + f[2] + '" class="' + (fbF === f[2] ? "on" : "") + '">' + f[1] + " <i>" + cnt(L, f[2]) + "</i></button>"; }).join("");
+    $("body").innerHTML = head("💬 의견함", fbTab === "teach" ? "선생님들이 쌤 노트 ❓ 도움말 → 💬 의견 보내기로 보낸 글 · 답변은 보낸 선생님의 쌤비 쪽지에 📬로 가요(이름 없이 보낸 글도 받아요)." : "학생들이 공부 Gym 💬 건의함에 보낸 글(별명만 있어요) · 답변은 그 학생 기기의 '📬 내 글에 온 답변'에, [공개]를 켜면 건의함에서 모두에게 보여요.",
+        '<button type="button" class="btn" id="fbRe">↻ 새로 받기</button>')
+      + '<div class="stabs">' + tabs + "</div>"
+      + '<div class="fbBar"><div class="stabs">' + fil + '</div><span class="sp"></span><input type="search" id="fbQ" placeholder="🔍 내용·이름 찾기" value="' + esc(fbQ) + '"></div>'
+      + '<div class="scr"><div class="fbl">' + (fbTab === "gym" && FB.gymErr ? '<div class="card"><p>⚠ 공부 Gym 건의함 시트를 열지 못했어요: ' + esc(FB.gymErr) + "</p><p>업무판 Apps Script 편집기에서 <b>의견함_시험</b>을 한 번 실행해 다른 시트 열기를 허락해 주세요.</p></div>" : "")
+      + (rows.map(fbRow).join("") || '<div class="card"><p>' + (fbF === "n" ? "🎉 새 글이 없어요." : "해당하는 글이 없어요.") + "</p></div>") + "</div></div>"
+      + '<div class="foot"><span class="msg" id="fbMsg">답변·처리·공개를 바꾸면 바로 저장되고 🕘 변경 기록에 요약이 남아요.</span></div>';
+    $("fbRe").onclick = function(){ secFb(true); };
+    var qi = $("fbQ"); qi.oninput = function(){ fbQ = qi.value; var p = qi.selectionStart; paintFb(); var n = $("fbQ"); n.focus(); try{ n.setSelectionRange(p, p); }catch(e){} };
+    if(fbOpen != null){ var ta = document.querySelector('[data-row="' + fbOpen + '"] textarea'); if(ta) ta.focus(); }
+  }
+  function fbRow(x){
+    var g = fbTab === "gym", k = stOf(x), lab = {n: "새 글", d: "처리 중", c: "완료"}[k];
+    var who = g ? "🧑‍🎓 " + esc(x.nick || "별명 없음") : "👩‍🏫 " + esc(x.name || "이름 없이");
+    var meta = '<span class="st ' + k + '">' + lab + "</span><span>" + esc(x.at) + "</span><b>" + who + "</b>"
+      + (g ? "<span>" + esc(GK[x.type] || x.type || "") + "</span>" + (x.stars && Number(x.stars) ? "<span>" + "★".repeat(Math.min(5, Number(x.stars))) + "</span>" : "") + (x.wk ? "<span>" + esc(x.wk) + "</span>" : "") + (x.wish ? "<span>공개 희망 " + esc(x.wish) + "</span>" : "")
+           : "<span>📍 " + esc(x.page || "") + "</span><span>v" + esc(x.ver || "") + "</span>" + (x.mine ? "" : '<span title="예전 판에서 보낸 글이라 답변이 그 선생님께 저절로 가지 않아요">✉ 직접 전달</span>'));
+    var sel = '<select data-fst="' + x.row + '" aria-label="처리">' + [["", "새 글"], ["처리 중", "처리 중"], ["완료", "완료"]].map(function(o){ var on = o[0] ? String(x.st || "") === o[0] : !x.st; return '<option value="' + o[0] + '"' + (on ? " selected" : "") + ">" + o[1] + "</option>"; }).join("")
+      + (x.st && !/^(처리 중|완료)$/.test(x.st) ? '<option selected value="' + esc(x.st) + '">' + esc(x.st) + "</option>" : "") + "</select>";
+    var ct = '<div class="ct">' + (g ? '<button type="button" class="pub' + (x.pub ? " on" : "") + '" data-fpub="' + x.row + '" title="공부 Gym 건의함에서 모두에게 보이기">' + (x.pub ? "👁 공개" : "공개 안 함") + "</button>" : "") + sel
+      + '<button type="button" class="btn sm" data-frp="' + x.row + '">' + (x.reply ? "✏ 답변 고치기" : "💬 답변 쓰기") + "</button></div>";
+    return '<div class="fbi' + (k === "n" ? " new" : "") + '" data-row="' + x.row + '"><div class="mt">' + meta + "</div>" + ct + '<div class="tx">' + esc(x.text) + "</div>"
+      + (g && x.q ? '<div class="q">🚩 ' + esc(x.qid ? x.qid + " · " : "") + esc(x.q) + "</div>" : "")
+      + (fbOpen === x.row ? '<div class="wr"><textarea maxlength="1000" placeholder="' + (g ? "학생에게 보낼 답변 (학생 이름·개인정보는 적지 않기)" : "선생님께 보낼 답변") + '">' + esc(x.reply || "") + '</textarea><button type="button" class="btn" data-fx="1">취소</button><button type="button" class="btn primary" data-fsave="' + x.row + '">보내기</button></div>'
+         : x.reply ? '<div class="rp">💬 ' + esc(x.reply) + "</div>" : "") + "</div>";
+  }
+  function fbFind(row){ return FB[fbTab].filter(function(x){ return x.row === Number(row); })[0]; }
+  function fbSave(x, ch, okTxt){
+    $("fbMsg").textContent = "저장하는 중…";
+    return AD.call("fbset", Object.assign({src: fbTab, row: x.row, chk: String(x.text).slice(0, 20)}, ch)).then(function(){
+      Object.keys(ch).forEach(function(k){ x[k] = ch[k]; });
+      fbKeep(FB); paintFb(); $("fbMsg").innerHTML = '<span class="ok">✓ ' + esc(okTxt) + "</span>";
+    }, function(e){
+      if(/CONFLICT/.test(String(e && e.message || e))){ toast("시트가 그사이 바뀌었어요. 새로 받아 올게요."); secFb(true); return; }
+      $("fbMsg").innerHTML = '<span class="er">' + esc(AD.errText(e)) + "</span>";
+    });
+  }
+  $("body").addEventListener("click", function(e){
+    if(cur !== "fb" || !FB) return;
+    var t = e.target.closest("button"); if(!t) return;
+    if(t.dataset.ft){ fbTab = t.dataset.ft; fbOpen = null; try{ sessionStorage.setItem("ttadm_fbt", fbTab); }catch(er){} paintFb(); return; }
+    if(t.dataset.ff){ fbF = t.dataset.ff; fbOpen = null; paintFb(); return; }
+    if(t.dataset.frp){ fbOpen = Number(t.dataset.frp); paintFb(); return; }
+    if(t.dataset.fx){ fbOpen = null; paintFb(); return; }
+    if(t.dataset.fpub){ var xp = fbFind(t.dataset.fpub); if(xp) fbSave(xp, {pub: !xp.pub}, xp.pub ? "공개를 껐어요" : "공부 Gym 건의함에 공개했어요"); return; }
+    if(t.dataset.fsave){
+      var xs = fbFind(t.dataset.fsave), v = t.parentNode.querySelector("textarea").value.trim(); if(!xs) return;
+      var ch = {reply: v}; if(v && stOf(xs) === "n") ch.st = "완료";
+      fbOpen = null; fbSave(xs, ch, v ? (fbTab === "gym" ? "답변을 보냈어요 · 학생 기기의 📬 내 글에 온 답변에 보여요" : "답변을 보냈어요 · 보낸 선생님의 쌤비 쪽지에 📬로 가요") : "답변을 지웠어요");
+    }
+  });
+  $("body").addEventListener("change", function(e){
+    if(cur !== "fb" || !FB) return; var s2 = e.target.closest("[data-fst]"); if(!s2) return;
+    var x = fbFind(s2.dataset.fst); if(x) fbSave(x, {st: s2.value}, "처리 상태를 '" + (s2.value || "새 글") + "'(으)로 바꿨어요");
+  });
   SF.on(function(s){ if(!s.open && cur === "safe" && AD.state() && document.getElementById("tb") && SD){ SD = null; if(!dirty) secSafe(); } });
   draw();
 })();

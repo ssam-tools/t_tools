@@ -554,6 +554,12 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
   .hubDlg .hn,.hubDlg .hi{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:800;background:var(--t-accent-soft,#e6f0fa);color:var(--t-accent,#2f6fb5)}
   .hubDlg .hr.ok .hn{background:#1D9E75;color:#fff}
   .hubDlg .hr.danger b{color:#c0392b}
+  .fbMine{margin-top:10px;border-top:1px dashed var(--line,#dde3ea);padding-top:8px;display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto;font-size:13px}
+  .fbMine .fm{background:var(--t-chip,#f4f6f8);border-radius:10px;padding:6px 10px;display:flex;flex-direction:column;gap:2px}
+  .fbMine .fm.got{background:#eaf6ef}
+  .fbMine small{color:var(--sub,#5b6773);font-size:11.5px}
+  .fbMine p{margin:2px 0 0;color:#1a6a43;font-weight:600}
+  .fbMine em{font-style:normal;color:var(--sub,#5b6773);font-size:12px}
 </style>
 </head>
 <body>
@@ -684,6 +690,7 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
     <label class="field" style="margin-top:8px">이름 <small>(선택 · 답을 받고 싶을 때)</small><input type="text" id="fbName" maxlength="20" autocomplete="off"></label>
     <p class="sm" style="margin-top:8px">🔒 학생 이름 등 개인정보는 적지 말아 주세요. 함께 가는 것: 쌤 노트 버전 · 보고 있던 화면 이름</p>
     <p class="bErr" id="fbErr"></p>
+    <div id="fbMine" class="fbMine" hidden></div>
     <div class="acts"><span></span><div class="r"><button type="button" class="btn" id="fbCancel">취소</button><button type="submit" class="btn primary" id="fbOk">보내기</button></div></div>
   </form>
 </dialog>
@@ -901,18 +908,19 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
         {ic: "🦉", t: "처음 사용 안내", s: "쌤 노트 쓰는 법", fn: clickMenu("mHelp")},
         {ic: "⌨️", t: "단축키 안내", s: "/ 찾기 · Alt+1~5 메뉴 · Alt+B 쌤비 · ?", fn: clickMenu("mKeys")},
         {ic: "📲", t: "앱 설치하기", s: "바탕화면·홈 화면에 쌤비 아이콘", fn: clickMenu("mInstall")},
-        {ic: "💬", t: "의견 보내기", s: "불편한 점 · 아이디어를 담당 선생님께", fn: clickMenu("mFeedback")}]; }}
+        {ic: "💬", t: "의견 보내기", s: (window.TT_FBM && TT_FBM.unseen() ? "📬 보낸 의견에 답이 " + TT_FBM.unseen() + "개 왔어요 · " : "") + "불편한 점 · 아이디어를 담당 선생님께", fn: clickMenu("mFeedback")}]; }}
     };
     function startSt(){ var R = D.start.rows(), need = R.filter(function(r){ return !r.opt; }), done = need.filter(function(r){ return r.ok; }).length, nx = need.filter(function(r){ return !r.ok; })[0];
       return nx ? "⚠ " + done + "/" + need.length + " · 다음: " + nx.t : "✓ 준비 끝 · " + R.filter(function(r){ return r.ok; }).length + "/" + R.length + " 단계"; }
+    function fbN(){ try{ return Number(localStorage.getItem("ttadm_fbnew") || 0); }catch(e){ return 0; } }
     function items(){
       var adm = window.TT_ADMIN && TT_ADMIN.state && TT_ADMIN.state();
       return [
         {x: {icon: "🧳", name: "시작 세팅", st: startSt(), fn: function(){ open("start"); }}},
         {x: {icon: "🎨", name: "꾸미기", st: "화면 · 쌤비 · 도장판·배지", fn: function(){ open("look"); }}},
         {x: {icon: "💾", name: "백업·새 학년", st: bk(), fn: function(){ open("data"); }}},
-        {x: {icon: "❓", name: "도움말", st: "쓰는 법 · 단축키 · 앱 설치 · 의견 보내기", fn: function(){ open("help"); }}},
-        {x: {icon: "🛡️", name: "관리", st: adm ? "🛡️ 관리자 모드 중" : "관리자 전용 · 교직원 · 금고 · 변경 기록", fn: goTo("apps/admin/")}}
+        {x: {icon: "❓", name: "도움말", st: window.TT_FBM && TT_FBM.unseen() ? "⚠ 📬 보낸 의견에 답이 왔어요" : "쓰는 법 · 단축키 · 앱 설치 · 의견 보내기", fn: function(){ open("help"); }}},
+        {x: {icon: "🛡️", name: "관리", st: adm && fbN() ? "⚠ 💬 새 의견 " + fbN() + "개 · 관리자 모드 중" : adm ? "🛡️ 관리자 모드 중" : "관리자 전용 · 교직원 · 금고 · 의견함 · 변경 기록", fn: goTo("apps/admin/")}}
       ];
     }
     var dlg = null;
@@ -1311,9 +1319,45 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
   function copyTxt(t){ try{ return navigator.clipboard.writeText(t).then(function(){ return true; }, function(){ return false; }); }catch(e){ return Promise.resolve(false); } }
   $("mFeedback").onclick = function(){ closeMenu(); $("fbErr").textContent = ""; $("fbOk").disabled = false; $("fbName").value = (TT.school.load().teacher || ""); $("dlgFb").showModal(); setTimeout(function(){ $("fbText").focus(); }, 0); };
   $("fbCancel").onclick = function(){ $("dlgFb").close(); };
+  /* v2.54 내가 보낸 의견과 답변 — tt_fb_mine_v1 {list:[{id, at, t(앞 60자), reply, st, seen}], at(마지막 확인)} · 내 글만, 이 기기에만 */
+  var FBM = window.TT_FBM = (function(){
+    var K = "tt_fb_mine_v1";
+    function esc(v){ return String(v == null ? "" : v).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+    function load(){ var o = TT.store.get(K, null) || {}; o.list = Array.isArray(o.list) ? o.list : []; return o; }
+    function save(o){ TT.store.set(K, o); }
+    function add(id, t){ var o = load(); o.list.unshift({id: id, at: Date.now(), t: String(t).slice(0, 60)}); o.list = o.list.slice(0, 30); save(o); }
+    function unseen(){ return load().list.filter(function(x){ return x.reply && !x.seen; }).length; }
+    function check(force){
+      var o = load(), B = TT.store.get("tt_board_v1", null) || {};
+      var wait = o.list.filter(function(x){ return !x.reply && Date.now() - x.at < 120 * 864e5; }).map(function(x){ return x.id; });
+      if(!wait.length || !(B.url && B.pw) || TT.classroom) return Promise.resolve(0);
+      if(!force && o.at && Date.now() - o.at < 3 * 3600e3) return Promise.resolve(0);
+      o.at = Date.now(); save(o);
+      return fetch(B.url, {method: "POST", redirect: "follow", credentials: "omit", cache: "no-store", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify({action: "fbmine", pw: B.pw, ids: wait})})
+        .then(function(r){ return r.json(); }).then(function(j){
+          if(!j || !j.ok) return 0; var o2 = load(), n = 0;
+          (j.items || []).forEach(function(it){ o2.list.forEach(function(x){ if(x.id === it.id){ if(it.reply && x.reply !== it.reply){ x.reply = it.reply; x.seen = false; n++; } x.st = it.st || ""; } }); });
+          save(o2); if(n) window.dispatchEvent(new Event("tt-fb-reply")); return n;
+        }).catch(function(){ return 0; });
+    }
+    function paint(){
+      var o = load(), box = $("fbMine"); if(!box) return;
+      if(!o.list.length){ box.hidden = true; return; }
+      box.hidden = false;
+      box.innerHTML = '<b>📬 내가 보낸 의견</b>' + o.list.slice(0, 6).map(function(x){
+        return '<div class="fm' + (x.reply ? " got" : "") + '"><small>' + new Date(x.at).toLocaleDateString("ko-KR", {month: "numeric", day: "numeric"}) + (x.st ? " · " + esc(x.st) : "") + "</small><span>" + esc(x.t) + (x.t.length >= 60 ? "…" : "") + "</span>"
+          + (x.reply ? '<p>💬 ' + esc(x.reply) + "</p>" : '<em>답변 기다리는 중</em>') + "</div>"; }).join("");
+      o.list.forEach(function(x){ if(x.reply) x.seen = true; }); save(o);
+    }
+    return {add: add, unseen: unseen, check: check, paint: paint, load: load};
+  })();
+  $("mFeedback").addEventListener("click", function(){ FBM.paint(); FBM.check(true).then(function(n){ if(n) FBM.paint(); }); });
+  setTimeout(function(){ FBM.check(false); }, 6000);
+  if(/[?&]fb=1/.test(location.search)) setTimeout(function(){ var b = $("mFeedback"); if(b) b.click(); }, 800);
   $("fFb").addEventListener("submit", function(e){
     e.preventDefault();
     var t = $("fbText").value.trim(); if(t.length < 2){ $("fbErr").textContent = "내용을 적어 주세요."; return; }
+    var fbNewId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     var B = TT.store.get("tt_board_v1", null) || {}, msg = "[쌤 노트 의견 · v" + TT.VERSION + "] " + t + ($("fbName").value.trim() ? " — " + $("fbName").value.trim() : "");
     if(!(B.url && B.pw)){
       copyTxt(msg).then(function(ok){
@@ -1323,10 +1367,15 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
     }
     $("fbOk").disabled = true; $("fbErr").textContent = "보내는 중…";
     fetch(B.url, {method: "POST", redirect: "follow", credentials: "omit", cache: "no-store", headers: {"Content-Type": "text/plain;charset=utf-8"},
-      body: JSON.stringify({action: "fb", pw: B.pw, text: t, name: $("fbName").value.trim(), ver: TT.VERSION, page: (location.hash || "#home").slice(1)})})
+      body: JSON.stringify({action: "fb2", id: fbNewId, pw: B.pw, text: t, name: $("fbName").value.trim(), ver: TT.VERSION, page: (location.hash || "#home").slice(1)})})
       .then(function(r){ return r.json(); }).then(function(j){
+        if(j && !j.ok && /지원하지 않는/.test(String(j.error))) return fetch(B.url, {method: "POST", redirect: "follow", credentials: "omit", cache: "no-store", headers: {"Content-Type": "text/plain;charset=utf-8"},   // 업무판이 예전 판이면 예전 방식으로
+          body: JSON.stringify({action: "fb", pw: B.pw, text: t, name: $("fbName").value.trim(), ver: TT.VERSION, page: (location.hash || "#home").slice(1)})}).then(function(r){ return r.json(); }).then(function(j2){ if(j2 && j2.ok) j2.old = 1; return j2; });
+        return j;
+      }).then(function(j){
         if(!j || !j.ok) throw new Error(j && j.error || "보내지 못했어요");
-        $("fbText").value = ""; $("dlgFb").close(); TT.ui.toast("💬 의견을 보냈어요. 고맙습니다!");
+        if(!j.old) FBM.add(fbNewId, t);
+        $("fbText").value = ""; $("dlgFb").close(); TT.ui.toast(j.old ? "💬 의견을 보냈어요. 고맙습니다!" : "💬 의견을 보냈어요. 답이 오면 쌤비가 알려 드릴게요!");
       }).catch(function(err){
         $("fbOk").disabled = false;
         copyTxt(msg).then(function(ok){ $("fbErr").textContent = (/지원하지 않는/.test(String(err.message)) ? "업무판이 아직 의견 받기를 지원하지 않아요." : /AUTH/.test(String(err.message)) ? "업무판 비밀번호가 바뀌었어요. 설정 → 시작 세팅 → 학교 연결에서 다시 넣어 주세요." : "보내지 못했어요.") + (ok ? " 내용을 복사해 두었으니 쿨메신저로 보내 주세요." : " 내용 칸의 글을 복사해 쿨메신저로 보내 주세요."); });

@@ -338,6 +338,8 @@
   function doy(d){ return Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000); }
   function nItems(){
     var c = nCfg(), now = new Date(), td = ymdS(now), n = doy(now), out = [];
+    try{ var FM = (TT.store.get("tt_fb_mine_v1", null) || {}).list || [], nr = FM.filter(function(x){ return x.reply && !x.seen; }).length;   // v2.54 보낸 의견에 온 답(늘 맨 앞)
+      if(nr) out.push({k: "info", tag: "📬 답이 왔어요", t: "보낸 의견에 답이 " + nr + "개 왔어요 · 눌러서 보기", href: BASE + "?fb=1"}); }catch(e){}
     if(!c.off.tip){
       var C = TT.store.get("tt_calendar_v1", null), E = C && Array.isArray(C.events) ? C.events : [], lim = ymdS(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 10)), ev = null;
       E.filter(function(e){ return e && e.d > td && e.d <= lim && e.t; }).sort(function(a, b){ return a.d < b.d ? -1 : 1; }).some(function(e){
