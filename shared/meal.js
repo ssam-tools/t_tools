@@ -5,6 +5,8 @@
    - 받은 식단은 이 기기에 저장(snmeal_v1, 2주) → 인터넷이 잠깐 안 돼도 보임. 학생 자료는 보내지 않습니다(학교 코드·날짜만). */
 (function(){
   "use strict";
+  if(window.TTMeal) return;                                              // v2.46 도구 화면에서도 불러옴(날짜 → 급식) — 두 번 불러도 한 번만
+  var APPS = /\/apps\//.test(location.pathname);
   var API = "https://open.neis.go.kr/hub/", CK = "snmeal_v1";
   function pad(n){ return (n < 10 ? "0" : "") + n; }
   function ymd(d){ return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()); }
@@ -85,7 +87,8 @@
     + "#dlgMeal .mset input[type=text]{width:100%;margin-top:4px}#dlgMeal .mres button{display:block;width:100%;text-align:left;margin-top:4px}"
     + "#dlgMeal .row2{display:flex;gap:6px;align-items:center;flex-wrap:wrap}"
     + "@media (max-width:760px){#dlgMeal .mwk{grid-template-columns:1fr}#dlgMeal .mday{min-height:0}}";
-  var chip, dlg;
+  var chip, dlg, cssOn = false;
+  function css(){ if(cssOn) return; cssOn = true; var st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st); }
   function lineText(days, t){
     var x = days && days[ymd(t.d)]; if(!x) return null;
     return dishes(x.raw, opt().allergy).slice(0, 5).join(" · ");
@@ -131,6 +134,7 @@
   }
   var shownMon = null;
   function openDlg(){
+    css();
     if(!dlg){
       dlg = document.createElement("dialog"); dlg.id = "dlgMeal"; document.body.appendChild(dlg);
       dlg.addEventListener("click", function(e){
@@ -158,7 +162,7 @@
         + '<label style="margin-left:auto"><input type="checkbox" id="mAll"' + (o.allergy ? " checked" : "") + "> 알레르기 번호 보기</label></div><div id=\"mBody\"></div>";
     }else h += '<p>학교를 한 번 찾아 연결하면 첫 화면에 🍚 급식 단추가 나옵니다(마우스를 올리면 메뉴). (학기초 세팅 파일에도 함께 들어가 다른 선생님은 설정할 필요 없음)</p>';
     h += '<div class="mset"><b>학교 찾기</b><div class="row2"><input type="text" id="mQ" placeholder="학교 이름 (예: 마산서중)" value="' + esc((s.name || "").replace(/학교$/, "")) + '" style="flex:1"><button type="button" class="btn" data-m="find">찾기</button></div><div class="mres" id="mRes"></div>'
-      + '<details style="margin-top:8px"><summary>나이스 인증키 (선택)</summary><p class="muted" style="margin:4px 0">open.neis.go.kr 에서 무료로 받은 키를 넣으면 더 안정적으로 불러옵니다. 키 없이도 됩니다.</p>'
+      + '<details style="margin-top:8px"><summary>나이스 인증키 (시간표 교체 확인에 필요)</summary><p class="muted" style="margin:4px 0">open.neis.go.kr → 마이페이지에서 무료로 받은 키. 급식은 키 없이도 되지만, 시간표 ↻ 교체 확인에는 꼭 필요해요.</p>'
       + '<div class="row2"><input type="text" id="mKey" value="' + esc(s.neisKey || "") + '" placeholder="인증키" style="flex:1"><button type="button" class="btn" data-m="key">저장</button></div></details>'
       + (has ? "" : '<p style="margin-top:8px"><button type="button" class="btn" data-m="hide">급식은 쓰지 않을래요 (첫 화면에서 숨기기)</button></p>') + "</div>"
       + '<p class="muted" style="font-size:12px;margin:8px 0 0">급식 정보는 나이스 교육정보 개방 포털에서 학교 코드와 날짜만으로 받아 옵니다.</p>';
@@ -174,8 +178,9 @@
     }, function(){ box.textContent = "인터넷 연결을 확인해 주세요."; });
   }
   function start(){
+    if(APPS) return;                                                    // 도구 화면은 단추 없이 (맨 위 날짜에 올리면 급식)
     var lead = document.querySelector("header .lead"); if(!lead || chip) return;
-    var st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st);
+    css();
     chip = document.createElement("button"); chip.type = "button"; chip.id = "mealChip"; chip.className = "meal"; chip.hidden = true;
     var lt = document.getElementById("leadTxt"); if(lt && lt.nextSibling) lead.insertBefore(chip, lt.nextSibling); else lead.appendChild(chip);
     chip.addEventListener("click", function(){ hidePop(); openDlg(); });

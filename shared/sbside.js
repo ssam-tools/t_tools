@@ -64,8 +64,8 @@
   function neisCheck(){
     var s = TT.school.load() || {}, t = TT.timetable.load();
     if(!t){ location.href = "apps/timetable/"; return; }
-    if(!s.neisA || !s.neisS){ st.neis = {msg: "⋯ → 학교·선생님 설정에서 급식(나이스) 학교를 먼저 골라 주세요."}; paint(); return; }
-    if(!s.neisKey){ st.neis = {msg: "나이스 인증키가 있어야 시간표를 읽을 수 있어요. 급식 창 → '나이스 인증키'에 넣어 주세요(open.neis.go.kr 무료)."}; paint(); return; }
+    if(!s.neisA || !s.neisS){ st.neis = {msg: "먼저 나이스에서 우리 학교를 한 번 찾아 연결해 주세요.", school: 1}; paint(); return; }
+    if(!s.neisKey){ st.neis = {msg: "나이스 인증키를 넣으면 시간표를 읽을 수 있어요.", key: 1}; paint(); return; }   // v2.46 인증키를 여기서 바로 넣기
     var d = new Date(), w = d.getDay(), monD = add(d, w === 0 ? 1 : w === 6 ? 2 : 1 - w), mon = ymd(monD), base = t.slots, my = {};
     Object.keys(base).forEach(function(k){ var x = base[k]; if(x && +x.cls > 100) my[+x.cls] = my[+x.cls] || x.subj || s.subject || ""; });
     var C = Object.keys(my); if(!C.length){ st.neis = {msg: "시간표에 반(예: 304)이 들어 있어야 확인할 수 있어요."}; paint(); return; }
@@ -154,15 +154,24 @@
     var lst, head;
     if(st.pick){ var pd = new Date(+st.pick.slice(0, 4), +st.pick.slice(5, 7) - 1, +st.pick.slice(8, 10)); head = (pd.getMonth() + 1) + "/" + pd.getDate() + " (" + DOW[pd.getDay()] + ")"; lst = (by[st.pick] || []).slice(); }
     else{
-      head = "다가오는 일"; var rank = {me: 0, off: 1, sch: 1, bd: 2};
-      lst = L.filter(function(x){ return x.d >= td; }).sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : rank[a.k] - rank[b.k]; });
+      var mk0 = monthKey(D), from = st.mon > 0 ? mk0 + "-01" : td;              // v2.46 보고 있는 달의 남은 일만 (이번 달이면 오늘부터)
+      head = st.mon < 0 ? (D.getMonth() + 1) + "월 일정" : (st.mon ? (D.getMonth() + 1) + "월 할 일" : "이번 달 남은 일"); var rank = {me: 0, off: 1, sch: 1, bd: 2};
+      lst = L.filter(function(x){ return String(x.d).slice(0, 7) === mk0 && (st.mon < 0 || x.d >= from); }).sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : rank[a.k] - rank[b.k]; });
       var seen = {}; lst = lst.filter(function(x){ var q = x.d + x.t; if(seen[q]) return false; seen[q] = 1; return true; });
     }
-    h += '<div class="sdL"><div class="lh">' + esc(head) + (st.pick ? '<button type="button" data-day="">✕</button>' : "") + "</div>"
-      + (lst.length ? lst.map(function(x){ var dt = x.d.slice(5).replace(/^0/, "").replace("-", "/").replace("/0", "/"); return '<div class="li k-' + x.k + '">' + (st.pick ? "" : "<span>" + dt + "</span>") + esc(x.t) + "</div>"; }).join("") : '<div class="li none">' + (st.pick ? "일정이 없어요" : "가까운 일정이 없어요") + "</div>")
+    h += '<div class="sdL"><div class="lh"><span>' + esc(head) + (lst.length ? ' <em class="ct">' + lst.length + "</em>" : "") + "</span>" + (st.pick ? '<button type="button" data-day="">✕</button>' : "") + "</div>"
+      + (lst.length ? lst.map(function(x){ var dt = x.d.slice(5).replace(/^0/, "").replace("-", "/").replace("/0", "/"); return '<div class="li k-' + x.k + '" title="' + esc(x.t) + '">' + (st.pick ? "" : "<span>" + dt + "</span>") + esc(x.t) + "</div>"; }).join("") : '<div class="li none">' + (st.pick ? "일정이 없어요" : "남은 일정이 없어요") + "</div>")
       + "</div>"
       + (boardCfg() ? "" : '<div class="sdHint">학교 업무판을 연결하면 월간 업무도 여기에 보여요 · ⋯ → 학교 업무판 연결</div>');
     return h;
+  }
+
+  /* v2.46 나이스 인증키 저장 (이 기기 · 학교·선생님 설정과 같은 자리 tt_school_v1.neisKey) → 바로 교체 확인 */
+  function saveKey(){
+    var i = side && side.querySelector("#sdKey"), v = i ? i.value.replace(/\s+/g, "") : "";
+    if(!/^[0-9a-zA-Z]{16,40}$/.test(v)){ TT.ui.toast("인증키를 확인해 주세요 (영문·숫자 32자 정도)"); if(i) i.focus(); return; }
+    TT.school.save({neisKey: v}); try{ var o = JSON.parse(localStorage.getItem("snmeal_v1") || "{}"); o.w = {}; localStorage.setItem("snmeal_v1", JSON.stringify(o)); }catch(x){}
+    TT.ui.toast("나이스 인증키를 저장했어요"); st.neis = null; neisCheck();
   }
 
   /* ── 그리기 ── */
@@ -172,7 +181,9 @@
       side = document.createElement("aside"); side.id = "sbSide"; side.setAttribute("aria-label", "오늘 한눈에");
       document.body.appendChild(side);
       side.addEventListener("click", function(e){
-        var b = e.target.closest("[data-v],[data-cm],[data-day],[data-neis],[data-napply],[data-nclose]"); if(!b) return;
+        var b = e.target.closest("[data-v],[data-cm],[data-day],[data-neis],[data-napply],[data-nclose],[data-nkey],[data-nsch]"); if(!b) return;
+        if(b.hasAttribute("data-nsch")){ st.neis = null; paint(); if(window.TTMeal) TTMeal.open(); return; }
+        if(b.hasAttribute("data-nkey")){ saveKey(); return; }
         if(b.hasAttribute("data-v")){ st.view = b.getAttribute("data-v"); try{ localStorage.setItem("sb_side_view", st.view); }catch(x){} }
         else if(b.hasAttribute("data-cm")){ var v = +b.getAttribute("data-cm"); st.mon = v ? st.mon + v : 0; st.pick = ""; }
         else if(b.hasAttribute("data-day")){ var k = b.getAttribute("data-day"); st.pick = st.pick === k ? "" : k; }
@@ -183,16 +194,23 @@
       });
     }
     side.hidden = false; if(!document.body.classList.contains("sbSideOn")) document.body.classList.add("sbSideOn");
-    var v = view(), N = st.neis;
+    var v = view(), N = st.neis, ki = side.querySelector("#sdKey"), kv = ki ? ki.value : "", kf = ki && document.activeElement === ki;   // 적던 인증키는 다시 그려도 그대로
+    var sl = side.querySelector(".sdL"), sy = sl ? sl.scrollTop : 0;
     side.innerHTML = '<section class="sdC sdT" aria-label="내 시간표"><div class="sdH"><b>내 시간표</b><span class="seg" role="group" aria-label="보기">'
       + '<button type="button" data-v="day" aria-pressed="' + (v === "day") + '">오늘</button><button type="button" data-v="week" aria-pressed="' + (v === "week") + '">이번 주</button></span></div>'
       + '<div class="sdB">' + (v === "week" ? weekHTML() : dayHTML()) + "</div>"
       + '<div class="sdF"><button type="button" data-neis title="나이스 학급 시간표와 비교해 이번 주 교체를 찾아요"' + (st.busy ? " disabled" : "") + ">↻ 교체 확인</button><a href=\"apps/timetable/\">고치기</a></div>"
       + (N ? '<div class="sdN' + (N.ok ? " ok" : "") + '"><p>' + esc(N.msg) + "</p>" + (N.list ? "<ul>" + N.list.slice(0, 8).map(function(x){ return "<li>" + esc(x) + "</li>"; }).join("") + (N.list.length > 8 ? "<li>… " + (N.list.length - 8) + "개 더</li>" : "") + "</ul>" : "")
+        + (N.key ? '<div class="nk"><input id="sdKey" type="text" inputmode="latin" autocomplete="off" spellcheck="false" maxlength="40" placeholder="인증키 붙여넣기" aria-label="나이스 인증키"><button type="button" class="p" data-nkey>저장</button></div>'
+          + '<small class="nh">open.neis.go.kr → 마이페이지 → 인증키 (무료) · ⋯ → 학교·선생님 설정에서도 바꿀 수 있어요</small>' : "")
+        + (N.school ? '<div class="nk"><button type="button" class="p" data-nsch>🍚 우리 학교 찾기</button></div>' : "")
         + '<div class="na">' + (N.apply ? '<button type="button" class="p" data-napply>이번 주에 반영</button>' : "") + (st.busy ? "" : '<button type="button" data-nclose>닫기</button>') + "</div></div>" : "")
       + "</section>"
       + '<section class="sdC sdK" aria-label="달력">' + calHTML() + "</section>";
+    var k2 = side.querySelector("#sdKey"); if(k2){ k2.value = kv; if(kf || (N && !N.f)){ k2.focus(); N.f = 1; } }
+    var l2 = side.querySelector(".sdL"); if(l2 && sy) l2.scrollTop = sy;
   }
+  document.addEventListener("keydown", function(e){ if(e.key === "Enter" && e.target && e.target.id === "sdKey" && !e.isComposing){ e.preventDefault(); saveKey(); } });
   var rT = 0; function soon(){ clearTimeout(rT); rT = setTimeout(paint, 80); }
   ["resize", "tt-home-change", "tt-mytodo-change", "hashchange", "focus", "load"].forEach(function(ev){ window.addEventListener(ev, soon); });
   window.addEventListener("storage", function(e){ if(!e.key || /^tt_/.test(e.key)) soon(); });

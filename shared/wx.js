@@ -3,7 +3,7 @@
    · 첫 화면 날짜 옆 "☀ 12°" (올리면/누르면 자세히 — shared/hidden.js "wx"), 쌤비 소품(우산·마스크·목도리)과 한마디(shared/sbhome.js). */
 (function(){
   "use strict";
-  if(!window.TT || window.TT_WX || /\/apps\//.test(location.pathname)) return;   // 첫 화면에서만
+  if(!window.TT || window.TT_WX) return;   // v2.46 도구 화면 맨 위 줄에도 (모든 화면 같은 모양)
   var KEY = "sn_wx_v1", TTL = 30 * 60e3, OLD = 6 * 3600e3, busy = false;
   var CODES = [[0, "☀", "맑음"], [1, "🌤", "대체로 맑음"], [2, "⛅", "구름 조금"], [3, "☁", "흐림"], [48, "🌫", "안개"], [57, "🌦", "이슬비"], [67, "🌧", "비"], [77, "🌨", "눈"], [82, "🌧", "소나기"], [86, "🌨", "눈 소나기"], [99, "⛈", "뇌우"]];
   function code(c){ c = +c || 0; for(var i = 0; i < CODES.length; i++) if(c <= CODES[i][0]) return {ic: CODES[i][1], tx: CODES[i][2]}; return {ic: "☁", tx: "흐림"}; }
@@ -64,6 +64,7 @@
     return h;
   }
   window.TT_WX = {data: data, load: load, hint: hint, chip: chip, html: html};
+  if(data()) setTimeout(function(){ try{ document.dispatchEvent(new CustomEvent("tt-wx")); }catch(e){} }, 0);   // 저장된 날씨가 있으면 맨 위 줄에 바로
   if(cfg()) load(); else window.addEventListener("load", function(){ setTimeout(function(){ load(); }, 300); });   // g/sites.js(학교 위치)가 늦게 올 수 있어서
   setInterval(function(){ if(!document.hidden) load(); }, 10 * 60e3);
   document.addEventListener("visibilitychange", function(){ if(!document.hidden) load(); });

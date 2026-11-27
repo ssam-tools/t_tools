@@ -452,15 +452,9 @@ html[data-ui="ssambi"] .tpd .on,html[data-ui="ssambi"] .tpd b.on{border-radius:1
 #sbHero .circ .ci .sbTree{position:absolute;right:-4px;bottom:-2px;font-size:15px;margin:0}
 #sbBar .sbTree{display:none}
 /* v2.8.1 왼쪽 막대: 화면보다 길면 줄이기 (sbbar.js fitRail) */
-#sbRail.tight{gap:6px;padding-top:8px}
-#sbRail.tight .owl svg{width:56px;height:56px}
-#sbRail.tight .say small{display:none}
-#sbRail.tight .mi{min-height:34px;font-size:14.5px}
+/* v2.46 위쪽(쌤비·한마디·찾기)과 메뉴 줄은 그대로 두고, 펼친 도구 목록만 줄임 — 메뉴가 화면마다 같은 자리에 */
 #sbRail.tight .ti{min-height:27px;font-size:13px}
 #sbRail.tight .tl{padding:2px 0 4px 10px}
-#sbRail.tighter .say{display:none}
-#sbRail.tighter .owl svg{width:44px;height:44px}
-#sbRail.tighter .mi{min-height:31px}
 #sbRail.tighter .ti{min-height:24px}
 
 /* v2.11.4 교실 기기(전자칠판): 첫 화면 검색·말로 기록·빠른 입력 없음 (수업용 메뉴만) */
@@ -686,3 +680,52 @@ html[data-ui="ssambi"] body.sbTopOn > header h1,html[data-ui="ssambi"] body.sbTo
 #sbSide .sdL .li.none{color:var(--t-faint);padding-left:0}#sbSide .sdL .li.none::before{display:none}
 #sbSide .sdHint{margin-top:auto;font-size:11px;color:var(--t-faint);padding-top:6px}
 body.sbSideOn #sbHero .bub.brief .bl.nx{display:none}              /* 다음 수업은 오른쪽 시간표가 보여 줌 */
+
+/* ---------- v2.46 모든 화면 같은 자리: 왼쪽 메뉴 · 맨 위 줄(학교·날짜·시각·날씨 ……… ☆ ⋯) ---------- */
+@media (min-width:900px) and (min-height:460px){
+  /* 왼쪽 메뉴: 위쪽 칸 높이를 고정 → 홈·수업·우리 반 … 메뉴가 어느 화면에서나 같은 높이에서 시작 */
+  html[data-ui="ssambi"] #sbRail{overflow:hidden}
+  #sbRail .rt{height:118px;flex:none;overflow:hidden;align-items:center;justify-content:flex-start;gap:8px}
+  #sbRail .rt .owl{width:68px;height:68px}
+  #sbRail .say{align-self:stretch;height:40px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;padding:2px 8px;flex:none}
+  #sbRail .say b,#sbRail .say small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #sbRail .rs .q{height:38px;box-sizing:border-box}
+  #sbRail .rn{flex:0 1 auto;min-height:0;display:flex;flex-direction:column}
+  #sbRail .ml{flex:0 1 auto;min-height:0;display:flex;flex-direction:column}
+  #sbRail .mi{flex:none}
+  #sbRail .tl{flex:0 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin}
+  #sbRail .rb{flex:none}
+  /* 홈·설정: 같은 높이의 쌤 노트 이름 칸 (가운데에 큰 쌤비·검색창이 있으므로) */
+  #sbRail.hm .rh{height:164px;flex:none;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:0;padding:0;margin:0;border:0}
+  #sbRail.hm .lg{flex-direction:column;gap:6px}
+  #sbRail.hm .lg b{font-size:18px}
+  #sbRail.hm .rh small{font-size:12.5px;color:var(--t-sub);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #sbRail.hm .rh::after{content:"";width:100%;border-bottom:1px solid var(--t-line);margin-top:auto}
+  /* 접어도 위쪽 칸 높이는 그대로 (메뉴 아이콘이 같은 자리) */
+  html.sbMini #sbRail .rs,html.sbMini #sbRail .say{display:flex!important;visibility:hidden}
+  html.sbMini #sbRail .rt .owl{width:44px;height:44px}
+  html.sbMini #sbRail.hm .rh small{display:none}
+  html.sbMini #sbRail.hm .rh{padding:0}
+  /* 맨 위 줄: 홈·설정도 도구 화면과 같은 높이·글자 (좌우 끝은 sbbar.js alignTop 이 맞춤) */
+  html[data-ui="ssambi"] body.sbOn{padding-top:2px!important}
+  #sbHero .top{min-height:34px!important;height:34px;padding-bottom:0;border-bottom:0;flex:none}
+  #sbHero .top .sp,#sbTop .sp{font-size:13.5px}
+  html[data-ui="ssambi"] body.sbTopOn > #sbTop{height:34px;margin-top:0}
+}
+@media (min-width:1280px){
+  #sbSide{top:38px;border-top:1px solid var(--t-line);border-top-left-radius:14px}   /* 오른쪽 칸은 맨 위 줄 아래에서 (☆ ⋯ 가 어느 화면에서나 오른쪽 끝) */
+}
+/* 다가오는 일: 이번 달 남은 일만, 길면 목록 안에서 스크롤 (글자가 겹치지 않게) */
+#sbSide .sdL{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;flex:1 1 auto}
+#sbSide .sdL .lh{position:sticky;top:0;background:var(--t-card);padding-bottom:2px;flex:none}
+#sbSide .sdL .li{flex:none;line-height:1.5}
+#sbSide .sdK{overflow:hidden}
+#sbSide .sdL .lh .ct{font-style:normal;font-weight:700;color:var(--t-accent);margin-left:2px}
+#sbSide .sdN .nk{display:flex;gap:6px;margin:4px 0 2px}
+#sbSide .sdN .nk input{flex:1;min-width:0;border:1px solid var(--t-line);border-radius:8px;padding:4px 8px;font:inherit;font-size:12.5px;background:var(--t-card);color:var(--t-ink)}
+#sbSide .sdN .nk input:focus{outline:none;border-color:var(--t-accent);box-shadow:0 0 0 2px var(--t-accent-soft)}
+#sbSide .sdN .nk button{border:1px solid var(--t-accent);background:var(--t-accent);color:#fff;border-radius:8px;font:inherit;font-size:12px;font-weight:700;padding:3px 10px;cursor:pointer;flex:none}
+#sbSide .sdN .nh{display:block;font-size:11px;color:var(--t-sub);margin:2px 0 4px;line-height:1.4}
+@media (min-width:900px) and (min-height:460px){
+  #sbRail .tl.scr{-webkit-mask-image:linear-gradient(#000 calc(100% - 22px),rgba(0,0,0,.25));mask-image:linear-gradient(#000 calc(100% - 22px),rgba(0,0,0,.25))}
+}

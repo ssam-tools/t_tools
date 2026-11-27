@@ -132,7 +132,7 @@
     hero.querySelector(".hrow").innerHTML = hrowHTML(); hero.querySelector(".top .sp").innerHTML = dateHTML();
     hero.querySelector(".circ").innerHTML = circHTML();
     homeRail();
-    seatMore(); seatBox();
+    seatMore(); seatBox(); alignSoon();
   }
   /* v2.45 홈·설정에도 도구 화면과 같은 왼쪽 메뉴 (PC) — 위쪽 쌤비·검색창 자리는 쌤 노트 로고 (가운데에 큰 쌤비·검색창이 있으므로) */
   var hrail = null;
@@ -146,7 +146,9 @@
     hrail.hidden = !ok;
     if(document.body.classList.contains("sbRailOn") !== ok) document.body.classList.toggle("sbRailOn", ok);
     if(!ok) return;
-    hrail.querySelector(".rh").innerHTML = '<a class="lg" href="' + esc(BASE) + '" title="쌤 노트 홈">' + (ART && ART.logo ? ART.logo(28) : "") + "<b>쌤 노트</b></a>";
+    var sc0 = (TT.school && TT.school.load ? TT.school.load() : {}) || {};
+    var rhH = '<a class="lg" href="' + esc(BASE) + '" title="쌤 노트 홈">' + (ART && ART.logo ? ART.logo(48) : "") + "<b>쌤 노트</b></a>" + (sc0.name ? "<small>" + esc(sc0.name) + "</small>" : "");   // v2.46 도구 화면의 쌤비·찾기 칸과 같은 높이
+    var rh = hrail.querySelector(".rh"); if(rh.getAttribute("data-h") !== rhH){ rh.setAttribute("data-h", rhH); rh.innerHTML = rhH; }
     hrail.querySelector(".rn").innerHTML = railHTML();
     hrail.querySelector(".rb").innerHTML = miniBtn();
   }
@@ -238,12 +240,31 @@
     var t = TT.joy.treeNow(); return '<i class="sbTree" data-tree title="우리 반 ' + esc(t.nm) + " · 칭찬·청소 당번 완료 " + t.n + "번" + (t.next ? " · " + t.nnm + "까지 " + t.next + "번" : "") + '">' + t.ic + "</i>";
   }
   /* v2.8.1 왼쪽 막대가 화면보다 길면 조금씩 줄여 스크롤 없이: ① 칸 높이·쌤비 크기 ② 쌤비 한마디 숨김 */
-  function fitRail(){
+  function fitRail(){                                                   // v2.46 위쪽·메뉴 줄은 그대로, 펼친 도구 목록만 줄이고 그래도 길면 목록 안에서 스크롤
     if(!rail || !rail.offsetHeight) return;
     rail.classList.remove("tight", "tighter");
-    if(rail.scrollHeight > rail.clientHeight + 2) rail.classList.add("tight");
-    if(rail.scrollHeight > rail.clientHeight + 2) rail.classList.add("tighter");
+    function over(){ var tl = rail.querySelector(".tl"); return (tl && tl.scrollHeight > tl.clientHeight + 2) || rail.scrollHeight > rail.clientHeight + 2; }
+    if(over()) rail.classList.add("tight");
+    if(over()) rail.classList.add("tighter");
+    var tl0 = rail.querySelector(".tl"); if(tl0) tl0.classList.toggle("scr", tl0.scrollHeight > tl0.clientHeight + 2);   // 목록이 더 있으면 아래를 흐리게
+    var on = rail.querySelector(".tl .ti.on"), tl = on && on.parentNode; if(tl && tl.scrollHeight > tl.clientHeight + 2){ var r = on.offsetTop - tl.offsetTop; if(r < tl.scrollTop || r > tl.scrollTop + tl.clientHeight - on.offsetHeight) tl.scrollTop = r - (tl.clientHeight - on.offsetHeight) / 2; }
   }
+  /* v2.46 맨 위 줄(학교 · 날짜 · 시각 · 날씨 ……… ☆ ⋯)을 어느 화면에서나 같은 자리에: 왼쪽 메뉴 끝 + 28px ~ 화면 오른쪽 끝 - 28px
+     (화면마다 몸통 여백·오른쪽 칸이 달라도 줄의 양 끝을 똑같이 맞춤) */
+  function alignTop(el){
+    if(!el) return;
+    el.style.marginLeft = ""; el.style.marginRight = "";
+    var rl = document.getElementById("sbRail");
+    if(window.innerWidth < 900 || window.innerHeight < 460 || !rl || rl.hidden || !rl.offsetWidth || !el.offsetWidth) return;
+    var r = el.getBoundingClientRect(), L = rl.getBoundingClientRect().right + 28, Rt = document.documentElement.clientWidth - 28;
+    el.style.setProperty("margin-left", Math.round(L - r.left) + "px", "important");
+    el.style.setProperty("margin-right", Math.round(r.right - Rt) + "px", "important");
+  }
+  function alignAll(){ alignTop(hero && hero.querySelector(".top")); alignTop(topEl); }
+  var alT = 0; function alignSoon(){ cancelAnimationFrame(alT); alT = requestAnimationFrame(alignAll); }
+  window.addEventListener("resize", alignSoon);
+  new MutationObserver(alignSoon).observe(R, {attributes: true, attributeFilter: ["class"]});
+  new MutationObserver(alignSoon).observe(document.body || R, {attributes: true, attributeFilter: ["class"]});
   window.addEventListener("resize", function(){ clearTimeout(fitRail.t); fitRail.t = setTimeout(fitRail, 150); });
   function barTabs(){
     var cur = curMenu();
@@ -312,7 +333,7 @@
     bar.querySelector(".sbTabs").innerHTML = barTabs();
     var sbs = bar.querySelector(".sbSubs"), subH = barSubs();   // v2.24.1 휴대폰: 지금 메뉴의 도구(소메뉴)를 한 줄로 — 옆으로 밀어 다른 도구로
     if(sbs.getAttribute("data-h") !== subH){ sbs.setAttribute("data-h", subH); sbs.innerHTML = subH; sbs.hidden = !subH; var on = sbs.querySelector(".on"); if(on) setTimeout(function(){ try{ sbs.scrollLeft = on.offsetLeft - (sbs.clientWidth - on.offsetWidth) / 2; }catch(e){} }, 30); }
-    F.ph(); headIcon(); fitRail();
+    F.ph(); headIcon(); fitRail(); alignSoon();
     requestAnimationFrame(function(){ R.classList.add("sbReady"); fitRail(); }); setTimeout(function(){ R.classList.add("sbReady"); }, 120);   // v2.8.1: 창이 뒤에 있어 그림 신호가 늦어도 보이게
   }
 
