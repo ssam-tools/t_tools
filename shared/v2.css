@@ -855,3 +855,20 @@ html.sbMini #sbRail .tg{display:none}
 .sbSet u{text-decoration:none;color:var(--t-faint);font-size:20px}
 .sbSet ol.adm .ss{padding:7px 14px;border-style:dashed}
 .sbSet ol.adm .ci{width:32px;height:32px}
+
+/* ---------- v2.55 휴대폰 최적화: 바로 입력 4칸 · ⋯ 메뉴는 휴대폰에 맞는 것만 ---------- */
+.sbPhQ{display:none}
+@media (max-width:760px){
+  .sbPhQ{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:2px 0 14px}
+  .sbPhQ .pq{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:78px;padding:8px 2px;border:1px solid var(--t-line);border-radius:16px;background:var(--t-card);color:var(--t-ink);text-decoration:none;-webkit-tap-highlight-color:transparent;transition:transform .12s}
+  .sbPhQ .pq:active{transform:scale(.95);border-color:var(--t-accent)}
+  .sbPhQ .pi{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--t-accent-soft);color:var(--t-accent);font-size:22px;line-height:1}
+  .sbPhQ .pi svg{width:24px;height:24px}
+  .sbPhQ b{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  #more [data-hubm="data"],#more [data-hubm="admin"]{display:none!important}
+}
+/* v2.55 도구 화면 ⋯ 메뉴: 홈 ⋯ 와 같은 모양 (어느 화면에서나 같은 칸) */
+#sbTop details.more .menu{position:absolute;top:calc(100% + 6px);right:0;left:auto;min-width:200px;padding:6px;background:var(--t-card);border:1px solid var(--t-line);border-radius:14px;box-shadow:var(--sb-pop,0 12px 32px rgba(20,40,70,.18))}
+#sbTop details.more .menu button,#sbTop details.more .menu a{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:0 12px;border:0;border-radius:10px;background:transparent;font:inherit;font-size:15px;color:var(--t-ink);text-align:left;text-decoration:none;cursor:pointer;box-sizing:border-box}
+#sbTop details.more .menu button:hover,#sbTop details.more .menu a:hover{background:var(--t-chip)}
+#sbTop details.more .menu .mi{display:inline-grid;place-items:center;width:18px;color:var(--t-sub)}

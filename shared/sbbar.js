@@ -20,7 +20,8 @@
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function icon(n, s){ return ART && ART.icon ? ART.icon(n, s) : ""; }
   var CRM = !!TT.classroom;                                             // 교실 기기: 수업용(room) 도구가 있는 메뉴만, 검색·말로 기록·쌤비 창·나무 없음
-  function shown(id){ if(CRM) return id === "home" || tools(id).length > 0; return id === "home" || id === "settings" || id === "lib" || typeof ttMenuShown !== "function" || ttMenuShown(id); }
+  function PH(){ return typeof ttIsPhone === "function" && ttIsPhone(); }   // v2.55 휴대폰: 아래 탭 5칸(홈·수업·우리 반·학생·학교) — 자료실은 학교 안에, 설정은 오른쪽 위 ⋯
+  function shown(id){ if(CRM) return id === "home" || tools(id).length > 0; if(PH() && (id === "lib" || id === "settings")) return false; return id === "home" || id === "settings" || id === "lib" || typeof ttMenuShown !== "function" || ttMenuShown(id); }
   if(CRM) R.setAttribute("data-room", "on");
   function pad(n){ return (n < 10 ? "0" : "") + n; }
   function sub(){ try{ return sessionStorage.getItem(SUBK) || ""; }catch(e){ return ""; } }
@@ -32,6 +33,7 @@
     var m = location.pathname.match(/\/apps\/([^\/]+)\//), id = m ? m[1] : "";
     if(id === "tardy" && /[?&]tab=counsel/.test(location.search)) id = "counsel";
     if(id === "sguide") id = /[?&]tab=counsel/.test(location.search) ? "counsel" : "gquick";
+    if(id === "school") id = "schoolhub";                              // v2.55 학교 업무판 폴더 이름과 도구 id가 달라 메뉴 표시가 빠졌던 것
     return typeof TT_TOOLS !== "undefined" ? TT_TOOLS.filter(function(x){ return x.id === id; })[0] || null : null;
   }
   function curMenu(){
@@ -41,7 +43,7 @@
       return MENUS.some(function(m){ return m[0] === h; }) ? h : "home";
     }
     var t = hereTool(); if(!t) return "";
-    return t.menu === "school" && t.group === "lib" ? "lib" : t.menu;
+    return t.menu === "school" && t.group === "lib" && !PH() ? "lib" : t.menu;
   }
   function season(){
     var lk = R.getAttribute("data-look"), m = new Date().getMonth() + 1;
@@ -66,12 +68,14 @@
   function owlSvg(size){ var p = P(), it = tempItem || p.item; return ART ? ART.svg({acc: TT.joy && TT.joy.acc ? TT.joy.acc() : "", item: it, deco: (TT.joy && TT.joy.on && !TT.joy.on()) || it === "scarf" ? "" : season(), open: !!p.open, sleep: !!p.sleep, listen: !!p.listen, size: size}) : "🦉"; }
   /* v2.3: 메뉴를 누르면 중메뉴 없이 대표 도구가 바로 (홈·설정은 메인 화면) */
   var REP = {"class": "apps/book/", homeroom: "apps/tardy/", student: "apps/stucard/", school: "apps/school/", lib: "apps/lib/"};
-  function href(id){ return id === "home" ? BASE : REP[id] ? BASE + REP[id] : BASE + "#" + id; }
+  var REP_PH = {"class": "apps/journal/"};                             // v2.55 휴대폰: 수업 = 수업 기록 (교과서 띄우기는 PC·전자칠판)
+  function rep(id){ return (PH() && !CRM && REP_PH[id]) || REP[id]; }
+  function href(id){ return id === "home" ? BASE : rep(id) ? BASE + rep(id) : BASE + "#" + id; }
   if(HOME){                                                             // 예전 주소(#class …)·단축키(Alt+2~5)로 와도 대표 도구로
     var toRep = function(){
       if(R.getAttribute("data-ui") !== "ssambi") return false;
       var h = (location.hash || "").replace(/^#/, ""), k = h === "school" && sub() === "lib" ? "lib" : h;
-      if(REP[k]){ location.replace(BASE + REP[k]); return true; }
+      if(rep(k)){ location.replace(BASE + rep(k)); return true; }
       return false;
     };
     if(toRep()) return;
@@ -242,11 +246,12 @@
   var rail = null, bar = null;
   function tools(mid){
     if(typeof TT_TOOLS === "undefined") return [];
+    var HT = hereTool();
     return TT_TOOLS.filter(function(t){
       if(!t.ready || !t.href || t.noRail || (CRM && !t.room)) return false;   // v2.8.1: 리모컨은 교과서 화면 위 [📱 리모컨] 단추로 (왼쪽 목록이 길어 스크롤 생기지 않게)
-      if(typeof ttToolShown === "function" && !ttToolShown(t)) return false;
+      if(typeof ttToolShown === "function" && !ttToolShown(t) && !(HT && HT.id === t.id)) return false;   // 휴대폰에서 숨긴 도구도 지금 열린 화면이면 보임
       if(mid === "lib") return t.menu === "school" && t.group === "lib";
-      if(mid === "school") return t.menu === "school" && t.group !== "lib";
+      if(mid === "school") return t.menu === "school" && (t.group !== "lib" || PH());   // 휴대폰: 자료실 탭이 없으니 학교 안에
       return t.menu === mid;
     });
   }
@@ -434,16 +439,13 @@
   }
   /* v2.41 도구 화면 맨 위 줄: 홈·설정과 똑같이 [학교 · 날짜 · 시각 · 날씨 ……… ☆ ⋯] — 어느 화면에서나 같은 자리
      ⋯ 메뉴는 홈의 ⋯ 와 같은 순서. 이 화면에서 바로 되는 것(단축키·도장판·학기초 세팅·백업)은 바로, 나머지는 홈으로 가서 그 창을 엽니다(?m=) */
-  var TOPM = [["안내"], ["mHelp", "❓", "처음 사용 안내"], ["mKeys", "⌨️", "단축키 안내"], ["mFeedback", "💬", "의견 보내기"], ["mJoy", "🎈", "도장판·배지"],
-    ["설정"], ["setup", "🧳", "학기초 세팅"], ["mSchool", "🏫", "학교·선생님 설정"], ["mAuto", "✨", "자동 준비 설정"], ["mFont", "🎨", "화면 꾸미기"], ["mBoard", "📅", "학교 업무판 연결"], ["mTalk", "📣", "쌤비 이야기"], ["mInstall", "📲", "앱 설치하기"],
-    ["백업"], ["mBackup", "💾", "전체 백업 저장"], ["mRestore", "📂", "백업 불러오기"], ["-"], ["mNewYear", "🌱", "새 학년 시작"]];
+  /* v2.55 도구 화면 ⋯ 도 홈 ⋯ 와 같은 설정 칸으로 (누르면 홈에서 그 창) — 휴대폰은 시작 세팅·꾸미기·도움말만 */
+  var HUBM = [["start", "🧳", "시작 세팅"], ["look", "🎨", "꾸미기"], ["data", "💾", "백업·새 학년", 1], ["help", "❓", "도움말"], ["admin", "🛡️", "관리", 1]];
   function topMenuHTML(){
-    return TOPM.map(function(x){
-      if(x[0] === "-") return "<hr>";
-      if(x.length === 1) return (x[0] === "안내" ? "" : "<hr>") + '<div class="mh">' + x[0] + "</div>";
+    return HUBM.filter(function(x){ return !(x[3] && PH()); }).map(function(x){
       var ic = '<span class="mi">' + (ART && ART.toolIcon ? ART.toolIcon(null, x[1], 16) : esc(x[1])) + "</span>";
-      if(x[0] === "setup") return '<a href="' + esc(BASE + "apps/setup/") + '" data-e="' + x[1] + '">' + ic + x[2] + "</a>";
-      return '<button type="button" data-top="' + x[0] + '"' + (x[0] === "mNewYear" ? ' class="danger"' : "") + ' data-e="' + x[1] + '">' + ic + x[2] + "</button>";
+      return x[0] === "admin" ? '<a href="' + esc(BASE + "apps/admin/") + '" data-e="' + x[1] + '">' + ic + x[2] + "</a>"
+        : '<button type="button" data-top="hub:' + x[0] + '" data-e="' + x[1] + '">' + ic + x[2] + "</button>";
     }).join("");
   }
   var topEl = null;
@@ -452,11 +454,12 @@
     if(!topEl){
       topEl = document.createElement("div"); topEl.id = "sbTop"; topEl.className = "top";
       topEl.innerHTML = '<span class="sp"></span><button type="button" class="fav" id="sbFav" aria-label="자주 가는 사이트 (Alt+S)" title="자주 가는 사이트 (Alt+S)" aria-expanded="false" aria-haspopup="dialog">' + icon("star", 18) + "</button>"
-        + (CRM ? "" : '<details class="more" id="sbMore"><summary aria-label="더 보기" title="안내 · 설정 · 백업">⋯</summary><div class="menu">' + topMenuHTML() + "</div></details>");
+        + (CRM ? "" : '<details class="more" id="sbMore"><summary aria-label="더 보기" title="설정">⋯</summary><div class="menu">' + topMenuHTML() + "</div></details>");
       document.body.insertBefore(topEl, document.body.firstChild); document.body.classList.add("sbTopOn");
       topEl.addEventListener("click", function(e){
         var b = e.target.closest("[data-top]"); if(!b) return;
         var id = b.getAttribute("data-top"), md = document.getElementById("sbMore"); if(md) md.open = false;
+        if(id.indexOf("hub:") === 0){ location.href = BASE + "index.html?hub=" + id.slice(4); return; }   // v2.55 홈의 같은 설정 창
         if(id === "mKeys" && window.TT_KEYS && TT_KEYS.help){ TT_KEYS.help(); return; }
         if(id === "mJoy"){ if(TT.joy) TT.joy.open(); else TT.ui.toast("교실 기기에서는 재미 요소가 꺼져 있어요."); return; }
         if(id === "mBackup" && TT.backup && TT.backup.save){ TT.backup.save(); return; }
@@ -670,7 +673,7 @@
     if(t.hasAttribute("data-plus")){ if(window.TT_QUICK) TT_QUICK.open(); return; }
     var m = t.dataset.m; if(!m) return;
     setSub(m === "lib" ? "lib" : "");
-    if(REP[m]) return;                                                  // 대표 도구로 그대로 이동
+    if(rep(m)) return;                                                  // 대표 도구로 그대로 이동
     if(HOME){                                                           // 첫 화면 안에서는 다시 불러오지 않고 화면만 바꿈
       e.preventDefault();
       var h = m === "home" ? "" : m === "lib" ? "school" : m;

@@ -910,17 +910,23 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
         {ic: "📲", t: "앱 설치하기", s: "바탕화면·홈 화면에 쌤비 아이콘", fn: clickMenu("mInstall")},
         {ic: "💬", t: "의견 보내기", s: (window.TT_FBM && TT_FBM.unseen() ? "📬 보낸 의견에 답이 " + TT_FBM.unseen() + "개 왔어요 · " : "") + "불편한 점 · 아이디어를 담당 선생님께", fn: clickMenu("mFeedback")}]; }}
     };
-    function startSt(){ var R = D.start.rows(), need = R.filter(function(r){ return !r.opt; }), done = need.filter(function(r){ return r.ok; }).length, nx = need.filter(function(r){ return !r.ok; })[0];
+    function startSt(){ var R = D.start.rows().filter(function(r){ return !PH() || !PH_ROW[r.t]; }), need = R.filter(function(r){ return !r.opt; }), done = need.filter(function(r){ return r.ok; }).length, nx = need.filter(function(r){ return !r.ok; })[0];
       return nx ? "⚠ " + done + "/" + need.length + " · 다음: " + nx.t : "✓ 준비 끝 · " + R.filter(function(r){ return r.ok; }).length + "/" + R.length + " 단계"; }
     function fbN(){ try{ return Number(localStorage.getItem("ttadm_fbnew") || 0); }catch(e){ return 0; } }
+    /* v2.55 휴대폰: 시작 세팅·꾸미기·도움말만 (백업·새 학년·관리·학교 세팅 받기·도장판·단축키는 PC에서) */
+    function PH(){ return typeof ttIsPhone === "function" && ttIsPhone(); }
+    var PH_SUB = {look: "화면 · 쌤비", help: "쓰는 법 · 앱 설치 · 의견"}, PH_OUT = {data: 1, admin: 1}, PH_ROW = {"학교 세팅 받기": 1, "도장판·배지": 1, "단축키 안내": 1};
     function items(){
       var adm = window.TT_ADMIN && TT_ADMIN.state && TT_ADMIN.state();
+      return items0(adm).filter(function(it){ return !PH() || !PH_OUT[it.k]; });
+    }
+    function items0(adm){
       return [
-        {x: {icon: "🧳", name: "시작 세팅", st: startSt(), fn: function(){ open("start"); }}},
-        {x: {icon: "🎨", name: "꾸미기", st: "화면 · 쌤비 · 도장판·배지", fn: function(){ open("look"); }}},
-        {x: {icon: "💾", name: "백업·새 학년", st: bk(), fn: function(){ open("data"); }}},
-        {x: {icon: "❓", name: "도움말", st: window.TT_FBM && TT_FBM.unseen() ? "⚠ 📬 보낸 의견에 답이 왔어요" : "쓰는 법 · 단축키 · 앱 설치 · 의견 보내기", fn: function(){ open("help"); }}},
-        {x: {icon: "🛡️", name: "관리", st: adm && fbN() ? "⚠ 💬 새 의견 " + fbN() + "개 · 관리자 모드 중" : adm ? "🛡️ 관리자 모드 중" : "관리자 전용 · 교직원 · 금고 · 의견함 · 변경 기록", fn: goTo("apps/admin/")}}
+        {k: "start", x: {icon: "🧳", name: "시작 세팅", st: startSt(), fn: function(){ open("start"); }}},
+        {k: "look", x: {icon: "🎨", name: "꾸미기", st: PH() ? "화면 · 쌤비" : "화면 · 쌤비 · 도장판·배지", fn: function(){ open("look"); }}},
+        {k: "data", x: {icon: "💾", name: "백업·새 학년", st: bk(), fn: function(){ open("data"); }}},
+        {k: "help", x: {icon: "❓", name: "도움말", st: window.TT_FBM && TT_FBM.unseen() ? "⚠ 📬 보낸 의견에 답이 왔어요" : PH() ? "쓰는 법 · 앱 설치 · 의견 보내기" : "쓰는 법 · 단축키 · 앱 설치 · 의견 보내기", fn: function(){ open("help"); }}},
+        {k: "admin", x: {icon: "🛡️", name: "관리", st: adm && fbN() ? "⚠ 💬 새 의견 " + fbN() + "개 · 관리자 모드 중" : adm ? "🛡️ 관리자 모드 중" : "관리자 전용 · 교직원 · 금고 · 의견함 · 변경 기록", fn: goTo("apps/admin/")}}
       ];
     }
     var dlg = null;
@@ -929,9 +935,10 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
       try{ var more = $("more"); if(more) more.open = false; }catch(e){}
       if(!dlg){ dlg = document.createElement("dialog"); dlg.className = "hubDlg"; document.body.appendChild(dlg);
         dlg.addEventListener("click", function(e){ if(e.target === dlg || (e.target.closest && e.target.closest("[data-hx]"))) dlg.close(); }); }
-      var R = d.rows();
+      var R = d.rows().filter(function(r){ return !PH() || !PH_ROW[r.t]; }), n0 = 0;
+      if(PH()) R.forEach(function(r){ if(r.n) r.n = ++n0; });   // 휴대폰: 뺀 단계가 있으면 번호를 다시 1부터
       dlg.setAttribute("aria-label", d.t);
-      dlg.innerHTML = '<div class="hh"><b>' + d.ic + " " + d.t + '</b><small>' + d.sub + '</small><button type="button" class="hx" data-hx aria-label="닫기">✕</button></div><div class="hl">'
+      dlg.innerHTML = '<div class="hh"><b>' + d.ic + " " + d.t + '</b><small>' + (PH() && PH_SUB[k] ? PH_SUB[k] : d.sub) + '</small><button type="button" class="hx" data-hx aria-label="닫기">✕</button></div><div class="hl">'
         + R.map(function(r, i){ return '<button type="button" class="hr' + (r.ok ? " ok" : "") + (r.danger ? " danger" : "") + '" data-hi="' + i + '">'
           + (r.n ? '<i class="hn">' + (r.ok ? "✓" : r.n) + "</i>" : '<i class="hi">' + r.ic + "</i>")
           + '<span><b>' + (r.n ? r.ic + " " : "") + r.t + (r.opt ? ' <em>선택</em>' : "") + "</b><small>" + r.s + "</small></span><u>›</u></button>"; }).join("") + "</div>";
@@ -1381,6 +1388,12 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
         copyTxt(msg).then(function(ok){ $("fbErr").textContent = (/지원하지 않는/.test(String(err.message)) ? "업무판이 아직 의견 받기를 지원하지 않아요." : /AUTH/.test(String(err.message)) ? "업무판 비밀번호가 바뀌었어요. 설정 → 시작 세팅 → 학교 연결에서 다시 넣어 주세요." : "보내지 못했어요.") + (ok ? " 내용을 복사해 두었으니 쿨메신저로 보내 주세요." : " 내용 칸의 글을 복사해 쿨메신저로 보내 주세요."); });
       });
   });
+  /* v2.55 도구 화면 ⋯ 에서 넘어옴: ?hub=start → 홈에서 그 설정 창(시작 세팅·꾸미기·백업·도움말) */
+  (function(){
+    var m = /[?&]hub=(start|look|data|help)\b/.exec(location.search); if(!m) return;
+    try{ history.replaceState(null, "", location.pathname + location.hash); }catch(e){}
+    setTimeout(function(){ if(window.TT_HUB) TT_HUB.open(m[1]); }, 400);
+  })();
   /* v2.41 도구 화면 맨 위 ⋯ 에서 넘어옴: ?m=mSchool → 홈에서 그 메뉴 창을 바로 열기 */
   (function(){
     var m = /[?&]m=(m[A-Za-z]+)\b/.exec(location.search); if(!m) return;

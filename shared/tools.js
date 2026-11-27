@@ -16,6 +16,7 @@
    목록 순서 = 화면에 나오는 순서. cat 과 TT_CATS 는 예전 화면(저장본)이 깨지지 않게 남겨 둔 것으로, 더는 쓰지 않습니다.
    old: 바꾸기 전 이름. 찾기(Ctrl+K)에서 예전 이름으로도 찾고, 각 도구 화면의 제목(h1·창 제목)을 새 이름으로 바꿔 보여 줍니다.
    season: ["start"|"mid"|"end"] — 메뉴 화면에서 그 시기(학기초 2·3·8월 / 학기중 / 학기말 6·7·11·12월)에 앞으로 나오는 도구 (개편 6단계)
+   pc: true — 휴대폰(폭 760px 이하)에서는 메뉴·찾기에 나오지 않는 PC·전자칠판용 도구 (v2.55, ttToolShown)
    who: "homeroom" 메뉴(우리 반)는 학교·선생님 설정에서 '교과만'을 고르면 숨깁니다(ttMenuShown).
 
    ── 개편 3단계(v0.30): 교과 칸 = 교과 팩 ──
@@ -65,44 +66,44 @@ var TT_PACK_DATA = {};   // 불러온 팩: {id: {id, name, units, links, tools}}
 var TT_TOOLS = [
   /* ── 수업 · 수업하기 ── */
   {id:"timetable",icon:"🕘", cat:"teach", menu:"class", group:"teach", short:"내 시간표", name:"내 시간표", desc:"컴시간 시간표를 붙여 넣으면 오늘 수업·수업 기록에 쓰입니다. 수업 교체는 그 주에만 반영.", href:"apps/timetable/", ready:true, room:true, season:["start"]},
-  {id:"book",   icon:"📘", cat:"teach", menu:"class", group:"teach", short:"교과서", name:"교과서 띄우기", old:"교과서·수업 모드", desc:"▶ 수업 모드: ① 교과서 ② 개념 정리 ③ 교과서 문제(타이머) ④ 도전 문제 → [오늘 수업 끝] 한 번으로 진도 저장 · 반마다 지난 쪽에서 · 진도표.", href:"apps/book/", ready:true, room:true},
+  {id:"book", pc:true,   icon:"📘", cat:"teach", menu:"class", group:"teach", short:"교과서", name:"교과서 띄우기", old:"교과서·수업 모드", desc:"▶ 수업 모드: ① 교과서 ② 개념 정리 ③ 교과서 문제(타이머) ④ 도전 문제 → [오늘 수업 끝] 한 번으로 진도 저장 · 반마다 지난 쪽에서 · 진도표.", href:"apps/book/", ready:true, room:true},
   {id:"remote", icon:"📱", cat:"teach", menu:"class", group:"teach", noRail:true, short:"리모컨", name:"수업 리모컨", desc:"휴대폰으로 교실 화면의 교과서를 넘기고 확대·단계·타이머·번호 뽑기·목표 띄우기 (보관함 연결 필요).", href:"apps/remote/", ready:true},
   {id:"journal",icon:"📒", cat:"teach", menu:"class", group:"teach", short:"수업 기록", name:"수업 기록", old:"수업 기록장", desc:"수업 진도와 학생 활동을 반별로 기록합니다.", href:"apps/journal/", ready:true, room:true},
-  {id:"class",  icon:"🧰", cat:"teach", menu:"class", group:"teach", short:"교실 도구", name:"교실 도구", old:"수업 도구", desc:"칠판(모눈·좌표평면) · 뽑기 · 타이머 · 모둠 점수 · 소음 신호등.", href:"apps/class/", ready:true, room:true},
-  {id:"group",  icon:"🧩", cat:"teach", menu:"class", group:"teach", short:"모둠 편성", name:"모둠 편성", desc:"조건에 맞게 모둠과 좌석을 편성합니다.", href:"apps/group/", ready:true, room:true, months:[3], season:["start"]},
+  {id:"class", pc:true,  icon:"🧰", cat:"teach", menu:"class", group:"teach", short:"교실 도구", name:"교실 도구", old:"수업 도구", desc:"칠판(모눈·좌표평면) · 뽑기 · 타이머 · 모둠 점수 · 소음 신호등.", href:"apps/class/", ready:true, room:true},
+  {id:"group", pc:true,  icon:"🧩", cat:"teach", menu:"class", group:"teach", short:"모둠 편성", name:"모둠 편성", desc:"조건에 맞게 모둠과 좌석을 편성합니다.", href:"apps/group/", ready:true, room:true, months:[3], season:["start"]},
   /* ── 수업 · 평가 ── */
   {id:"stuprog", icon:"🎒", cat:"teach", menu:"class", group:"teach", short:"학생 프로그램", name:"학생 프로그램", desc:"학생 휴대폰용 공부 Gym(쌤비 PT) · 중학 개념지도(수학) · 국어 근육 — 큰 QR · 인쇄용 · 교실 함께 읽기 · 결과 모으기.", href:"apps/stuprog/", ready:true, room:true},
   {id:"sites",  icon:"🌐", cat:"teach", menu:"class", group:"teach", short:"사이트", name:"자주 가는 사이트", desc:"많이 쓰는 사이트를 수업용·업무용·개인용으로 모아 두기 · 📌 고정하면 첫 화면에 단추로 · 교실 기기에는 수업용만.", href:"apps/sites/", ready:true, room:true},
-  {id:"assess", icon:"📊", cat:"teach", menu:"class", group:"eval", short:"수행평가", name:"수행평가", desc:"채점 기준(점수형·수준형)을 만들고 반마다 채점, 관찰은 교과 세특 기록으로.", href:"apps/assess/", ready:true, season:["start","end"]},
-  {id:"mblue",  icon:"🎯", cat:"math", menu:"class", group:"eval",  short:"분류표", name:"이원목적분류표", desc:"문항별 성취기준·난이도·배점·정답 → 합계·분포 점검, 인쇄.", href:"apps/mblue/", ready:true, exam:21, season:["end"]},
+  {id:"assess", pc:true, icon:"📊", cat:"teach", menu:"class", group:"eval", short:"수행평가", name:"수행평가", desc:"채점 기준(점수형·수준형)을 만들고 반마다 채점, 관찰은 교과 세특 기록으로.", href:"apps/assess/", ready:true, season:["start","end"]},
+  {id:"mblue", pc:true,  icon:"🎯", cat:"math", menu:"class", group:"eval",  short:"분류표", name:"이원목적분류표", desc:"문항별 성취기준·난이도·배점·정답 → 합계·분포 점검, 인쇄.", href:"apps/mblue/", ready:true, exam:21, season:["end"]},
   /* ── 수업 · 교과 칸 ── 교과 전용 도구는 교과 팩 파일(subjects/<교과>.js)에 있습니다. 아래 TT_PACKS 참고 */
   /* ── 우리 반 (담임) ── */
   {id:"roster", icon:"👥", cat:"life", menu:"homeroom", group:"room",  short:"명렬표", name:"명렬표", old:"학급 명렬표", desc:"나이스 명단 · 학생 사진과 메모 · 학생 카드(상담 카드).", href:"apps/roster/", ready:true, room:true, months:[3], season:["start"]},
-  {id:"photo",  icon:"📷", cat:"life", menu:"homeroom", group:"room",  short:"사진", in:"roster", name:"사진 파일명", old:"나이스 사진 이름", desc:"반 사진을 명렬표 순서대로 이름(번호)로 바꾸고 용량도 줄입니다.", href:"apps/photo/", ready:true, home:true, season:["start"]},
+  {id:"photo", pc:true,  icon:"📷", cat:"life", menu:"homeroom", group:"room",  short:"사진", in:"roster", name:"사진 파일명", old:"나이스 사진 이름", desc:"반 사진을 명렬표 순서대로 이름(번호)로 바꾸고 용량도 줄입니다.", href:"apps/photo/", ready:true, home:true, season:["start"]},
   {id:"tardy",  icon:"🧭", cat:"life", menu:"homeroom", group:"room",  short:"출결", name:"출결·결석계", desc:"무단지각 확인, 결석 사유와 결석신고서(한글 파일·인쇄).", href:"apps/tardy/", ready:true, home:true},
   {id:"parent", icon:"✉️", cat:"life", menu:"homeroom", group:"room",  short:"문자", name:"학부모 문자", desc:"상황별 학부모 안내 문자를 빠르게 만듭니다.", href:"apps/parent/", ready:true},
   {id:"submit", icon:"📦", cat:"life", menu:"homeroom", group:"room",  short:"제출물", name:"제출물 확인", old:"제출물 체크", desc:"동의서·회신·신청서를 학생별로 체크하고 미제출자만 모아 봅니다.", href:"apps/submit/", ready:true},
-  {id:"duty",   icon:"🧹", cat:"life", menu:"homeroom", group:"room",  short:"1인 1역", name:"1인 1역·당번", desc:"역할을 정하면 주마다 학생이 자동으로 돌아갑니다. 전자칠판에 띄워 씁니다.", href:"apps/duty/", ready:true, room:true, home:true, months:[3], season:["start"]},
-  {id:"seat",   icon:"🪑", cat:"life", menu:"homeroom", group:"room",  short:"자리 배치", name:"자리 배치", desc:"명렬표로 자리표 만들기 · 무작위 · 바꾸기 · 고정 · 학생 쪽에서 보기 · 인쇄 (이 기기에만).", href:"apps/seat/", ready:true, room:true, season:["start"]},
+  {id:"duty", pc:true,   icon:"🧹", cat:"life", menu:"homeroom", group:"room",  short:"1인 1역", name:"1인 1역·당번", desc:"역할을 정하면 주마다 학생이 자동으로 돌아갑니다. 전자칠판에 띄워 씁니다.", href:"apps/duty/", ready:true, room:true, home:true, months:[3], season:["start"]},
+  {id:"seat", pc:true,   icon:"🪑", cat:"life", menu:"homeroom", group:"room",  short:"자리 배치", name:"자리 배치", desc:"명렬표로 자리표 만들기 · 무작위 · 바꾸기 · 고정 · 학생 쪽에서 보기 · 인쇄 (이 기기에만).", href:"apps/seat/", ready:true, room:true, season:["start"]},
   /* ── 학생 ── */
   {id:"stucard",icon:"📇", cat:"care", menu:"student", group:"stu",  short:"학생 카드", name:"학생 카드", desc:"학생 한 명의 기록 · 출결 · 상담 · 제출물을 한 화면에 (읽기 전용).", href:"apps/stucard/", ready:true},
   {id:"voice",  icon:"🎙️", cat:"care", menu:"student", group:"stu",  short:"말로 기록", name:"말로 기록", old:"녹음", desc:"상담·학부모 상담·회의·수업 관찰·할 일을 말로 남기고, 이름을 가린 뒤 AI로 정리해 제자리에 저장(소리는 저장 안 함).", href:"apps/voice/", ready:true},
   {id:"gquick", icon:"⚡", cat:"care", menu:"student", group:"stu",  short:"빠른 지도", name:"빠른 지도", desc:"어느 반에서나: 지도 종류를 고르고 학생을 누르면 바로 기록 (우리 반은 출결과 함께).", href:"apps/sguide/?tab=guide", ready:true},
   {id:"counsel",icon:"🗣️", cat:"care", menu:"student", group:"stu",  short:"상담 일지", name:"상담 일지", old:"상담", desc:"어느 반에서나 상담일지 · 후속 확인 (교과 세특 참고로도 모임).", href:"apps/sguide/?tab=counsel", ready:true},
-  {id:"record", icon:"📑", cat:"care", menu:"student", group:"stu",  short:"생기부", name:"생기부 도우미", desc:"모인 학생 기록을 영역별로 보며 초안 쓰기 · 나이스 글자 수 · 유의 낱말 점검.", href:"apps/record/", ready:true, months:[7,12], season:["end"]},
-  {id:"advisor",icon:"🎓", cat:"care", menu:"student", group:"stu",  short:"진학 추천", name:"진학 추천", old:"진학", desc:"성적 분석 · 지원 가능 고교 살펴보기 · 가산점 자동 입력.", href:"apps/advisor/", ready:true, home:true, months:[10,11], season:["end"]},
-  {id:"bonus",  icon:"🏅", cat:"care", menu:"student", group:"stu",  short:"가산점", in:"advisor", name:"가산점 계산", old:"가산점 자동 입력", desc:"수상경력·창체 파일을 올리면 가산점 양식을 자동으로 채웁니다.", href:"apps/bonus/", ready:true, home:true, months:[10,11], season:["end"]},
+  {id:"record", pc:true, icon:"📑", cat:"care", menu:"student", group:"stu",  short:"생기부", name:"생기부 도우미", desc:"모인 학생 기록을 영역별로 보며 초안 쓰기 · 나이스 글자 수 · 유의 낱말 점검.", href:"apps/record/", ready:true, months:[7,12], season:["end"]},
+  {id:"advisor", pc:true,icon:"🎓", cat:"care", menu:"student", group:"stu",  short:"진학 추천", name:"진학 추천", old:"진학", desc:"성적 분석 · 지원 가능 고교 살펴보기 · 가산점 자동 입력.", href:"apps/advisor/", ready:true, home:true, months:[10,11], season:["end"]},
+  {id:"bonus", pc:true,  icon:"🏅", cat:"care", menu:"student", group:"stu",  short:"가산점", in:"advisor", name:"가산점 계산", old:"가산점 자동 입력", desc:"수상경력·창체 파일을 올리면 가산점 양식을 자동으로 채웁니다.", href:"apps/bonus/", ready:true, home:true, months:[10,11], season:["end"]},
   /* ── 학교 ── (업무판 묶음의 '주간·월간 업무판'은 연결한 학교 업무판 주소로 그립니다) */
   {id:"schoolhub", icon:"🏫", cat:"work", menu:"school", group:"board", short:"업무판", name:"학교 업무판", desc:"주간·월간 업무판 · 내선번호 · 자주 보는 문서(자료실에서 ★)를 한 화면에.", href:"apps/school/", ready:true},
-  {id:"year",   icon:"📆", cat:"work", menu:"school", group:"board",  short:"연간 업무", name:"연간 업무", desc:"해마다 돌아오는 일 · 학사일정 붙여 넣기 → 첫 화면 달력.", href:"apps/year/", ready:true},
+  {id:"year", pc:true,   icon:"📆", cat:"work", menu:"school", group:"board",  short:"연간 업무", name:"연간 업무", desc:"해마다 돌아오는 일 · 학사일정 붙여 넣기 → 첫 화면 달력.", href:"apps/year/", ready:true},
   {id:"lib",    icon:"🔎", cat:"work", menu:"school", group:"lib",  short:"자료실", name:"자료실", old:"학교 자료실", desc:"규정집·교육계획서·기재요령·서식을 누구나 올리고 내용까지 찾기 (몇 쪽인지).", href:"apps/lib/", ready:true},
-  {id:"ai",     icon:"🤖", cat:"work", menu:"school", group:"lib",  short:"문서 도우미", name:"문서 도우미", old:"AI·문서 도우미", desc:"개인정보를 가린 AI 요청문 · 🧾 자동 채움(가정통신문·안내 문자·신청서·명단 표·공문 틀에 학교·날짜·담임·명단을 채움) · 보관함.", href:"apps/ai/", ready:true},
-  {id:"train",  icon:"📜", cat:"work", menu:"school", group:"work",  short:"의무연수", name:"의무연수 취합", desc:"꾸러미 이수증·이수번호를 한 번 내면 연수 담당자들이 한 번에 모아 갑니다.", href:"apps/train/", ready:true},
-  {id:"short",  icon:"🔗", cat:"work", menu:"school", group:"lib",  short:"짧은 주소", name:"짧은 주소", desc:"긴 주소를 g/?수학1 처럼 짧게 · QR도 함께 · 우리 학교 선생님이 함께 쓰는 목록.", href:"apps/short/", ready:true},
-  {id:"merge",  icon:"📎", cat:"work", menu:"school", group:"lib",  short:"파일 합치기", name:"파일 합치기·나누기", desc:"엑셀·한글(hwpx)·PDF를 이 기기 안에서 합치기 · PDF 쪽 정리·나누기·글자/그림 뽑기. 서식까지 그대로는 윈도우 프로그램.", href:"apps/merge/", ready:true},
+  {id:"ai", pc:true,     icon:"🤖", cat:"work", menu:"school", group:"lib",  short:"문서 도우미", name:"문서 도우미", old:"AI·문서 도우미", desc:"개인정보를 가린 AI 요청문 · 🧾 자동 채움(가정통신문·안내 문자·신청서·명단 표·공문 틀에 학교·날짜·담임·명단을 채움) · 보관함.", href:"apps/ai/", ready:true},
+  {id:"train", pc:true,  icon:"📜", cat:"work", menu:"school", group:"work",  short:"의무연수", name:"의무연수 취합", desc:"꾸러미 이수증·이수번호를 한 번 내면 연수 담당자들이 한 번에 모아 갑니다.", href:"apps/train/", ready:true},
+  {id:"short", pc:true,  icon:"🔗", cat:"work", menu:"school", group:"lib",  short:"짧은 주소", name:"짧은 주소", desc:"긴 주소를 g/?수학1 처럼 짧게 · QR도 함께 · 우리 학교 선생님이 함께 쓰는 목록.", href:"apps/short/", ready:true},
+  {id:"merge", pc:true,  icon:"📎", cat:"work", menu:"school", group:"lib",  short:"파일 합치기", name:"파일 합치기·나누기", desc:"엑셀·한글(hwpx)·PDF를 이 기기 안에서 합치기 · PDF 쪽 정리·나누기·글자/그림 뽑기. 서식까지 그대로는 윈도우 프로그램.", href:"apps/merge/", ready:true},
   /* ── 설정 ── */
-  {id:"setup",  icon:"🧳", cat:"work", menu:"settings", group:"set",  short:"학기초 세팅", name:"학기초 세팅", desc:"담당자가 학교 원본 파일(학생 명렬 엑셀 · 한글 교직원 명렬·내선번호·시간표·학사일정)을 한꺼번에 넣고 잠근 파일 하나로 → 선생님은 불러와 내 이름만 고르면 끝.", href:"apps/setup/", ready:true, months:[2,3], season:["start"]},
-  {id:"admin",  icon:"🛡️", cat:"work", menu:"settings", group:"set",  short:"관리", name:"관리", desc:"관리자(담당자) 전용: 교직원·학교 정보·학생 명렬·학사일정·🔐 금고를 쌤 노트에서 넣고·고치고·지우기 · 관리자 만들기 · 변경 기록. 관리자 모드는 30분.", href:"apps/admin/", ready:true}
+  {id:"setup", pc:true,  icon:"🧳", cat:"work", menu:"settings", group:"set",  short:"학기초 세팅", name:"학기초 세팅", desc:"담당자가 학교 원본 파일(학생 명렬 엑셀 · 한글 교직원 명렬·내선번호·시간표·학사일정)을 한꺼번에 넣고 잠근 파일 하나로 → 선생님은 불러와 내 이름만 고르면 끝.", href:"apps/setup/", ready:true, months:[2,3], season:["start"]},
+  {id:"admin", pc:true,  icon:"🛡️", cat:"work", menu:"settings", group:"set",  short:"관리", name:"관리", desc:"관리자(담당자) 전용: 교직원·학교 정보·학생 명렬·학사일정·🔐 금고를 쌤 노트에서 넣고·고치고·지우기 · 관리자 만들기 · 변경 기록. 관리자 모드는 30분.", href:"apps/admin/", ready:true}
 ];
 
 /* ── 도구 정보 꺼내 쓰기 (모든 화면 공통) ── 목록이 없거나 id 가 틀리면 fallback(지금 적힌 글자)을 그대로 씁니다. */
@@ -122,8 +123,11 @@ function ttLabel(id, fallback){ var t = ttTool(id); return t ? t.icon + " " + t.
 /* 메뉴를 보여 줄지: 우리 반(who:"homeroom")은 '교과만' 선생님에게 숨김 (tt_school_v1.role === "subject") */
 function ttIsSubjectOnly(){ try{ var o = JSON.parse(localStorage.getItem("tt_school_v1") || "null"); return !!(o && o.role === "subject"); }catch(e){ return false; } }
 function ttMenuShown(id){ var m = ttMenu(id); return !m || m.who !== "homeroom" || !ttIsSubjectOnly(); }
-/* 도구를 보여 줄지 (메뉴가 숨겨졌으면 그 도구도) */
-function ttToolShown(t){ if(typeof t === "string") t = ttTool(t); return !!t && ttMenuShown(t.menu) && (!t.subject || !ttPackOnly() || t.subject === ttPackId()); }
+/* v2.55 휴대폰: 화면 폭 760px 이하. pc:true 도구(칠판에 띄우기·파일·엑셀 작업)는 휴대폰 메뉴·찾기에서 숨김 — 주소로 열면 그대로 열림 */
+function ttIsPhone(){ try{ return !!(window.matchMedia && window.matchMedia("(max-width:760px)").matches); }catch(e){ return false; } }
+function ttPcOnly(t){ if(typeof t === "string") t = ttTool(t); return !!(t && t.pc && ttIsPhone()); }
+/* 도구를 보여 줄지 (메뉴가 숨겨졌으면 그 도구도 · 휴대폰에서는 pc 도구도) */
+function ttToolShown(t){ if(typeof t === "string") t = ttTool(t); return !!t && !ttPcOnly(t) && ttMenuShown(t.menu) && (!t.subject || !ttPackOnly() || t.subject === ttPackId()); }
 /* PLAN_다듬기 5단계: 교과 칸에 모든 교과 팩 도구를 보일지. 학교·선생님 설정의 '내 교과만 보기'(tt_school_v1.packOnly)를 켜면 고른 교과만 */
 function ttPackOnly(){ return !!ttSchoolObj().packOnly; }
 /* 교과 칸 묶음 목록: 내 교과 먼저 [{id:"subject"(내 교과)|"subject_<팩>", pack, name}] */

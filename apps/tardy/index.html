@@ -237,6 +237,8 @@ table.plain{width:100%;border-collapse:collapse;font-size:13.5px}
 .pf h2{font-family:"Malgun Gothic",sans-serif;text-align:center;font-size:22px;letter-spacing:10px;margin:6px 0 16px}
 .pf .school{text-align:center;font-family:"Malgun Gothic",sans-serif;font-size:24px;font-weight:800;letter-spacing:12px;margin-top:22px}
 .pf .school small{font-size:14px;letter-spacing:0;font-weight:400}
+  /* v2.55 휴대폰: 입력·확인만 한 줄로 — 결석신고서(한글 출력)·설정은 PC에서, 학부모 문자는 위 도구 줄에 */
+  @media (max-width:760px){ .tabs [data-tab="report"],.tabs [data-tab="settings"],.tabs a[href="../parent/"]{display:none!important} }
 </style>
 <script src="../../shared/early.js"></script>
 </head>
