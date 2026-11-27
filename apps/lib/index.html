@@ -44,7 +44,7 @@
   .it .ic{font-size:24px;flex:none}
   .it .mn{flex:1;min-width:0}
   .it .tt{font-weight:800;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .it .mt{font-size:12px;color:var(--sub);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .it .mt{font-size:12px;color:var(--sub);display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-height:0!important;border:0!important;box-shadow:none!important}   /* v2.51 쌤비 홈 공통 .mt(메뉴 칸 64px)과 이름이 겹쳐 생긴 빈칸 없앰 */
   .it .btn{padding:5px 10px;font-size:13px}
   .chip{font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;background:#eceff3;color:#4a5560}
   .chip.new{background:var(--ok-soft);color:var(--ok)}.chip.old{background:#f3f4f6;color:#9aa5b1}.chip.idx{background:var(--accent-soft);color:var(--accent)}
@@ -117,6 +117,23 @@
     .nav label{padding:4px 2px} body{height:auto;min-height:100dvh;overflow:auto} .bar{justify-content:flex-start} }
   .btn.star{font-size:16px;color:#9aa5b1;padding-left:10px;padding-right:10px}.btn.star.on{color:#e0a526}
   html.inframe header{display:none}
+  /* v2.51 🌐 공식 자료 */
+  .nav .offNav{margin-top:6px;border-top:1px dashed var(--line);border-radius:0 0 9px 9px;padding-top:9px}
+  .offWrap{flex:1;min-height:0;overflow:auto}
+  .offSec{margin-top:10px;flex:none}
+  .olist{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:5px}
+  .it.off{padding:6px 10px}
+  .it.off .tt{font-size:14px;line-height:1.3}
+  .it.off .mt{flex-wrap:nowrap;overflow:hidden;line-height:1.3;margin-top:2px}
+  .it.off .mt > span:not(.chip){white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .it.off .mt .chip{flex:none}
+  .offErr{margin:4px 0;font-size:13px;color:var(--sub)}
+  .offSec h3{font-size:14px;margin:0 0 6px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .offSec h3 small{font-size:12px;font-weight:500;color:var(--sub)}
+  .offTip{margin:2px 0 4px;font-size:13px;color:var(--sub)}
+  .it.off .ic{font-size:20px}
+  .it.off a.btn{flex:none;text-decoration:none;white-space:nowrap}
+  .offAll{display:inline-flex;margin-top:8px;text-decoration:none}
 </style>
 </head>
 <body>
@@ -142,6 +159,7 @@
 <script>if(window.top !== window) document.documentElement.classList.add("inframe");</script>
 <script src="../../shared/tt.js"></script>
 <script src="../../shared/libcache.js"></script>
+<script src="../../shared/official.js"></script>
 <script>
 (function(){
   "use strict";
@@ -163,6 +181,14 @@
   /* ---------- 목록 ---------- */
   /* v2.39.1 빠르게: 저장해 둔 목록을 먼저 보여 주고 뒤에서 새로 확인 · 주소에 자료(id)가 있으면 목록을 기다리지 않고 파일부터 받기 */
   function keepItems(r){ return (r.items || []).filter(function(x){ return !/^ttbook__/.test(String(x.name || "")); }); }   /* 교과서 조각(교과서 띄우기용)은 목록에서 숨김 */
+  /* v2.50.1 ★ 정리: 자료실 목록에 없는 파일(지운 파일 · 다른 기기·관리자가 지운 파일)은 학교 업무판 '자주 보는 문서'에서도 뺌 */
+  function pruneStars(ids){
+    var o = TT.store.get("tt_lib_star_v1", null) || {}, S = o.ids || {}, keep = {}, n = 0;
+    ids.forEach(function(id){ keep[String(id)] = 1; });
+    Object.keys(S).forEach(function(id){ if(!keep[id]){ delete S[id]; n++; } });
+    if(n){ o.ids = S; TT.store.set("tt_lib_star_v1", o); }
+    return n;
+  }
   function load(){
     var shown = false, sig = "";
     var uid = new URLSearchParams(location.search).get("id"); if(uid && !opened) fetchFile(uid).catch(function(){});
@@ -174,6 +200,7 @@
     post({action: "liblist"}).then(function(r){
       var fresh = keepItems(r), fs = JSON.stringify(fresh);
       TT_LIBC.listPut("lib", fresh); TT_LIBC.prune("lib", (r.items || []).map(function(x){ return x.id; }));
+      if(Array.isArray(r.items)) pruneStars(r.items.map(function(x){ return x.id; }));   // v2.50.1 자료실에서 없어진 파일은 업무판 ★에서도 뺌
       if(shown && fs === sig) return;
       items = fresh;
       if(shown && $("q").value.trim()) return;                    // 찾기 결과를 보고 있으면 그대로 둠(다음에 반영)
@@ -185,15 +212,36 @@
   function drawNav(){
     var c = {"전체": 0}; items.forEach(function(x){ if(onlyNew && !x.latest) return; c["전체"]++; c[x.cat] = (c[x.cat] || 0) + 1; });
     $("nav").innerHTML = ["전체"].concat(CATS).map(function(k){ return '<button type="button" data-c="' + esc(k) + '" aria-current="' + (k === cat) + '">' + esc(k) + "<small>" + (c[k] || 0) + "</small></button>"; }).join("")
+      + (window.TT_OFFICIAL ? '<button type="button" data-c="__off" class="offNav" aria-current="' + (cat === "__off") + '" title="교육부·교육청·법령 누리집의 지침 — 올리지 않고 바로 찾아 써요">🌐 공식 자료<small>' + TT_OFFICIAL.items().length + "</small></button>" : "")
       + '<label><input type="checkbox" id="onlyNew" ' + (onlyNew ? "checked" : "") + "> 최신 판만</label>";
     $("onlyNew").onchange = function(){ onlyNew = this.checked; drawNav(); drawList(); };
   }
   $("nav").onclick = function(e){ var b = e.target.closest("[data-c]"); if(!b) return; cat = b.dataset.c; $("q").value = ""; drawNav(); drawList(); };
+  /* v2.51 🌐 공식 자료: 교육부·교육청·법령 누리집에 늘 있는 지침은 올리지 않고 바로 (shared/official.js) */
+  function offRow(it){
+    return '<div class="it off"><span class="ic">' + (it.url ? "🌐" : "🔎") + '</span><div class="mn"><div class="tt">' + esc(it.t) + '</div><div class="mt"><span class="chip">' + esc(it.who) + "</span><span>" + esc(it.d || "") + "</span></div></div>"
+      + '<a class="btn" href="' + esc(TT_OFFICIAL.href(it)) + '" target="_blank" rel="noopener noreferrer">' + (it.url ? "바로 가기 ↗" : "누리집에서 찾기 ↗") + "</a></div>";
+  }
+  function offHTML(q){
+    if(!window.TT_OFFICIAL) return "";
+    var M = TT_OFFICIAL.match(q).slice(0, 5), o = TT_OFFICIAL.office();
+    return '<div class="offSec"><h3>🌐 공식 자료에서 <small>교육부 · ' + esc(o ? o.name : "교육청") + " · 법령 — 올리지 않아도 돼요</small></h3>"
+      + (M.length ? '<div class="olist">' + M.map(offRow).join("") + "</div>" : "")
+      + '<a class="btn offAll" href="' + esc(TT_OFFICIAL.searchUrl(q, "both")) + '" target="_blank" rel="noopener noreferrer">🔎 교육부·' + esc(o ? o.name : "교육청") + " 누리집에서 '" + esc(q) + "' 찾기 ↗</a></div>";
+  }
+  function drawOff(){
+    var L = TT_OFFICIAL.items(), G = [], by = {};
+    L.forEach(function(it){ if(!by[it.g]){ by[it.g] = []; G.push(it.g); } by[it.g].push(it); });
+    $("body").innerHTML = '<div class="offWrap"><p class="offTip">해마다 새 판이 나오는 기관 지침은 누리집 목록으로 바로 연결해요. 자료실에는 <b>우리 학교에서 만든 문서</b>(규정집·교육계획서·서식 등)를 올려 주세요.</p>'
+      + G.map(function(g){ return '<div class="offSec"><h3>' + esc(g) + '</h3><div class="olist">' + by[g].map(offRow).join("") + "</div></div>"; }).join("") + "</div>";
+    $("info").textContent = "공식 자료 " + L.length + "곳 · 기관 누리집으로 바로 연결 · 찾는 말 말고는 아무것도 보내지 않아요";
+  }
   function drawList(){
+    if(cat === "__off" && window.TT_OFFICIAL){ drawOff(); return; }
     var my = mine().mine, L = items.filter(function(x){ return (cat === "전체" || x.cat === cat) && (!onlyNew || x.latest); }).sort(function(a, b){ return a.at < b.at ? 1 : -1; });
     $("body").innerHTML = L.length ? '<div class="list">' + L.map(function(x){
       return '<div class="it"><span class="ic">' + icon(x.name) + '</span><div class="mn"><div class="tt" title="' + esc(x.name) + '">' + esc(x.title) + '</div><div class="mt"><span class="chip">' + esc(x.cat) + "</span>" + (x.latest ? '<span class="chip new">최신</span>' : '<span class="chip old">보관</span>') + (x.pages ? '<span class="chip idx">내용 검색' + (/\.pdf$/i.test(x.name) ? " " + x.pages + "쪽" : "") + "</span>" : '<span class="chip">이름으로만 검색</span>') + "<span>" + esc(x.by || "") + "</span><span>" + esc(day(x.at)) + "</span><span>" + kb(x.size) + "</span>" + (x.desc ? "<span>" + esc(x.desc) + "</span>" : "") + '</div></div>' + (star()[x.id] ? '<button type="button" class="btn star on" data-star="' + x.id + '" title="학교 업무판의 자주 보는 문서에서 빼기" aria-pressed="true">★</button>' : '<button type="button" class="btn star" data-star="' + x.id + '" title="학교 업무판의 자주 보는 문서에 넣기 (학교 배치도·교육계획서·규정집 등)" aria-pressed="false">☆</button>') + (isPdf(x.name) ? '<button type="button" class="btn" data-view="' + x.id + '">👁 보기</button>' : "") + '<button type="button" class="btn" data-get="' + x.id + '">⬇ 내려받기</button>' + (my[x.id] || admin ? '<button type="button" class="btn" data-edit="' + x.id + '" title="자료 이름·갈래·설명 고치기">✏️ 고치기</button>' : "") + (my[x.id] || admin ? '<button type="button" class="btn" data-del="' + x.id + '" title="' + (my[x.id] ? "내가 올린 자료" : "관리자") + '">🗑</button>' : "") + "</div>";
-    }).join("") + "</div>" : '<div class="empty"><div class="big">🔎</div><div><b>' + (items.length ? "이 갈래에 자료가 없습니다." : "아직 올라온 자료가 없습니다.") + '</b><br>규정집, 교육계획서, 생활기록부 기재요령, 자주 쓰는 서식처럼<br>구성원이 가끔 찾아보는 자료를 올려 주세요. PDF·HWPX·워드·엑셀은 내용까지 찾을 수 있어요.</div><button type="button" class="btn primary" id="up2">＋ 자료 올리기</button></div>';
+    }).join("") + "</div>" : '<div class="empty"><div class="big">🔎</div><div><b>' + (items.length ? "이 갈래에 자료가 없습니다." : "아직 올라온 자료가 없습니다.") + '</b><br>규정집, 교육계획서, 자주 쓰는 서식처럼<br><b>우리 학교에서 만든 문서</b>를 올려 주세요. 기재요령·법령 같은 기관 지침은 왼쪽 🌐 공식 자료에서 바로 찾아요. PDF·HWPX·워드·엑셀은 내용까지 찾을 수 있어요.</div><button type="button" class="btn primary" id="up2">＋ 자료 올리기</button></div>';
     var u2 = $("up2"); if(u2) u2.onclick = upload;
     $("info").textContent = "자료 " + items.filter(function(x){ return x.latest; }).length + "개 (보관 " + items.filter(function(x){ return !x.latest; }).length + ") · 누구나 올리고 내려받습니다";
   }
@@ -529,7 +577,7 @@
   function del(id){
     var x = items.filter(function(i){ return i.id === id; })[0]; if(!x) return;
     TT.ui.confirm("자료 지우기", "'" + x.title + "'을(를) 자료실에서 지웁니다. 드라이브 휴지통으로 옮겨집니다.", "지우기", function(){
-      var o = mine(); post({action: "libdel", id: id, tok: o.mine[id] || "", admin: admin}).then(function(){ delete o.mine[id]; TT.store.set("tt_lib_v1", o); TT.ui.toast("지웠습니다."); load(); }).catch(function(e){ TT.ui.toast(err(e)); });
+      var o = mine(); post({action: "libdel", id: id, tok: o.mine[id] || "", admin: admin}).then(function(){ delete o.mine[id]; TT.store.set("tt_lib_v1", o); var st = TT.store.get("tt_lib_star_v1", null) || {}; if(st.ids && st.ids[id]){ delete st.ids[id]; TT.store.set("tt_lib_star_v1", st); } TT.ui.toast("지웠습니다."); load(); }).catch(function(e){ TT.ui.toast(err(e)); });
     });
   }
 
@@ -587,7 +635,7 @@
   $("sf").onsubmit = function(e){
     e.preventDefault(); var q = $("q").value.trim(); if(!q){ drawList(); return; }
     $("body").innerHTML = '<div class="empty"><div class="big">🔎</div><div>찾는 중…</div></div>';
-    post({action: "libsearch", q: q}).then(function(r){ r.hits = (r.hits || []).filter(function(h){ return !/^ttbook__/.test(String(h.name || "")) && !/^교과서 조각/.test(String(h.title || "")); }); $("body").innerHTML = showHits(r.hits, q); $("info").textContent = "'" + q + "' " + (r.hits || []).length + "곳 · 최신 판을 먼저 보여 줍니다"; }).catch(function(e2){ $("body").innerHTML = '<div class="empty"><div>' + esc(err(e2)) + "</div></div>"; });
+    post({action: "libsearch", q: q}).then(function(r){ r.hits = (r.hits || []).filter(function(h){ return !/^ttbook__/.test(String(h.name || "")) && !/^교과서 조각/.test(String(h.title || "")); }); $("body").innerHTML = showHits(r.hits, q); $("body").insertAdjacentHTML("beforeend", offHTML(q)); $("info").textContent = "'" + q + "' " + (r.hits || []).length + "곳 · 최신 판을 먼저 보여 줍니다"; }).catch(function(e2){ $("body").innerHTML = '<div class="offWrap"><p class="offErr">학교 자료실: ' + esc(err(e2)) + "</p>" + offHTML(q) + "</div>"; });
   };
   $("ask").onclick = function(){
     var q = $("q").value.trim(); if(!q){ TT.ui.toast("물어볼 말을 찾기 칸에 적어 주세요. (예: 체험학습 신청 기한)"); return; }

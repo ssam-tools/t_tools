@@ -171,6 +171,24 @@
   }
   $("tabs").addEventListener("click", function(e){ var b = e.target.closest("[data-k]"); if(!b) return; cur = b.dataset.k; sessionStorage.setItem(TK, cur); draw(); });
   window.addEventListener("storage", function(e){ if(e.key === "tt_lib_star_v1" || e.key === "tt_board_v1") draw(); });
+  /* v2.50.1 ★ 자주 보는 문서 정리: 자료실에서 지운 파일은 위쪽 ★ 줄에서도 사라지게 (10분에 한 번, 목록만 받아 비교) */
+  (function syncStars(){
+    var b = B(), S = (TT.store.get("tt_lib_star_v1", null) || {}).ids || {};
+    if(!boardOk() || !b.pw || !Object.keys(S).length) return;
+    var k = "sbStarChk", last = +(sessionStorage.getItem(k) || 0); if(Date.now() - last < 600000) return;
+    sessionStorage.setItem(k, String(Date.now()));
+    fetch(b.url, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify({pw: b.pw, action: "liblist"})})
+      .then(function(r){ return r.json(); }).then(function(r){
+        if(!r || !r.ok || !Array.isArray(r.items)) return;
+        var keep = {}, o = TT.store.get("tt_lib_star_v1", null) || {}, ids = o.ids || {}, n = 0;
+        r.items.forEach(function(x){ keep[String(x.id)] = 1; });
+        Object.keys(ids).forEach(function(id){ if(!keep[id]){ delete ids[id]; n++; } });
+        if(!n) return;
+        o.ids = ids; TT.store.set("tt_lib_star_v1", o);
+        if(cur.indexOf("doc:") === 0 && !ids[cur.slice(4)]){ cur = "board"; sessionStorage.setItem(TK, cur); }
+        draw(); TT.ui.toast("자료실에서 지운 문서 " + n + "개를 ★ 줄에서 뺐어요");
+      }).catch(function(){});
+  })();
   draw();
 })();
 </script>

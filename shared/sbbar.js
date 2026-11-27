@@ -174,10 +174,10 @@
     var cls = hc ? (hc.grade && hc.cls ? hc.grade + "-" + hc.cls : hc.name || "") : "";
     if(sc.teacher) who = esc(sc.teacher) + " 선생님" + (cls ? " · " + esc(cls) + " 담임" : sc.subject ? " · " + esc(sc.subject) : "");
     var J = TT.joy && (!TT.joy.on || TT.joy.on()) ? TT.joy : null, dd = J && J.dday ? J.dday() : null, ti = termInfo();
-    var h = '<div class="mcTop"><a class="lg" href="' + esc(BASE) + '" title="쌤 노트 홈">' + (ART && ART.logo ? ART.logo(22) : "") + "<b>쌤 노트</b></a>" + (sc.name ? '<small title="' + esc(sc.name) + '">' + esc(sc.name.replace(/학교$/, "")) + "</small>" : "") + "</div>";
+    var h = '<div class="mcTop"><a class="lg" href="' + esc(BASE) + '" title="쌤 노트 홈">' + (ART && ART.logo ? ART.logo(22) : "") + "<b>쌤 노트</b></a>" + "</div>";   // v2.50.1 학교 이름은 맨 위 줄에 있으므로 뺌
     h += '<button type="button" class="meCard" data-mecard title="도장판 · 배지 · 아낀 시간 보기">';
     h += '<span class="mcWho">' + (who || "쌤 노트에 오신 걸 환영해요") + "</span>";
-    h += dd ? '<span class="mcD"><b>' + (dd.n === 0 ? "D-DAY" : "D-" + dd.n) + "</b><span>" + esc(dd.t) + "</span></span>"
+    h += dd ? '<span class="mcD" title="' + esc(dd.t) + '"><b>' + (dd.n === 0 ? "D-DAY" : "D-" + dd.n) + "</b><span>" + esc(dd.t) + "</span></span>"
             : '<span class="mcD calm"><b>' + (new Date().getMonth() + 1) + "월</b><span>가까운 큰 일정 없음</span></span>";
     if(ti) h += '<span class="mcBar" aria-hidden="true"><i style="width:' + ti.pct + '%"></i></span><span class="mcT">' + ti.name + "까지 수업일 <b>" + ti.left + "일</b></span>";
     if(J && J.treeNow){
@@ -343,7 +343,7 @@
       E.filter(function(e){ return e && e.d > td && e.d <= lim && e.t; }).sort(function(a, b){ return a.d < b.d ? -1 : 1; }).some(function(e){
         for(var i = 0; i < NEV.length; i++) if(NEV[i][0].test(e.t)){ ev = {e: e, tip: NEV[i][1]}; return true; } return false; });
       if(ev){ var dn = Math.round((new Date(+ev.e.d.slice(0, 4), +ev.e.d.slice(5, 7) - 1, +ev.e.d.slice(8, 10)) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
-        out.push({k: "tip", tag: "D-" + dn + " " + ev.e.t.replace(/^\s*\d학기\s*/, ""), full: ev.e.t, t: ev.tip}); }
+        out.push({k: "tip", tag: "D-" + dn + " 일정", ev: ev.e.t, t: ev.tip}); }
       var M = NMON[now.getMonth() + 1] || []; if(M.length) out.push({k: "tip", tag: (now.getMonth() + 1) + "월 업무 팁", t: M[n % M.length]});
     }
     if(!c.off.info){
@@ -364,10 +364,10 @@
     }
     if(!L.length) return '<div class="sbNote fold"><div class="nh"><button type="button" class="nt" data-nt="set" title="받을 쪽지 고르기">📌 쌤비 쪽지 꺼 둠</button><button type="button" class="na" data-nt="set" aria-label="쪽지 고르기">⚙</button></div></div>';
     nIdx = (nIdx % L.length + L.length) % L.length;
-    var it = L[nIdx], body = esc(it.t), fold = !!c.fold;
-    var txt = it.href ? '<a class="nb" href="' + esc(it.href) + '" title="' + body + '">' + body + "</a>" : '<p class="nb" title="' + body + '">' + body + "</p>";
-    return '<div class="sbNote k-' + it.k + (fold ? " fold" : "") + '" aria-label="쌤비 쪽지"><div class="nh">'
-      + '<button type="button" class="nt" data-nt="fold" title="' + esc(it.full || it.tag) + " · " + (fold ? "펼치기" : "접기") + '" aria-expanded="' + !fold + '">📌 <span>' + esc(it.tag) + "</span></button>"
+    var it = L[nIdx], body = (it.ev ? "<b>" + esc(it.ev) + "</b> · " : "") + esc(it.t), fold = !!c.fold, tip = (it.ev ? esc(it.ev) + " · " : "") + esc(it.t);   // v2.50.1 일정 이름은 잘리지 않게 본문 첫머리에
+    var txt = it.href ? '<a class="nb" href="' + esc(it.href) + '" title="' + tip + '">' + body + "</a>" : '<p class="nb" title="' + tip + '">' + body + "</p>";
+    return '<div class="sbNote k-' + it.k + (it.ev ? " ev" : "") + (fold ? " fold" : "") + '" aria-label="쌤비 쪽지"><div class="nh">'
+      + '<button type="button" class="nt" data-nt="fold" title="' + esc(it.tag) + " · " + (fold ? "펼치기" : "접기") + '" aria-expanded="' + !fold + '">📌 <span>' + esc(it.tag) + "</span></button>"
       + (L.length > 1 ? '<button type="button" class="na" data-nt="prev" aria-label="이전 쪽지" title="이전 (' + (nIdx + 1) + "/" + L.length + ')">‹</button><button type="button" class="na" data-nt="next" aria-label="다음 쪽지" title="다음 (' + (nIdx + 1) + "/" + L.length + ')">›</button>' : "")
       + '<button type="button" class="na ng" data-nt="set" title="받을 쪽지 고르기" aria-label="받을 쪽지 고르기">⚙</button></div>' + txt + "</div>";
   }

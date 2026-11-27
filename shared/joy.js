@@ -70,13 +70,13 @@
     var t = ymd(), lim = ymd(new Date(Date.now() + 120 * 864e5)), best = null;
     events().forEach(function(e){
       if(!e || !e.d || e.d <= t || e.d > lim) return;
-      if(!/고사|시험|평가회|방학식|방학|졸업|수능|종업식|체육대회|축제|수학여행|수련회/.test(e.t || "")) return;
+      if(!/고사|시험|지필|평가회|방학식|방학|졸업|수능|종업식|체육대회|축제|수학여행|수련회/.test(e.t || "")) return;
       if(/방학/.test(e.t) && !/방학식/.test(e.t) && e.k === "off") return;   // 방학 기간 날짜들은 방학식만
       if(!best || e.d < best.d) best = e;
     });
     if(!best) return null;
     var n = Math.round((new Date(best.d + "T00:00:00") - new Date(t + "T00:00:00")) / 864e5);
-    return {t: String(best.t).replace(/\s+/g, " ").slice(0, 12), n: n, d: best.d};
+    return {t: String(best.t).replace(/\s+/g, " ").trim().slice(0, 40), n: n, d: best.d};   // v2.51 일정 이름을 자르지 않음 (보여 주는 곳에서 줄 수로 맞춤)
   }
   function examNear(){ var t = new Date(); t.setHours(0, 0, 0, 0); var a = ymd(new Date(t - 2 * 864e5)), b = ymd(new Date(+t + 5 * 864e5)); return events().some(function(e){ return e.d >= a && e.d <= b && (e.k === "exam" || /고사|시험/.test(e.t || "")); }); }
   function season(){ var m = new Date().getMonth() + 1; return m >= 3 && m <= 5 ? "spring" : m >= 6 && m <= 8 ? "summer" : m >= 9 && m <= 11 ? "autumn" : "winter"; }
