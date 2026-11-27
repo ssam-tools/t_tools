@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.58.2";
+  var VERSION = "2.58.3";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -1008,7 +1008,9 @@ var TT = (function(){
         try{ var hs = document.createElement("style"); hs.id = "sbHold"; hs.textContent = 'html[data-ui="ssambi"]:not(.sbReady) body{visibility:hidden}html[data-ui="ssambi"] .tt-rail{display:none!important}'; (document.head || r).appendChild(hs); }catch(e){}
         setTimeout(function(){ r.classList.add("sbReady"); }, /\/apps\//.test(location.pathname) ? 2500 : 8000);   // v2.8.1: 첫 화면은 쌤비 홈이 다 그리면 보임(느린 기기에서 2.5초에 예전 업무판이 잠깐 보이던 문제)
       }   // v2.0: 쌤비 홈 디자인(shared/v2.css)은 이 표시가 있을 때만
-      var mt = document.querySelector('meta[name="theme-color"]'), th = THEMES.filter(function(x){ return x.id === o.look; })[0]; if(mt && th) mt.setAttribute("content", th.c[1]);
+      var mt = document.querySelector('meta[name="theme-color"]'), th = THEMES.filter(function(x){ return x.id === o.look; })[0];
+      if(!mt && th && document.head){ mt = document.createElement("meta"); mt.name = "theme-color"; document.head.appendChild(mt); }   // v2.58.3 이 표시가 없는 화면(학교 업무판 등)도 창 위 막대를 테마 색으로
+      if(mt && th) mt.setAttribute("content", th.c[1]);
     }
     function set(k, v){ var o = get(); o[k] = v; try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){} apply(o); }
     /* 처음대로: 색·글꼴·크기만 되돌림 (첫 화면 고르기는 그대로) */
