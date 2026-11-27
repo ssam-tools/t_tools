@@ -407,9 +407,11 @@
     var POS = {a: [0, 0, 1], b: [1, 0, 0], c: [1, 1, 0], d: [0, 2, 1], e: [0, 1, 0], f: [0, 0, 0], g: [0, 1, 1]};
     function stick(x, y, horiz, cls, data){
       var L = 52, T = 9, r = horiz ? '<rect x="' + (x + 6) + '" y="' + (y - T / 2) + '" width="' + (L - 12) + '" height="' + T + '" rx="3"' : '<rect x="' + (x - T / 2) + '" y="' + (y + 6) + '" width="' + T + '" height="' + (L - 12) + '" rx="3"';
-      if(cls === "slot") return '<g class="slot" data-k="' + data + '">' + r + ' fill="#f1f3f5" stroke="#adb5bd" stroke-dasharray="4 3"/></g>';
+      /* v2.58 휴대폰: 손가락으로 누르기 쉽게 보이지 않는 넓은 누름 칸 */
+      var hit = horiz ? '<rect x="' + (x + 4) + '" y="' + (y - 13) + '" width="' + (L - 8) + '" height="26" fill="transparent"/>' : '<rect x="' + (x - 13) + '" y="' + (y + 4) + '" width="26" height="' + (L - 8) + '" fill="transparent"/>';
+      if(cls === "slot") return '<g class="slot" data-k="' + data + '">' + hit + r + ' fill="#f1f3f5" stroke="#adb5bd" stroke-dasharray="4 3"/></g>';
       var head = horiz ? '<circle cx="' + (x + L - 8) + '" cy="' + y + '" r="6.5" fill="#e03131"/>' : '<circle cx="' + x + '" cy="' + (y + 8) + '" r="6.5" fill="#e03131"/>';
-      return '<g class="stick" data-k="' + data + '">' + r + ' fill="' + (cls === "held" ? "#ffd43b" : "#e9b872") + '" stroke="#a0703c"/>' + head + "</g>";
+      return '<g class="stick" data-k="' + data + '">' + hit + r + ' fill="' + (cls === "held" ? "#ffd43b" : "#e9b872") + '" stroke="#a0703c"/>' + head + "</g>";
     }
     function draw(){
       var x = 20, parts = "", n = P.sets.length;

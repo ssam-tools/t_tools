@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.57.0";
+  var VERSION = "2.58.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -509,7 +509,7 @@ var TT = (function(){
      나중에 받을 파일을 지금 미리 받아 둠(실행 순서·내용은 그대로). 이미 화면에 들어 있으면 건너뜀 */
   (function(){
     try{
-      if(!/\/apps\//.test(location.pathname) || window.top !== window) return;
+      if(!/\/apps\//.test(location.pathname) || window.top !== window || window.TT_STUDENT) return;
       var L = ["shared/tools.js?v=" + VERSION];
       if(!document.querySelector('script[src*="shared/ssambi.js"]')) (document.querySelector('script[src*="shared/voice.js"]') ? [] : ["shared/voice.js"]).concat(["shared/sbart.js", "shared/sbbar.js", "shared/ssambi.js"]).forEach(function(f){ L.push(f + "?v=" + VERSION); });
       L.forEach(function(f){ var l = document.createElement("link"); l.rel = "preload"; l.as = "script"; l.href = BASE + f; (document.head || document.documentElement).appendChild(l); });
@@ -723,6 +723,7 @@ var TT = (function(){
     }
     function build(){
       try{ rename(); }catch(e){}
+      if(window.TT_STUDENT){ document.documentElement.classList.add("sbReady"); return; }   // v2.58 학생용 화면(놀이터 ?me): 선생님 메뉴·쌤비 없이
       if(window.top !== window){ document.documentElement.classList.add("sbReady"); return; }   // v2.3: 학교 업무판의 문서 칸처럼 다른 화면 안에 열리면 메뉴 막대 없이
       var st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st);
       document.documentElement.classList.add("tt-hasnav");

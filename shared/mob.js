@@ -7,7 +7,7 @@
    - PC(폭 761px 이상)·교실 기기·예전 화면에서는 아무것도 하지 않습니다. */
 (function(){
   "use strict";
-  if(!window.TT || window.TT_MOB || TT.classroom || window.top !== window) return;
+  if(!window.TT || window.TT_MOB || TT.classroom || window.TT_STUDENT || window.top !== window) return;
   var R = document.documentElement, BASE = TT.BASE || "./", HOME = !/\/apps\//.test(location.pathname), ART = window.TT_SBART;
   var DOW = "일월화수목금토";
   function ph(){ return typeof ttIsPhone === "function" && ttIsPhone() && R.getAttribute("data-ui") === "ssambi"; }

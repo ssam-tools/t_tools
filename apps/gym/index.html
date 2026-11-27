@@ -904,12 +904,14 @@
   function sb(size, opts){ return window.TT_SBART ? TT_SBART.svg(Object.assign({acc: "trainer", size: size}, opts || {})) : "🦉"; }
   /* 지당 노트 문 (PLAN_지당연계 2단계): 오늘 지당을 했는지 · 끈기 심장 */
   function jdInfo(){ try{ return window.JDGYM ? JDGYM.jd() : null; }catch(e){ return null; } }
+  /* v2.58 🎮 오늘 운동(10분)을 하면 쉬는 시간 — 수학 놀이터(혼자 하는 퍼즐·생각 놀이) */
+  function playChip(){ return attCount(TODAY) ? '<a class="chip" href="../play/?me=1" style="text-decoration:none" title="오늘 운동 끝! 쉬는 시간엔 수학 놀이터">🎮</a>' : ""; }
   function jdChip(){ var j = jdInfo(); if(!j) return ""; return '<a class="chip' + (j.has && !j.today ? " hot" : "") + '" href="../jidang/" style="text-decoration:none" title="지당 노트 · 지금 당장, 변화의 시작!">📝 ' + (!j.has ? "지당" : j.today ? "지당 ✓" : "오늘 지당") + "</a>"; }
   function header(title, back){
     var st = streak();
     hd.innerHTML = (back ? '<button class="ib" data-go="' + back + '" aria-label="뒤로">←</button>' : "")
       + "<h1>" + title + (S.nick && !back ? "<small>· " + esc(S.nick) + "</small>" : "") + "</h1>"
-      + (back ? "" : jdChip() + '<span class="chip hot" title="연속 출석">🔥 ' + st + '</span><span class="chip" title="이번 주 휴식권">🎟️ ' + restLeft() + "</span>");
+      + (back ? "" : jdChip() + playChip() + '<span class="chip hot" title="연속 출석">🔥 ' + st + '</span><span class="chip" title="이번 주 휴식권">🎟️ ' + restLeft() + "</span>");
   }
   function go(v, arg){
     V = v; document.body.classList.toggle("focus", v === "room" || v === "train" || v === "result" || v === "report");

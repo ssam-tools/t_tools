@@ -132,6 +132,35 @@
   .ans{font-size:clamp(20px,4vh,36px);font-weight:900;color:#c2410c}
   @media (max-width:760px){ main{grid-template-columns:minmax(0,1fr)} .ghead .d{display:none} .bomb,.bingo,.det,.pz,.wheel,.gq,.yut,.p2,.sea,.slot{flex-direction:column} .yut .bd,.p2>.mines,.p2>.g2048,.p2>.slide,.p2>.lights,.p2>.dots,.sea .map{max-width:100%;height:auto;width:100%} .yut .side,.p2 .side{max-width:100%} .bomb .side,.bingo .right,.det .cand{width:100%} .sd{max-width:100%;height:auto;width:100%} .wheel .wbox{max-width:100%;height:auto;width:100%} .gq .main,.gq .opts.g{max-width:100%;height:auto;width:100%} .nav{flex-direction:row;flex-wrap:wrap;max-height:110px} .nav h3{width:100%} body{height:auto;min-height:100dvh;overflow:auto} .area{min-height:60vh} }
   :fullscreen body,body:fullscreen{padding:10px}
+  /* v2.58 휴대폰 고장 고치기 — 놀이 CSS(K.css)보다 뒤에 오도록 !important */
+  button,.area{touch-action:manipulation}
+  @media (hover:none){ .peg:hover{background:none!important} }
+  .g2048,.slide,.lights{touch-action:none}
+  @media (max-width:760px){
+    .pz .han{width:100%!important;flex:none!important;height:min(50vh,340px)!important;padding:16px 4px 12px!important;gap:6px!important}
+    .pz .han .peg{height:90%!important}
+    .pzside{width:100%}
+    .pz > *{align-self:stretch!important;max-width:100%!important}
+    .ms{justify-content:center}.ms .c{width:clamp(54px,21vw,84px)!important;height:clamp(54px,21vw,84px)!important;font-size:clamp(26px,8vw,40px)!important}.ms .s{min-width:26px!important;font-size:14px!important}
+    .mt svg{width:100%!important;max-height:none!important}
+    .setb{height:auto!important;flex:none!important;gap:6px!important}
+    .mk{flex-wrap:wrap!important;gap:8px!important}
+    .mk .nc{width:clamp(56px,19vw,78px)!important;font-size:clamp(28px,9vw,40px)!important}
+    .t369 .num{font-size:clamp(64px,24vw,140px)!important}
+    .t369 .rule{font-size:15px!important;text-align:center}
+    .nums15{grid-template-columns:repeat(5,1fr)!important;width:100%!important;gap:6px!important}
+    .nums15 button{font-size:30px!important;aspect-ratio:1!important}
+    .hands15{gap:8px!important}.hands15 div{min-width:0!important;flex:1;font-size:15px!important;padding:6px 8px!important}
+    .bomb .grid button{min-height:32px!important;font-size:15px!important}
+    .slide{max-width:100%!important;width:100%!important;height:auto!important}
+  }
+  /* v2.58 학생용 (?me) */
+  html.me header .bar,html.me header .back,html.me #nav,html.me #teams,html.me .turnrow,html.me #info,html.me .lkt{display:none!important}
+  html.me main{grid-template-columns:minmax(0,1fr)!important}
+  html.me header h1{font-size:20px}
+  html.me .ghead .meback{font:inherit;font-weight:800;font-size:14px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;margin:0 0 6px;min-height:36px}
+  html.me .phome .cards .card .lab{display:none}
+  @media (max-width:760px){ html.me body{padding:8px!important} html.me header{padding:4px 2px!important} html.me .ghead .d{display:block!important;font-size:13px} html.me .phome .cards{grid-template-columns:repeat(2,minmax(0,1fr))!important} }
 </style>
 </head>
 <body>
@@ -163,6 +192,7 @@
   <span id="info">맞히면 기회, 점수는 운으로! 모둠 점수는 수업 도구 🏆와 함께 쌓입니다 · 모둠 이름을 누르면 바꿀 수 있어요 · 모둠 수 2~6</span>
   <span class="priv">🔒 학생 이름 없이 · 저장되는 것은 모둠 점수뿐</span>
 </footer>
+<script>/* v2.58 학생용 놀이터(?me): 혼자 하는 퍼즐·생각 놀이만 · 선생님 메뉴·모둠 점수 없이 */ window.TT_STUDENT = /[?&]me\b/.test(location.search); if(window.TT_STUDENT) document.documentElement.classList.add("me");</script>
 <script src="../../shared/tt.js"></script>
 <script src="../../shared/mathgen.js"></script>
 <script src="kit.js"></script>
@@ -181,6 +211,25 @@
   var $ = function(id){ return document.getElementById(id); }, h = K.h;
   var CATS = [{id: "team", name: "🙌 함께 풀기", sub: "맞히면 점수 · 모둠 대항"}, {id: "think", name: "💡 생각 놀이", sub: "논리 · 사고력 · 퍼즐 · 창의성"}, {id: "puzzle", name: "🧠 퍼즐", sub: "혼자·짝·반 전체 도전"}, {id: "luck", name: "🍀 운과 확률", sub: "맞힌 모둠에게 주는 상 · 확률 수업"}];   // v2.48 풀기·퍼즐을 먼저, 운 놀이는 맨 뒤
   var M = K.MATH || {}, L = K.LOCK || {isLocked: function(){ return false; }};
+  /* v2.58 학생용(?me): 혼자 하는 🧠 퍼즐 · 💡 생각 놀이만 — 모둠 점수·차례 없이 '나' 혼자 */
+  var ME = !!window.TT_STUDENT, ME_OUT = {dots: 1};
+  if(ME){
+    CATS = CATS.filter(function(c){ return c.id === "puzzle" || c.id === "think"; }).map(function(c){ return c.id === "puzzle" ? {id: c.id, name: "🧠 퍼즐", sub: "혼자 도전"} : c; });
+    K.add = function(){}; K.award = function(){};
+    K.askTeam = function(t, cb){ if(cb) cb(0); };
+    K.teams = function(){ return [{i: 0, name: "나", score: 0, color: "#2f6fb5"}]; };
+    if(K.pref("meSnd") == null){ K.sound(false); K.pref("meSnd", 1); }   // 교실에서 한꺼번에 소리 나지 않게 처음엔 끔
+  }
+  function inMe(g){ return !ME || ((g.cat === "puzzle" || g.cat === "think") && !ME_OUT[g.id]); }
+  /* 학생용: 모둠 관련 단추·칸은 숨김 (두 모둠 · 맞힌 모둠 · 모둠 차례 …) */
+  function meTidy(){
+    if(!ME) return;
+    Array.prototype.forEach.call(document.querySelectorAll("#ghead button, #ghead label, #area button, #ghead select"), function(b){
+      var t = (b.textContent || "") + " " + (b.title || "");
+      if(/모둠/.test(t) && !b.closest(".meback")) b.style.display = "none";
+    });
+  }
+  if(ME) new MutationObserver(function(){ meTidy(); }).observe(document.getElementById("m"), {childList: true, subtree: true});
   function tags(id){ var m = M[id]; if(!m) return null; var t = h("span", "mtag"); m[0].forEach(function(x){ t.appendChild(h("i", "", x)); }); return t; }
   function locked(id){ return L.isLocked(id); }
   var cur = null, cleanup = null;
@@ -190,7 +239,7 @@
     var hb = h("button", "", "🏠 놀이 고르기"); hb.type = "button"; hb.setAttribute("aria-current", String(!cur)); hb.onclick = function(){ go(""); }; nav.appendChild(hb);
     CATS.forEach(function(c){
       nav.appendChild(h("h3", "", c.name)); var ng = h("div", "ng"); nav.appendChild(ng);
-      K.games.filter(function(g){ return g.cat === c.id; }).forEach(function(g){
+      K.games.filter(function(g){ return g.cat === c.id && inMe(g); }).forEach(function(g){
         var lk = locked(g.id), b = h("button", lk ? "lk" : ""); b.type = "button"; b.title = g.name + (lk ? " (잠김)" : ""); b.setAttribute("aria-current", String(cur === g.id)); b.appendChild(h("span", "", lk ? "🔒" : g.icon)); b.appendChild(h("span", "", g.name)); b.onclick = function(){ go(g.id); }; ng.appendChild(b);
       });
     });
@@ -201,16 +250,16 @@
     K.bump();
     Array.prototype.forEach.call(document.querySelectorAll("dialog[open]"), function(d){ if(!d.classList.contains("keep")) d.close(); });
     var fx = document.getElementById("fx"); if(fx) fx.innerHTML = "";
-    var g = K.games.filter(function(x){ return x.id === id; })[0]; cur = g ? g.id : null;
+    var g = K.games.filter(function(x){ return x.id === id && inMe(x); })[0]; cur = g ? g.id : null;
     var gh = $("ghead"), ar = $("area"); gh.innerHTML = ""; ar.innerHTML = ""; ar.className = "area";
     drawNav();
     if(!g){
-      gh.appendChild(h("h2", "", "오늘은 무엇을 할까요?")); gh.appendChild(h("span", "d", "놀이마다 📐 배우는 수학이 적혀 있어요. 운 놀이는 문제를 맞힌 모둠에게 주는 상으로 쓰면 좋아요. 🏁 퀴즈 배틀 → 맞힌 모둠이 🎁 상자 열기!"));
+      gh.appendChild(h("h2", "", "오늘은 무엇을 할까요?")); gh.appendChild(h("span", "d", ME ? "혼자 도전하는 퍼즐과 생각 놀이예요. 놀이마다 📐 배우는 수학이 숨어 있어요!" : "놀이마다 📐 배우는 수학이 적혀 있어요. 운 놀이는 문제를 맞힌 모둠에게 주는 상으로 쓰면 좋아요. 🏁 퀴즈 배틀 → 맞힌 모둠이 🎁 상자 열기!"));
       var home = h("div", "phome");
       CATS.forEach(function(c){
         home.appendChild(h("h3", "", c.name));
         var cards = h("div", "cards");
-        K.games.filter(function(x){ return x.cat === c.id; }).forEach(function(x){ var lk = locked(x.id), b = h("button", "card" + (lk ? " lk" : "")); b.type = "button"; b.title = lk ? "🔒 선생님이 잠가 둔 놀이예요" : x.desc; b.appendChild(h("div", "i", lk ? "🔒" : x.icon)); var d = h("div"); d.appendChild(h("b", "", x.name)); var tg = tags(x.id); if(tg) d.appendChild(tg); d.appendChild(h("span", "", x.desc)); b.appendChild(d); b.onclick = function(){ K.S.click(); go(x.id); }; cards.appendChild(b); });
+        K.games.filter(function(x){ return x.cat === c.id && inMe(x); }).forEach(function(x){ var lk = locked(x.id), b = h("button", "card" + (lk ? " lk" : "")); b.type = "button"; b.title = lk ? "🔒 선생님이 잠가 둔 놀이예요" : x.desc; b.appendChild(h("div", "i", lk ? "🔒" : x.icon)); var d = h("div"); d.appendChild(h("b", "", x.name)); var tg = tags(x.id); if(tg) d.appendChild(tg); d.appendChild(h("span", "", x.desc)); b.appendChild(d); b.onclick = function(){ K.S.click(); go(x.id); }; cards.appendChild(b); });
         home.appendChild(cards);
       });
       ar.appendChild(home); return;
@@ -225,10 +274,11 @@
       row.appendChild(K.btn("🧠 퍼즐 고르기", "primary", function(){ go(""); }));
       lb.appendChild(row); lb.appendChild(h("p", "lkt", "선생님은 오른쪽 위 ⋯ → '운 놀이 오늘만 열기'로 열 수 있어요 (다음 날 다시 잠김)")); ar.appendChild(lb); return;
     }
+    if(ME){ var mb = K.btn("← 놀이 고르기", "meback", function(){ go(""); window.scrollTo(0, 0); }); gh.appendChild(mb); }
     gh.appendChild(h("h2", "", g.icon + " " + g.name)); gh.appendChild(h("span", "d", g.desc));
     var mm = M[g.id]; if(mm){ var mr = h("div", "mline"); mr.appendChild(h("span", "lab", "📐 배우는 수학")); var tg2 = tags(g.id); if(tg2) mr.appendChild(tg2); mr.appendChild(h("span", "mq", "💭 " + mm[1])); gh.appendChild(mr); }
     var ctl = h("div", "ctl"); gh.appendChild(ctl);
-    try{ cleanup = g.mount(ar, ctl) || null; }catch(e){ ar.appendChild(h("div", "gwrap", "이 놀이를 여는 중 문제가 생겼습니다: " + e.message)); console.error(e); }
+    try{ cleanup = g.mount(ar, ctl) || null; meTidy(); }catch(e){ ar.appendChild(h("div", "gwrap", "이 놀이를 여는 중 문제가 생겼습니다: " + e.message)); console.error(e); }
   }
 
   /* 모둠 점수 줄 */
@@ -261,8 +311,9 @@
   if(K.LOCK){ luckBtn(); $("mLuck").onclick = function(){ closeMenu(); if(L.open()){ L.set(false); luckBtn(); show(location.hash.slice(1)); TT.ui.toast("운 놀이를 다시 잠갔어요"); } else TT.ui.confirm("운 놀이 열기", "하이·로우 · 블랙잭 · 슬롯머신 · 동전 연속 맞히기를 오늘 하루만 엽니다. 내일은 다시 잠겨요.", "오늘만 열기", function(){ L.set(true); luckBtn(); show(location.hash.slice(1)); }); }; } else $("mLuck").hidden = true;
   $("mReset").onclick = function(){ closeMenu(); TT.ui.confirm("모둠 점수 0으로", "이 반의 모둠 점수를 모두 0으로 합니다. (수업 도구 🏆 모둠 점수도 같이 바뀝니다)", "0으로", function(){ K.resetScores(); }); };
 
+  if(ME){ var pv = document.querySelector("footer .priv"); if(pv) pv.textContent = "🔒 이름·기록을 어디에도 보내지 않아요 · 이 기기에서만"; document.title = "수학 놀이터"; }
   var sel = $("cls");
-  if(TT.roster.classes().length) TT.ui.classSelect(sel, "class", function(c){ K.setClass(c); });
+  if(!ME && TT.roster.classes().length) TT.ui.classSelect(sel, "class", function(c){ K.setClass(c); });
   else { sel.hidden = true; K.setClass(null); }
   drawTeams();
   window.addEventListener("hashchange", function(){ show(location.hash.slice(1)); });
