@@ -309,7 +309,8 @@
       + '<h3>🏅 배지 <small>' + Object.keys(J.badges).length + " / " + BADGES.length + " · 받기 전에는 숨겨져 있어요</small></h3>"
       + '<div class="joyBd">' + BADGES.map(function(b){ var g = J.badges[b[0]]; return '<div class="' + (g ? "got" : "") + '"' + (g ? ' title="' + new Date(g).toLocaleDateString("ko-KR") + '"' : "") + "><i>" + (g ? b[1] : "❔") + "</i>" + (g ? esc(b[2]) : "숨은 배지") + "</div>"; }).join("") + "</div>"
       + '<p style="font-size:12px;color:var(--t-sub,#5b6773);margin:8px 0 0;line-height:1.5">아낀 시간은 쌤 노트가 만든 파일 내려받기·인쇄 때마다 손으로 할 때 걸릴 시간을 대략 더한 값입니다. 모든 기록은 이 기기에만 있습니다.</p>'
-      + '<h3>🦉 쌤비 소품 <small>배지를 받을수록 하나씩 열려요 · 눌러서 씌우기</small></h3><div class="joyAcc2">' + ACCS.map(function(a){ var op = a[3] <= nb;
+      + (window.TT_SBART && TT_SBART.coatPicker ? '<h3>🦉 쌤비 옷장 <small>깃털 색 · 밤하늘·금빛은 배지를 모으면 열려요</small></h3>' + TT_SBART.coatPicker() : "")   // v2.48
+      + '<h3>🎀 쌤비 소품 <small>배지를 받을수록 하나씩 열려요 · 눌러서 씌우기</small></h3><div class="joyAcc2">' + ACCS.map(function(a){ var op = a[3] <= nb;
           return '<button type="button" data-acc="' + a[0] + '"' + (op ? "" : " disabled") + ' class="' + (ca === a[0] ? "on" : "") + '" title="' + (op ? a[2] : "배지 " + a[3] + "개를 받으면 열려요") + '"><i>' + (op ? a[1] : "🔒") + "</i>" + (op ? esc(a[2]) : "배지 " + a[3] + "개") + "</button>"; }).join("") + "</div>"
       + '<p style="font-size:12.5px;margin:10px 0 0;color:var(--t-sub,#5b6773)">🧭 숨은 정보 <b>' + Object.keys(J.cnt.hid || {}).length + "</b>가지 찾음 · 쌤 노트 곳곳에 마우스를 올려 보세요(휴대폰은 길게 누르기)</p>"
       + '<label class="joyOff"><input type="checkbox" id="hidOn"' + (((TT.store.get("tt_ui_v1", {}) || {}).hidOff) ? "" : " checked") + "> 숨은 정보 보기 (마우스를 올리면 나오는 작은 말풍선)</label>"

@@ -83,6 +83,16 @@
   .card .i{font-size:24px;line-height:1}
   @media (max-height:820px) and (min-width:761px){ .card span{display:none!important} .card{padding:6px 9px;align-items:center} .card .i{font-size:20px} .phome h3{font-size:14.5px} }
   .card b{display:block;font-size:14px}
+  .card .mtag,.mline .mtag,.mtag{display:flex!important;flex-wrap:wrap;gap:3px;margin:3px 0 1px;-webkit-line-clamp:none!important}
+  .mtag i{font-style:normal;font-size:11px;font-weight:700;color:#1f5f99;background:#e7f1fb;border-radius:999px;padding:0 7px;line-height:1.6;white-space:nowrap}
+  .card.lk{background:#f4f5f7;border-style:dashed}.card.lk b{color:var(--sub)}.card.lk .mtag i{background:#eceef1;color:#7a8592}
+  .nav button.lk{opacity:.55}
+  .mline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;margin-top:4px;font-size:13px}
+  .mline .lab{font-weight:800;color:#1f5f99;font-size:12.5px}.mline .mtag{margin:0}.mline .mq{color:var(--ink);background:#fff8e1;border-radius:8px;padding:2px 10px;font-weight:600}
+  .lockbox{max-width:520px;margin:6vh auto 0;text-align:center;background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px 24px}
+  .lockbox .ic{font-size:44px}.lockbox b{display:block;font-size:20px;margin:6px 0}.lockbox p{color:var(--sub);margin:6px 0;line-height:1.6}.lockbox p.lkq{color:var(--ink);background:#fff8e1;border-radius:10px;padding:8px 12px}
+  .lockbox p.lkt{font-size:12px;color:var(--sub);margin-top:14px}
+  .lockbox .row{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
   .card span{display:block;font-size:11.5px;color:var(--sub);line-height:1.4;margin-top:2px}
   /* 효과 */
   #fx{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
@@ -135,6 +145,7 @@
     <button type="button" class="tbtn" id="snd" aria-pressed="true" title="소리 켜고 끄기">🔊 소리</button>
     <button type="button" class="tbtn" id="full" title="전체 화면">⛶ 전체 화면</button>
     <details class="more" id="more"><summary aria-label="더 보기">⋯</summary><div class="menu">
+      <button type="button" id="mLuck">🔒 운 놀이 잠금</button>
       <button type="button" id="mReset" class="danger">모둠 점수 모두 0으로</button>
       <hr><a href="../class/">🧰 수업 도구 (🎲 뽑기 · 🏆 모둠 점수)</a><a href="../mgen/">🔢 문항 생성기</a>
     </div></details>
@@ -162,11 +173,15 @@
 <script src="g_puzzle.js"></script>
 <script src="g_puzzle2.js"></script>
 <script src="g_new.js"></script>
+<script src="math.js"></script>
 <script>
 (function(){
   "use strict";
   var $ = function(id){ return document.getElementById(id); }, h = K.h;
-  var CATS = [{id: "luck", name: "🍀 운으로", sub: "누구나 역전할 수 있어요"}, {id: "team", name: "🙌 함께 풀기", sub: "맞히면 점수 · 모둠 대항"}, {id: "puzzle", name: "🧠 퍼즐", sub: "혼자·짝·반 전체 도전"}];
+  var CATS = [{id: "team", name: "🙌 함께 풀기", sub: "맞히면 점수 · 모둠 대항"}, {id: "puzzle", name: "🧠 퍼즐", sub: "혼자·짝·반 전체 도전"}, {id: "luck", name: "🍀 운과 확률", sub: "맞힌 모둠에게 주는 상 · 확률 수업"}];   // v2.48 풀기·퍼즐을 먼저, 운 놀이는 맨 뒤
+  var M = K.MATH || {}, L = K.LOCK || {isLocked: function(){ return false; }};
+  function tags(id){ var m = M[id]; if(!m) return null; var t = h("span", "mtag"); m[0].forEach(function(x){ t.appendChild(h("i", "", x)); }); return t; }
+  function locked(id){ return L.isLocked(id); }
   var cur = null, cleanup = null;
 
   function drawNav(){
@@ -175,7 +190,7 @@
     CATS.forEach(function(c){
       nav.appendChild(h("h3", "", c.name)); var ng = h("div", "ng"); nav.appendChild(ng);
       K.games.filter(function(g){ return g.cat === c.id; }).forEach(function(g){
-        var b = h("button"); b.type = "button"; b.title = g.name; b.setAttribute("aria-current", String(cur === g.id)); b.appendChild(h("span", "", g.icon)); b.appendChild(h("span", "", g.name)); b.onclick = function(){ go(g.id); }; ng.appendChild(b);
+        var lk = locked(g.id), b = h("button", lk ? "lk" : ""); b.type = "button"; b.title = g.name + (lk ? " (잠김)" : ""); b.setAttribute("aria-current", String(cur === g.id)); b.appendChild(h("span", "", lk ? "🔒" : g.icon)); b.appendChild(h("span", "", g.name)); b.onclick = function(){ go(g.id); }; ng.appendChild(b);
       });
     });
   }
@@ -189,17 +204,28 @@
     var gh = $("ghead"), ar = $("area"); gh.innerHTML = ""; ar.innerHTML = ""; ar.className = "area";
     drawNav();
     if(!g){
-      gh.appendChild(h("h2", "", "오늘은 무엇을 할까요?")); gh.appendChild(h("span", "d", "운 게임은 문제를 맞힌 모둠에게 기회를 주는 상으로 쓰면 좋아요. 🏁 퀴즈 배틀 → 맞힌 모둠이 🎁 상자 열기!"));
+      gh.appendChild(h("h2", "", "오늘은 무엇을 할까요?")); gh.appendChild(h("span", "d", "놀이마다 📐 배우는 수학이 적혀 있어요. 운 놀이는 문제를 맞힌 모둠에게 주는 상으로 쓰면 좋아요. 🏁 퀴즈 배틀 → 맞힌 모둠이 🎁 상자 열기!"));
       var home = h("div", "phome");
       CATS.forEach(function(c){
         home.appendChild(h("h3", "", c.name));
         var cards = h("div", "cards");
-        K.games.filter(function(x){ return x.cat === c.id; }).forEach(function(x){ var b = h("button", "card"); b.type = "button"; b.title = x.desc; b.appendChild(h("div", "i", x.icon)); var d = h("div"); d.appendChild(h("b", "", x.name)); d.appendChild(h("span", "", x.desc)); b.appendChild(d); b.onclick = function(){ K.S.click(); go(x.id); }; cards.appendChild(b); });
+        K.games.filter(function(x){ return x.cat === c.id; }).forEach(function(x){ var lk = locked(x.id), b = h("button", "card" + (lk ? " lk" : "")); b.type = "button"; b.title = lk ? "🔒 선생님이 잠가 둔 놀이예요" : x.desc; b.appendChild(h("div", "i", lk ? "🔒" : x.icon)); var d = h("div"); d.appendChild(h("b", "", x.name)); var tg = tags(x.id); if(tg) d.appendChild(tg); d.appendChild(h("span", "", x.desc)); b.appendChild(d); b.onclick = function(){ K.S.click(); go(x.id); }; cards.appendChild(b); });
         home.appendChild(cards);
       });
       ar.appendChild(home); return;
     }
+    if(locked(g.id)){                                                   // v2.48 운 놀이 잠금: 선생님만 오늘 하루 풀 수 있음
+      gh.appendChild(h("h2", "", "🔒 " + g.name));
+      var lb = h("div", "lockbox"); lb.appendChild(h("div", "ic", "🔒"));
+      lb.appendChild(h("b", "", "선생님이 잠가 둔 놀이예요"));
+      lb.appendChild(h("p", "", "운으로만 정해지는 놀이는 문제를 맞힌 상으로 쓸 때 열어요. 지금은 🙌 함께 풀기나 🧠 퍼즐에 도전해 볼까요?"));
+      var mq = M[g.id]; if(mq) lb.appendChild(h("p", "lkq", "💭 미리 생각해 봐요: " + mq[1]));
+      var row = h("div", "row");
+      row.appendChild(K.btn("🧠 퍼즐 고르기", "primary", function(){ go(""); }));
+      lb.appendChild(row); lb.appendChild(h("p", "lkt", "선생님은 오른쪽 위 ⋯ → '운 놀이 오늘만 열기'로 열 수 있어요 (다음 날 다시 잠김)")); ar.appendChild(lb); return;
+    }
     gh.appendChild(h("h2", "", g.icon + " " + g.name)); gh.appendChild(h("span", "d", g.desc));
+    var mm = M[g.id]; if(mm){ var mr = h("div", "mline"); mr.appendChild(h("span", "lab", "📐 배우는 수학")); var tg2 = tags(g.id); if(tg2) mr.appendChild(tg2); mr.appendChild(h("span", "mq", "💭 " + mm[1])); gh.appendChild(mr); }
     var ctl = h("div", "ctl"); gh.appendChild(ctl);
     try{ cleanup = g.mount(ar, ctl) || null; }catch(e){ ar.appendChild(h("div", "gwrap", "이 놀이를 여는 중 문제가 생겼습니다: " + e.message)); console.error(e); }
   }
@@ -230,6 +256,8 @@
   $("full").onclick = function(){ if(document.fullscreenElement) document.exitFullscreen(); else (document.documentElement.requestFullscreen || function(){}).call(document.documentElement); };
   function closeMenu(){ $("more").open = false; }
   document.addEventListener("click", function(e){ if(!$("more").contains(e.target)) closeMenu(); });
+  function luckBtn(){ $("mLuck").textContent = L.open && L.open() ? "🔓 운 놀이 다시 잠그기 (지금 열림)" : "🔒 운 놀이 오늘만 열기"; }
+  if(K.LOCK){ luckBtn(); $("mLuck").onclick = function(){ closeMenu(); if(L.open()){ L.set(false); luckBtn(); show(location.hash.slice(1)); TT.ui.toast("운 놀이를 다시 잠갔어요"); } else TT.ui.confirm("운 놀이 열기", "하이·로우 · 블랙잭 · 슬롯머신 · 동전 연속 맞히기를 오늘 하루만 엽니다. 내일은 다시 잠겨요.", "오늘만 열기", function(){ L.set(true); luckBtn(); show(location.hash.slice(1)); }); }; } else $("mLuck").hidden = true;
   $("mReset").onclick = function(){ closeMenu(); TT.ui.confirm("모둠 점수 0으로", "이 반의 모둠 점수를 모두 0으로 합니다. (수업 도구 🏆 모둠 점수도 같이 바뀝니다)", "0으로", function(){ K.resetScores(); }); };
 
   var sel = $("cls");

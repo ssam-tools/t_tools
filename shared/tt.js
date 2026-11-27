@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.47.0";
+  var VERSION = "2.48.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -1031,6 +1031,7 @@ var TT = (function(){
         + "@media (max-width:560px){.ttlook .g5{grid-template-columns:repeat(3,minmax(0,1fr))}.ttlook .g4{grid-template-columns:repeat(2,minmax(0,1fr))}}";
       d.innerHTML = "<style>" + css + "</style><h2>🎨 화면 꾸미기</h2><p>고르면 바로 바뀝니다 · 모든 화면에 함께 · 이 기기에만 저장</p>"
         + (!legacy() ? "" : "<h3>첫 화면 <small style=\"font-weight:400\">· 자료는 그대로, 화면 모양만 바뀝니다</small></h3><div class=\"g g2\" data-k=\"ui\">" + UIS.map(function(z){ return '<button type="button" class="o" data-v="' + z.id + '"><b>' + z.name + "</b><small>" + z.desc + "</small></button>"; }).join("") + "</div>")
+        + (window.TT_SBART && TT_SBART.coatPicker ? "<h3>🦉 쌤비 옷장 <small style=\"font-weight:400\">· 깃털 색 · 특별한 색은 배지를 모으면 열려요</small></h3>" + TT_SBART.coatPicker() : "")   // v2.48
         + "<h3>테마</h3><div class=\"g g5\" data-k=\"look\">" + THEMES.map(function(t){ return '<button type="button" class="o" data-v="' + t.id + '"><span class="sw" style="background:' + t.c[0] + '">' + t.c.slice(1).map(function(c){ return '<i style="background:' + c + '"></i>'; }).join("") + "</span><b>" + t.name + "</b><small>" + t.desc + "</small></button>"; }).join("") + "</div>"
         + "<h3>글꼴</h3><div class=\"g g4\" data-k=\"font\">" + FONTS.map(function(f){ return '<button type="button" class="o" data-v="' + f.id + '"><span class="fs" style="font-family:' + f.ff.replace(/"/g, "&quot;") + '">가나다 Aa 12</span><b>' + f.name + "</b><small>" + f.desc + "</small></button>"; }).join("") + "</div>"
         + "<h3>글자 크기</h3><div class=\"g g3\" data-k=\"size\">" + SIZES.map(function(z, i){ return '<button type="button" class="o" data-v="' + z.id + '"><b style="font-size:' + (14 + i * 3) + 'px">' + z.name + "</b></button>"; }).join("") + "</div>"

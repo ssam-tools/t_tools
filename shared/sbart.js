@@ -9,7 +9,30 @@
 (function(){
   "use strict";
   if(window.TT_SBART) return;
-  var INK = "#04342C", BODY = "#1D9E75", DARK = "#0F6E56", BELLY = "#9FE1CB", BEAK = "#EF9F27", RED = "#D9483B";
+  var INK = "#04342C", BODY = "var(--owl-body,#1D9E75)", DARK = "var(--owl-dark,#0F6E56)", BELLY = "var(--owl-belly,#9FE1CB)", BEAK = "var(--owl-beak,#EF9F27)", RED = "#D9483B";   // v2.48 깃털 색은 쌤비 옷장(CSS 변수)
+
+  /* ── v2.48 쌤비 옷장: 같은 쌤비, 깃털 색만 바꿔 입기 ──
+     기본 4가지는 바로, 특별한 색 2가지는 배지를 모으면 열림(재미 요소를 끄면 모두 열림). 고른 값은 tt_ui_v1.owl (기기 연결 시 함께).
+     색은 <html> 의 CSS 변수(--owl-*)로 → 바꾸면 어느 화면의 쌤비든 다시 그리지 않아도 바로 바뀜. */
+  var COATS = [
+    {id: "green", name: "숲 쌤비", sub: "기본", c: ["#1D9E75", "#0F6E56", "#9FE1CB", "#EF9F27"], need: 0},
+    {id: "brown", name: "갈색 부엉이", sub: "포근함", c: ["#A0703F", "#6F4A27", "#EBD3AE", "#EF9F27"], need: 0},
+    {id: "snow", name: "눈부엉이", sub: "깨끗함", c: ["#E3E9EE", "#A3B1BE", "#FFFFFF", "#EF9F27"], spot: "#8795A3", line: "#C3CDD6", need: 0},
+    {id: "pink", name: "벚꽃 쌤비", sub: "화사함", c: ["#E58BAE", "#BF5E80", "#FBDCE7", "#EF9F27"], need: 0},
+    {id: "night", name: "밤하늘 쌤비", sub: "배지 3개", c: ["#3C5A9A", "#24386A", "#BFD0EE", "#F2B33D"], star: "#FFE38A", need: 3},
+    {id: "gold", name: "금빛 쌤비", sub: "배지 8개", c: ["#E2AA2E", "#AE7712", "#FBE8A8", "#C2410C"], star: "#FFF6D8", need: 8}
+  ];
+  function coatOf(id){ for(var i = 0; i < COATS.length; i++) if(COATS[i].id === id) return COATS[i]; return COATS[0]; }
+  function ui(){ try{ return JSON.parse(localStorage.getItem("tt_ui_v1") || "{}") || {}; }catch(e){ return {}; } }
+  function joyInfo(){ var j = {}; try{ j = JSON.parse(localStorage.getItem("tt_joy_v1") || "{}") || {}; }catch(e){} return {off: !!j.off, n: Object.keys(j.badges || {}).length}; }
+  function unlocked(c){ var J = joyInfo(); return !c.need || J.off || J.n >= c.need; }
+  function coatId(){ var c = coatOf(ui().owl); return unlocked(c) ? c.id : "green"; }
+  function applyCoat(){
+    var c = coatOf(coatId()), st = document.documentElement.style;
+    st.setProperty("--owl-body", c.c[0]); st.setProperty("--owl-dark", c.c[1]); st.setProperty("--owl-belly", c.c[2]); st.setProperty("--owl-beak", c.c[3]);
+    st.setProperty("--owl-spot", c.spot || "none"); st.setProperty("--owl-line", c.line || "none"); st.setProperty("--owl-star", c.star || "none");
+    document.documentElement.setAttribute("data-owl", c.id);
+  }
   var NOTE = "var(--t-accent,#2f6fb5)";
 
   function glasses(x, y, r, col, w){                                   // 안경 무늬 (로고·노트 표지)
@@ -164,6 +187,11 @@
 
   function svg(o){
     o = o || {};
+    if(o.coat){ var pc = coatOf(o.coat); var B0 = BODY, D0 = DARK, E0 = BELLY, K0 = BEAK; BODY = pc.c[0]; DARK = pc.c[1]; BELLY = pc.c[2]; BEAK = pc.c[3];   // 옷장 미리 보기: 그 색으로 직접
+      try{ return svg0(o, pc); } finally { BODY = B0; DARK = D0; BELLY = E0; BEAK = K0; } }
+    return svg0(o, null);
+  }
+  function svg0(o, pc){
     var P = o.listen ? 6 : 4.6, size = o.size || 120, it = ITEMS[o.item] || "", dc = DECO[o.deco] || "", sleep = !!o.sleep;
     var eyes = sleep ? '<path d="M41 54 q5 4 10 0 M69 54 q5 4 10 0" fill="none" stroke="' + INK + '" stroke-width="2.4" stroke-linecap="round"/>'
       : '<g class="sbEye"><circle cx="47.5" cy="53" r="' + P + '" fill="' + INK + '"/><circle cx="75.5" cy="53" r="' + P + '" fill="' + INK + '"/>'
@@ -179,8 +207,10 @@
     return '<svg class="sbArt' + (o.listen ? " lis" : "") + '" viewBox="0 0 120 120" width="' + size + '" height="' + size + '" aria-hidden="true" focusable="false">'
       + '<ellipse cx="60" cy="114" rx="30" ry="4" fill="#000" opacity=".07"/>'
       + '<path d="M29 36 L35 13 L47 30 Z M91 36 L85 13 L73 30 Z" fill="' + DARK + '"/>'
-      + '<ellipse cx="60" cy="68" rx="35" ry="42" fill="' + BODY + '"/><ellipse cx="60" cy="80" rx="23" ry="25" fill="' + BELLY + '"/>'
+      + '<ellipse cx="60" cy="68" rx="35" ry="42" fill="' + BODY + '" stroke="' + (pc ? (pc.line || "none") : "var(--owl-line,none)") + '" stroke-width="1.6"/><ellipse cx="60" cy="80" rx="23" ry="25" fill="' + BELLY + '"/>'
       + '<path d="M50 96 q5 4 10 0 M60 96 q5 4 10 0" fill="none" stroke="' + BODY + '" stroke-width="1.6" opacity=".5"/>'
+      + '<g fill="' + (pc ? (pc.spot || "none") : "var(--owl-spot,none)") + '"><path d="M33 70 l3 -2 l3 2 z M31 80 l3 -2 l3 2 z M36 90 l3 -2 l3 2 z M81 70 l3 -2 l3 2 z M83 80 l3 -2 l3 2 z M78 90 l3 -2 l3 2 z"/></g>'   // 눈부엉이 무늬
+      + '<g fill="' + (pc ? (pc.star || "none") : "var(--owl-star,none)") + '"><circle cx="34" cy="74" r="1.3"/><circle cx="85" cy="70" r="1.6"/><circle cx="38" cy="88" r="1"/><circle cx="82" cy="86" r="1.2"/><path d="M87 58 l1 2.4 l2.4 1 l-2.4 1 l-1 2.4 l-1 -2.4 l-2.4 -1 l2.4 -1 z"/></g>'   // 밤하늘·금빛 반짝이
       + (o.deco === "winter" ? dc : "")
       + '<circle cx="46" cy="52" r="13" fill="#fff" stroke="' + INK + '" stroke-width="3"/><circle cx="74" cy="52" r="13" fill="#fff" stroke="' + INK + '" stroke-width="3"/>'
       + '<path d="M58.5 50.5 q1.5 -2 3 0" fill="none" stroke="' + INK + '" stroke-width="3"/>' + eyes
@@ -201,5 +231,64 @@
     + ".sbArt.lis .sbWave{animation:sbArtWave 1s ease-in-out infinite}@keyframes sbArtWave{0%,100%{opacity:.35}50%{opacity:1}}"
     + "@media (prefers-reduced-motion:reduce){.sbArt *{animation:none!important}}";
   (function(){ var s = document.createElement("style"); s.textContent = CSS; (document.head || document.documentElement).appendChild(s); })();
-  window.TT_SBART = {accs: Object.keys(ACC), svg: svg, logo: logo, icon: icon, toolIcon: toolIcon, ICONS: ICONS, railIcons: railIcons, items: Object.keys(ITEMS), decos: Object.keys(DECO)};
+  /* 옷장 고르기 칸 (화면 꾸미기 · 도장판 · 처음 안내에서 함께 씀) */
+  function coatPicker(){
+    var cur = coatId(), J = joyInfo();
+    return '<div class="sbCoats" role="radiogroup" aria-label="쌤비 깃털 색">' + COATS.map(function(c){
+      var ok = unlocked(c), on = c.id === cur;
+      return '<button type="button" class="sbCoat' + (on ? " on" : "") + (ok ? "" : " lock") + '" data-coat="' + c.id + '" role="radio" aria-checked="' + on + '" title="' + (ok ? c.name : "배지 " + c.need + "개를 모으면 열려요 (지금 " + J.n + "개)") + '">'
+        + '<span class="pv">' + svg({coat: c.id, size: 58}) + (ok ? "" : '<i class="lk">🔒</i>') + "</span><b>" + c.name + "</b><small>" + (ok ? (c.need ? "✨ 특별한 색" : c.sub) : "배지 " + J.n + "/" + c.need) + "</small></button>";
+    }).join("") + "</div>";
+  }
+  function setCoat(id){
+    var c = coatOf(id); if(!unlocked(c)) return false;
+    var u = window.TT && TT.store ? (TT.store.get("tt_ui_v1", {}) || {}) : ui(); u.owl = c.id; u.owlAsk = 1;
+    if(window.TT && TT.store) TT.store.set("tt_ui_v1", u); else try{ localStorage.setItem("tt_ui_v1", JSON.stringify(u)); }catch(e){}
+    applyCoat();
+    Array.prototype.forEach.call(document.querySelectorAll(".sbCoat"), function(b){ var on = b.getAttribute("data-coat") === c.id; b.classList.toggle("on", on); b.setAttribute("aria-checked", on); });
+    try{ document.dispatchEvent(new CustomEvent("tt-coat", {detail: c.id})); }catch(e){}
+    return true;
+  }
+  var CCSS = ".sbCoats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}"
+    + ".sbCoat{font:inherit;border:2px solid var(--t-line,#dde3ea);background:var(--t-card,#fff);border-radius:14px;padding:6px 4px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;color:var(--t-ink,#1d2733);min-width:0;transition:transform .15s,border-color .15s}"
+    + ".sbCoat:hover{transform:translateY(-2px)}.sbCoat.on{border-color:var(--t-accent,#2f6fb5);box-shadow:0 0 0 3px var(--t-accent-soft,#e6f0fa)}"
+    + ".sbCoat .pv{position:relative;display:block;width:58px;height:58px}.sbCoat .pv svg{display:block}.sbCoat b{font-size:12.5px;white-space:nowrap}.sbCoat small{font-size:10.5px;color:var(--t-sub,#5b6773);white-space:nowrap}"
+    + ".sbCoat.lock{cursor:not-allowed}.sbCoat.lock .pv svg{filter:grayscale(.85) opacity(.45)}.sbCoat.lock:hover{transform:none}.sbCoat .lk{position:absolute;right:-2px;bottom:2px;font-style:normal;font-size:16px}"
+    + "@media (max-width:560px){.sbCoats{grid-template-columns:repeat(3,minmax(0,1fr))}}"
+    + "#sbCoatDlg{border:0;border-radius:20px;padding:20px 22px 16px;width:min(560px,94vw);box-shadow:0 14px 44px rgba(0,0,0,.28);background:var(--t-card,#fff);color:var(--t-ink,#1d2733);font-family:var(--t-font,inherit)}"
+    + "#sbCoatDlg::backdrop{background:rgba(20,30,45,.45)}#sbCoatDlg h2{margin:0 0 2px;font-size:19px}#sbCoatDlg p{margin:0 0 12px;font-size:13px;color:var(--t-sub,#5b6773)}"
+    + "#sbCoatDlg .acts{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:12px;color:var(--t-faint,#9aa5b1)}#sbCoatDlg .acts button{font:inherit;font-weight:700;font-size:14px;border:0;background:var(--t-accent,#2f6fb5);color:#fff;border-radius:10px;padding:8px 18px;cursor:pointer}";
+  function css(){ if(document.getElementById("sbCoatCss") || !document.head) return; var st = document.createElement("style"); st.id = "sbCoatCss"; st.textContent = CCSS; document.head.appendChild(st); }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("[data-coat]"); if(!b) return;
+    e.preventDefault();
+    var c = coatOf(b.getAttribute("data-coat"));
+    if(!unlocked(c)){ if(window.TT && TT.ui) TT.ui.toast("🔒 " + c.name + "은(는) 배지 " + c.need + "개를 모으면 열려요 (지금 " + joyInfo().n + "개)"); return; }
+    if(setCoat(c.id) && window.TT && TT.joy && TT.joy.bubble && TT.joy.on && TT.joy.on()) TT.joy.bubble("🦉 " + c.name + "로 갈아입었어요!", 2600);
+  });
+  window.addEventListener("storage", function(e){ if(!e.key || e.key === "tt_ui_v1" || e.key === "tt_joy_v1") applyCoat(); });
+  /* 처음 한 번: 쌤비 고르기 (홈 · 쌤비 디자인 · 개인 기기 · 다른 창이 열려 있지 않을 때) */
+  function askOnce(){
+    if(/\/apps\//.test(location.pathname) || window.top !== window) return;
+    var n = 0, iv = setInterval(function(){
+      if(++n > 40){ clearInterval(iv); return; }
+      var R = document.documentElement, u = ui();
+      if(u.owlAsk || u.owl){ clearInterval(iv); return; }
+      if(R.getAttribute("data-ui") !== "ssambi" || !document.body || !document.body.classList.contains("sbOn")) return;
+      try{ if(localStorage.getItem("ttv_device") === "classroom" || (window.TT && TT.classroom)) { clearInterval(iv); return; } }catch(e){}
+      if(document.querySelector("dialog[open]") || document.hidden) return;
+      clearInterval(iv); css();
+      var d = document.createElement("dialog"); d.id = "sbCoatDlg"; d.setAttribute("aria-label", "쌤비 고르기");
+      d.innerHTML = "<h2>🦉 나와 함께할 쌤비를 골라 주세요</h2><p>쌤비 옷장이 열렸어요. 깃털 색만 바뀌고, 소품·표정은 그대로예요.</p>" + coatPicker()
+        + '<div class="acts"><span>⋯ → 화면 꾸미기에서 언제든 바꿀 수 있어요</span><button type="button" data-ok>이걸로 할게요</button></div>';
+      document.body.appendChild(d);
+      d.addEventListener("click", function(e){ if(e.target.closest("[data-ok]") || e.target === d){ var v = ui(); if(!v.owlAsk){ setCoat(coatId()); } d.close(); } });
+      d.addEventListener("close", function(){ d.remove(); });
+      if(d.showModal) d.showModal(); else d.setAttribute("open", "");
+    }, 1500);
+  }
+  applyCoat();
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", function(){ css(); askOnce(); }); else { css(); askOnce(); }
+
+  window.TT_SBART = {coats: COATS, coat: coatId, setCoat: setCoat, coatPicker: coatPicker, applyCoat: applyCoat, accs: Object.keys(ACC), svg: svg, logo: logo, icon: icon, toolIcon: toolIcon, ICONS: ICONS, railIcons: railIcons, items: Object.keys(ITEMS), decos: Object.keys(DECO)};
 })();
