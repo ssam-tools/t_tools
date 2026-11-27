@@ -16,10 +16,58 @@
   function toMin(t){ var a = String(t).split(":"); return (+a[0]) * 60 + (+a[1]); }
   function clsTxt(s){ var c = +s.cls; return c > 100 ? Math.floor(c / 100) + "-" + (c % 100) : String(s.code || ""); }
   function view(){ if(st.view) return st.view; try{ return localStorage.getItem("sb_side_view") || "day"; }catch(e){ return "day"; } }
+  function isSet(){ return document.body.classList.contains("inmenu") && /^#settings$/.test(location.hash || ""); }   // v2.47 설정 화면: 내 쌤 노트 상태
   function on(){
-    return R.getAttribute("data-ui") === "ssambi" && document.body.classList.contains("sbOn") && !document.body.classList.contains("inmenu")
+    return R.getAttribute("data-ui") === "ssambi" && document.body.classList.contains("sbOn") && (!document.body.classList.contains("inmenu") || isSet())
       && window.innerWidth >= 1280 && !(TT.classroom);
   }
+
+  /* ── v2.47 설정 화면 오른쪽: ① 준비 점검(빠진 것만 눈에 띄게, 누르면 바로 그 설정) ② 안전·기기(백업 · 동기화 · 저장 공간 · 버전) ── */
+  var space = null;                                                     // 이 기기 저장 공간 (한 번만 재고 기억)
+  function readSpace(){
+    if(space || !navigator.storage || !navigator.storage.estimate) return;
+    space = {busy: 1}; navigator.storage.estimate().then(function(e){ space = {u: e.usage || 0, q: e.quota || 0}; paint(); }).catch(function(){ space = {}; });
+  }
+  function mb(n){ return n >= 1073741824 ? (n / 1073741824).toFixed(1) + "GB" : Math.max(1, Math.round(n / 1048576)) + "MB"; }
+  function checks(){
+    var s = TT.school.load() || {}, bd = TT.store.get("tt_board_v1", {}) || {}, Cal = TT.store.get("tt_calendar_v1", null);
+    var rs = false; try{ rs = TT.roster.has(); }catch(e){}
+    var sub = s.role === "subject";
+    return [
+      {ok: !!(s.name && s.teacher), t: "학교·선생님 정보", hint: "이름이 결석신고서·문자에 들어가요", act: "mSchool"},
+      {ok: TT.timetable.has(), t: "내 시간표", hint: "지금 수업·기록 안 한 수업을 알려 줘요", href: "apps/timetable/"},
+      sub ? null : {ok: rs, t: "학급 명렬표", hint: "출결·상담·학생 카드에 쓰여요", href: "apps/roster/"},
+      {ok: !!(Cal && Cal.events && Cal.events.length), t: "학사일정", hint: "D-day·달력·남은 수업일", href: "apps/setup/"},
+      {ok: !!(s.neisA && s.neisS && s.neisKey), t: "나이스 연결", hint: s.neisA && s.neisS ? "인증키를 넣으면 교체 확인이 돼요" : "급식·시간표 교체 확인", act: "mSchool"},
+      {ok: !!(bd.url && bd.pw), t: "학교 업무판", hint: "월간 업무가 달력에 보여요", act: "mBoard"}
+    ].filter(Boolean);
+  }
+  function setHTML(){
+    var C = checks(), n = C.filter(function(c){ return c.ok; }).length, all = n === C.length;
+    var h = '<section class="sdC sdS" aria-label="준비 점검"><div class="sdH"><b>준비 점검</b><span class="sdCnt' + (all ? " ok" : "") + '">' + n + " / " + C.length + "</span></div>"
+      + '<span class="sdBar" aria-hidden="true"><i style="width:' + Math.round(n / C.length * 100) + '%"></i></span>'
+      + (all ? '<p class="sdAll">🎉 모두 준비됐어요!</p>' : "")
+      + '<div class="sdChk">' + C.map(function(c){
+          var tag = c.href ? 'a href="' + esc(c.href) + '"' : 'button type="button" data-act="' + c.act + '"';
+          return "<" + tag + ' class="ck' + (c.ok ? " ok" : "") + '" title="' + esc(c.hint) + '"><i>' + (c.ok ? "✓" : "!") + "</i><span><b>" + esc(c.t) + "</b>" + (c.ok ? "" : "<small>" + esc(c.hint) + "</small>") + "</span>" + (c.ok ? "" : "<em>넣기 ›</em>") + "</" + (c.href ? "a" : "button") + ">";
+        }).join("") + "</div></section>";
+    /* 안전·기기 */
+    var bd = TT.backup && TT.backup.daysSince ? TT.backup.daysSince() : null, has = TT.backup && TT.backup.hasData ? TT.backup.hasData() : true;
+    var bWarn = has && (bd == null || bd >= 14);
+    var V = window.Vault && Vault.status ? Vault.status() : null, vm = V ? V.mode : "";
+    var vTxt = vm === "personal" ? "켜짐" + (V.last ? " · " + ago(V.last) : "") : vm === "classroom" ? "교실 기기(공용)" : "꺼짐";
+    readSpace();
+    h += '<section class="sdC sdV" aria-label="안전·기기"><div class="sdH"><b>안전·기기</b></div>'
+      + row("💾", "백업", bd == null ? "아직 안 했어요" : bd === 0 ? "오늘 ✓" : bd + "일 전", bWarn ? "warn" : "", bWarn ? '<button type="button" class="sm p" data-act="mBackup">지금 백업</button>' : "")
+      + row("☁️", "기기 연결", vTxt, vm ? "" : "dim", '<button type="button" class="sm" data-act="mVault">' + (vm ? "관리" : "켜기") + "</button>")
+      + row("💽", "이 기기 저장", space && space.u != null ? mb(space.u) + " 사용" + (space.q ? " · 남은 " + mb(Math.max(0, space.q - space.u)) : "") : "재는 중…", "", "")
+      + row("⌨️", "단축키", "Alt+1~5 메뉴 · / 찾기", "", '<button type="button" class="sm" data-act="mKeys">보기</button>')
+      + '<button type="button" class="sdVer" data-hist title="제작 히스토리">🦉 쌤 노트 v' + esc(TT.VERSION) + ' <span>· 무엇이 바뀌었나 ›</span></button>'
+      + "</section>";
+    return h;
+  }
+  function ago(t){ var m = Math.round((Date.now() - t) / 60000); return m < 1 ? "방금" : m < 60 ? m + "분 전" : m < 1440 ? Math.round(m / 60) + "시간 전" : Math.round(m / 1440) + "일 전"; }
+  function row(ic, t, v, cls, btn){ return '<div class="sdR' + (cls ? " " + cls : "") + '"><i>' + ic + "</i><span><b>" + t + "</b><small>" + esc(v) + "</small></span>" + btn + "</div>"; }
 
   /* ── ① 내 시간표 ── */
   function taught(){ var J = TT.store.get("tt_journal_v1", null); return (J && J.taught) || {}; }
@@ -181,7 +229,9 @@
       side = document.createElement("aside"); side.id = "sbSide"; side.setAttribute("aria-label", "오늘 한눈에");
       document.body.appendChild(side);
       side.addEventListener("click", function(e){
-        var b = e.target.closest("[data-v],[data-cm],[data-day],[data-neis],[data-napply],[data-nclose],[data-nkey],[data-nsch]"); if(!b) return;
+        var b = e.target.closest("[data-v],[data-cm],[data-day],[data-neis],[data-napply],[data-nclose],[data-nkey],[data-nsch],[data-act],[data-hist]"); if(!b) return;
+        if(b.hasAttribute("data-act")){ var mb0 = document.getElementById(b.getAttribute("data-act")); if(mb0) mb0.click(); else TT.ui.toast("잠시 뒤 다시 눌러 주세요"); return; }
+        if(b.hasAttribute("data-hist")){ var cr = document.getElementById("sbCredit"); if(cr) cr.click(); return; }
         if(b.hasAttribute("data-nsch")){ st.neis = null; paint(); if(window.TTMeal) TTMeal.open(); return; }
         if(b.hasAttribute("data-nkey")){ saveKey(); return; }
         if(b.hasAttribute("data-v")){ st.view = b.getAttribute("data-v"); try{ localStorage.setItem("sb_side_view", st.view); }catch(x){} }
@@ -194,6 +244,8 @@
       });
     }
     side.hidden = false; if(!document.body.classList.contains("sbSideOn")) document.body.classList.add("sbSideOn");
+    if(isSet()){ side.classList.add("set"); side.innerHTML = setHTML(); return; }
+    side.classList.remove("set");
     var v = view(), N = st.neis, ki = side.querySelector("#sdKey"), kv = ki ? ki.value : "", kf = ki && document.activeElement === ki;   // 적던 인증키는 다시 그려도 그대로
     var sl = side.querySelector(".sdL"), sy = sl ? sl.scrollTop : 0;
     side.innerHTML = '<section class="sdC sdT" aria-label="내 시간표"><div class="sdH"><b>내 시간표</b><span class="seg" role="group" aria-label="보기">'
@@ -212,6 +264,7 @@
   }
   document.addEventListener("keydown", function(e){ if(e.key === "Enter" && e.target && e.target.id === "sdKey" && !e.isComposing){ e.preventDefault(); saveKey(); } });
   var rT = 0; function soon(){ clearTimeout(rT); rT = setTimeout(paint, 80); }
+  document.addEventListener("close", function(){ if(isSet()) soon(); }, true);   // 설정 창을 닫으면 점검 다시
   ["resize", "tt-home-change", "tt-mytodo-change", "hashchange", "focus", "load"].forEach(function(ev){ window.addEventListener(ev, soon); });
   window.addEventListener("storage", function(e){ if(!e.key || /^tt_/.test(e.key)) soon(); });
   new MutationObserver(soon).observe(document.body, {attributes: true, attributeFilter: ["class"]});

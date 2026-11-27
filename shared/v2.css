@@ -498,7 +498,7 @@ html[data-room="on"] #sbHero .srow,html[data-room="on"] #sbBar [data-mic]{displa
 /* ---------- v2.41 도구 화면 맨 위 줄 (홈·설정의 위 줄과 같은 모양) — 학교 · 날짜 · 시각 · 날씨 ……… ☆ ⋯ ----------
    새 줄이 생긴 만큼 원래 화면이 내려가지 않도록: 화면 위 여백을 이 줄이 대신하고, 제목 글자를 조금 줄임 */
 #sbTop{display:none}
-html[data-ui="ssambi"] body.sbTopOn > #sbTop{display:flex;position:relative;flex:none;align-items:center;justify-content:flex-end;gap:4px;height:34px;margin:0;font-family:var(--t-font);z-index:30}
+html[data-ui="ssambi"] body.sbTopOn > #sbTop{padding:0!important;flex-wrap:nowrap!important;display:flex;position:relative;flex:none;align-items:center;justify-content:flex-end;gap:4px;height:34px;margin:0;font-family:var(--t-font);z-index:30}
 html[data-ui="ssambi"] body.sbTopOn{padding-top:2px!important}
 /* 화면 전체 높이를 쓰는 도구(.app · #app)는 위 줄만큼 줄여 아래가 잘리지 않게 (휴대폰 위쪽 줄과 같은 방식) */
 html[data-ui="ssambi"] body.sbTopOn:has(> .app),html[data-ui="ssambi"] body.sbTopOn:has(> #app){display:flex!important;flex-direction:column}
@@ -696,16 +696,33 @@ body.sbSideOn #sbHero .bub.brief .bl.nx{display:none}              /* 다음 수
   #sbRail .tl{flex:0 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin}
   #sbRail .rb{flex:none}
   /* 홈·설정: 같은 높이의 쌤 노트 이름 칸 (가운데에 큰 쌤비·검색창이 있으므로) */
-  #sbRail.hm .rh{height:164px;flex:none;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:0;padding:0;margin:0;border:0}
-  #sbRail.hm .lg{flex-direction:column;gap:6px}
-  #sbRail.hm .lg b{font-size:18px}
-  #sbRail.hm .rh small{font-size:12.5px;color:var(--t-sub);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #sbRail.hm .rh::after{content:"";width:100%;border-bottom:1px solid var(--t-line);margin-top:auto}
+  #sbRail.hm .rh{height:164px;flex:none;box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px;min-height:0;padding:0;margin:0;border:0}
+  /* v2.47 나의 학교생활 카드 */
+  #sbRail.hm .mcTop{display:flex;align-items:center;justify-content:space-between;gap:6px;height:26px;padding:0 4px;flex:none}
+  #sbRail.hm .mcTop .lg{display:flex;flex-direction:row;align-items:center;gap:7px;text-decoration:none;color:var(--t-ink)}
+  #sbRail.hm .mcTop .lg b{font-size:15.5px;font-weight:800;letter-spacing:-.2px}
+  #sbRail.hm .mcTop small{font-size:12px;color:var(--t-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  #sbRail .meCard{flex:1;min-height:0;display:flex;flex-direction:column;align-items:stretch;gap:5px;text-align:left;border:0;border-radius:14px;padding:9px 11px;background:var(--t-chip);color:var(--t-ink);font:inherit;cursor:pointer;overflow:hidden;transition:background .15s,transform .15s}
+  #sbRail .meCard:hover{background:var(--t-accent-soft)}
+  #sbRail .meCard:active{transform:scale(.98)}
+  #sbRail .meCard:focus-visible{outline:2px solid var(--t-accent);outline-offset:2px}
+  #sbRail .mcWho{font-size:12px;color:var(--t-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #sbRail .mcD{display:flex;align-items:baseline;gap:7px;min-width:0}
+  #sbRail .mcD b{font-size:24px;line-height:1;font-weight:800;color:var(--t-accent);letter-spacing:-.5px;font-variant-numeric:tabular-nums;flex:none}
+  #sbRail .mcD span{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #sbRail .mcD.calm b{font-size:18px;color:var(--t-ink)}#sbRail .mcD.calm span{font-weight:500;color:var(--t-sub);font-size:12px}
+  #sbRail .mcBar{display:block;height:5px;border-radius:9px;background:rgba(0,0,0,.08);overflow:hidden;flex:none}
+  #sbRail .mcBar i{display:block;height:100%;border-radius:9px;background:var(--t-accent)}
+  #sbRail .mcT{font-size:11.5px;color:var(--t-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #sbRail .mcT b{color:var(--t-ink)}
+  #sbRail .mcJ{display:flex;gap:8px;font-size:11.5px;color:var(--t-sub);white-space:nowrap;overflow:hidden;margin-top:auto}
+  #sbRail .mcMini{display:none}
   /* 접어도 위쪽 칸 높이는 그대로 (메뉴 아이콘이 같은 자리) */
   html.sbMini #sbRail .rs,html.sbMini #sbRail .say{display:flex!important;visibility:hidden}
   html.sbMini #sbRail .rt .owl{width:44px;height:44px}
-  html.sbMini #sbRail.hm .rh small{display:none}
-  html.sbMini #sbRail.hm .rh{padding:0}
+  html.sbMini #sbRail .meCard,html.sbMini #sbRail.hm .mcTop small,html.sbMini #sbRail.hm .mcTop .lg b{display:none}
+  html.sbMini #sbRail.hm .mcTop{justify-content:center}
+  html.sbMini #sbRail .mcMini{display:block;text-align:center;font-size:13px;font-weight:800;color:var(--t-accent);margin-top:10px}
   /* 맨 위 줄: 홈·설정도 도구 화면과 같은 높이·글자 (좌우 끝은 sbbar.js alignTop 이 맞춤) */
   html[data-ui="ssambi"] body.sbOn{padding-top:2px!important}
   #sbHero .top{min-height:34px!important;height:34px;padding-bottom:0;border-bottom:0;flex:none}
@@ -728,4 +745,48 @@ body.sbSideOn #sbHero .bub.brief .bl.nx{display:none}              /* 다음 수
 #sbSide .sdN .nh{display:block;font-size:11px;color:var(--t-sub);margin:2px 0 4px;line-height:1.4}
 @media (min-width:900px) and (min-height:460px){
   #sbRail .tl.scr{-webkit-mask-image:linear-gradient(#000 calc(100% - 22px),rgba(0,0,0,.25));mask-image:linear-gradient(#000 calc(100% - 22px),rgba(0,0,0,.25))}
+}
+/* ---------- v2.47 설정 화면 오른쪽: 준비 점검 · 안전·기기 ---------- */
+#sbSide.set{gap:14px}
+#sbSide .sdS{flex:none}
+#sbSide .sdV{flex:1;min-height:0;border-top:1px solid var(--t-line);padding-top:12px;overflow-y:auto;scrollbar-width:thin}
+#sbSide .sdCnt{font-size:12.5px;font-weight:800;color:#C2410C;background:#FFF1E6;border-radius:999px;padding:2px 10px;font-variant-numeric:tabular-nums}
+#sbSide .sdCnt.ok{color:#2E7D32;background:#EAF5EA}
+#sbSide .sdBar{display:block;height:6px;border-radius:9px;background:var(--t-chip);overflow:hidden;margin:2px 0 8px}
+#sbSide .sdBar i{display:block;height:100%;background:var(--t-accent);border-radius:9px;transition:width .4s}
+#sbSide .sdAll{margin:0 0 6px;font-size:13px;font-weight:700;color:#2E7D32}
+#sbSide .sdChk{display:flex;flex-direction:column;gap:3px}
+#sbSide .ck{display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:1px solid #F3C9A8;background:#FFF8F2;border-radius:11px;padding:7px 10px;font:inherit;color:var(--t-ink);text-decoration:none;cursor:pointer;transition:background .15s,transform .15s}
+#sbSide .ck:hover{background:#FFEEDD;transform:translateX(2px)}
+#sbSide .ck i{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:800;background:#F59E0B;color:#fff}
+#sbSide .ck span{flex:1;min-width:0;display:flex;flex-direction:column}
+#sbSide .ck b{font-size:13.5px;font-weight:700}
+#sbSide .ck small{font-size:11.5px;color:var(--t-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sbSide .ck em{flex:none;font-style:normal;font-size:12px;font-weight:700;color:#C2410C}
+#sbSide .ck.ok{border-color:transparent;background:transparent;padding:4px 10px;cursor:default}
+#sbSide .ck.ok:hover{background:var(--t-chip);transform:none}
+#sbSide .ck.ok i{background:#E3F1E4;color:#2E7D32}
+#sbSide .ck.ok b{font-weight:500;color:var(--t-sub)}
+#sbSide .sdR{display:flex;align-items:center;gap:9px;padding:7px 4px;border-bottom:1px dashed var(--t-line)}
+#sbSide .sdR:last-of-type{border-bottom:0}
+#sbSide .sdR > i{flex:none;font-style:normal;font-size:16px;width:22px;text-align:center}
+#sbSide .sdR > span{flex:1;min-width:0;display:flex;flex-direction:column}
+#sbSide .sdR b{font-size:13px;font-weight:700}
+#sbSide .sdR small{font-size:12px;color:var(--t-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sbSide .sdR.warn small{color:#C2410C;font-weight:700}
+#sbSide .sdR.dim small{color:var(--t-faint)}
+#sbSide .sdR .sm{flex:none;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-ink);border-radius:8px;font:inherit;font-size:12px;padding:3px 10px;cursor:pointer}
+#sbSide .sdR .sm:hover{border-color:var(--t-accent);color:var(--t-accent)}
+#sbSide .sdR .sm.p{background:var(--t-accent);border-color:var(--t-accent);color:#fff;font-weight:700}
+#sbSide .sdVer{margin-top:10px;width:100%;border:0;background:var(--t-chip);border-radius:10px;padding:8px 10px;font:inherit;font-size:12.5px;font-weight:700;color:var(--t-ink);text-align:left;cursor:pointer}
+#sbSide .sdVer span{font-weight:500;color:var(--t-sub)}
+#sbSide .sdVer:hover{background:var(--t-accent-soft)}
+/* v2.47 홈·설정: 맨 위 줄은 그대로, 가운데 내용만 조금 아래로 (숨 쉴 여백) */
+@media (min-width:900px) and (min-height:600px){
+  html[data-ui="ssambi"] body.sbOn #sbHero .top{margin-bottom:clamp(10px,4.5vh,48px)}
+}
+/* v2.47 출결·모둠 편성(.app 화면)도 제목·내용 왼쪽 끝을 다른 도구 화면과 같게 (왼쪽 메뉴 + 28px) */
+@media (min-width:900px) and (min-height:460px){
+  html[data-ui="ssambi"] body.sbRailOn > .app{max-width:none;margin:0;padding-left:28px;padding-right:28px;box-sizing:border-box}
+  html[data-ui="ssambi"] body.sbRailOn > .app:has(> .hdr){padding-left:12px;padding-right:12px}   /* 출결: 제목 줄에 이미 16px 여백 */
 }

@@ -146,11 +146,48 @@
     hrail.hidden = !ok;
     if(document.body.classList.contains("sbRailOn") !== ok) document.body.classList.toggle("sbRailOn", ok);
     if(!ok) return;
-    var sc0 = (TT.school && TT.school.load ? TT.school.load() : {}) || {};
-    var rhH = '<a class="lg" href="' + esc(BASE) + '" title="쌤 노트 홈">' + (ART && ART.logo ? ART.logo(48) : "") + "<b>쌤 노트</b></a>" + (sc0.name ? "<small>" + esc(sc0.name) + "</small>" : "");   // v2.46 도구 화면의 쌤비·찾기 칸과 같은 높이
+    var rhH = meCard();   // v2.47 나의 학교생활 카드 (도구 화면의 쌤비·찾기 칸과 같은 높이)
     var rh = hrail.querySelector(".rh"); if(rh.getAttribute("data-h") !== rhH){ rh.setAttribute("data-h", rhH); rh.innerHTML = rhH; }
     hrail.querySelector(".rn").innerHTML = railHTML();
     hrail.querySelector(".rb").innerHTML = miniBtn();
+  }
+  /* v2.47 홈·설정 왼쪽 위: 나의 학교생활 카드 — 다른 곳에 없는 것만 (맨 위 줄=날짜·날씨·급식, 오른쪽=시간표)
+     ① 누구인지(이름 · 담임 반/교과) ② 가장 가까운 큰 일정 D-day ③ 방학식·종업식까지 남은 수업일 + 막대 ④ 우리 반 나무 · 퇴근 도장 · 아낀 시간
+     모든 계산은 이 기기 자료로만 (보내는 것 없음). 누르면 도장판·배지. */
+  function ymdS(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function termInfo(){
+    var C = TT.store.get("tt_calendar_v1", null), E = C && Array.isArray(C.events) ? C.events : [], now = new Date(), td = ymdS(now);
+    var ends = E.filter(function(e){ return e && e.d >= td && /방학식|종업식/.test(e.t || ""); }).sort(function(a, b){ return a.d < b.d ? -1 : 1; });
+    var m = now.getMonth() + 1, y = now.getFullYear(), end = ends[0] ? ends[0].d : (m >= 3 && m <= 7 ? y + "-07-20" : (m >= 8 ? y + 1 : y) + "-01-08");
+    var endName = ends[0] ? (/종업식/.test(ends[0].t) ? "종업식" : /여름/.test(ends[0].t) || +end.slice(5, 7) <= 8 && +end.slice(5, 7) >= 6 ? "여름방학" : "겨울방학") : (m >= 3 && m <= 7 ? "여름방학" : "겨울방학");
+    var starts = E.filter(function(e){ return e && e.d <= td && /개학|입학식|시업식/.test(e.t || ""); }).sort(function(a, b){ return a.d < b.d ? 1 : -1; });
+    var start = starts[0] ? starts[0].d : (m >= 3 && m <= 7 ? y + "-03-02" : (m >= 8 ? y : y - 1) + "-08-17");
+    var off = {}; E.forEach(function(e){ if(e && /방학|휴업|공휴|재량|개교기념|대체/.test(e.t || "") && !/방학식/.test(e.t || "")) off[e.d] = 1; });
+    function days(a, b){ var n = 0, d = new Date(+a.slice(0, 4), +a.slice(5, 7) - 1, +a.slice(8, 10)), z = b; for(var i = 0; i < 400; i++){ var k = ymdS(d); if(k > z) break; var w = d.getDay(); if(w && w < 6 && !off[k]) n++; d.setDate(d.getDate() + 1); } return n; }
+    if(end < start) return null;
+    var all = days(start, end), left = days(td, end);
+    return all ? {name: endName, left: left, pct: Math.max(0, Math.min(100, Math.round((all - left) / all * 100)))} : null;
+  }
+  function meCard(){
+    var sc = (TT.school && TT.school.load ? TT.school.load() : {}) || {}, who = "";
+    var hc = null; try{ hc = sc.role !== "subject" && TT.roster ? TT.roster.home() : null; }catch(e){}
+    var cls = hc ? (hc.grade && hc.cls ? hc.grade + "-" + hc.cls : hc.name || "") : "";
+    if(sc.teacher) who = esc(sc.teacher) + " 선생님" + (cls ? " · " + esc(cls) + " 담임" : sc.subject ? " · " + esc(sc.subject) : "");
+    var J = TT.joy && (!TT.joy.on || TT.joy.on()) ? TT.joy : null, dd = J && J.dday ? J.dday() : null, ti = termInfo();
+    var h = '<div class="mcTop"><a class="lg" href="' + esc(BASE) + '" title="쌤 노트 홈">' + (ART && ART.logo ? ART.logo(22) : "") + "<b>쌤 노트</b></a>" + (sc.name ? '<small title="' + esc(sc.name) + '">' + esc(sc.name.replace(/학교$/, "")) + "</small>" : "") + "</div>";
+    h += '<button type="button" class="meCard" data-mecard title="도장판 · 배지 · 아낀 시간 보기">';
+    h += '<span class="mcWho">' + (who || "쌤 노트에 오신 걸 환영해요") + "</span>";
+    h += dd ? '<span class="mcD"><b>' + (dd.n === 0 ? "D-DAY" : "D-" + dd.n) + "</b><span>" + esc(dd.t) + "</span></span>"
+            : '<span class="mcD calm"><b>' + (new Date().getMonth() + 1) + "월</b><span>가까운 큰 일정 없음</span></span>";
+    if(ti) h += '<span class="mcBar" aria-hidden="true"><i style="width:' + ti.pct + '%"></i></span><span class="mcT">' + ti.name + "까지 수업일 <b>" + ti.left + "일</b></span>";
+    if(J && J.treeNow){
+      var t = J.treeNow(), sk = J.streak ? J.streak() : 0, ms = J.monthStamps ? J.monthStamps() : 0, ws = J.weekSaved ? J.weekSaved() : 0;
+      h += '<span class="mcJ"><span title="우리 반 나무 (칭찬·청소 당번 완료로 자라요)">' + t.ic + " " + esc(t.nm) + "</span>"
+        + '<span title="퇴근 도장' + (J.stamped && J.stamped() ? " · 오늘 찍음" : "") + '">' + (J.stamped && J.stamped() ? "✅" : "🙌") + " " + (sk >= 2 ? sk + "일째" : "도장 " + ms) + "</span>"
+        + '<span title="이번 주 아낀 시간">⏱️ ' + (ws >= 60 ? Math.floor(ws / 60) + "시간" : ws + "분") + "</span></span>";
+    }
+    h += '</button><span class="mcMini" title="' + (dd ? esc(dd.t) + " D-" + dd.n : "") + '">' + (dd ? "D-" + dd.n : "") + "</span>";
+    return h;
   }
   function seatBox(){                                                   // 쌤비 창(#sbBox): 마이크 단추 바로 오른쪽(말풍선 높이에서) — 자리가 모자라면 마이크 아래에 띄움
     var box = document.getElementById("sbBox"); if(!box) return;
@@ -501,6 +538,7 @@
   }
   document.addEventListener("click", function(e){
     var host = e.target.closest && e.target.closest("#sbHero,#sbRail,#sbBar"); if(!host) return;
+    if(e.target.closest("[data-mecard]")){ e.preventDefault(); if(TT.joy && TT.joy.open) TT.joy.open(); else location.href = BASE + "index.html#settings"; return; }   // v2.47 나의 학교생활 카드
     if(e.target.closest("[data-rmini]")){ e.preventDefault(); var mn = !R.classList.contains("sbMini"); R.classList.toggle("sbMini", mn); try{ localStorage.setItem("sb_rail_mini", mn ? "1" : "0"); }catch(x){} draw(); window.dispatchEvent(new Event("resize")); return; }   // v2.45 메뉴 접기
     if(e.target.closest("[data-tree]") && TT.joy){ e.preventDefault(); e.stopPropagation(); TT.joy.open("tree"); return; }   // v2.8 우리 반 나무
     var ba = e.target.closest(".bub [data-bact]"); if(ba && window.TT_SBHOME && TT_SBHOME.bact){ e.stopPropagation(); TT_SBHOME.bact(ba.getAttribute("data-bact")); return; }   // v2.44 브리핑 단추
