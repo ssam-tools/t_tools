@@ -164,7 +164,7 @@
         + '<div><label class="f">숫자 6자리</label><input type="password" class="ttv-pinin" name="pin" inputmode="numeric" maxlength="6" autocomplete="new-password"></div>'
         + '<div><label class="f">한 번 더</label><input type="password" class="ttv-pinin" name="pin2" inputmode="numeric" maxlength="6" autocomplete="new-password"></div>'
         + '<button class="ttv-btn p" data-a="pinset">정하기</button></div></div>'
-        + '<p>다른 기기 연결: 그 기기에서 <b>⋯ → 기기 연결·동기화</b>를 열고 같은 ID와 비밀 문구를 넣으세요. 전자칠판은 “여러 선생님이 쓰는 기기”로 정하세요.</p>'
+        + '<p>다른 기기 연결: 그 기기에서 <b>설정 → 시작 세팅 → 내 기기 연결</b>를 열고 같은 ID와 비밀 문구를 넣으세요. 전자칠판은 “여러 선생님이 쓰는 기기”로 정하세요.</p>'
         + '<div class="ttv-err"></div><div class="acts"><button class="ttv-btn d" data-a="off">이 기기 연결 끊기</button><div class="r"><button class="ttv-btn" data-a="close">닫기</button><button class="ttv-btn p" data-a="now">지금 동기화</button></div></div>'
         + '<p style="margin-top:14px;font-size:12px">보관함을 아예 없애려면 <a href="#" data-a="wipe" style="color:var(--t-danger,#b3261e)">보관함 지우기</a> (학교 업무판에 있는 내 자료와 ID가 지워지고, 이 기기의 자료는 남아요)</p>');
       q("[data-a=close]").onclick = function(){ dlg.close(); };
@@ -303,7 +303,7 @@
         if(j.error){ g.innerHTML = '<p class="sub" style="color:var(--t-danger,#b3261e)">' + esc(j.error) + '</p>'; return; }
         if(j.school && j.school !== P.school){ savePub({school: j.school}); P.school = j.school; box.querySelector(".ttv-sc").textContent = j.school; }
         list = j.items || [];
-        if(!list.length){ g.innerHTML = '<p class="sub">아직 교실 열기를 정한 선생님이 없어요.<br>내 휴대폰이나 교무실 PC의 쌤 노트에서 <b>⋯ → 기기 연결·동기화 → 교실 전자칠판에서 열기</b>로 번호를 정하면 여기에 이름이 나와요.</p>'; return; }
+        if(!list.length){ g.innerHTML = '<p class="sub">아직 교실 열기를 정한 선생님이 없어요.<br>내 휴대폰이나 교무실 PC의 쌤 노트에서 <b>설정 → 시작 세팅 → 내 기기 연결 → 교실 전자칠판에서 열기</b>로 번호를 정하면 여기에 이름이 나와요.</p>'; return; }
         g.innerHTML = list.map(function(t, i){ return '<button type="button" data-i="' + i + '"' + (t.locked ? ' class="lk" title="번호가 여러 번 틀려 잠겼어요"' : "") + '>' + (t.locked ? "🔒 " : "") + esc(t.name) + '</button>'; }).join("");
         g.querySelectorAll("button").forEach(function(b){ b.onclick = function(){ keypad(list[+b.dataset.i]); }; });
       };
@@ -466,7 +466,7 @@
     if(here || CR || !document.getElementById("mBoard") || LS("ttv_device") || LS("ttv_vault") || LS("ttv_kind") || /[?&](legacy|invite|room)=/.test(location.search)) return;
     setTimeout(function(){
       if(document.querySelector("dialog[open]")) return;
-      dialog('<h2>이 기기는 누가 쓰나요?</h2><p>처음 한 번만 고르면 돼요. 나중에 <b>⋯ → 기기 연결·동기화</b>에서 바꿀 수 있어요.</p>'
+      dialog('<h2>이 기기는 누가 쓰나요?</h2><p>처음 한 번만 고르면 돼요. 나중에 <b>설정 → 시작 세팅 → 내 기기 연결</b>에서 바꿀 수 있어요.</p>'
         + '<div class="ttv-big"><button type="button" data-k="personal"><b>💻 나만 쓰는 기기</b>교무실 PC·내 휴대폰<br>· 자료가 이 기기에 늘 저장돼요<br>· 모든 도구를 써요</button>'
         + '<button type="button" data-k="shared"><b>🏫 여러 선생님이 쓰는 기기</b>교실 전자칠판·교실 PC<br>· 이름 누르고 숫자 6자리로 열어요<br>· 수업 도구만, 끝나면 자료가 지워져요</button></div>'
         + '<div class="acts"><span></span><div class="r"><button class="ttv-btn" data-a="later">나중에</button></div></div>');

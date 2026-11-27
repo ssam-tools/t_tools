@@ -282,7 +282,7 @@
       clearInterval(iv); css();
       var d = document.createElement("dialog"); d.id = "sbCoatDlg"; d.setAttribute("aria-label", "쌤비 고르기");
       d.innerHTML = "<h2>🦉 나와 함께할 쌤비를 골라 주세요</h2><p>쌤비 옷장이 열렸어요. 깃털 색만 바뀌고, 소품·표정은 그대로예요.</p>" + coatPicker()
-        + '<div class="acts"><span>⋯ → 화면 꾸미기에서 언제든 바꿀 수 있어요</span><button type="button" data-ok>이걸로 할게요</button></div>';
+        + '<div class="acts"><span>설정 → 꾸미기 → 쌤비에서 언제든 바꿀 수 있어요</span><button type="button" data-ok>이걸로 할게요</button></div>';
       document.body.appendChild(d);
       d.addEventListener("click", function(e){ if(e.target.closest("[data-ok]") || e.target === d){ var v = ui(); if(!v.owlAsk){ setCoat(coatId()); } d.close(); } });
       d.addEventListener("close", function(){ d.remove(); });

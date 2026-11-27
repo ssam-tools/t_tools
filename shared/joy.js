@@ -1,5 +1,5 @@
 /* 쌤 노트 · 재미 요소 (PLAN_통일 6단계) — TT.joy
-   업무를 가리지 않는 작은 즐거움. 모두 이 기기에만 저장(tt_joy_v1, 전체 백업에 포함)하고, ⋯ → 🎈 도장판·배지에서 끌 수 있습니다.
+   업무를 가리지 않는 작은 즐거움. 모두 이 기기에만 저장(tt_joy_v1, 전체 백업에 포함)하고, 설정 → 꾸미기 → 도장판·배지에서 끌 수 있습니다.
    교실 기기(전자칠판) 모드에서는 아무것도 하지 않습니다.
    ① 🦉 살아 있는 쌤비 — 계절 소품(🌸🕶️🍂🧣), 시험 기간 머리띠(📝), 시간·요일에 맞춘 한마디(첫 화면, 시간대마다 한 번)
    ② ✅ 퇴근 도장 — '오늘 챙길 것'에 급한 일이 없으면 오후에 [🙌 퇴근 도장] → 쾅! 한 달 도장판
@@ -259,7 +259,7 @@
     BADGES.forEach(function(b){ if(!J.badges[b[0]]){ var ok = false; try{ ok = b[3](J); }catch(e){} if(ok){ J.badges[b[0]] = Date.now(); got.push(b); } } });
     if(!got.length) return; save(J);
     var nb = Object.keys(J.badges).length, nu = ACCS.filter(function(a){ return a[3] && a[3] <= nb && a[3] > nb - got.length; })[0];
-    setTimeout(function(){ confetti(["🏅", "✨", "⭐"], 14); bubble("🏅 새 배지! <b>" + got.map(function(b){ return b[1] + " " + b[2]; }).join(", ") + "</b>" + (nu ? "<small>" + nu[1] + " 쌤비 소품 '" + nu[2] + "'이(가) 열렸어요 · ⋯ → 도장판·배지에서 씌워 보세요</small>" : "<small>⋯ → 도장판·배지에서 모두 볼 수 있어요</small>"), 9000); }, 600);
+    setTimeout(function(){ confetti(["🏅", "✨", "⭐"], 14); bubble("🏅 새 배지! <b>" + got.map(function(b){ return b[1] + " " + b[2]; }).join(", ") + "</b>" + (nu ? "<small>" + nu[1] + " 쌤비 소품 '" + nu[2] + "'이(가) 열렸어요 · 설정 → 꾸미기 → 도장판·배지에서 씌워 보세요</small>" : "<small>설정 → 꾸미기 → 도장판·배지에서 모두 볼 수 있어요</small>"), 9000); }, 600);
   }
   function count(k){ J = load(); J.cnt[k] = (J.cnt[k] || 0) + 1; save(J); if(k === "keys" && J.cnt.keys === 30) badges(); }
   (function(){   // 하루에 쓴 도구 가짓수
@@ -278,12 +278,15 @@
         : '<button type="button" data-jd="do" style="font:inherit;font-weight:800;border:0;border-radius:10px;padding:6px 14px;background:#FFD84D;cursor:pointer">오늘 지당 ✔</button>') + "</div>";
   }
   var dlg = null;
+  var MODE = "badges";
+  function openAs(focus){ MODE = focus === "ssambi" ? "ssambi" : "badges"; open(focus); }
   function open(focus){
     J = load();
     if(!dlg){ dlg = document.createElement("dialog"); dlg.className = "joyDlg"; dlg.setAttribute("aria-label", "도장판·배지"); document.body.appendChild(dlg);
       dlg.addEventListener("click", function(e){ if(e.target === dlg || (e.target.closest && e.target.closest("[data-x]"))) dlg.close(); });
       dlg.addEventListener("change", function(e){ if(e.target.id === "hidOn"){ var u = TT.store.get("tt_ui_v1", {}) || {}; if(e.target.checked) delete u.hidOff; else u.hidOff = true; TT.store.set("tt_ui_v1", u); return; } if(e.target.id === "joyOn"){ J = load(); J.off = !e.target.checked; save(J); refresh(); open(); } });
       dlg.addEventListener("click", function(e){ var s = e.target.closest && e.target.closest("[data-stamp]"); if(s){ e.preventDefault(); dlg.close(); stamp(); } });
+      dlg.addEventListener("click", function(e){ var t = e.target.closest && e.target.closest("[data-talk]"); if(t && window.TT_TALK){ dlg.close(); TT_TALK.open("cats"); } });
       dlg.addEventListener("click", function(e){ var a = e.target.closest && e.target.closest("[data-acc]"); if(a && !a.disabled){ setAcc(a.dataset.acc); open(); } });
       dlg.addEventListener("click", function(e){                       // 📝 나의 지당
         var a = e.target.closest && e.target.closest("[data-jd]"); if(!a) return; e.preventDefault();
@@ -301,20 +304,28 @@
     for(var k = 1; k <= last; k++){ var dt = new Date(y, m, k), w = dt.getDay(); if(w === 0 || w === 6) continue; var key = ymd(dt); cells += '<span class="' + (J.stamps[key] ? "st" : "") + (key === t ? " td" : "") + '">' + k + "</span>"; }
     var n = growth(), T = tree(n), ws = weekSaved(), al = allSaved(), ms = monthStamps(), sk = streak(), nb = Object.keys(J.badges).length, ca = J.acc || "season";
     var canStamp = !J.stamps[t] && stampable();
-    dlg.innerHTML = '<h2>🎈 도장판 · 배지<button type="button" class="x" data-x>닫기 Esc</button></h2>'
+    /* v2.53 설정 → 🎨 꾸미기: '쌤비'(옷장·소품·재미·숨은 정보)와 '도장판·배지'를 따로 — 옷장이 두 곳에 나오지 않게 */
+    if(MODE === "ssambi"){
+      dlg.setAttribute("aria-label", "쌤비 꾸미기");
+      dlg.innerHTML = '<h2>🦉 쌤비 <button type="button" class="x" data-x>닫기 Esc</button></h2>'
+      + (window.TT_SBART && TT_SBART.coatPicker ? '<h3>🦉 쌤비 옷장 <small>깃털 색 · 밤하늘·금빛은 배지를 모으면 열려요</small></h3>' + TT_SBART.coatPicker() : "")   // v2.48
+      + '<h3>🎀 쌤비 소품 <small>배지를 받을수록 하나씩 열려요 · 눌러서 씌우기</small></h3><div class="joyAcc2">' + ACCS.map(function(a){ var op = a[3] <= nb;
+          return '<button type="button" data-acc="' + a[0] + '"' + (op ? "" : " disabled") + ' class="' + (ca === a[0] ? "on" : "") + '" title="' + (op ? a[2] : "배지 " + a[3] + "개를 받으면 열려요") + '"><i>' + (op ? a[1] : "🔒") + "</i>" + (op ? esc(a[2]) : "배지 " + a[3] + "개") + "</button>"; }).join("") + "</div>"
+      + '<p style="font-size:12.5px;margin:10px 0 0;color:var(--t-sub,#5b6773)">🧭 숨은 정보 <b>' + Object.keys(J.cnt.hid || {}).length + "</b>가지 찾음 · 쌤 노트 곳곳에 마우스를 올려 보세요(휴대폰은 길게 누르기)</p>"
+      + '<label class="joyOff"><input type="checkbox" id="hidOn"' + (((TT.store.get("tt_ui_v1", {}) || {}).hidOff) ? "" : " checked") + "> 숨은 정보 보기 (마우스를 올리면 나오는 작은 말풍선)</label>"
+      + '<label class="joyOff"><input type="checkbox" id="joyOn"' + (on() ? " checked" : "") + "> 재미 요소 켜기 (쌤비 소품·한마디·도장·배지·D-day 칩)</label>"
+      + (window.TT_TALK ? '<p style="margin:10px 0 0"><button type="button" class="btn" data-talk>📣 쌤비 이야기 · 들을 이야기 고르기</button></p>' : "");
+    } else {
+      dlg.setAttribute("aria-label", "도장판·배지");
+      dlg.innerHTML = '<h2>🎈 도장판 · 배지<button type="button" class="x" data-x>닫기 Esc</button></h2>'
       + '<h3>✅ ' + (m + 1) + '월 퇴근 도장 <small>' + ms + "개" + (sk >= 2 ? " · 🔥 " + sk + "일 연속" : "") + (canStamp ? ' · <a href="#" data-stamp style="color:#c62828;font-weight:800">오늘 도장 찍기</a>' : "") + "</small></h3>"
       + '<div class="joyCal"><b>월</b><b>화</b><b>수</b><b>목</b><b>금</b>' + cells + "</div>"
       + jdBlock()
       + '<div class="joyRow" style="margin-top:10px"><div>⏱️ 이번 주 아낀 시간<b>' + (ws ? hm(ws) : "0분") + "</b></div><div>🚀 지금까지<b>" + (al ? hm(al) : "0분") + "</b></div><div" + (focus === "tree" ? ' style="outline:2px solid #2f6b1f"' : "") + ">" + T.ic + " 우리 반 나무<b>" + T.nm + " · 칭찬·청소 " + n + "</b>" + (T.next ? T.nnm + "까지 " + T.next + "번" : "") + "</div></div>"
       + '<h3>🏅 배지 <small>' + Object.keys(J.badges).length + " / " + BADGES.length + " · 받기 전에는 숨겨져 있어요</small></h3>"
       + '<div class="joyBd">' + BADGES.map(function(b){ var g = J.badges[b[0]]; return '<div class="' + (g ? "got" : "") + '"' + (g ? ' title="' + new Date(g).toLocaleDateString("ko-KR") + '"' : "") + "><i>" + (g ? b[1] : "❔") + "</i>" + (g ? esc(b[2]) : "숨은 배지") + "</div>"; }).join("") + "</div>"
-      + '<p style="font-size:12px;color:var(--t-sub,#5b6773);margin:8px 0 0;line-height:1.5">아낀 시간은 쌤 노트가 만든 파일 내려받기·인쇄 때마다 손으로 할 때 걸릴 시간을 대략 더한 값입니다. 모든 기록은 이 기기에만 있습니다.</p>'
-      + (window.TT_SBART && TT_SBART.coatPicker ? '<h3>🦉 쌤비 옷장 <small>깃털 색 · 밤하늘·금빛은 배지를 모으면 열려요</small></h3>' + TT_SBART.coatPicker() : "")   // v2.48
-      + '<h3>🎀 쌤비 소품 <small>배지를 받을수록 하나씩 열려요 · 눌러서 씌우기</small></h3><div class="joyAcc2">' + ACCS.map(function(a){ var op = a[3] <= nb;
-          return '<button type="button" data-acc="' + a[0] + '"' + (op ? "" : " disabled") + ' class="' + (ca === a[0] ? "on" : "") + '" title="' + (op ? a[2] : "배지 " + a[3] + "개를 받으면 열려요") + '"><i>' + (op ? a[1] : "🔒") + "</i>" + (op ? esc(a[2]) : "배지 " + a[3] + "개") + "</button>"; }).join("") + "</div>"
-      + '<p style="font-size:12.5px;margin:10px 0 0;color:var(--t-sub,#5b6773)">🧭 숨은 정보 <b>' + Object.keys(J.cnt.hid || {}).length + "</b>가지 찾음 · 쌤 노트 곳곳에 마우스를 올려 보세요(휴대폰은 길게 누르기)</p>"
-      + '<label class="joyOff"><input type="checkbox" id="hidOn"' + (((TT.store.get("tt_ui_v1", {}) || {}).hidOff) ? "" : " checked") + "> 숨은 정보 보기 (마우스를 올리면 나오는 작은 말풍선)</label>"
-      + '<label class="joyOff"><input type="checkbox" id="joyOn"' + (on() ? " checked" : "") + "> 재미 요소 켜기 (쌤비 소품·한마디·도장·배지·D-day 칩)</label>";
+      + '<p style="font-size:12px;color:var(--t-sub,#5b6773);margin:8px 0 0;line-height:1.5">아낀 시간은 쌤 노트가 만든 파일 내려받기·인쇄 때마다 손으로 할 때 걸릴 시간을 대략 더한 값입니다. 모든 기록은 이 기기에만 있습니다.</p>';
+    }
     if(!dlg.open){ if(dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", ""); }
   }
 
@@ -350,7 +361,7 @@
     badges();
   }
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
-  TT.joy = {saved: saved, count: count, open: open, stamp: stamp, on: on, weekSaved: weekSaved, dday: dday, examNear: examNear, season: season,
+  TT.joy = {saved: saved, count: count, open: openAs, stamp: stamp, on: on, weekSaved: weekSaved, dday: dday, examNear: examNear, season: season,
             stamped: function(){ return !!load().stamps[ymd()]; }, stampable: stampable, monthStamps: monthStamps,
             found: found, streak: streak, acc: acc, setAcc: setAcc, yearCard: yearCard, treeNow: function(){ var n = growth(); var t = tree(n); t.n = n; return t; }, bubble: bubble, allSaved: allSaved};   // v2.8   // v2.0 쌤비 홈도 함께 씀
 })();

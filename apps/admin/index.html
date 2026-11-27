@@ -112,7 +112,7 @@
     $("nav").innerHTML = SEC.map(function(s){ return '<button type="button" disabled>' + s[1] + " " + esc(s[2]) + "</button>"; }).join("");
     var B = AD.board(), msg = "";
     if(AD.classroom()) msg = "교실 기기(공용)에서는 관리자 모드를 켤 수 없어요. 교무실 PC나 내 휴대폰에서 열어 주세요.";
-    else if(!B.url || !B.pw) msg = '먼저 <a href="../../#settings">⋯ → 학교 업무판 연결</a>에서 주소와 공용 비밀번호를 넣어 주세요.';
+    else if(!B.url || !B.pw) msg = '먼저 <a href="../../#settings">설정 → 시작 세팅 → 학교 연결</a>에서 주소와 공용 비밀번호를 넣어 주세요.';
     $("body").innerHTML = '<form class="lockbox" id="lf" autocomplete="off"><div class="bi">🛡️</div><b style="font-size:18px">관리자 모드</b>'
       + (msg ? '<small>' + msg + "</small>" : '<input type="password" id="lp" placeholder="관리자 비밀번호" aria-label="관리자 비밀번호" autocomplete="current-password">'
         + '<input type="text" id="ln" placeholder="내 이름 (변경 기록에 남아요 · 최고 관리자만)" aria-label="이름" maxlength="20" value="' + esc(sessionStorage.getItem("ttadm_name") || (TT.school.load() || {}).teacher || "") + '">'

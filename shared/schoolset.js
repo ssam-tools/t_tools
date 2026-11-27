@@ -226,10 +226,10 @@ var TTSet = (function(){
         }, "되돌리기", 14000);
         return m;
       }, function(e){
-        if(String(e && e.message) === "LOCK") TT.ui.toast("🦉 학교 세팅을 열지 못했어요. 공용 비밀번호가 바뀐 것 같아요 — ⋯ → 학교 업무판 연결에서 새 비밀번호를 넣어 주세요.", null, null, 10000);
+        if(String(e && e.message) === "LOCK") TT.ui.toast("🦉 학교 세팅을 열지 못했어요. 공용 비밀번호가 바뀐 것 같아요 — 설정 → 시작 세팅 → 학교 연결에서 새 비밀번호를 넣어 주세요.", null, null, 10000);
         return null;
       });
-    }).catch(function(e){ var m = String(e && e.message); if(m === "AUTH") TT.ui.toast("업무판 공용 비밀번호가 바뀌었어요. ⋯ → 학교 업무판 연결에서 새 비밀번호를 넣어 주세요.", null, null, 9000); return null; });
+    }).catch(function(e){ var m = String(e && e.message); if(m === "AUTH") TT.ui.toast("업무판 공용 비밀번호가 바뀌었어요. 설정 → 시작 세팅 → 학교 연결에서 새 비밀번호를 넣어 주세요.", null, null, 9000); return null; });
   }
 
   /* ================= 6단계: 나이스 학사일정 저절로 (하루 한 번) ================= */

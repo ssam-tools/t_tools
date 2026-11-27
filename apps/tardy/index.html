@@ -347,7 +347,7 @@ loadHome();
 let S = (() => { const o = lsGet(KEY); if (o) return normalize(o); const m = migrate(); return m || blank(); })();
 if (!lsGet(KEY)) persist();
 { try { const C = JSON.parse(localStorage.getItem('tt_calendar_v1') || 'null'); ((C && C.events) || []).forEach(e => { if (e.k === 'off' && !S.holidays[e.d]) S.holidays[e.d] = e.t; }); } catch (e) {} }   // 학사일정(연간 업무에서 붙여 넣기)의 휴업일
-{ const sc = TT.school.load(); if (sc.name) S.settings.school = sc.name; if (sc.teacher) S.settings.teacher = sc.teacher; }   // 학교 이름·담임 이름은 공통 설정(첫 화면 ⋯ → 학교·선생님 설정)과 같은 값
+{ const sc = TT.school.load(); if (sc.name) S.settings.school = sc.name; if (sc.teacher) S.settings.teacher = sc.teacher; }   // 학교 이름·담임 이름은 공통 설정(첫 화면 설정 → 시작 세팅 → 내 정보)과 같은 값
 
 const startDate = () => { const t = today(); return L.isSchoolDay(t, S.holidays) ? t : L.prevSchoolDay(t, S.holidays); };
 let view = { tab: (['entry','week','student','stats','guide','counsel','report','settings'].indexOf(new URLSearchParams(location.search).get('tab')) >= 0 ? new URLSearchParams(location.search).get('tab') : 'entry'), date: startDate(), monday: L.weekStart(today()), filter: 'all', range: 'all', logStudent: '', sel: '', mode: 'L', rk: 'ok', ok: false, rmonth: 'all', gk: '', gh: '개별', gmulti: false, gsel: [], gdate: today() };

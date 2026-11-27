@@ -389,11 +389,13 @@
   /* v2.8.1 왼쪽 막대가 화면보다 길면 조금씩 줄여 스크롤 없이: ① 칸 높이·쌤비 크기 ② 쌤비 한마디 숨김 */
   function fitRail(){                                                   // v2.46 위쪽·메뉴 줄은 그대로, 펼친 도구 목록만 줄이고 그래도 길면 목록 안에서 스크롤
     if(!rail || !rail.offsetHeight) return;
-    rail.classList.remove("tight", "tighter", "noNote");
+    rail.classList.remove("tight", "tighter", "noNote", "noteMini");
     function over(){ var tl = rail.querySelector(".tl"); return (tl && tl.scrollHeight > tl.clientHeight + 2) || rail.scrollHeight > rail.clientHeight + 2; }
-    if(over()) rail.classList.add("noNote");   // v2.50 자리가 모자라면 쪽지부터 숨김 (도구 목록이 먼저)
+    /* v2.53 자리가 모자라면: 쪽지 한 줄 → 도구 줄 간격 줄이기 → (그래도 메뉴 전체가 넘칠 때만) 쪽지 숨김 — 화면마다 메뉴 아래가 달라지지 않게 */
+    if(over()) rail.classList.add("noteMini");
     if(over()) rail.classList.add("tight");
     if(over()) rail.classList.add("tighter");
+    if(rail.scrollHeight > rail.clientHeight + 2) rail.classList.add("noNote");
     var tl0 = rail.querySelector(".tl"); if(tl0) tl0.classList.toggle("scr", tl0.scrollHeight > tl0.clientHeight + 2);   // 목록이 더 있으면 아래를 흐리게
     var on = rail.querySelector(".tl .ti.on"), tl = on && on.parentNode; if(tl && tl.scrollHeight > tl.clientHeight + 2){ var r = on.offsetTop - tl.offsetTop; if(r < tl.scrollTop || r > tl.scrollTop + tl.clientHeight - on.offsetHeight) tl.scrollTop = r - (tl.clientHeight - on.offsetHeight) / 2; }
   }

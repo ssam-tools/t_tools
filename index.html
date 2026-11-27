@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2f6fb5">
 <title>쌤 노트</title>
-<script>/* v2.0: 첫 화면 고르기(⋯ → 화면 꾸미기)가 '쌤비 홈'이면 그리기 전에 표시 — 업무판이 잠깐 보였다 바뀌지 않게 */
+<script>/* v2.0: 첫 화면 고르기(설정 → 꾸미기 → 화면)가 '쌤비 홈'이면 그리기 전에 표시 — 업무판이 잠깐 보였다 바뀌지 않게 */
 try{ var snG = /[?&]legacy=(on|off)\b/.exec(location.search);   /* v2.8: 쌤비 홈 고정 · 예전 화면(업무판 첫 화면·예전 휴대폰 화면)은 ?legacy=on 일 때만 고를 수 있음 (LEGACY.md) */
   if(snG){ if(snG[1] === "on") localStorage.setItem("sn_legacy_ui", "1"); else localStorage.removeItem("sn_legacy_ui"); history.replaceState(null, "", location.pathname + location.search.replace(/[?&]legacy=(on|off)\b/, "").replace(/^&/, "?") + location.hash); }
   var snLeg = localStorage.getItem("sn_legacy_ui") === "1", snQ = snLeg && /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse(localStorage.getItem("snlook_v1") || "null");
@@ -534,6 +534,26 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
     .mt small{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
     .mview.mf{flex:none}.msea{display:none}
   }
+
+  /* v2.53 설정 허브 (시작 세팅 · 꾸미기 · 백업·새 학년 · 도움말) */
+  html.ttHub #more .menu > :not([data-hubm]){display:none!important}
+  .hubDlg{border:0;border-radius:18px;padding:0;width:min(520px,94vw);box-shadow:0 18px 48px rgba(20,40,70,.22);font-family:var(--t-font,inherit);color:var(--t-ink,#1d2733);background:var(--t-card,#fff)}
+  .hubDlg::backdrop{background:rgba(20,30,45,.28)}
+  .hubDlg .hh{display:flex;align-items:baseline;gap:10px;padding:16px 18px 8px;flex-wrap:wrap}
+  .hubDlg .hh b{font-size:18px}
+  .hubDlg .hh small{color:var(--t-sub,#5b6773);font-size:12.5px;flex:1}
+  .hubDlg .hx{border:0;background:transparent;font-size:16px;cursor:pointer;color:var(--t-sub,#5b6773);border-radius:8px;padding:4px 8px}
+  .hubDlg .hl{display:flex;flex-direction:column;gap:4px;padding:4px 10px 14px}
+  .hubDlg .hr{display:flex;align-items:center;gap:12px;text-align:left;border:0;background:transparent;border-radius:12px;padding:10px 10px;cursor:pointer;font:inherit;color:inherit}
+  .hubDlg .hr:hover,.hubDlg .hr:focus-visible{background:var(--t-chip,#f1f3f6);outline:0}
+  .hubDlg .hr span{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .hubDlg .hr b{font-size:15px}
+  .hubDlg .hr b em{font-style:normal;font-size:11px;font-weight:700;color:var(--t-sub,#5b6773);background:var(--t-chip,#f1f3f6);border-radius:999px;padding:1px 7px;margin-left:4px}
+  .hubDlg .hr small{font-size:12.5px;color:var(--t-sub,#5b6773);line-height:1.4}
+  .hubDlg .hr u{text-decoration:none;color:var(--t-faint,#9aa5b1);font-size:18px}
+  .hubDlg .hn,.hubDlg .hi{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:800;background:var(--t-accent-soft,#e6f0fa);color:var(--t-accent,#2f6fb5)}
+  .hubDlg .hr.ok .hn{background:#1D9E75;color:#fff}
+  .hubDlg .hr.danger b{color:#c0392b}
 </style>
 </head>
 <body>
@@ -550,6 +570,11 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
     <details class="more" id="more">
       <summary aria-label="더 보기">⋯</summary>
       <div class="menu">
+        <button type="button" data-hubm="start" data-e="🧳">시작 세팅</button>
+        <button type="button" data-hubm="look" data-e="🎨">꾸미기</button>
+        <button type="button" data-hubm="data" data-e="💾">백업·새 학년</button>
+        <button type="button" data-hubm="help" data-e="❓">도움말</button>
+        <a href="apps/admin/" data-hubm="admin" data-e="🛡️">관리</a>
         <div class="mh">안내</div>
         <button type="button" id="mHelp" data-e="❓">처음 사용 안내</button>
         <button type="button" id="mKeys" data-e="⌨️" onclick="this.closest('details').open=false;window.TT_KEYS&&TT_KEYS.help()">단축키 안내 <small style="opacity:.6">?</small></button>
@@ -643,7 +668,7 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
       <li><b>쌤비</b>: 지금 챙길 일을 한 줄로 알려 줘요. 쌤비나 🎤를 누르면 말로 기록·찾기·바로 실행("3반 출결", "기재요령에서 봉사활동 찾아 줘").</li>
       <li><b>검색창</b>(어디서나 <b>/</b> · 문서·업무판에서는 <b>Ctrl+F</b>): 학생·도구·내선번호·자료실을 찾고, 오른쪽에 문서가 열려 있으면 그 문서 안을 찾아요. <b>+ 할 일</b>처럼 적으면 내 할 일에 들어갑니다.</li>
       <li><b>메뉴</b>(PC 왼쪽 · 휴대폰 위): 홈 · 수업 · 우리 반 · 학생 · 학교 · 자료실 · 설정. 메뉴를 누르면 대표 도구가 바로 열리고, 왼쪽에 그 메뉴의 도구 목록이 펼쳐져요.</li>
-      <li><b>오늘 할 일</b>: 입력한 자료에서 저절로 생기고, 끝내면 사라져요. 급한 일이 없으면 오후에 <b>퇴근 도장</b> 쾅! (⋯ → 도장판·배지)</li>
+      <li><b>오늘 할 일</b>: 입력한 자료에서 저절로 생기고, 끝내면 사라져요. 급한 일이 없으면 오후에 <b>퇴근 도장</b> 쾅! (설정 → 꾸미기 → 도장판·배지)</li>
     </ol>
     <p style="margin-top:10px">🔒 학생 자료는 이 기기의 브라우저에만 저장됩니다. ⋯ → <b>기기 연결·동기화</b>를 켜면 내 비밀 문구로 잠근 뒤에만 학교 업무판 보관함과 맞춰져요. 한 달에 한 번은 ⋯ → <b>전체 백업 저장</b>.</p>
     <p style="margin-top:6px">📲 ⋯ → <b>앱 설치하기</b>를 누르면 바탕화면·홈 화면에 쌤비 아이콘(쌤 노트)이 생기고, 인터넷이 끊겨도 열립니다.</p>
@@ -845,7 +870,73 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
     var out = []; (m.groups || []).forEach(function(g){ if(m.id === "class" && g.id === "subject" && typeof ttPackGroups === "function"){ var P = ttPackGroups(); if(P.length){ out.push.apply(out, P); return; } } out.push(g); }); return out;
   }
   function inGroup(t, g){ return g.pack ? t.group === "subject" && t.subject === g.pack : t.group === g.id; }
+
+  /* ── v2.53 설정 5칸: ① 시작 세팅 ② 꾸미기 ③ 백업·새 학년 ④ 도움말 · 🛡️ 관리 ──
+     칸을 누르면 작은 창(허브)에 순서대로 줄이 나오고, 줄을 누르면 지금까지 쓰던 창이 그대로 열립니다(기능은 그대로, 메뉴만 정리). */
+  var HUB = (function(){
+    function brd(){ var b = TT.store.get("tt_board_v1", null) || {}; return !!(b.url && /^https:\/\/script\.google\.com\//.test(b.url) && b.pw); }
+    function setv(){ var x = TT.store.get("tt_schoolset_v1", null); return !!(x && x.ver); }
+    function me(){ var x = TT.school.load() || {}; return !!(x.teacher && x.name); }
+    function auto(){ var a = TT.store.get("tt_auto_v1", null); return !!(a && a.set && Object.keys(a.set).length); }
+    function vlt(){ try{ var v = JSON.parse(localStorage.getItem("ttv_vault") || "null"); return !!(v && v.id); }catch(e){ return false; } }
+    function goTo(h){ return function(){ location.href = h; }; }
+    function joy(k){ return function(){ if(window.TT && TT.joy) TT.joy.open(k); else TT.ui.toast("교실 기기에서는 재미 요소가 꺼져 있어요."); }; }
+    function bk(){ var d = TT.backup.daysSince(); return d == null ? (TT.backup.hasData() ? "⚠ 아직 한 번도 백업하지 않았어요" : "아직 백업할 자료가 없어요") : d > 30 ? "⚠ 마지막 백업 " + d + "일 전" : "마지막 백업 " + (d ? d + "일 전" : "오늘"); }
+    var D = {
+      start: {ic: "🧳", t: "시작 세팅", sub: "처음 한 번 · 위에서부터 차례대로 하면 끝나요", rows: function(){ return [
+        {n: 1, ic: "📅", t: "학교 연결", s: "학교 업무판 주소 · 공용 비밀번호 (초대 링크로 열었다면 이미 됨)", ok: brd(), fn: clickMenu("mBoard")},
+        {n: 2, ic: "🏫", t: "학교 세팅 받기", s: "교직원 · 학생 명렬 · 학사일정 · 시간표를 한 번에 (교실 기기 QR도 여기)", ok: setv(), fn: goTo("apps/setup/")},
+        {n: 3, ic: "🙋", t: "내 정보", s: "내 이름 · 담임 반/교과 · 교과 칸 · 나이스 인증키", ok: me(), fn: clickMenu("mSchool")},
+        {n: 4, ic: "✨", t: "자동 준비", s: "시기에 맞춰 쌤비가 미리 챙길 일 고르기", ok: auto(), opt: 1, fn: clickMenu("mAuto")},
+        {n: 5, ic: "☁️", t: "내 기기 연결", s: "교무실 PC · 휴대폰 · 전자칠판끼리 내 자료 맞추기", ok: vlt(), opt: 1, fn: clickMenu("mVault")}]; }},
+      look: {ic: "🎨", t: "꾸미기", sub: "화면 · 쌤비 · 도장판", rows: function(){ return [
+        {ic: "🖼️", t: "화면", s: "테마 색 · 글꼴 · 글자 크기", fn: clickMenu("mFont")},
+        {ic: "🦉", t: "쌤비", s: "깃털 색(옷장) · 소품 · 들을 이야기 · 재미 요소 · 숨은 정보", fn: joy("ssambi")},
+        {ic: "🎈", t: "도장판·배지", s: "퇴근 도장 · 아낀 시간 · 배지 · 나의 지당", fn: joy("badges")}]; }},
+      data: {ic: "💾", t: "백업·새 학년", sub: "내 자료를 파일 하나로 지키기", rows: function(){ return [
+        {ic: "💾", t: "전체 백업 저장", s: bk().replace(/^⚠ /, ""), fn: clickMenu("mBackup")},
+        {ic: "📂", t: "백업 불러오기", s: "백업 파일에서 되살리기 (다른 기기로 옮길 때)", fn: clickMenu("mRestore")},
+        {ic: "🌱", t: "새 학년 시작", s: "한 해 돌아보기 → 백업 → 정리 · 학년이 바뀔 때 한 번 (조심)", danger: 1, fn: clickMenu("mNewYear")}]; }},
+      help: {ic: "❓", t: "도움말", sub: "쓰는 법 · 단축키 · 앱 설치 · 의견", rows: function(){ return [
+        {ic: "🦉", t: "처음 사용 안내", s: "쌤 노트 쓰는 법", fn: clickMenu("mHelp")},
+        {ic: "⌨️", t: "단축키 안내", s: "/ 찾기 · Alt+1~5 메뉴 · Alt+B 쌤비 · ?", fn: clickMenu("mKeys")},
+        {ic: "📲", t: "앱 설치하기", s: "바탕화면·홈 화면에 쌤비 아이콘", fn: clickMenu("mInstall")},
+        {ic: "💬", t: "의견 보내기", s: "불편한 점 · 아이디어를 담당 선생님께", fn: clickMenu("mFeedback")}]; }}
+    };
+    function startSt(){ var R = D.start.rows(), need = R.filter(function(r){ return !r.opt; }), done = need.filter(function(r){ return r.ok; }).length, nx = need.filter(function(r){ return !r.ok; })[0];
+      return nx ? "⚠ " + done + "/" + need.length + " · 다음: " + nx.t : "✓ 준비 끝 · " + R.filter(function(r){ return r.ok; }).length + "/" + R.length + " 단계"; }
+    function items(){
+      var adm = window.TT_ADMIN && TT_ADMIN.state && TT_ADMIN.state();
+      return [
+        {x: {icon: "🧳", name: "시작 세팅", st: startSt(), fn: function(){ open("start"); }}},
+        {x: {icon: "🎨", name: "꾸미기", st: "화면 · 쌤비 · 도장판·배지", fn: function(){ open("look"); }}},
+        {x: {icon: "💾", name: "백업·새 학년", st: bk(), fn: function(){ open("data"); }}},
+        {x: {icon: "❓", name: "도움말", st: "쓰는 법 · 단축키 · 앱 설치 · 의견 보내기", fn: function(){ open("help"); }}},
+        {x: {icon: "🛡️", name: "관리", st: adm ? "🛡️ 관리자 모드 중" : "관리자 전용 · 교직원 · 금고 · 변경 기록", fn: goTo("apps/admin/")}}
+      ];
+    }
+    var dlg = null;
+    function open(k){
+      var d = D[k]; if(!d) return;
+      try{ var more = $("more"); if(more) more.open = false; }catch(e){}
+      if(!dlg){ dlg = document.createElement("dialog"); dlg.className = "hubDlg"; document.body.appendChild(dlg);
+        dlg.addEventListener("click", function(e){ if(e.target === dlg || (e.target.closest && e.target.closest("[data-hx]"))) dlg.close(); }); }
+      var R = d.rows();
+      dlg.setAttribute("aria-label", d.t);
+      dlg.innerHTML = '<div class="hh"><b>' + d.ic + " " + d.t + '</b><small>' + d.sub + '</small><button type="button" class="hx" data-hx aria-label="닫기">✕</button></div><div class="hl">'
+        + R.map(function(r, i){ return '<button type="button" class="hr' + (r.ok ? " ok" : "") + (r.danger ? " danger" : "") + '" data-hi="' + i + '">'
+          + (r.n ? '<i class="hn">' + (r.ok ? "✓" : r.n) + "</i>" : '<i class="hi">' + r.ic + "</i>")
+          + '<span><b>' + (r.n ? r.ic + " " : "") + r.t + (r.opt ? ' <em>선택</em>' : "") + "</b><small>" + r.s + "</small></span><u>›</u></button>"; }).join("") + "</div>";
+      Array.prototype.forEach.call(dlg.querySelectorAll("[data-hi]"), function(b){ b.onclick = function(){ var r = R[+b.dataset.hi]; dlg.close(); setTimeout(r.fn, 0); }; });
+      if(!dlg.open) dlg.showModal();
+    }
+    return {items: items, open: open};
+  })();
+  window.TT_HUB = HUB;
+  if(!TT.classroom) document.documentElement.classList.add("ttHub");          // ⋯ 메뉴도 같은 5칸만
+  Array.prototype.forEach.call(document.querySelectorAll("button[data-hubm]"), function(b){ b.onclick = function(){ var d = $("more"); if(d) d.open = false; HUB.open(b.dataset.hubm); }; });
   function menuGroups(m){
+    if(m.id === "settings" && !TT.classroom) return [{g: {id: "set", name: "설정"}, items: HUB.items()}];   // v2.53 설정 5칸
     var pk = typeof ttPack === "function" ? ttPack() : null;
     return expandGroups(m).map(function(g){
       var L = TT_TOOLS.filter(function(t){ return t.menu === m.id && inGroup(t, g) && okTool(t); });
@@ -1090,7 +1181,7 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
   function okUrl(u){ return /^https?:\/\/[^\s]+$/i.test(u); }
   function openLinks(){
     var pk = typeof ttPack === "function" ? ttPack() : null, box = $("lkPack"), M = myLinks();
-    $("lkLead").textContent = pk ? pk.icon + " " + pk.name + " 교과 팩의 공개 자료와 내가 넣은 링크입니다." : "고른 교과 팩이 없어 내가 넣은 링크만 모읍니다. (⋯ → 학교·선생님 설정 → 교과 칸)";
+    $("lkLead").textContent = pk ? pk.icon + " " + pk.name + " 교과 팩의 공개 자료와 내가 넣은 링크입니다." : "고른 교과 팩이 없어 내가 넣은 링크만 모읍니다. (설정 → 시작 세팅 → 내 정보 → 교과 칸)";
     box.textContent = "";
     if(pk && (pk.links || []).length){ var ul = document.createElement("ul"); pk.links.filter(function(x){ return okUrl(x.u); }).forEach(function(x){ ul.appendChild(linkLi(x)); }); box.appendChild(ul); }
     var mu = $("lkMine"); mu.textContent = ""; M.forEach(function(x){ mu.appendChild(linkLi(x)); });
@@ -1238,7 +1329,7 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
         $("fbText").value = ""; $("dlgFb").close(); TT.ui.toast("💬 의견을 보냈어요. 고맙습니다!");
       }).catch(function(err){
         $("fbOk").disabled = false;
-        copyTxt(msg).then(function(ok){ $("fbErr").textContent = (/지원하지 않는/.test(String(err.message)) ? "업무판이 아직 의견 받기를 지원하지 않아요." : /AUTH/.test(String(err.message)) ? "업무판 비밀번호가 바뀌었어요. ⋯ → 학교 업무판 연결에서 다시 넣어 주세요." : "보내지 못했어요.") + (ok ? " 내용을 복사해 두었으니 쿨메신저로 보내 주세요." : " 내용 칸의 글을 복사해 쿨메신저로 보내 주세요."); });
+        copyTxt(msg).then(function(ok){ $("fbErr").textContent = (/지원하지 않는/.test(String(err.message)) ? "업무판이 아직 의견 받기를 지원하지 않아요." : /AUTH/.test(String(err.message)) ? "업무판 비밀번호가 바뀌었어요. 설정 → 시작 세팅 → 학교 연결에서 다시 넣어 주세요." : "보내지 못했어요.") + (ok ? " 내용을 복사해 두었으니 쿨메신저로 보내 주세요." : " 내용 칸의 글을 복사해 쿨메신저로 보내 주세요."); });
       });
   });
   /* v2.41 도구 화면 맨 위 ⋯ 에서 넘어옴: ?m=mSchool → 홈에서 그 메뉴 창을 바로 열기 */

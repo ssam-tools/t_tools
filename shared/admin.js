@@ -57,11 +57,11 @@
   }
   function errText(e){
     var m = String(e && e.message || e);
-    if(m === "NOBOARD") return "먼저 ⋯ → 학교 업무판 연결에서 주소와 공용 비밀번호를 넣어 주세요.";
+    if(m === "NOBOARD") return "먼저 설정 → 시작 세팅 → 학교 연결에서 주소와 공용 비밀번호를 넣어 주세요.";
     if(m === "ROOM") return "교실 기기(공용)에서는 관리자 모드를 켤 수 없어요.";
     if(m === "ADMIN_EXPIRED") return "관리자 모드 시간이 끝났어요. 다시 관리자 비밀번호를 넣어 주세요.";
     if(m === "CONFLICT") return "다른 관리자가 먼저 올렸어요. 새로 받은 뒤 다시 고쳐 주세요.";
-    if(m === "AUTH") return "업무판 공용 비밀번호가 바뀌었어요. ⋯ → 학교 업무판 연결에서 다시 넣어 주세요.";
+    if(m === "AUTH") return "업무판 공용 비밀번호가 바뀌었어요. 설정 → 시작 세팅 → 학교 연결에서 다시 넣어 주세요.";
     if(m === "NO_DOPOST" || /지원하지 않는/.test(m)) return "학교 업무판에 관리자 기능(Admin.gs)이 아직 없어요. 담당자께 '관리자_금고_설정안내'를 부탁해 주세요.";
     if(/^HTTP|Failed to fetch|NetworkError/.test(m)) return "학교 업무판에 연결하지 못했어요. 인터넷을 확인해 주세요.";
     return m;

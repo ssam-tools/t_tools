@@ -210,7 +210,7 @@
     h += '<div class="sdL"><div class="lh"><span>' + esc(head) + (lst.length ? ' <em class="ct">' + lst.length + "</em>" : "") + "</span>" + (st.pick ? '<button type="button" data-day="">✕</button>' : "") + "</div>"
       + (lst.length ? lst.map(function(x){ var dt = x.d.slice(5).replace(/^0/, "").replace("-", "/").replace("/0", "/"); return '<div class="li k-' + x.k + '" title="' + esc(x.t) + '">' + (st.pick ? "" : "<span>" + dt + "</span>") + esc(x.t) + "</div>"; }).join("") : '<div class="li none">' + (st.pick ? "일정이 없어요" : "남은 일정이 없어요") + "</div>")
       + "</div>"
-      + (boardCfg() ? "" : '<div class="sdHint">학교 업무판을 연결하면 월간 업무도 여기에 보여요 · ⋯ → 학교 업무판 연결</div>');
+      + (boardCfg() ? "" : '<div class="sdHint">학교 업무판을 연결하면 월간 업무도 여기에 보여요 · 설정 → 시작 세팅 → 학교 연결</div>');
     return h;
   }
 
@@ -254,7 +254,7 @@
       + '<div class="sdF"><button type="button" data-neis title="나이스 학급 시간표와 비교해 이번 주 교체를 찾아요"' + (st.busy ? " disabled" : "") + ">↻ 교체 확인</button><a href=\"apps/timetable/\">고치기</a></div>"
       + (N ? '<div class="sdN' + (N.ok ? " ok" : "") + '"><p>' + esc(N.msg) + "</p>" + (N.list ? "<ul>" + N.list.slice(0, 8).map(function(x){ return "<li>" + esc(x) + "</li>"; }).join("") + (N.list.length > 8 ? "<li>… " + (N.list.length - 8) + "개 더</li>" : "") + "</ul>" : "")
         + (N.key ? '<div class="nk"><input id="sdKey" type="text" inputmode="latin" autocomplete="off" spellcheck="false" maxlength="40" placeholder="인증키 붙여넣기" aria-label="나이스 인증키"><button type="button" class="p" data-nkey>저장</button></div>'
-          + '<small class="nh">open.neis.go.kr → 마이페이지 → 인증키 (무료) · ⋯ → 학교·선생님 설정에서도 바꿀 수 있어요</small>' : "")
+          + '<small class="nh">open.neis.go.kr → 마이페이지 → 인증키 (무료) · 설정 → 시작 세팅 → 내 정보에서도 바꿀 수 있어요</small>' : "")
         + (N.school ? '<div class="nk"><button type="button" class="p" data-nsch>🍚 우리 학교 찾기</button></div>' : "")
         + '<div class="na">' + (N.apply ? '<button type="button" class="p" data-napply>이번 주에 반영</button>' : "") + (st.busy ? "" : '<button type="button" data-nclose>닫기</button>') + "</div></div>" : "")
       + "</section>"
