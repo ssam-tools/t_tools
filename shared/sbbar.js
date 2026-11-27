@@ -265,11 +265,34 @@
     return '<nav class="ml" aria-label="메뉴">' + MENUS.filter(function(m){ return shown(m[0]); }).map(function(m){
           var on = m[0] === cur, L = on ? tools(m[0]) : [];
           return '<a class="mi' + (on ? " on" : "") + '" href="' + esc(href(m[0])) + '" data-m="' + m[0] + '" title="' + m[1] + (KEYS[m[0]] ? " (" + KEYS[m[0]] + ")" : "") + '">' + icon(m[0], 20) + "<span>" + m[1] + "</span>" + (m[0] === "homeroom" ? treeTag() : "") + "</a>"
-            + (L.length ? '<div class="tl" role="group" aria-label="' + m[1] + ' 도구">' + L.map(function(t){
-                var here = me && me.id === t.id;
-                return '<a class="ti' + (here ? " on" : "") + '" href="' + esc(BASE + t.href) + '" title="' + esc(t.name) + '"' + (here ? ' aria-current="page"' : "") + ">" + (ART ? ART.toolIcon(t.id, t.icon, 16) : "") + "<span>" + esc(t.short || t.name) + "</span></a>";
-              }).join("") + "</div>" : "");
+            + (L.length ? '<div class="tl" role="group" aria-label="' + m[1] + ' 도구">' + (m[0] === "class" && L.length > 7 ? clsGroups(L, me) : L.map(function(t){ return tiHTML(t, me); }).join("")) + "</div>" : "");
         }).join("") + "</nav>";
+  }
+  function tiHTML(t, me){
+    var here = me && me.id === t.id;
+    return '<a class="ti' + (here ? " on" : "") + '" href="' + esc(BASE + t.href) + '" title="' + esc(t.name) + '"' + (here ? ' aria-current="page"' : "") + ">" + (ART ? ART.toolIcon(t.id, t.icon, 16) : "") + "<span>" + esc(t.short || t.name) + "</span></a>";
+  }
+  /* v2.49 수업 메뉴 묶음: 도구가 많으면 4묶음으로 — 지금 도구가 있는 묶음만 펼침(따로 펼친 묶음은 그대로), 누르면 접고 펼치기(이 기기에 기억) */
+  var CG = [["run", "📘", "수업 진행", ["timetable", "book", "lessonkit", "class", "group", "journal"]],
+            ["eval", "📝", "평가", ["mgen", "mcheck", "assess", "mblue"]],
+            ["ref", "📚", "참고자료", ["concept", "hmath", "sites"]],
+            ["act", "🎮", "학생 활동", ["play", "mlab", "stuprog"]]];
+  var CGK = "sb_cls_open";
+  function cgOpen(){ try{ return JSON.parse(localStorage.getItem(CGK) || "{}") || {}; }catch(e){ return {}; } }
+  function cgOf(t){
+    for(var i = 0; i < CG.length; i++) if(CG[i][3].indexOf(t.id) >= 0) return CG[i][0];
+    return t.group === "eval" ? "eval" : t.group === "subject" ? "ref" : "run";   // 다른 교과 팩 도구도 알맞은 묶음으로
+  }
+  function clsGroups(L, me){
+    var O = cgOpen(), meG = me ? cgOf(me) : "";
+    return CG.map(function(g){
+      var T = L.filter(function(t){ return cgOf(t) === g[0]; });
+      if(!T.length) return "";
+      T.sort(function(a, b){ var ia = g[3].indexOf(a.id), ib = g[3].indexOf(b.id); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
+      var open = g[0] === meG || (O[g[0]] != null ? !!O[g[0]] : g[0] === (meG || "run"));   // 기본: 지금 도구가 있는 묶음만 (없으면 수업 진행)
+      return '<button type="button" class="tg' + (open ? " op" : "") + (g[0] === meG ? " here" : "") + '" data-cg="' + g[0] + '" aria-expanded="' + open + '"' + (g[0] === meG ? " disabled" : "") + '><span>' + g[1] + " " + g[2] + "</span><em>" + (open ? "" : T.length) + "</em></button>"
+        + (open ? T.map(function(t){ return tiHTML(t, me); }).join("") : "");
+    }).join("");
   }
   /* v2.8 우리 반 나무: 메뉴 '우리 반' 옆 작은 나무 (칭찬·청소 당번 완료로 자람) — 누르면 도장판 */
   function treeTag(){
@@ -538,6 +561,7 @@
   }
   document.addEventListener("click", function(e){
     var host = e.target.closest && e.target.closest("#sbHero,#sbRail,#sbBar"); if(!host) return;
+    var cg = e.target.closest("[data-cg]"); if(cg){ e.preventDefault(); var O = cgOpen(), k = cg.getAttribute("data-cg"); O[k] = !cg.classList.contains("op"); try{ localStorage.setItem(CGK, JSON.stringify(O)); }catch(x){} draw(); return; }   // v2.49 수업 묶음 접고 펼치기
     if(e.target.closest("[data-mecard]")){ e.preventDefault(); if(TT.joy && TT.joy.open) TT.joy.open(); else location.href = BASE + "index.html#settings"; return; }   // v2.47 나의 학교생활 카드
     if(e.target.closest("[data-rmini]")){ e.preventDefault(); var mn = !R.classList.contains("sbMini"); R.classList.toggle("sbMini", mn); try{ localStorage.setItem("sb_rail_mini", mn ? "1" : "0"); }catch(x){} draw(); window.dispatchEvent(new Event("resize")); return; }   // v2.45 메뉴 접기
     if(e.target.closest("[data-tree]") && TT.joy){ e.preventDefault(); e.stopPropagation(); TT.joy.open("tree"); return; }   // v2.8 우리 반 나무

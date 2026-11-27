@@ -790,3 +790,13 @@ body.sbSideOn #sbHero .bub.brief .bl.nx{display:none}              /* 다음 수
   html[data-ui="ssambi"] body.sbRailOn > .app{max-width:none;margin:0;padding-left:28px;padding-right:28px;box-sizing:border-box}
   html[data-ui="ssambi"] body.sbRailOn > .app:has(> .hdr){padding-left:12px;padding-right:12px}   /* 출결: 제목 줄에 이미 16px 여백 */
 }
+/* v2.49 수업 메뉴 묶음 (왼쪽 메뉴 도구 목록) */
+#sbRail .tg{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;border:0;background:transparent;font:inherit;font-size:11.5px;font-weight:800;color:var(--t-faint);padding:6px 8px 2px;cursor:pointer;text-align:left;letter-spacing:.2px;flex:none}
+#sbRail .tg:first-child{padding-top:2px}
+#sbRail .tg:hover{color:var(--t-accent)}
+#sbRail .tg em{font-style:normal;font-weight:700;font-size:11px;color:var(--t-faint)}
+#sbRail .tg:not(.op) em::after{content:" ›"}
+#sbRail .tg.op:not(.here) em::after{content:"⌄";font-size:12px}
+#sbRail .tg.here{cursor:default;color:var(--t-accent)}
+#sbRail .tg:not(.op){background:var(--t-chip);border-radius:8px;margin:2px 0;padding:5px 8px;color:var(--t-sub)}
+html.sbMini #sbRail .tg{display:none}

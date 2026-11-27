@@ -174,11 +174,12 @@
 <script src="g_puzzle2.js"></script>
 <script src="g_new.js"></script>
 <script src="math.js"></script>
+<script src="g_think.js"></script>
 <script>
 (function(){
   "use strict";
   var $ = function(id){ return document.getElementById(id); }, h = K.h;
-  var CATS = [{id: "team", name: "🙌 함께 풀기", sub: "맞히면 점수 · 모둠 대항"}, {id: "puzzle", name: "🧠 퍼즐", sub: "혼자·짝·반 전체 도전"}, {id: "luck", name: "🍀 운과 확률", sub: "맞힌 모둠에게 주는 상 · 확률 수업"}];   // v2.48 풀기·퍼즐을 먼저, 운 놀이는 맨 뒤
+  var CATS = [{id: "team", name: "🙌 함께 풀기", sub: "맞히면 점수 · 모둠 대항"}, {id: "think", name: "💡 생각 놀이", sub: "논리 · 사고력 · 퍼즐 · 창의성"}, {id: "puzzle", name: "🧠 퍼즐", sub: "혼자·짝·반 전체 도전"}, {id: "luck", name: "🍀 운과 확률", sub: "맞힌 모둠에게 주는 상 · 확률 수업"}];   // v2.48 풀기·퍼즐을 먼저, 운 놀이는 맨 뒤
   var M = K.MATH || {}, L = K.LOCK || {isLocked: function(){ return false; }};
   function tags(id){ var m = M[id]; if(!m) return null; var t = h("span", "mtag"); m[0].forEach(function(x){ t.appendChild(h("i", "", x)); }); return t; }
   function locked(id){ return L.isLocked(id); }
