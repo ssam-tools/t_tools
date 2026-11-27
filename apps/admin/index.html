@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
+<!-- 외부로 자료를 보내는 통로를 막습니다. 예외: 학교 업무판(구글 앱스 스크립트) — 잠긴 글자와 관리자 확인만 오갑니다. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://open.neis.go.kr https://api.open-meteo.com https://air-quality-api.open-meteo.com https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/ssambi3-192.png">
+<script src="../../shared/early.js"></script>
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>관리 · 쌤 노트</title>
+<!--
+  🛡️ 관리 (PLAN_금고 2·3·5·8단계): 관리자(담당자)·최고 관리자가 학교 공용 자료를 쌤 노트 안에서 넣고·고치고·지우는 곳.
+  · 관리자 모드(shared/admin.js): 업무판에서 비밀번호 확인 → 30분짜리 표. 교실 기기에서는 켤 수 없음.
+  · 교직원·학교 정보 = 학교 세팅 A 묶음(공용 비밀번호로 잠금)을 받아 고친 뒤 다시 잠가 올림 → 선생님 기기에 저절로 반영.
+  · 금고 = D 묶음(금고 문구로 잠금, shared/safe.js). 학생 명렬(B)은 손대지 않음(keepB).
+  · 화면에 보이는 금고 내용은 인쇄되지 않고, 10분 동안 쓰지 않으면 다시 잠깁니다.
+-->
+<style>
+  main{display:grid!important;grid-template-columns:minmax(170px,206px) minmax(0,1fr);gap:10px;padding:10px!important}
+  .nav{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:2px}
+  .nav button{font:inherit;font-size:14px;text-align:left;border:0;background:transparent;border-radius:9px;padding:8px 10px;cursor:pointer;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:6px}
+  .nav button:hover{background:#f3f6f9}
+  .nav button[aria-current=true]{background:var(--accent);color:#fff}
+  .nav button small{font-size:11px;opacity:.75}
+  .nav hr{border:0;border-top:1px dashed var(--line);margin:6px 2px}
+  .nav .who{font-size:12.5px;color:var(--sub);padding:4px 8px 8px;line-height:1.5}
+  .nav .who b{color:var(--ink)}
+  .body{min-height:0;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+  .head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:none}
+  .head h2{margin:0;font-size:18px;flex:1;min-width:0}
+  .head .sub{font-size:12.5px;color:var(--sub);flex-basis:100%}
+  .scr{flex:1 1 0;min-height:0;overflow:auto}
+  table.ed{width:100%;border-collapse:separate;border-spacing:0 3px;font-size:13.5px}
+  table.ed th{font-size:12px;color:var(--sub);text-align:left;font-weight:700;padding:0 4px;position:sticky;top:0;background:var(--card,#fff);z-index:1}
+  table.ed td{padding:0 2px}
+  table.ed input[type=text],table.ed input[type=password],table.ed input[type=tel],table.ed input[type=url]{font:inherit;font-size:13.5px;width:100%;box-sizing:border-box;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 8px;background:var(--card,#fff);color:var(--ink)}
+  table.ed input:focus{outline:none;border-color:var(--accent)}
+  table.ed tr.chg input{background:#fffbea}
+  table.ed tr.new input{background:#eefaf1}
+  .ib{border:0;background:transparent;cursor:pointer;font-size:14px;padding:4px 6px;border-radius:7px;color:var(--sub)}
+  .ib:hover{background:#f1f3f6;color:var(--ink)}
+  .pw{display:flex;gap:2px;align-items:center}
+  .form{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 12px;max-width:760px}
+  .form label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--sub)}
+  .form input{font:inherit;font-size:14.5px;height:38px;border:1px solid var(--line);border-radius:10px;padding:0 10px;color:var(--ink);background:var(--card,#fff)}
+  .card{background:var(--card,#fff);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .card h3{margin:0 0 6px;font-size:15px}
+  .card p{margin:4px 0;font-size:13.5px;color:var(--sub);line-height:1.6}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;align-content:start}
+  .lockbox{margin:auto;display:flex;flex-direction:column;gap:10px;align-items:stretch;max-width:360px;width:100%;text-align:center}
+  .lockbox .bi{font-size:46px;line-height:1}
+  .lockbox input{font:inherit;font-size:16px;height:46px;border:1px solid var(--line);border-radius:12px;padding:0 14px;background:var(--card,#fff);color:var(--ink)}
+  .lockbox small{color:var(--sub);line-height:1.6}
+  .er{color:var(--danger,#c0392b);font-size:13px;min-height:18px}
+  .ok{color:#1a7f4b}
+  .stabs{display:flex;gap:6px;flex:none}
+  .stabs button{font:inherit;font-size:13.5px;border:1px solid var(--line);background:var(--card,#fff);border-radius:999px;padding:5px 12px;cursor:pointer;color:var(--sub)}
+  .stabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .log{list-style:none;margin:0;padding:0;font-size:13.5px}
+  .log li{display:flex;gap:10px;padding:6px 4px;border-bottom:1px solid var(--line)}
+  .log time{color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap;min-width:120px}
+  .log b{white-space:nowrap}
+  .tag{font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;background:#f6e7dc;color:#7a2e0e;white-space:nowrap}
+  .danger{background:#c0392b!important;border-color:#c0392b!important;color:#fff!important}
+  .foot{display:flex;gap:8px;align-items:center;flex:none;flex-wrap:wrap}
+  .foot .msg{font-size:13px;color:var(--sub);flex:1;min-width:200px}
+  @media print{.body .scr,.body table{visibility:hidden!important}}
+  @media (max-width:760px){ main{grid-template-columns:minmax(0,1fr)} .nav{flex-direction:row;flex-wrap:wrap;overflow:visible} .nav button{border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px} .nav hr,.nav .who{display:none} body{height:auto;min-height:100dvh;overflow:auto} .body{overflow:visible} .scr{overflow:visible} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>🛡️ 관리</h1>
+  </div>
+</header>
+<main class="panel" id="m">
+  <nav class="nav" id="nav" aria-label="관리 칸"></nav>
+  <section class="body" id="body"></section>
+</main>
+<footer>
+  <span id="info">관리자가 학교 공용 자료를 넣고·고치고·지우는 곳 · 올리면 선생님 기기에 저절로 반영돼요</span>
+  <span class="priv">🔒 서버에는 잠긴 글자만 · 관리자 모드는 30분 · 교실 기기에서는 쓸 수 없어요</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script src="../../shared/schoolset.js"></script>
+<script src="../../shared/admin.js"></script>
+<script src="../../shared/safe.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var AD = window.TT_ADMIN, SF = window.TT_SAFE;
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function toast(t){ if(TT.ui && TT.ui.toast) TT.ui.toast(t); }
+  var SEC = [
+    ["school", "🏫", "학교 정보"], ["staff", "👥", "교직원"], ["roster", "🧑‍🎓", "학생 명렬"], ["cal", "📅", "학사일정"],
+    ["safe", "🔐", "금고"], ["lib", "📚", "자료실·짧은 주소"], ["room", "📱", "교실 기기"], ["keys", "🔑", "비밀번호·열쇠", true], ["log", "🕘", "변경 기록"]
+  ];
+  var cur = (location.hash || "").replace(/^#/, "") || sessionStorage.getItem("ttadm_sec") || "staff";
+  var SA = null;          // 학교 세팅 A 묶음 {A, ver, books, hasB}
+  var dirty = false;
+
+  /* ───────── 잠긴 화면 (관리자 모드 아님) ───────── */
+  function drawLock(){
+    $("nav").innerHTML = SEC.map(function(s){ return '<button type="button" disabled>' + s[1] + " " + esc(s[2]) + "</button>"; }).join("");
+    var B = AD.board(), msg = "";
+    if(AD.classroom()) msg = "교실 기기(공용)에서는 관리자 모드를 켤 수 없어요. 교무실 PC나 내 휴대폰에서 열어 주세요.";
+    else if(!B.url || !B.pw) msg = '먼저 <a href="../../#settings">⋯ → 학교 업무판 연결</a>에서 주소와 공용 비밀번호를 넣어 주세요.';
+    $("body").innerHTML = '<form class="lockbox" id="lf" autocomplete="off"><div class="bi">🛡️</div><b style="font-size:18px">관리자 모드</b>'
+      + (msg ? '<small>' + msg + "</small>" : '<input type="password" id="lp" placeholder="관리자 비밀번호" aria-label="관리자 비밀번호" autocomplete="current-password">'
+        + '<input type="text" id="ln" placeholder="내 이름 (변경 기록에 남아요 · 최고 관리자만)" aria-label="이름" maxlength="20" value="' + esc(sessionStorage.getItem("ttadm_name") || (TT.school.load() || {}).teacher || "") + '">'
+        + '<span class="er" id="le"></span><button type="submit" class="btn primary">관리자 모드 시작 (30분)</button>'
+        + '<small>관리자는 학교 공용 자료(교직원·학생 명렬·학사일정·금고)를 고치고 올릴 수 있어요.<br>관리자가 아니면 이 화면은 필요 없어요.</small>') + "</form>";
+    var f = $("lf"); if(!$("lp")) return;
+    $("lp").focus();
+    f.onsubmit = function(e){
+      e.preventDefault(); var b = f.querySelector("button"); b.disabled = true; $("le").textContent = "확인 중…";
+      try{ sessionStorage.setItem("ttadm_name", $("ln").value.trim()); }catch(x){}
+      AD.login($("lp").value, $("ln").value.trim()).then(function(){ draw(); }, function(err){ $("le").textContent = AD.errText(err); b.disabled = false; });
+    };
+  }
+
+  /* ───────── 틀 ───────── */
+  function draw(){
+    var s = AD.state();
+    if(!s){ drawLock(); return; }
+    if(!SEC.some(function(x){ return x[0] === cur; })) cur = "staff";
+    $("nav").innerHTML = '<div class="who">' + (s.role === "super" ? "👑 <b>최고 관리자</b>" : "🛡️ <b>관리자</b>") + " · " + esc(s.name) + "</div>"
+      + SEC.map(function(x){ var lockd = x[3] && s.role !== "super"; return '<button type="button" data-s="' + x[0] + '" aria-current="' + (x[0] === cur) + '"' + (lockd ? ' title="최고 관리자만"' : "") + ">" + x[1] + " " + esc(x[2]) + (lockd ? "<small>👑</small>" : "") + "</button>"; }).join("")
+      + '<hr><button type="button" id="endB">관리자 모드 끝내기</button>';
+    $("endB").onclick = function(){ if(dirty && !confirm("올리지 않은 고친 내용이 있어요. 그래도 끝낼까요?")) return; dirty = false; AD.end(false); };
+    try{ sessionStorage.setItem("ttadm_sec", cur); }catch(e){}
+    $("body").onclick = null;
+    ({school: secSchool, staff: secStaff, roster: secRoster, cal: secCal, safe: secSafe, lib: secLib, room: secRoom, keys: secKeys, log: secLog})[cur]();
+  }
+  $("nav").addEventListener("click", function(e){
+    var b = e.target.closest("[data-s]"); if(!b) return;
+    if(dirty && !confirm("올리지 않은 고친 내용이 있어요. 다른 칸으로 갈까요? (고친 내용은 사라져요)")) return;
+    dirty = false; cur = b.dataset.s; history.replaceState(null, "", "#" + cur); draw();
+  });
+  AD.on(function(s){ if(!s) { dirty = false; SF.close(); drawLock(); } });
+  window.addEventListener("beforeunload", function(e){ if(dirty){ e.preventDefault(); e.returnValue = ""; } });
+  function head(t, sub, right){ return '<div class="head"><h2>' + t + "</h2>" + (right || "") + (sub ? '<div class="sub">' + sub + "</div>" : "") + "</div>"; }
+  function busy(t){ $("body").innerHTML = '<div class="lockbox"><div class="bi">⏳</div><small>' + esc(t) + "</small></div>"; }
+  function fail(e, retry){ $("body").innerHTML = '<div class="lockbox"><div class="bi">⚠️</div><small>' + esc(AD.errText(e)) + '</small>' + (retry ? '<button type="button" class="btn" id="rt">다시</button>' : "") + "</div>"; if(retry) $("rt").onclick = retry; }
+
+  /* ───────── 학교 세팅 A 묶음 받기·올리기 ───────── */
+  function loadA(force){
+    if(SA && !force) return Promise.resolve(SA);
+    var c = AD.board();
+    return TTSet.api("setver").then(function(m){
+      if(!m.ver) return (SA = {A: null, ver: 0, books: false, hasB: false});
+      return TTSet.api("setget", {part: "a"}).then(function(r){ return TTSet.unlock(r.data, c.pw); }).then(function(A){ return (SA = {A: A, ver: m.ver, books: !!m.books, hasB: !!m.hasB}); });
+    });
+  }
+  function putA(A, sum){
+    var c = AD.board();
+    return TTSet.lock(A, c.pw).then(function(a){ return AD.call("setput", {a: a, b: "", keepB: true, sum: sum, base: SA.ver, books: SA.books}); }).then(function(r){
+      SA = {A: A, ver: r.ver, books: SA.books, hasB: SA.hasB};
+      try{ TTSet.apply(A, {update: true, what: {school: 1, staff: 1}}); var S = TTSet.state(); S.ver = r.ver; S.sum = sum; TTSet.saveState(S); }catch(e){}   // 이 기기에도 바로
+      return r;
+    });
+  }
+  function noSet(){ return head("학교 세팅이 아직 없어요") + '<div class="card"><p>교직원·학교 정보는 학교 세팅에 들어 있어요. 처음 한 번은 <a href="../setup/">🧳 학기초 세팅 → 📤 만들기·올리기</a>에서 학교 원본 파일로 만든 뒤 올려 주세요. 그다음부터는 여기서 고칠 수 있어요.</p></div>'; }
+
+  /* ───────── 🏫 학교 정보 ───────── */
+  function secSchool(){
+    busy("학교 세팅을 받는 중…");
+    loadA().then(function(S){
+      if(!S.A){ $("body").innerHTML = noSet(); return; }
+      var sc = S.A.school || {}, F = [["name", "학교 이름"], ["principal", "학교장"], ["addr", "주소"], ["tel", "대표 전화"], ["comci", "컴시간 학교 코드"]];
+      $("body").innerHTML = head("🏫 학교 정보", "결석신고서·문자·첫 화면에 쓰이는 학교 정보예요. 나이스 코드는 학기초 세팅에서 학교를 찾아 넣어요.")
+        + '<div class="scr"><div class="form">' + F.map(function(f){ return '<label>' + f[1] + '<input type="text" data-f="' + f[0] + '" value="' + esc(sc[f[0]] || "") + '" maxlength="60"></label>'; }).join("")
+        + '<label>나이스 학교 코드<input type="text" value="' + esc((sc.neisA || "") + " " + (sc.neisS || "")) + '" disabled></label></div></div>'
+        + '<div class="foot"><span class="msg" id="fm">고친 뒤 [올리기]를 누르면 선생님 기기에 저절로 반영돼요.</span><button type="button" class="btn primary" id="up">☁ 올리기</button></div>';
+      Array.prototype.forEach.call($("body").querySelectorAll("[data-f]"), function(i){ i.oninput = function(){ dirty = true; }; });
+      $("up").onclick = function(){
+        var A = JSON.parse(JSON.stringify(S.A)), ch = [];
+        A.school = A.school || {};
+        Array.prototype.forEach.call($("body").querySelectorAll("[data-f]"), function(i){ var v = i.value.trim(); if((A.school[i.dataset.f] || "") !== v){ ch.push(i.previousSibling.textContent.trim()); A.school[i.dataset.f] = v; } });
+        if(!ch.length){ $("fm").textContent = "바뀐 것이 없어요."; return; }
+        upload(this, function(){ return putA(A, "학교 정보: " + ch.join("·")); });
+      };
+    }, function(e){ fail(e, secSchool); });
+  }
+  function upload(btn, job){
+    btn.disabled = true; $("fm").className = "msg"; $("fm").textContent = "잠가서 올리는 중…";
+    return job().then(function(){ dirty = false; $("fm").className = "msg ok"; $("fm").textContent = "✔ 올렸어요. 선생님 기기가 켤 때 저절로 반영돼요."; toast("☁ 올렸어요"); }, function(e){
+      $("fm").className = "msg er"; $("fm").textContent = AD.errText(e);
+      if(String(e.message) === "CONFLICT"){ SA = null; }
+    }).then(function(){ btn.disabled = false; });
+  }
+
+  /* ───────── 👥 교직원 (넣기·고치기·지우기) ───────── */
+  var lastOk = "";
+  var COLS = [["name", "이름", 18], ["dept", "부서", 20], ["pos", "직위·담임", 26], ["subj", "교과", 14], ["tel", "내선", 14]];
+  function secStaff(){
+    busy("학교 세팅을 받는 중…");
+    loadA().then(function(S){
+      if(!S.A){ $("body").innerHTML = noSet(); return; }
+      var base = (S.A.staff || []).map(function(x, i){ return Object.assign({_i: i}, x); }), rows = base.map(function(x){ return Object.assign({}, x); }), del = {}, q = "";
+      var main = (S.A.staffMain || []).map(function(x){ return x.label + " " + x.number; }).join(", ");
+      function sig(x){ return COLS.map(function(c){ return x[c[0]] || ""; }).join("|"); }
+      function paintT(){
+        var L = rows.filter(function(x){ return !q || sig(x).indexOf(q) >= 0; });
+        $("tb").innerHTML = L.map(function(x){
+          var k = rows.indexOf(x), st = x._i == null ? "new" : sig(x) !== sig(base[x._i]) ? "chg" : "";
+          return '<tr class="' + st + '" data-k="' + k + '">' + COLS.map(function(c){ return '<td><input type="text" data-c="' + c[0] + '" value="' + esc(x[c[0]] || "") + '" maxlength="30" aria-label="' + c[1] + '"></td>'; }).join("")
+            + '<td><button type="button" class="ib" data-del title="지우기 (전출)">🗑</button></td></tr>';
+        }).join("") || '<tr><td colspan="6" style="color:var(--sub);padding:12px">찾는 교직원이 없어요.</td></tr>';
+        var nAdd = rows.filter(function(x){ return x._i == null; }).length, nChg = rows.filter(function(x){ return x._i != null && sig(x) !== sig(base[x._i]); }).length, nDel = Object.keys(del).length;
+        $("cnt").textContent = rows.length + "명" + (nAdd || nChg || nDel ? " · 새로 " + nAdd + " · 고침 " + nChg + " · 지움 " + nDel : "");
+        dirty = !!(nAdd || nChg || nDel);
+      }
+      $("body").innerHTML = head("👥 교직원", "이름·부서·직위(담임 반은 '3-2 담임'처럼)·교과·내선. 선생님 기기의 내선번호·숨은 정보·자동 세팅에 쓰여요.",
+          '<input type="search" id="sq" placeholder="찾기" style="font:inherit;height:34px;border:1px solid var(--line);border-radius:999px;padding:0 12px;width:150px"><span id="cnt" class="tag"></span>')
+        + '<div class="scr"><table class="ed"><thead><tr>' + COLS.map(function(c){ return '<th style="width:' + c[2] + '%">' + c[1] + "</th>"; }).join("") + '<th style="width:4%"></th></tr></thead><tbody id="tb"></tbody></table></div>'
+        + '<div class="foot"><button type="button" class="btn" id="add">＋ 한 명 넣기</button><span class="msg' + (lastOk ? " ok" : "") + '" id="fm">' + (lastOk ? esc(lastOk) : '대표번호: ' + esc(main || "없음") + ' · 명렬 파일로 한꺼번에 바꾸려면 <a href="../setup/">학기초 세팅</a>') + '</span><button type="button" class="btn primary" id="up">☁ 올리기</button></div>';
+      paintT(); lastOk = "";
+      $("sq").oninput = function(){ q = this.value.trim(); paintT(); };
+      $("tb").addEventListener("input", function(e){ var tr = e.target.closest("tr"), c = e.target.dataset.c; if(!tr || !c) return; rows[+tr.dataset.k][c] = e.target.value; var x = rows[+tr.dataset.k]; tr.className = x._i == null ? "new" : sig(x) !== sig(base[x._i]) ? "chg" : ""; paintCount(); });
+      function paintCount(){ var nAdd = rows.filter(function(x){ return x._i == null; }).length, nChg = rows.filter(function(x){ return x._i != null && sig(x) !== sig(base[x._i]); }).length, nDel = Object.keys(del).length; $("cnt").textContent = rows.length + "명" + (nAdd || nChg || nDel ? " · 새로 " + nAdd + " · 고침 " + nChg + " · 지움 " + nDel : ""); dirty = !!(nAdd || nChg || nDel); }
+      $("tb").addEventListener("click", function(e){
+        if(!e.target.closest("[data-del]")) return; var k = +e.target.closest("tr").dataset.k, x = rows[k];
+        if(x._i != null) del[x._i] = x.name || "이름 없음"; rows.splice(k, 1); paintT();
+      });
+      $("add").onclick = function(){ rows.unshift({name: "", dept: "", pos: "", subj: "", tel: ""}); q = ""; $("sq").value = ""; paintT(); var i = $("tb").querySelector("input"); if(i) i.focus(); };
+      $("up").onclick = function(){
+        var bad = rows.filter(function(x){ return !String(x.name || "").trim(); }).length;
+        if(bad){ $("fm").className = "msg er"; $("fm").textContent = "이름이 빈 줄이 " + bad + "개 있어요. 이름을 넣거나 🗑로 지워 주세요."; return; }
+        var badTel = rows.filter(function(x){ return x.tel && !/^[\d\-~ ]{2,15}$/.test(x.tel); }).length;
+        if(badTel){ $("fm").className = "msg er"; $("fm").textContent = "내선은 숫자와 - 만 써 주세요 (" + badTel + "곳)."; return; }
+        var nAdd = rows.filter(function(x){ return x._i == null; }).map(function(x){ return x.name.trim(); }), nChg = rows.filter(function(x){ return x._i != null && sig(x) !== sig(base[x._i]); }).length, D = Object.keys(del).map(function(k){ return del[k]; });
+        if(!nAdd.length && !nChg && !D.length){ $("fm").textContent = "바뀐 것이 없어요."; return; }
+        var A = JSON.parse(JSON.stringify(S.A));
+        A.staff = rows.map(function(x){ return {name: String(x.name).trim().slice(0, 20), dept: String(x.dept || "").trim().slice(0, 20), pos: String(x.pos || "").trim().slice(0, 30), subj: String(x.subj || "").trim().slice(0, 12), tel: String(x.tel || "").trim()}; });
+        var sum = "교직원 " + [nAdd.length ? "전입 " + nAdd.length + "명" : "", D.length ? "전출 " + D.length + "명" : "", nChg ? "고침 " + nChg + "명" : ""].filter(Boolean).join(" · ");
+        upload(this, function(){ return putA(A, sum); }).then(function(){ if(!dirty){ lastOk = "✔ 올렸어요 · " + sum + " · 선생님 기기가 켤 때 저절로 반영돼요."; secStaff(); } });
+      };
+    }, function(e){ fail(e, secStaff); });
+  }
+
+  /* ───────── 🧑‍🎓 학생 명렬 · 📅 학사일정 · 📱 교실 기기 (지금 있는 화면으로) ───────── */
+  function linkCard(t, sub, items){ $("body").innerHTML = head(t, sub) + '<div class="scr"><div class="grid2">' + items.map(function(x){ return '<div class="card"><h3>' + x[0] + "</h3><p>" + x[1] + '</p><p><a class="btn" href="' + x[2] + '">' + x[3] + "</a></p></div>"; }).join("") + "</div></div>"; }
+  function secRoster(){ linkCard("🧑‍🎓 학생 명렬", "학생 명렬은 '학생 명렬 비밀 문구'로 한 번 더 잠겨 있어요. 관리자 모드 비밀번호로는 열리지 않아요.", [
+    ["✏️ 전입·전출·반 이동", "학기초 세팅의 📤 만들기·올리기 → ✏️ 바뀐 것만 고치기에서 학생 한 명씩 고치고 올려요.", "../setup/#edit", "학기초 세팅 열기"],
+    ["📥 명렬 파일로 새로", "나이스 학생 명단 엑셀을 다시 넣어 한꺼번에 바꿔요(새 학년).", "../setup/", "학기초 세팅 열기"]]); }
+  function secCal(){ linkCard("📅 학사일정", "학사일정은 나이스 학사일정에서 하루 한 번 저절로 받아요.", [
+    ["🔄 나이스에서 받기", "급식과 같은 학교 코드로 나이스 학사일정을 받아요. 바뀌면 다음 날 선생님 기기에 반영돼요.", "../setup/", "학기초 세팅 열기"],
+    ["✏️ 한 줄 더하기", "나이스에 없는 학교 행사는 연간 업무에서 더해요.", "../year/", "연간 업무 열기"]]); }
+  function secRoom(){ linkCard("📱 교실 기기", "전자칠판 같은 공용 기기는 수업에 필요한 자료만 받고, 금고·관리자 모드는 쓸 수 없어요.", [
+    ["📷 교실 기기 QR", "전자칠판 카메라나 주소로 열면 교실 기기로 한 번에 세팅돼요.", "../setup/#room", "QR 만들기"],
+    ["🔢 선생님별 6자리 번호", "공용 기기에서 이름 + 숫자 6자리로 내 환경을 여는 방법이에요.", "../../#settings", "설정 열기"]]); }
+  function secLib(){
+    var sup = AD.isSuper();
+    linkCard("📚 자료실 · 짧은 주소", sup ? "최고 관리자 모드에서는 자료실·짧은 주소가 관리자 모드로 열려요(남이 올린 것 지우기·고치기)." : "남이 올린 자료·짧은 주소 지우기는 최고 관리자만 할 수 있어요. 내가 올린 것은 지금처럼 지울 수 있어요.", [
+      ["🔎 자료실", "오래된 판·잘못 올린 자료를 지우고 갈래를 고쳐요. 지운 자료는 업무판 ★ 줄에서도 저절로 빠져요.", "../lib/", "자료실 열기"],
+      ["🔗 짧은 주소", "쓰지 않는 짧은 주소를 정리해요.", "../short/", "짧은 주소 열기"]]);
+  }
+
+  /* ───────── 🔐 금고 ───────── */
+  var SK = [["acc", "공용 계정"], ["ppl", "연락처"], ["info", "보안 안내"]], sub = "acc";
+  var FIELDS = {acc: [["site", "사이트·프로그램", 15, "text"], ["url", "주소", 15, "url"], ["user", "아이디", 13, "text"], ["pw", "비밀번호", 16, "pw"], ["owner", "담당", 9, "text"], ["memo", "메모", 18, "text"]],
+                ppl: [["name", "이름", 14, "text"], ["dept", "부서", 16, "text"], ["phone", "휴대폰", 18, "tel"], ["ok", "동의", 8, "check"], ["memo", "메모", 30, "text"]],
+                info: [["t", "항목", 22, "text"], ["v", "값 (가려 보임)", 26, "pw"], ["memo", "메모", 38, "text"]]};
+  var SD = null;   // 고치는 중인 금고 사본
+  function secSafe(){
+    busy("금고를 확인하는 중…");
+    SF.latest().then(function(c){
+      if(c && c.wiped || !c || !c.data) return safeNew(c && c.wiped);
+      var st = SF.status();
+      if(SF.data()) return safeEdit();
+      if(st.remembered) return SF.open().then(safeEdit, function(e){ safeAsk(SF.errText(e)); });
+      safeAsk("");
+    }, function(e){ fail(e, secSafe); });
+  }
+  function safeAsk(err){
+    $("body").innerHTML = '<form class="lockbox" id="sf" autocomplete="off"><div class="bi">🔐</div><b style="font-size:18px">금고 열기</b><input type="password" id="sp" placeholder="금고 문구" aria-label="금고 문구">'
+      + '<label style="font-size:13px;color:var(--sub)"><input type="checkbox" id="sr" checked> 이 기기에 기억 (내 기기만)</label><span class="er" id="se">' + esc(err || "") + '</span><button type="submit" class="btn primary">열기</button></form>';
+    $("sp").focus();
+    $("sf").onsubmit = function(e){ e.preventDefault(); $("se").textContent = "여는 중…"; SF.open($("sp").value, $("sr").checked).then(safeEdit, function(x){ $("se").textContent = SF.errText(x); }); };
+  }
+  function safeNew(wiped){
+    if(!AD.isSuper()){ $("body").innerHTML = head("🔐 금고") + '<div class="card"><p>' + (wiped ? "금고가 긴급 잠금되었어요." : "아직 금고가 없어요.") + " 금고는 최고 관리자가 처음 만들고 금고 문구를 정해요.</p></div>"; return; }
+    $("body").innerHTML = head("🔐 새 금고 만들기", wiped ? "긴급 잠금된 뒤예요. 새 문구로 새 금고를 만들어요." : "금고 문구는 서버 어디에도 저장되지 않아요. 잊으면 금고를 새로 만들어야 해요.")
+      + '<form class="lockbox" id="nf" autocomplete="off"><input type="password" id="n1" placeholder="새 금고 문구 (10자 이상 권장)" aria-label="새 금고 문구"><input type="password" id="n2" placeholder="한 번 더" aria-label="한 번 더">'
+      + '<span class="er" id="ne"></span><button type="submit" class="btn primary">금고 만들기</button><small>문구는 공용 비밀번호와 다르게 정하고, 교직원에게 쿨메신저·구두로 따로 알려 주세요.</small></form>';
+    $("nf").onsubmit = function(e){
+      e.preventDefault(); var a = $("n1").value, b = $("n2").value;
+      if(a.length < 8) return void ($("ne").textContent = "8자 이상으로 정해 주세요.");
+      if(a !== b) return void ($("ne").textContent = "두 문구가 달라요.");
+      if(a === AD.board().pw) return void ($("ne").textContent = "공용 비밀번호와 다르게 정해 주세요.");
+      $("ne").textContent = "만드는 중…";
+      SF.forget();
+      SF.save(SF.blank(), {pass: a, base: SF.ver(), kv: 1, sum: "금고 만들기"}).then(function(){ toast("🔐 금고를 만들었어요"); safeEdit(); }, function(x){ $("ne").textContent = SF.errText(x); });
+    };
+  }
+  function safeEdit(){
+    var d = SF.data(); if(!d){ secSafe(); return; }
+    SD = JSON.parse(JSON.stringify(d)); dirty = false;
+    $("body").innerHTML = head("🔐 금고", "넣은 내용은 이 기기에서 금고 문구로 잠가 올려요. 10분 동안 쓰지 않으면 다시 잠겨요.",
+        '<div class="stabs" id="st"></div><button type="button" class="btn" id="lk" title="지금 잠그기">🔒 잠그기</button>')
+      + '<div class="scr"><table class="ed"><thead id="th"></thead><tbody id="tb"></tbody></table></div>'
+      + '<div class="foot"><button type="button" class="btn" id="add">＋ 한 줄 넣기</button><span class="msg" id="fm"></span><button type="button" class="btn primary" id="up">☁ 올리기</button></div>';
+    $("lk").onclick = function(){ if(dirty && !confirm("올리지 않은 고친 내용이 사라져요. 잠글까요?")) return; dirty = false; SF.close(); secSafe(); };
+    $("st").onclick = function(e){ var b = e.target.closest("[data-sub]"); if(b){ sub = b.dataset.sub; paintS(); } };
+    $("add").onclick = function(){ var o = {id: SF.uid()}; FIELDS[sub].forEach(function(f){ o[f[0]] = f[3] === "check" ? false : ""; }); SD[sub].unshift(o); dirty = true; paintS(); var i = $("tb").querySelector("input"); if(i) i.focus(); };
+    $("tb").addEventListener("input", function(e){ var tr = e.target.closest("tr"), f = e.target.dataset.f; if(!tr || !f) return; SF.touch(); SD[sub][+tr.dataset.k][f] = e.target.type === "checkbox" ? e.target.checked : e.target.value; tr.className = "chg"; dirty = true; sumMsg(); });
+    $("tb").addEventListener("click", function(e){
+      var tr = e.target.closest("tr"); if(!tr) return; var k = +tr.dataset.k, b = e.target.closest("button"); if(!b) return; SF.touch();
+      if(b.dataset.x === "del"){ if(!confirm("이 줄을 지울까요?")) return; SD[sub].splice(k, 1); dirty = true; paintS(); }
+      else if(b.dataset.x === "eye"){ var i = b.parentNode.querySelector("input"); i.type = i.type === "password" ? "text" : "password"; if(i.type === "text") setTimeout(function(){ i.type = "password"; }, 10000); }
+      else if(b.dataset.x === "gen"){ var i2 = b.parentNode.querySelector("input"); if(i2.value && !confirm("새 비밀번호로 바꿀까요? (실제 사이트 비밀번호도 같이 바꿔야 해요)")) return; i2.value = SF.gen(14); i2.type = "text"; i2.dispatchEvent(new Event("input", {bubbles: true})); setTimeout(function(){ i2.type = "password"; }, 10000); }
+    });
+    $("up").onclick = function(){
+      var sum = "공용 계정 " + SD.acc.length + " · 연락처 " + SD.ppl.length + " · 보안 안내 " + SD.info.length;
+      if(!dirty){ $("fm").textContent = "바뀐 것이 없어요."; return; }
+      var btn = this; btn.disabled = true; $("fm").className = "msg"; $("fm").textContent = "잠가서 올리는 중…";
+      SF.save(SD, {sum: sum}).then(function(){ dirty = false; paintS(); $("fm").className = "msg ok"; $("fm").textContent = "✔ 올렸어요 · " + sum + " · 선생님 기기에서 열 때 새 판으로 보여요"; toast("🔐 금고를 올렸어요"); }, function(e){
+        $("fm").className = "msg er"; $("fm").textContent = String(e.message) === "CONFLICT" ? "다른 관리자가 먼저 올렸어요. 🔒 잠그기 → 다시 열어 새 판에서 고쳐 주세요." : SF.errText(e);
+      }).then(function(){ btn.disabled = false; });
+    };
+    paintS();
+  }
+  function sumMsg(){ $("fm").className = "msg"; $("fm").textContent = dirty ? "고친 내용이 있어요 · [올리기]를 눌러야 선생님 기기에 반영돼요." : "공용 계정 " + SD.acc.length + " · 연락처 " + SD.ppl.length + " · 보안 안내 " + SD.info.length; }
+  function paintS(){
+    $("st").innerHTML = SK.map(function(s){ return '<button type="button" data-sub="' + s[0] + '"' + (s[0] === sub ? ' class="on"' : "") + ">" + s[1] + " " + SD[s[0]].length + "</button>"; }).join("");
+    var F = FIELDS[sub];
+    $("th").innerHTML = "<tr>" + F.map(function(f){ return '<th style="width:' + f[2] + '%">' + f[1] + "</th>"; }).join("") + '<th style="width:4%"></th></tr>';
+    $("tb").innerHTML = SD[sub].map(function(x, k){
+      return '<tr data-k="' + k + '">' + F.map(function(f){
+        var v = x[f[0]];
+        if(f[3] === "check") return '<td style="text-align:center"><input type="checkbox" data-f="' + f[0] + '"' + (v ? " checked" : "") + ' aria-label="' + f[1] + '" title="연락처 공개에 동의함"></td>';
+        if(f[3] === "pw") return '<td><span class="pw"><input type="password" data-f="' + f[0] + '" value="' + esc(v) + '" autocomplete="new-password" aria-label="' + f[1] + '"><button type="button" class="ib" data-x="eye" title="10초 보기">👁</button>' + (sub === "acc" ? '<button type="button" class="ib" data-x="gen" title="새 비밀번호 만들기">🎲</button>' : "") + "</span></td>";
+        return '<td><input type="' + (f[3] === "url" ? "url" : f[3] === "tel" ? "tel" : "text") + '" data-f="' + f[0] + '" value="' + esc(v) + '" maxlength="' + (f[0] === "url" || f[0] === "memo" ? 200 : 60) + '" aria-label="' + f[1] + '"></td>';
+      }).join("") + '<td><button type="button" class="ib" data-x="del" title="지우기">🗑</button></td></tr>';
+    }).join("") || '<tr><td colspan="7" style="color:var(--sub);padding:14px">아직 없어요. [＋ 한 줄 넣기]로 넣어 주세요.' + (sub === "ppl" ? " 연락처는 공개에 동의한 분만 넣고 '동의'에 표시해 주세요." : "") + "</td></tr>";
+    sumMsg();
+  }
+
+  /* ───────── 🔑 비밀번호·열쇠 (최고 관리자) ───────── */
+  function secKeys(){
+    if(!AD.isSuper()){ $("body").innerHTML = head("🔑 비밀번호·열쇠") + '<div class="card"><p>👑 최고 관리자만 쓸 수 있어요. 관리자 비밀번호를 바꾸려면 최고 관리자께 부탁해 주세요.</p></div>'; return; }
+    busy("관리자 목록을 받는 중…");
+    AD.call("admlist").then(function(r){
+      $("body").innerHTML = head("🔑 비밀번호·열쇠", "관리자 만들기·회수 · 금고 문구 바꾸기 · 긴급 잠금")
+        + '<div class="scr"><div class="grid2">'
+        + '<div class="card"><h3>🛡️ 관리자(담당자)</h3><ul class="log">' + (r.list.length ? r.list.map(function(a){ return '<li><b>' + esc(a.n) + '</b><time>' + esc(String(a.at || "").slice(0, 10)) + '</time><span style="flex:1"></span><button type="button" class="ib" data-rm="' + esc(a.n) + '">회수</button></li>'; }).join("") : '<li style="color:var(--sub)">아직 없어요</li>') + "</ul>"
+        + '<form id="af" autocomplete="off" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"><input type="text" id="an" placeholder="이름 (예: 교무부 김OO)" maxlength="20" class="tt-in" style="font:inherit;height:36px;border:1px solid var(--line);border-radius:10px;padding:0 10px">'
+        + '<input type="password" id="ap" placeholder="관리자 비밀번호 (8자 이상)" autocomplete="new-password" style="font:inherit;height:36px;border:1px solid var(--line);border-radius:10px;padding:0 10px"><input type="password" id="ap2" placeholder="한 번 더" autocomplete="new-password" style="font:inherit;height:36px;border:1px solid var(--line);border-radius:10px;padding:0 10px">'
+        + '<span class="er" id="ae"></span><button type="submit" class="btn primary">관리자 만들기 / 비밀번호 바꾸기</button></form><p>회수하면 그 관리자의 관리자 모드가 바로 끝나요.</p></div>'
+        + '<div class="card"><h3>🔐 금고 문구 바꾸기</h3><p>학기 초나 전출이 있을 때 바꿔요. 예전 문구를 기억한 기기(전출 교사 휴대폰 등)는 더 이상 열지 못해요.</p>'
+        + '<form id="kf" autocomplete="off" style="display:flex;flex-direction:column;gap:6px"><input type="password" id="k1" placeholder="새 금고 문구" autocomplete="new-password" style="font:inherit;height:36px;border:1px solid var(--line);border-radius:10px;padding:0 10px"><input type="password" id="k2" placeholder="한 번 더" autocomplete="new-password" style="font:inherit;height:36px;border:1px solid var(--line);border-radius:10px;padding:0 10px">'
+        + '<span class="er" id="ke"></span><button type="submit" class="btn">문구 바꾸기</button></form></div>'
+        + '<div class="card"><h3>🚨 긴급 잠금</h3><p>금고 문구가 새어 나갔을 때 써요. 서버의 금고를 지우고, 모든 기기가 기억한 금고를 지우며, 모든 관리자 모드가 끝나요. 그 뒤 새 문구로 금고를 다시 만들어요.</p><button type="button" class="btn danger" id="wipe">긴급 잠금</button></div>'
+        + '<div class="card"><h3>ℹ️ 업무판에서 바꾸는 비밀번호</h3><p><b>공용 비밀번호</b>(PASSWORD)와 <b>최고 관리자 비밀번호</b>(LIB_ADMIN)는 업무판 Apps Script → 프로젝트 설정 → 스크립트 속성에서 바꿔요. 공용 비밀번호를 바꾼 뒤에는 학기초 세팅에서 학교 세팅을 한 번 다시 올려 주세요.</p></div>'
+        + "</div></div>";
+      $("body").onclick = function(e){
+        var b = e.target.closest("[data-rm]"); if(!b) return;
+        if(!confirm(b.dataset.rm + " 관리자를 회수할까요?")) return;
+        AD.call("admdel", {n: b.dataset.rm}).then(function(){ toast("회수했어요"); secKeys(); }, function(x){ toast(AD.errText(x)); });
+      };
+      $("af").onsubmit = function(e){
+        e.preventDefault(); var n = $("an").value.trim(), p = $("ap").value;
+        if(!n) return void ($("ae").textContent = "이름을 넣어 주세요.");
+        if(p.length < 8) return void ($("ae").textContent = "8자 이상으로 정해 주세요.");
+        if(p !== $("ap2").value) return void ($("ae").textContent = "두 비밀번호가 달라요.");
+        $("ae").textContent = "만드는 중…";
+        AD.call("admadd", {n: n, npw: p}).then(function(){ toast("🛡️ " + n + " 관리자를 만들었어요 · 비밀번호는 따로 알려 주세요"); secKeys(); }, function(x){ $("ae").textContent = AD.errText(x); });
+      };
+      $("kf").onsubmit = function(e){
+        e.preventDefault(); var a = $("k1").value;
+        if(a.length < 8) return void ($("ke").textContent = "8자 이상으로 정해 주세요.");
+        if(a !== $("k2").value) return void ($("ke").textContent = "두 문구가 달라요.");
+        if(!SF.data()){ $("ke").textContent = "먼저 🔐 금고 칸에서 지금 문구로 금고를 열어 주세요."; return; }
+        $("ke").textContent = "새 문구로 잠그는 중…";
+        SF.save(SF.data(), {newPass: a, sum: "금고 문구 바꿈"}).then(function(){ $("ke").className = "ok"; $("ke").textContent = "✔ 바꿨어요. 새 문구를 교직원에게 따로 알려 주세요."; }, function(x){ $("ke").textContent = SF.errText(x); });
+      };
+      $("wipe").onclick = function(){
+        var t = prompt("정말 긴급 잠금할까요? 되돌릴 수 없어요.\n계속하려면 '잠금'이라고 적어 주세요.");
+        if(t !== "잠금") return;
+        SF.wipe().then(function(){ toast("🚨 긴급 잠금했어요 · 모든 관리자 모드가 끝났어요"); AD.end(false); }, function(x){ toast(SF.errText(x)); });
+      };
+    }, function(e){ fail(e, secKeys); });
+  }
+
+  /* ───────── 🕘 변경 기록 ───────── */
+  function secLog(){
+    busy("변경 기록을 받는 중…");
+    AD.call("admlog").then(function(r){
+      $("body").innerHTML = head("🕘 변경 기록", "언제·누가·무엇을 바꿨는지 요약만 남아요(내용은 남지 않아요). 최근 200개.")
+        + '<div class="scr"><ul class="log">' + ((r.log || []).map(function(x){
+            var d = new Date(x.at), t = isNaN(d) ? x.at : (d.getMonth() + 1) + "/" + d.getDate() + " " + d.getHours() + ":" + ("0" + d.getMinutes()).slice(-2);
+            return "<li><time>" + esc(t) + "</time><b>" + esc(x.by) + '</b><span class="tag">' + (x.r === "super" ? "최고" : "관리자") + "</span><span>" + esc(x.w) + "</span></li>";
+          }).join("") || '<li style="color:var(--sub)">아직 기록이 없어요</li>') + "</ul></div>";
+    }, function(e){ fail(e, secLog); });
+  }
+
+  SF.on(function(s){ if(!s.open && cur === "safe" && AD.state() && document.getElementById("tb") && SD){ SD = null; if(!dirty) secSafe(); } });
+  draw();
+})();
+</script>
+</body>
+</html>

@@ -101,7 +101,8 @@ var TT_TOOLS = [
   {id:"short",  icon:"🔗", cat:"work", menu:"school", group:"lib",  short:"짧은 주소", name:"짧은 주소", desc:"긴 주소를 g/?수학1 처럼 짧게 · QR도 함께 · 우리 학교 선생님이 함께 쓰는 목록.", href:"apps/short/", ready:true},
   {id:"merge",  icon:"📎", cat:"work", menu:"school", group:"lib",  short:"파일 합치기", name:"파일 합치기·나누기", desc:"엑셀·한글(hwpx)·PDF를 이 기기 안에서 합치기 · PDF 쪽 정리·나누기·글자/그림 뽑기. 서식까지 그대로는 윈도우 프로그램.", href:"apps/merge/", ready:true},
   /* ── 설정 ── */
-  {id:"setup",  icon:"🧳", cat:"work", menu:"settings", group:"set",  short:"학기초 세팅", name:"학기초 세팅", desc:"담당자가 학교 원본 파일(학생 명렬 엑셀 · 한글 교직원 명렬·내선번호·시간표·학사일정)을 한꺼번에 넣고 잠근 파일 하나로 → 선생님은 불러와 내 이름만 고르면 끝.", href:"apps/setup/", ready:true, months:[2,3], season:["start"]}
+  {id:"setup",  icon:"🧳", cat:"work", menu:"settings", group:"set",  short:"학기초 세팅", name:"학기초 세팅", desc:"담당자가 학교 원본 파일(학생 명렬 엑셀 · 한글 교직원 명렬·내선번호·시간표·학사일정)을 한꺼번에 넣고 잠근 파일 하나로 → 선생님은 불러와 내 이름만 고르면 끝.", href:"apps/setup/", ready:true, months:[2,3], season:["start"]},
+  {id:"admin",  icon:"🛡️", cat:"work", menu:"settings", group:"set",  short:"관리", name:"관리", desc:"관리자(담당자) 전용: 교직원·학교 정보·학생 명렬·학사일정·🔐 금고를 쌤 노트에서 넣고·고치고·지우기 · 관리자 만들기 · 변경 기록. 관리자 모드는 30분.", href:"apps/admin/", ready:true}
 ];
 
 /* ── 도구 정보 꺼내 쓰기 (모든 화면 공통) ── 목록이 없거나 id 가 틀리면 fallback(지금 적힌 글자)을 그대로 씁니다. */

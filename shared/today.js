@@ -680,10 +680,13 @@
         if(!docHits) D = [{ic: "⏳", tx: "학교 자료실에서 찾는 중…", sub: "", go: function(){}}];
       }
     }
+    /* v2.52 🔐 금고: 내용은 찾지 않고(잠겨 있음) 금고에서 찾을 수 있다는 줄만 — 교실 기기에서는 없음 */
+    var K = (!m0 && !(TT.classroom || (function(){ try{ return localStorage.getItem("ttv_device") === "classroom"; }catch(e){ return false; } })()) && /비밀번호|비번|아이디|계정|와이파이|wi-?fi|와파|금고|연락처|휴대폰|핸드폰|폰번호|프린터|복합기|출입|도어락|로그인|공유기/i.test(qq))
+      ? [{ic: "🔐", tx: "학교 금고에서 찾기 · <b>" + esc(qq) + "</b>", sub: "공용 계정 · 연락처 · 보안 안내 (금고 문구로 열어요)", go: function(){ closeFind(); location.href = (TT.BASE || "./") + "apps/school/?tab=safe&q=" + encodeURIComponent(qq); }}] : [];
     var actFirst = m0 || parseDate(qq).date || (!T.length && !S.length && !E.length && !(docHits || []).length) || /\s/.test(qq);   // 띄어 쓴 한 줄은 입력으로 먼저
     function grp(h, L){ if(L.length){ R.push({h: h}); R = R.concat(L); } }
     if(actFirst) grp("입력", act);
-    grp("📞 내선번호", E); grp("학생", S); grp("도구", T); grp("🗂️ 학교 자료실", D);
+    grp("📞 내선번호", E); grp("🔐 학교 금고", K); grp("학생", S); grp("도구", T); grp("🗂️ 학교 자료실", D);
     if(!actFirst) grp("입력", act);
     return R;
   }

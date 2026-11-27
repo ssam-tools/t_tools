@@ -240,7 +240,7 @@
       <p>학교 업무판에는 <b>잠긴 글자만</b> 올라가요. 학생 명렬은 아래 <b>비밀 문구</b>로 한 번 더 잠급니다. 비밀 문구는 따로(회의·쿨메신저) 알려 주세요.</p>
       <div class="two"><label class="field" title="8자 이상">학생 명렬 비밀 문구<input type="password" id="mPass" placeholder="8자 이상" autocomplete="new-password"></label>
       <label class="field">한 번 더<input type="password" id="mPass2" placeholder="같게 한 번 더" autocomplete="new-password"></label></div>
-      <label class="field">관리자 비밀번호<input placeholder="자료실 관리자와 같음" type="password" id="mAdm" autocomplete="off"></label>
+      <label class="field">관리자 비밀번호<input placeholder="🛡️ 관리자 모드면 비워 두기" type="password" id="mAdm" autocomplete="off"></label>
       <label class="keep" id="mKeepW" title="교무실 PC처럼 나만 쓰는 기기에서만 · 백업·동기화에는 들어가지 않아요"><input type="checkbox" id="mKeep"> 🔑 이 기기에서 두 비밀번호 기억 <small>(다음엔 바로 올리기)</small></label>
       <div class="opts"><label title="내 사이트 목록의 업무용·수업용 사이트와 ★ 자주 보는 문서를 학교 추천으로 함께 보냄 (선생님이 고친 것이 우선)"><input type="checkbox" id="mRec" checked> ⭐ 내 추천 사이트·★ 문서</label>
         <label title="선생님 PC·전자칠판이 쉬는 동안 내 교과·내 학년 교과서를 학교 드라이브에서 받아 둠 (와이파이일 때만, 휴대폰은 안 받음)"><input type="checkbox" id="mBooks" checked> 📘 교과서 자동 받기</label></div>
@@ -663,14 +663,15 @@
     var c = TTSet.board(); if(!c.url || !c.pw) return err("먼저 ⋯ → 학교 업무판 연결에서 주소와 공용 비밀번호를 넣어 주세요.");
     var b = buildBody(); if(b.err) return err(b.err);
     var withB = !!b.body.roster, pe = passErr(withB); if(pe) return err(withB ? "학생 명렬을 잠글 " + pe : pe);
-    var adm = admPw(); if(!adm) return err("관리자 비밀번호를 넣어 주세요.");
+    var AM = window.TT_ADMIN && TT_ADMIN.state(), adm = AM ? "" : admPw(); if(!AM && !adm) return err("관리자 비밀번호를 넣어 주세요. (🛡️ 관리자 모드가 켜져 있으면 넣지 않아도 돼요)");
+    var admApi = function(a, x){ return AM ? TT_ADMIN.call(a, x) : TTSet.api(a, Object.assign({admin: adm}, x)); };   // v2.52 관리자 모드면 표로
     var bk = $("mPass").value, A = Object.assign({}, b.body), Bd = withB ? {roster: b.body.roster} : null;
     delete A.roster;
     if($("mRec").checked) A.rec = recSet();
     var books = $("mBooks").checked;
     var S0 = TTSet.state(); S0.adm = {rec: $("mRec").checked, books: books}; TTSet.saveState(S0);
     btn.disabled = true; msg.className = "msg"; msg.textContent = "관리자 확인 중…";
-    TTSet.api("setadmin", {admin: adm}).then(function(){
+    admApi("setadmin", {}).then(function(){
       msg.textContent = "바뀐 점 찾는 중…";
       return TTSet.pull(c, bk).then(function(r){ var o = r.A ? Object.assign({}, r.A) : null; if(o && r.B) o.roster = r.B.roster; return o; }, function(){ return null; });
     }).then(function(old){
@@ -679,7 +680,7 @@
       msg.textContent = "잠그는 중…";
       return Promise.all([TTSet.lock(A, c.pw), Bd ? TTSet.lock(Bd, bk) : Promise.resolve("")]).then(function(L){
         msg.textContent = "올리는 중…";
-        return TTSet.api("setput", {admin: adm, a: L[0], b: L[1], keepB: !Bd, sum: sum, books: books});
+        return admApi("setput", {a: L[0], b: L[1], keepB: !Bd, sum: sum, books: books});
       }).then(function(r){
         var S = TTSet.state(); S.ver = r.ver; S.sum = sum; S.books = books; if(bk && withB) S.bk = bk; TTSet.saveState(S); keepSave(); schView(true);
         msg.className = "msg ok"; msg.textContent = "✔ 올렸어요 · " + sum + ". 선생님 기기가 켤 때 저절로 반영됩니다.";
@@ -819,18 +820,21 @@
       + '<li>🏫 학교 정보·교직원·일정·시간표<br><small>→ <b>공용 비밀번호</b>로 잠긴 글자</small></li>'
       + '<li>👥 학생 명렬<br><small>→ <b>학생 명렬 비밀 문구</b>로 한 번 더 잠김 (업무판 담당자도 못 엶)</small></li>'
       + '<li>☁️ 내 보관함 ' + (vc && vc.id ? "<b>(연결됨: " + esc(vc.id) + ")</b>" : "(연결 안 함)") + '<br><small>→ <b>내 비밀 문구</b>로 잠김 (나만 엶)</small></li>'
+      + '<li>🔐 학교 금고 (공용 계정·연락처·보안 안내)<br><small>→ <b>금고 문구</b>로 잠긴 글자 · 교실 기기에는 안 내려옴</small></li>'
       + '<li>📚 자료실 · 주간업무<br><small>→ 학교 공용 자료 (개인정보 없음)</small></li></ul></section>'
       + '<section><h3>🔑 여는 열쇠</h3><ul>'
       + '<li>공용 비밀번호: <b>' + (B.pw ? "이 기기에 있음" : "없음") + '</b></li>'
       + '<li>학생 명렬 비밀 문구: <b>' + (room ? "기억 안 함(교실 기기)" : S.bk ? "이 기기가 기억함" : "기억 안 함") + '</b></li>'
       + '<li>내 비밀 문구: <b>어디에도 저장 안 함</b></li>'
-      + '<li>관리자 비밀번호: <b>업무판에만</b> (올리기·지우기용)</li></ul>'
+      + '<li>금고 문구: <b>' + (room ? "기억 안 함(교실 기기)" : (function(){ try{ return localStorage.getItem("ttsafe_k") ? "이 기기가 기억함" : "기억 안 함"; }catch(e){ return "기억 안 함"; } })()) + '</b> <small>(전체 백업·보관함에는 안 들어감)</small></li>'
+      + '<li>관리자 비밀번호: <b>업무판에만</b> (🛡️ 관리 · 30분 관리자 모드)</li></ul>'
       + '<p class="sm" style="margin-top:6px">학기가 바뀌면 담당자가 공용 비밀번호·학생 명렬 비밀 문구를 바꾸고 다시 올려요. 그러면 모든 기기에서 한 번만 새로 물어봐요.</p></section></div>'
-      + '<div class="acts"><div style="display:flex;gap:6px;flex-wrap:wrap">' + (S.bk ? '<button type="button" class="btn" data-x="forget">학생 명렬 비밀 문구 잊기</button>' : "")
+      + '<div class="acts"><div style="display:flex;gap:6px;flex-wrap:wrap">' + (S.bk ? '<button type="button" class="btn" data-x="forget">학생 명렬 비밀 문구 잊기</button>' : "") + ((function(){ try{ return !!(localStorage.getItem("ttsafe_k") || localStorage.getItem("ttsafe_c")); }catch(e){ return false; } })() ? '<button type="button" class="btn" data-x="sforget">금고 잊기</button>' : "")
       + '<button type="button" class="btn" data-x="books">' + (S.booksOff ? "📘 교과서 자동 받기 켜기" : "📘 이 기기는 교과서 자동 받기 끄기") + '</button>'
       + '<button type="button" class="btn" data-x="wipe" style="color:var(--danger)">이 기기에서 학교 세팅 지우기</button></div><button type="button" class="btn primary" data-x="close">닫기</button></div>');
     d.querySelector("[data-x=close]").onclick = function(){ d.close(); };
     var fg = d.querySelector("[data-x=forget]"); if(fg) fg.onclick = function(){ var s = TTSet.state(); delete s.bk; TTSet.saveState(s); d.close(); TT.ui.toast("학생 명렬 비밀 문구를 이 기기에서 지웠어요."); };
+    var sfg = d.querySelector("[data-x=sforget]"); if(sfg) sfg.onclick = function(){ ["ttsafe_k", "ttsafe_c", "ttsafe_wa"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} }); if(window.TT_SAFE) TT_SAFE.close(); d.close(); TT.ui.toast("이 기기에서 금고 문구와 금고를 지웠어요."); };
     d.querySelector("[data-x=books]").onclick = function(){ var s = TTSet.state(); s.booksOff = !s.booksOff; TTSet.saveState(s); d.close(); TT.ui.toast(s.booksOff ? "이 기기는 교과서를 저절로 받지 않아요." : "쉬는 동안 교과서를 저절로 받아요."); };
     d.querySelector("[data-x=wipe]").onclick = function(){
       TT.ui.confirm("이 기기에서 학교 세팅 지우기", "받아 둔 교직원 명렬·전체 교사 시간표·학교가 넣은 학사일정과 학교 세팅 기록을 이 기기에서 지웁니다. 학생 명렬과 내 기록(출결·상담·수업)은 그대로예요.", "지우기", function(){

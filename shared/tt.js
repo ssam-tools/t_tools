@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.51.0";
+  var VERSION = "2.52.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -1051,6 +1051,8 @@ var TT = (function(){
   var font = {list: look.fonts, get: function(){ return look.get().font; }, set: function(id){ look.set("font", id); }};   // 예전 이름
 
   (function(){ var s = document.createElement("script"); s.src = BASE + "shared/vaultui.js"; s.defer = true; document.head.appendChild(s); })();
+  /* v2.52 🛡️ 관리자 모드인 창이면 어느 화면에서나 맨 위 표시(shared/admin.js) */
+  try{ if(sessionStorage.getItem("ttadm_s") && !document.querySelector('script[src*="shared/admin.js"]')){ var as = document.createElement("script"); as.src = BASE + "shared/admin.js?v=" + VERSION; as.defer = true; document.head.appendChild(as); } }catch(e){}
 
   return { VERSION: VERSION, BASE: BASE, classroom: classroom, store: store, roster: roster, timetable: timetable, school: school, staff: staff, font: font, look: look, notes: notes, photos: photos, file: {toRows: fileToRows, readXlsx: readXlsx, userErr: userErr, zip: makeZip}, util: util, ui: ui, backup: backup };
 })();

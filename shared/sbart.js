@@ -136,6 +136,8 @@
     cert: '<rect x="5" y="3" width="14" height="14" rx="2"/><path d="M9 8h6M9 12h6M9 21l3-3 3 3"/>',
     clip: '<path d="M15 7l-6.5 6.5a2.1 2.1 0 0 0 3 3L18 10a4.2 4.2 0 0 0-6-6L5.5 10.5a6.4 6.4 0 0 0 9 9L20 14"/>',
     suitcase: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M3 12h18"/>',
+    shield: '<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/>',
+    safe: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/>',
     map: '<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/>',
     numbers: '<path d="M4 8h2v8M10 8h4v4h-4v4h4M17 8h3v8h-3M17 12h3"/>',
     check: '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
@@ -163,7 +165,7 @@
   var TOOL = {timetable: "clock", book: "class", remote: "phone", stuprog: "qr", journal: "notebook", mpace: "hourglass", "class": "toolbox", group: "group", assess: "chart", mblue: "target",
     roster: "homeroom", photo: "camera", tardy: "compass", parent: "mail", submit: "box", duty: "list", seat: "seats",
     stucard: "idcard", voice: "mic", gquick: "bolt", counsel: "chat", record: "doc", advisor: "cap", bonus: "medal",
-    year: "calendar", schoolhub: "school", lib: "search", ai: "robot", train: "cert", merge: "clip", short: "link", sites: "link", setup: "suitcase",
+    year: "calendar", schoolhub: "school", lib: "search", ai: "robot", train: "cert", merge: "clip", short: "link", sites: "link", setup: "suitcase", admin: "shield",
     concept: "map", hmath: "open", lessonkit: "map", mlab: "numbers", mgen: "numbers", mcheck: "check", mstudy: "open", mqr: "qr", play: "game", kread: "open", kreadt: "teacher"};
   var EMO = {"🗣️": "chat", "🔁": "refresh", "⚡": "bolt", "📄": "doc", "📦": "box", "📝": "pencil", "⏳": "hourglass", "📆": "calendar", "🏖️": "sun", "👀": "eye", "🧭": "compass", "✏️": "pencil", "⏰": "alarm", "📣": "megaphone", "🎓": "cap", "📋": "list", "📞": "phone", "🗂️": "lib", "🙋": "doc", "📅": "calendar", "🔗": "link", "📞": "phone", "🏫": "school", "🎨": "palette", "✨": "sparkle", "☁️": "cloud", "💾": "save", "📂": "lib", "❓": "help", "🌱": "sprout", "🧳": "suitcase"};
   Object.keys(T).forEach(function(k){ if(!ICONS[k]) ICONS[k] = T[k]; });

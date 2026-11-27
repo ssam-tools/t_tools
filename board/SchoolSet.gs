@@ -3,7 +3,8 @@
    - 서버(이 드라이브)에는 '잠긴 글자'만 둡니다. 잠그기·풀기는 선생님 기기 안에서 합니다.
        A 묶음(학교 정보·교직원·학사일정·전체 시간표·추천 세트): 공용 비밀번호로 잠금
        B 묶음(학생 명렬): 담당자가 따로 알려 주는 '학생 명렬 비밀 문구'로 잠금 → 업무판 담당자도 열 수 없음
-   - 받기(setver·setget·setcal): 공용 비밀번호 · 올리기·지우기(setput·setwipe·setadmin): 관리자 비밀번호(LIB_ADMIN)
+   - 받기(setver·setget·setcal): 공용 비밀번호 · 올리기(setput·setadmin): 관리자(Admin.gs의 표 또는 LIB_ADMIN) · 모두 지우기(setwipe): 최고 관리자
+   - v2.52: Admin.gs가 꼭 함께 있어야 합니다(admNeed_·admLog_).
    - 판 번호·요약은 스크립트 속성 SET_META 하나에(가볍게), 묶음은 드라이브 폴더 '쌤노트_학교세팅'에. 새 판을 올리면 예전 판 파일은 지움.
    - 쓰는 법: Apps Script에 새 파일 SchoolSet 을 만들어 붙여 넣고, Code.gs의 doPost 표에
        setver: () => setVer_(req), setget: () => setGet_(req), setput: () => setPut_(req), setwipe: () => setWipe_(req), setadmin: () => setAdmin_(req), setcal: () => setCal_(req),
@@ -11,14 +12,7 @@
 const SET_FOLDER = '쌤노트_학교세팅', SET_META = 'SET_META', SET_MAX = 8 * 1024 * 1024;
 function setFolder_() { const it = DriveApp.getFoldersByName(SET_FOLDER); return it.hasNext() ? it.next() : DriveApp.createFolder(SET_FOLDER); }
 function setMeta_() { try { return JSON.parse(PROPS_.getProperty(SET_META) || 'null'); } catch (e) { return null; } }
-function setAdminOk_(req) {
-  auth_(req.pw);
-  const a = String(PROPS_.getProperty('LIB_ADMIN') || '');
-  if (!a) throw new Error('관리자 비밀번호가 아직 없어요 (Apps Script → 프로젝트 설정 → 스크립트 속성 LIB_ADMIN)');
-  const cache = CacheService.getScriptCache(), fail = Number(cache.get('setfail') || 0);
-  if (fail >= 10) throw new Error('관리자 비밀번호를 너무 많이 틀렸어요. 10분 뒤에 다시 해 주세요.');
-  if (String(req.admin || '') !== a) { cache.put('setfail', String(fail + 1), 600); throw new Error('관리자 비밀번호가 맞지 않아요'); }
-}
+function setAdminOk_(req) { return admNeed_(req); }   // v2.52: 관리자 표(tok) 또는 예전 관리자 비밀번호(LIB_ADMIN) — board/Admin.gs
 /* 가벼운 확인: 판 번호·요약만 (드라이브를 읽지 않음) */
 function setVer_(req) {
   auth_(req.pw);
@@ -37,28 +31,31 @@ function setGet_(req) {
 function setAdmin_(req) { setAdminOk_(req); const m = setMeta_(); return { ver: m ? m.ver : 0 }; }
 /* 올리기: a(잠긴 글자, 꼭), b(잠긴 글자, 없으면 '' · keepB면 예전 것 그대로), sum(바뀐 점 요약) */
 function setPut_(req) {
-  setAdminOk_(req);
+  const who = setAdminOk_(req);
   const a = String(req.a || ''), b = String(req.b || '');
   if (!/^\{"salt"/.test(a)) throw new Error('잠긴 묶음이 아니에요');
   if (b && !/^\{"salt"/.test(b)) throw new Error('잠긴 묶음이 아니에요');
   if (a.length + b.length > SET_MAX) throw new Error('세팅이 너무 커요 (8MB까지)');
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    const old = setMeta_() || {}, f = setFolder_(), ver = Math.max(Date.now(), (old.ver || 0) + 1);
+    const old = setMeta_() || {};
+    if (req.base != null && Number(req.base) !== Number(old.ver || 0)) throw new Error('CONFLICT');   // v2.52 다른 관리자가 먼저 올림
+    const f = setFolder_(), ver = Math.max(Date.now(), (old.ver || 0) + 1);
     const fa = f.createFile('A_' + ver + '.txt', a, MimeType.PLAIN_TEXT);
     let fb = null;
     if (b) fb = f.createFile('B_' + ver + '.txt', b, MimeType.PLAIN_TEXT);
     const keepB = !b && req.keepB && old.b;
     const m = { ver: ver, at: new Date().toISOString(), sum: txt_(req.sum, 300), a: fa.getId(), b: fb ? fb.getId() : (keepB ? old.b : ''),
-                sizeA: a.length, sizeB: b ? b.length : (keepB ? old.sizeB || 0 : 0), books: !!req.books };
+                sizeA: a.length, sizeB: b ? b.length : (keepB ? old.sizeB || 0 : 0), books: req.books == null ? !!old.books : !!req.books, by: who.n };
     PROPS_.setProperty(SET_META, JSON.stringify(m));
     [old.a, keepB ? '' : old.b].forEach(function (id) { if (id) { try { DriveApp.getFileById(id).setTrashed(true); } catch (e) {} } });   // 예전 판은 지움
-    return { ver: ver };
+    admLog_(who, '학교 세팅: ' + (m.sum || '올림'));
+    return Object.assign(req.tok ? admIssue_(who) : {}, { ver: ver });
   } finally { lock.releaseLock(); }
 }
 /* 새 학년·비밀번호를 바꿀 때: 서버의 학교 세팅을 모두 지움 */
 function setWipe_(req) {
-  setAdminOk_(req);
+  const who = admNeed_(req, true); admLog_(who, '학교 세팅 모두 지움');
   const m = setMeta_() || {};
   [m.a, m.b].forEach(function (id) { if (id) { try { DriveApp.getFileById(id).setTrashed(true); } catch (e) {} } });
   PROPS_.deleteProperty(SET_META);

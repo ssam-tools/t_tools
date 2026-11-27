@@ -42,6 +42,26 @@
   .exl span{display:flex;flex-direction:column;min-width:0}
   html[data-ui="ssambi"] .ext #exq{display:none}   /* v2.7: 쌤비 홈 디자인에서는 왼쪽 검색창 하나로 찾음 */
   .exl div.hit{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft,rgba(0,0,0,.06))}.exl small{color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* v2.52 🔐 금고 (선생님 보기) — 인쇄하면 내용이 빈칸 */
+  .sf{display:flex;flex-direction:column;gap:8px;min-height:0;flex:1 1 0}
+  .sfh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex:none}
+  .sfh .sp{flex:1}
+  .sfh button{font:inherit;font-size:13.5px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;cursor:pointer;color:var(--sub)}
+  .sfh button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .sfl{flex:1 1 0;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:8px;align-content:start}
+  .sfc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+  .sfc.hit{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft,rgba(0,0,0,.06))}
+  .sfc .t{display:flex;align-items:center;gap:6px;font-weight:800;font-size:15px}
+  .sfc .t span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sfc .t a{font-size:12.5px;font-weight:600;color:var(--accent);text-decoration:none;white-space:nowrap}
+  .sfc .r{display:flex;align-items:center;gap:6px}
+  .sfc .r > i{font-style:normal;color:var(--sub);font-size:12px;min-width:44px}
+  .sfc .r code{flex:1;min-width:0;font-family:ui-monospace,Consolas,monospace;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:none}
+  .sfc .r button{font:inherit;font-size:12.5px;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:3px 8px;cursor:pointer;color:var(--ink);touch-action:none;-webkit-user-select:none;user-select:none}
+  .sfc .r button:active,.sfc .r button.held{background:var(--accent-soft,#e6f0fa)}
+  .sfc .m{color:var(--sub);font-size:12.5px}
+  .sfn{font-size:12.5px;color:var(--sub);flex:none}
+  @media print{.sf .sfl,.sf code{visibility:hidden!important}}
 </style>
 </head>
 <body>
@@ -53,6 +73,8 @@
 
 <script src="../../shared/tt.js"></script>
 <script src="../../shared/libd.js"></script>
+<script src="../../shared/admin.js"></script>
+<script src="../../shared/safe.js"></script>
 <script>
 (function(){
   "use strict";
@@ -65,12 +87,13 @@
   function stars(){ var o = (TT.store.get("tt_lib_star_v1", null) || {}).ids || {}; return Object.keys(o).map(function(id){ return {id: id, t: o[id].t, at: o[id].at || 0}; }).sort(function(a, b){ return a.at - b.at; }); }
   function tabs(){
     var L = [{k: "board", t: "📅 업무판"}, {k: "ext", t: "📞 내선번호"}], S = stars();
+    if(window.TT_SAFE && !TT_SAFE.room()) L.push({k: "safe", t: "🔐 금고"});   // v2.52 교실 기기에서는 금고 칸이 없음
     if(S.length) S.forEach(function(x){ L.push({k: "doc:" + x.id, t: "★ " + x.t}); });
     else SUG.forEach(function(x){ L.push({k: "find:" + x[1], t: x[0]}); });
     return L;
   }
   var U0 = new URLSearchParams(location.search), Q0 = U0.get("q") || "";
-  var cur = /^(board|ext)$/.test(U0.get("tab") || "") ? U0.get("tab") : sessionStorage.getItem(TK) || "board";
+  var cur = /^(board|ext|safe)$/.test(U0.get("tab") || "") ? U0.get("tab") : sessionStorage.getItem(TK) || "board";
   if(U0.get("tab") || Q0) try{ history.replaceState(null, "", location.pathname); }catch(e){}
 
   /* ── v2.7 왼쪽 쌤비 아래 검색창(shared/sbbar.js)과 연결: 보고 있는 칸에 따라 찾는 곳이 바뀜 ──
@@ -113,7 +136,7 @@
     var d = DW(), q = sq(); if(q && d && !/^\d{1,4}$/.test(q)) d.find(q);
   };
   function setProv(){
-    window.TT_SBFIND_P = cur === "board" ? PB : cur === "ext" ? PE : PD;
+    window.TT_SBFIND_P = cur === "board" ? PB : cur === "ext" ? PE : cur === "safe" ? PS : PD;
     if(PD === window.TT_SBFIND_P){ PD.key = cur; var t = tabs().filter(function(x){ return x.k === cur; })[0]; PD.ph = "이 문서에서 찾기" + (t ? " · " + t.t.replace(/^★\s*/, "").slice(0, 10) : ""); }
     if(SB()) TT_SBAR.refresh();
   }
@@ -144,10 +167,92 @@
       return;
     }
     if(cur === "ext"){ drawExt(P); return; }
+    if(cur === "safe"){ drawSafe(P); return; }
     var src = cur.indexOf("doc:") === 0 ? "../lib/?id=" + encodeURIComponent(cur.slice(4)) : "../lib/?find=" + encodeURIComponent(cur.slice(5));
     P.innerHTML = '<iframe class="frame" src="' + esc(src) + '" title="자주 보는 문서"></iframe>'
       + (stars().length ? "" : '<div class="note">자료실에서 문서의 ☆를 누르면 이 자리에 그 문서가 나와요 · <a href="../lib/">자료실 열기</a></div>');
   }
+  /* ── v2.52 🔐 학교 금고 (선생님 보기) — shared/safe.js · 금고 문구로 이 기기에서 풀어 보기만 ──
+     비밀번호는 ●●●●로 가리고, 누르고 있는 동안만 보임 · 복사는 30초 뒤 지움 · 10분 쓰지 않으면 잠김 · 인쇄하면 빈칸 */
+  var SFsub = "acc", SFq = "";
+  var SFK = [["acc", "공용 계정"], ["ppl", "연락처"], ["info", "보안 안내"]];
+  var PS = {key: "safe", ph: "금고에서 찾기 (사이트·이름·항목)",
+    find: function(q){ SFq = q; var d = TT_SAFE.data(); if(!d){ show({n: null, rows: [], note: "금고를 연 뒤 찾을 수 있어요"}); return; } paintSafe(); },
+    clear: function(){ SFq = ""; if(TT_SAFE.data()) paintSafe(); }};
+  function drawSafe(P){
+    var SF = window.TT_SAFE; if(!SF){ P.innerHTML = '<div class="msg">금고를 불러오지 못했어요.</div>'; return; }
+    if(SF.room()){ P.innerHTML = '<div class="msg"><b>교실 기기(공용)에서는 금고를 열 수 없어요.</b></div>'; return; }
+    if(SF.data()){ P.innerHTML = '<div class="sf"><div class="sfh" id="sfh"></div><div class="sfl" id="sfl"></div><div class="sfn" id="sfn"></div></div>'; paintSafe(); return; }
+    var st = SF.status();
+    P.innerHTML = '<form class="lock" id="sfk" autocomplete="off"><b>🔐 학교 금고</b>'
+      + (st.remembered ? '<span class="note">' + (st.wa ? "지문·기기 잠금으로 확인한 뒤 열려요." : "이 기기에 금고 문구가 기억되어 있어요.") + "</span>"
+        : '<input type="password" id="sfp" placeholder="금고 문구 (담당자가 따로 알려 준 문구)" aria-label="금고 문구"><label class="note"><input type="checkbox" id="sfr" checked> 이 기기에 기억 (내 기기만)</label>')
+      + '<span class="er" id="sfe"></span><button type="submit" class="btn primary">열기</button><span class="note">공용 계정 · 교직원 연락처 · 보안 안내 · 10분 쓰지 않으면 다시 잠겨요</span></form>';
+    var i = $("sfp"); if(i) i.focus();
+    $("sfk").onsubmit = function(e){
+      e.preventDefault(); $("sfe").textContent = "여는 중…";
+      (i ? SF.open(i.value, $("sfr").checked) : SF.open()).then(function(){ drawSafe(P); if(sq()) PS.find(sq()); else if(Q0 && cur === "safe" && SB()) TT_SBAR.focusSearch(Q0); }, function(x){ $("sfe").textContent = SF.errText(x); if(!i && !SF.status().remembered) drawSafe(P); });
+    };
+  }
+  function mask(v){ return v ? "●●●●●●●●" : "—"; }
+  function paintSafe(){
+    var SF = window.TT_SAFE, d = SF.data(); if(!d || !$("sfl")) return;
+    var q = (SFq || "").trim().toLowerCase();
+    function hit(x, keys){ return q && keys.some(function(k){ return String(x[k] || "").toLowerCase().indexOf(q) >= 0; }); }
+    var KEYS = {acc: ["site", "user", "owner", "memo"], ppl: ["name", "dept"], info: ["t", "memo"]};
+    if(q){ var best = SFK.map(function(s){ return [s[0], d[s[0]].filter(function(x){ return hit(x, KEYS[s[0]]); }).length]; }).sort(function(a, b){ return b[1] - a[1]; })[0]; if(best[1] && !d[SFsub].some(function(x){ return hit(x, KEYS[SFsub]); })) SFsub = best[0]; }
+    $("sfh").innerHTML = SFK.map(function(s){ return '<button type="button" data-sfs="' + s[0] + '"' + (s[0] === SFsub ? ' class="on"' : "") + ">" + s[1] + " " + d[s[0]].length + "</button>"; }).join("")
+      + '<span class="sp"></span>' + (window.TT_ADMIN && TT_ADMIN.state() ? '<a class="btn btn-sm" href="../admin/#safe">✏️ 고치기</a>' : "")
+      + '<button type="button" data-sfa="set" title="이 기기 설정">⚙</button><button type="button" data-sfa="lock">🔒 잠그기</button>';
+    var L = d[SFsub].slice().sort(function(a, b){ return (hit(b, KEYS[SFsub]) ? 1 : 0) - (hit(a, KEYS[SFsub]) ? 1 : 0); });
+    var row = function(lbl, v, k, secret){ return '<div class="r"><i>' + lbl + "</i><code" + (secret ? ' data-sec="' + k + '"' : "") + ">" + esc(secret ? mask(v) : v || "—") + "</code>" + (v && secret ? '<button type="button" data-hold="' + k + '" title="누르고 있는 동안 보기">👁</button>' : "") + (v ? '<button type="button" data-cp="' + k + '">복사</button>' : "") + "</div>"; };
+    $("sfl").innerHTML = L.map(function(x){
+      var id = esc(x.id), cls = "sfc" + (hit(x, KEYS[SFsub]) ? " hit" : "");
+      if(SFsub === "acc") return '<div class="' + cls + '" data-id="' + id + '"><div class="t"><span>' + esc(x.site || "이름 없음") + "</span>" + (/^https?:\/\//.test(x.url || "") ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">열기 ↗</a>' : "") + "</div>"
+        + row("아이디", x.user, "user") + row("비밀번호", x.pw, "pw", true) + (x.memo || x.owner ? '<div class="m">' + esc([x.memo, x.owner ? "담당 " + x.owner : ""].filter(Boolean).join(" · ")) + "</div>" : "") + "</div>";
+      if(SFsub === "ppl") return '<div class="' + cls + '" data-id="' + id + '"><div class="t"><span>' + esc(x.name || "") + '</span><a style="color:var(--sub)">' + esc(x.dept || "") + "</a></div>"
+        + (x.ok && x.phone ? row("휴대폰", x.phone, "phone", true) : '<div class="m">📨 쿨메신저로 연락해 주세요</div>') + (x.memo ? '<div class="m">' + esc(x.memo) + "</div>" : "") + "</div>";
+      return '<div class="' + cls + '" data-id="' + id + '"><div class="t"><span>' + esc(x.t || "") + "</span></div>" + row("값", x.v, "v", true) + (x.memo ? '<div class="m">' + esc(x.memo) + "</div>" : "") + "</div>";
+    }).join("") || '<div class="msg">아직 없어요. 관리자가 🛡️ 관리 → 🔐 금고에서 넣어요.</div>';
+    $("sfn").textContent = "🔒 누르고 있는 동안만 보여요 · 복사한 값은 30초 뒤 클립보드에서 지워져요 · 10분 쓰지 않으면 잠겨요 · 화면을 찍거나 다른 사람에게 보여 주지 마세요";
+    if(q){ var n = $("sfl").querySelectorAll(".hit").length; show({n: n, rows: [], note: n ? "" : "금고에 '" + esc(SFq) + "'이(가) 없어요"}); }
+  }
+  function sfItem(el){ var c = el.closest("[data-id]"), d = TT_SAFE.data(); if(!c || !d) return null; return d[SFsub].filter(function(x){ return String(x.id) === c.dataset.id; })[0]; }
+  function reveal(btn, on){
+    var x = sfItem(btn); if(!x) return; var code = btn.parentNode.querySelector("code"), k = btn.dataset.hold;
+    code.textContent = on ? (x[k] || "") : mask(x[k]); btn.classList.toggle("held", on); TT_SAFE.touch();
+  }
+  $("pane").addEventListener("pointerdown", function(e){ var b = e.target.closest("[data-hold]"); if(!b) return; e.preventDefault(); reveal(b, true); var up = function(){ reveal(b, false); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up); }; window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up); });
+  $("pane").addEventListener("keydown", function(e){ var b = e.target.closest && e.target.closest("[data-hold]"); if(b && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); reveal(b, true); setTimeout(function(){ reveal(b, false); }, 5000); } });
+  $("pane").addEventListener("click", function(e){
+    var SF = window.TT_SAFE; if(cur !== "safe" || !SF) return;
+    var s = e.target.closest("[data-sfs]"); if(s){ SFsub = s.dataset.sfs; SF.touch(); paintSafe(); return; }
+    var cp = e.target.closest("[data-cp]"); if(cp){ var x = sfItem(cp); if(x) SF.copy(x[cp.dataset.cp]).then(function(){ TT.ui.toast("📋 복사했어요 · 30초 뒤 지워져요"); }, function(){ TT.ui.toast("복사하지 못했어요"); }); return; }
+    var a = e.target.closest("[data-sfa]"); if(!a) return;
+    if(a.dataset.sfa === "lock"){ SF.close(); return; }
+    if(a.dataset.sfa === "set") sfSettings();
+  });
+  function sfSettings(){
+    var SF = window.TT_SAFE, st = SF.status();
+    SF.waAvail().then(function(av){
+      var d = document.createElement("dialog"); d.className = "tt-dlg"; d.style.cssText = "border:0;border-radius:16px;padding:18px;max-width:380px";
+      d.innerHTML = '<h3 style="margin:0 0 8px">🔐 이 기기의 금고</h3>'
+        + '<p style="font-size:13.5px;color:var(--sub);line-height:1.6">금고 문구: ' + (st.remembered ? "이 기기에 기억 중" : "기억하지 않음") + "</p>"
+        + (av ? '<p><button type="button" class="btn" data-w="' + (st.wa ? "off" : "on") + '">' + (st.wa ? "지문·기기 잠금 확인 끄기" : "👆 지문·Windows Hello로 열기 켜기") + '</button></p><p style="font-size:12.5px;color:var(--sub)">켜면 금고를 열 때마다 이 기기의 지문·PIN으로 한 번 더 확인해요.</p>' : '<p style="font-size:12.5px;color:var(--sub)">이 기기는 지문·Windows Hello 확인을 지원하지 않아요.</p>')
+        + '<p><button type="button" class="btn" data-w="forget">이 기기에서 금고 잊기</button></p><p style="text-align:right"><button type="button" class="btn primary" data-w="x">닫기</button></p>';
+      document.body.appendChild(d); d.showModal();
+      d.addEventListener("close", function(){ d.remove(); });
+      d.onclick = function(e){
+        var w = e.target.closest("[data-w]"); if(!w) return; var k = w.dataset.w;
+        if(k === "x"){ d.close(); return; }
+        if(k === "on") SF.waEnable().then(function(){ TT.ui.toast("👆 다음부터 금고를 열 때 기기 잠금으로 확인해요"); d.close(); }, function(){ TT.ui.toast("켜지 못했어요"); });
+        if(k === "off"){ SF.waOff(); d.close(); }
+        if(k === "forget"){ SF.forget(); TT.ui.toast("이 기기에서 금고 문구와 금고를 지웠어요"); d.close(); }
+      };
+    });
+  }
+  if(window.TT_SAFE) TT_SAFE.on(function(s){ if(cur === "safe" && !s.open) draw(); });
+
   /* 내선번호: 선생님 이름이 들어 있어, 업무판 공용 비밀번호를 넣어야 보임(이 창을 닫을 때까지) */
   function drawExt(P){
     var pw = B().pw || "";
