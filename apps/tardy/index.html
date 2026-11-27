@@ -222,7 +222,9 @@ table.plain{width:100%;border-collapse:collapse;font-size:13.5px}
 .pf{font-family:"Batang","바탕","Malgun Gothic",serif;color:#000;font-size:14.5px}
 .pf .top{font-size:12px;border-bottom:1px dotted #555;margin-bottom:22px;padding-bottom:2px}
 .pf .lb{font-size:12px;margin:0 0 4px}
-.pf h1{font-family:"Malgun Gothic",sans-serif;text-align:center;font-size:28px;letter-spacing:22px;margin:0 0 24px}
+.pf h1{font-family:"Malgun Gothic",sans-serif;text-align:center;font-size:30px;font-weight:800;letter-spacing:26px;margin:0 0 24px}
+.pf .bl{color:#1a3fd6}
+@media print{.pf .bl{color:#1a3fd6;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 .pf table{width:100%;border-collapse:collapse}
 .pf td{border:1px solid #000;padding:6px 8px;vertical-align:top}
 .pf .kinds div{line-height:1.8}
@@ -887,29 +889,30 @@ const yy = y => String(y || '').slice(-2);
 function formTexts(f) {
   const box = k => (f.box === k ? '■' : '□');
   const [sy, sm, sd] = ymdParts(f.submit), [cy, cm, cd] = ymdParts(f.confirmDate);
-  const school = (f.school || '○○중학교').replace(/\s+/g, '') + '장';
-  return {
-    2: [box('sick') + '병결          '],
-    3: [box('ok') + '인정결(사유: ' + fill(f.box === 'ok' ? f.boxReason : '', 28) + ')'],
-    4: [box('early') + '인정조퇴(사유: ' + fill(f.box === 'early' ? f.boxReason : '', 26) + ')'],
-    5: [box('late') + '인정지각(사유: ' + fill(f.box === 'late' ? f.boxReason : '', 26) + ')'],
-    10: [' '.repeat(Math.max(10, 45 - Math.max(0, wid(f.grade + f.cls + f.no) - 3))) + '제  ' + f.grade + '  학년  ' + f.cls + '  반  ' + f.no + '  번'],
-    11: [' '.repeat(31) + '성    명 : ' + f.name],
-    12: ['     위 학생은 (' + mid(f.reason, 46) + ')으로 인하여 '],
-    13: ['   20(' + mid(yy(f.y1), 3) + ')년(' + mid(f.m1, 3) + ')월(' + mid(f.d1, 3) + ')일(' + mid(f.w1, 3) + ')요일, (' + mid(f.p1, 3) + ')교시부터'],
-    17: [mid(f.m2, 4)],
-    18: [')월(' + mid(f.d2, 3) + ')일(' + mid(f.w2, 3) + ')요일, (' + mid(f.p2, 3) + ')교시까지  (' + mid(f.amount, 6) + ') (' + (f.unit || '일') + ') 동안'],
-    19: [' (' + (f.what || '결석') + ')하게 되었으므로 증빙서류를 갖추어 '],
-    22: ['20' + mid(yy(sy), 3) + '년  ' + mid(sm, 3) + '월  ' + mid(sd, 3) + '일'],
-    23: [' '.repeat(47) + '본  인 : ' + fill(f.self, 15) + '(인)'],
-    24: [' '.repeat(47) + '보호자 : ' + fill(f.guardian, 15) + '(인) '],
-    32: ['   위 사실을 (' + (f.confirm || CONFIRM[1]) + ')(으)로 확인 합니다.'],
-    33: [' '.repeat(33) + '20' + mid(yy(cy), 3) + '년  ' + mid(cm, 3) + '월  ' + mid(cd, 3) + '일'],
-    34: [' '.repeat(43) + '담  임 : ' + fill(f.teacher, 22) + '(인)'],
-    35: [[...school].join(' ')]
+  const t = {
+    5: [box('sick') + '병결          '],
+    6: [box('ok') + '인정결(사유: ' + fill(f.box === 'ok' ? f.boxReason : '', 28) + ')'],
+    7: [box('early') + '인정조퇴(사유: ' + fill(f.box === 'early' ? f.boxReason : '', 26) + ')'],
+    8: [box('late') + '인정지각(사유: ' + fill(f.box === 'late' ? f.boxReason : '', 26) + ')'],
+    13: [' '.repeat(Math.max(10, 45 - Math.max(0, wid(f.grade + f.cls + f.no) - 3))) + '제  ' + f.grade + '  학년  ' + f.cls + '  반  ' + f.no + '  번'],
+    14: [' '.repeat(32) + '성    명 : ' + f.name],
+    15: ['    위 학생은 (' + mid(f.reason, 37) + ')으로 인하여 '],
+    16: ['   20(' + mid(yy(f.y1), 4) + ')년(' + mid(f.m1, 4) + ')월(' + mid(f.d1, 3) + ')일(' + mid(f.w1, 3) + ')요일, '],
+    17: ['(' + mid(f.p1, 3) + ')교시'],
+    22: [mid(f.m2, 5)],
+    23: [')월(' + mid(f.d2, 3) + ')일(' + mid(f.w2, 3) + ')요일, (' + mid(f.p2, 3) + ')교시까지  (' + mid(f.amount, 5) + ') (' + mid(f.unit || '일', 5) + ') 동안'],
+    24: [' (' + mid(f.what || '결석', 12) + ')하게 되었으므로 증빙서류를 갖추어 '],
+    27: [mid(sy, 4) + '년  ' + mid(sm, 4) + '월  ' + mid(sd, 4) + '일'],
+    28: [' '.repeat(47) + '본  인 : ' + fill(f.self, 12) + '(인)'],
+    29: [' '.repeat(47) + '보호자 : ' + fill(f.guardian, 12) + '(인) '],
+    37: ['   위 사실을 (' + mid(f.confirm || CONFIRM[1], 34) + ')(으)로 확인 합니다.'],
+    38: [' '.repeat(31) + mid(cy, 4) + '년  ' + mid(cm, 4) + '월  ' + mid(cd, 4) + '일'],
+    39: [' '.repeat(43) + '담  임 : ' + fill(f.teacher, 19) + '(인)']
   };
+  if (f.school) t[40] = [[...(f.school.replace(/\s+/g, '') + '장')].join(' ')];   // 비워 두면 양식의 학교 이름 그대로
+  return t;
 }
-const EXPECT = { 2: '□병결', 3: '□인정결', 4: '□인정조퇴', 5: '□인정지각', 10: '학년', 11: '성    명', 12: '위 학생은', 13: '교시부터', 17: '    ', 18: '교시까지', 19: '결석, 지각, 조퇴', 22: '년', 23: '본  인', 24: '보호자', 32: '위 사실을', 33: '년', 34: '담  임', 35: '중 학 교 장' };
+const EXPECT = { 5: '□병결', 6: '□인정결', 7: '□인정조퇴', 8: '□인정지각', 13: '학년', 14: '성    명', 15: '위 학생은', 16: '요일', 17: '교시', 22: '     ', 23: '교시까지', 24: '하게 되었으므로', 27: '년', 28: '본  인', 29: '보호자', 37: '위 사실을', 38: '년', 39: '담  임', 40: '중 학 교 장' };
 const xmlEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 function zipEntries(buf) {
   const u8 = new Uint8Array(buf), dv = new DataView(buf); let i = u8.length - 22;
@@ -957,18 +960,18 @@ async function makeHwpx(f) {
 function printHtml(f) {
   const b = k => (f.box === k ? '■' : '□'), u = v => `<u>&nbsp;${esc(v || '')}&nbsp;</u>`;
   const [sy, sm, sd] = ymdParts(f.submit), [cy, cm, cd] = ymdParts(f.confirmDate);
-  const school = [...((f.school || '○○중학교').replace(/\s+/g, '') + '장')].join(' ');
-  return `<div class="pf"><div class="top">14. 출석관리 규정</div><p class="lb">&lt;서식7&gt;</p><h1>결석신고서</h1>
-    <table><tr><td class="kinds" style="width:62%"><div>${b('sick')}병결</div><div>${b('ok')}인정결(사유: ${esc(f.box === 'ok' ? f.boxReason : '')} )</div><div>${b('early')}인정조퇴(사유: ${esc(f.box === 'early' ? f.boxReason : '')} )</div><div>${b('late')}인정지각(사유: ${esc(f.box === 'late' ? f.boxReason : '')} )</div></td>
-      <td style="width:6%;text-align:center;vertical-align:middle">결<br>재</td><td style="padding:0"><table class="sign"><tr><td>계</td><td>부 장</td><td>교 감</td></tr><tr><td style="height:58px"></td><td></td><td></td></tr></table></td></tr>
+  const school = [...((f.school || '마산서중학교').replace(/\s+/g, '') + '장')].join(' ');
+  return `<div class="pf"><p class="lb">&lt;서식 7&gt;</p><h1 class="bl">결석신고서</h1>
+    <table><tr><td class="kinds" style="width:56%"><div>${b('sick')}병결</div><div>${b('ok')}인정결(사유: ${esc(f.box === 'ok' ? f.boxReason : '')} )</div><div>${b('early')}인정조퇴(사유: ${esc(f.box === 'early' ? f.boxReason : '')} )</div><div class="bl">${b('late')}인정지각(사유: ${esc(f.box === 'late' ? f.boxReason : '')} )</div></td>
+      <td style="width:5%;text-align:center;vertical-align:middle">결<br>재</td><td style="padding:0"><table class="sign"><tr><td>계</td><td>부장</td><td>교감</td></tr><tr><td style="height:58px"></td><td></td><td></td></tr></table></td></tr>
     <tr><td colspan="3" class="body"><div class="r">제 ${u(f.grade)} 학년 ${u(f.cls)} 반 ${u(f.no)} 번<br>성 명 : ${u(f.name)}</div>
-      위 학생은 ( ${esc(f.reason)} )으로 인하여<br>20( ${esc(yy(f.y1))} )년( ${esc(f.m1)} )월( ${esc(f.d1)} )일( ${esc(f.w1)} )요일, ( ${esc(f.p1)} )교시부터<br>
-      &emsp;&emsp;( ${esc(f.m2)} )월( ${esc(f.d2)} )일( ${esc(f.w2)} )요일, ( ${esc(f.p2)} )교시까지 ( ${esc(f.amount)} ) (${esc(f.unit)}) 동안<br>
-      (${esc(f.what)})하게 되었으므로 증빙서류를 갖추어 결석신고서를 제출합니다.<div class="c">20${esc(yy(sy))} 년 ${esc(sm)} 월 ${esc(sd)} 일</div>
+      위 학생은 ( ${esc(f.reason)} )으로 인하여<br>20( ${esc(yy(f.y1))} )년( ${esc(f.m1)} )월( ${esc(f.d1)} )일( ${esc(f.w1)} )요일, <span class="bl">( ${esc(f.p1)} )교시</span>부터<br>
+      &emsp;&emsp;( ${esc(f.m2)} )월( ${esc(f.d2)} )일( ${esc(f.w2)} )요일, ( ${esc(f.p2)} )교시까지 ( ${esc(f.amount)} ) ( ${esc(f.unit)} ) 동안<br>
+      ( ${esc(f.what)} )하게 되었으므로 증빙서류를 갖추어 <span class="bl">결석신고서</span>를 제출합니다.<div class="c">${esc(sy)} 년 ${esc(sm)} 월 ${esc(sd)} 일</div>
       <div class="r">본&ensp;인 : ${u(f.self)} (인)<br>보호자 : ${u(f.guardian)} (인)</div></td></tr>
     <tr><td colspan="3" class="note">* 증빙 서류 : 진단서, 진료확인서, 기타 증빙자료(미인정결은 증빙서류 필요 없음)</td></tr></table>
     <div class="cut"></div><p class="lb">&lt;양식2&gt;</p><h2>담 임 확 인 서</h2>
-    <p class="c" style="font-size:15.5px">위 사실을 (${esc(f.confirm)})(으)로 확인 합니다.</p><p class="c" style="font-size:15.5px">20${esc(yy(cy))} 년 ${esc(cm)} 월 ${esc(cd)} 일</p>
+    <p style="font-size:15.5px">&emsp;위 사실을 ( ${esc(f.confirm)} )(으)로 확인 합니다.</p><p class="c" style="font-size:15.5px">${esc(cy)} 년 ${esc(cm)} 월 ${esc(cd)} 일</p>
     <p class="r" style="font-size:15.5px">담&ensp;임 : ${u(f.teacher)} (인)</p><div class="school">${esc(school)} <small>귀하</small></div></div>`;
 }
 
