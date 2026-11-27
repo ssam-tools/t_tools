@@ -933,3 +933,37 @@ html.mob[data-ui="ssambi"] body.sbTopOn{padding-top:0!important}
 .mobSh .chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .mobSh .chips button,.mobSh .other{min-height:44px;border:1px solid var(--t-line);border-radius:12px;background:var(--t-card);color:var(--t-ink);font:inherit;font-size:15px;cursor:pointer}
 .mobSh .other{margin:10px 0 0;padding:0 14px;color:var(--t-sub)}
+
+/* ---------- v2.57 📱 도구 안쪽 화면 휴대폰 다듬기 (모든 도구 공통) ---------- */
+@media (max-width:760px){
+  /* 제목은 위 머리줄에 있으니 도구 안 큰 제목은 숨김 (같은 줄의 단추·정보는 그대로) */
+  html.mob h1[data-sbi]{display:none!important}
+  html.mob header:has(h1[data-sbi]) > div:not(:has(> :not(h1,a.back,a.ttback,.tt-navbtn))){display:none!important}
+  html.mob header:has(h1[data-sbi]){margin-top:0!important;padding-top:0!important;min-height:0!important}
+  html.mob header:has(h1[data-sbi]):not(:has(> :not(div:has(> h1[data-sbi]),a.back,.tt-navbtn,script,style))){display:none!important}
+  /* 글자 칸은 16px — 아이폰에서 누를 때 화면이 확대되지 않게 · 누르기 쉬운 높이 */
+  html.mob input:not([type=checkbox]):not([type=radio]):not([type=range]),html.mob select,html.mob textarea{font-size:16px!important}
+  html.mob input:not([type=checkbox]):not([type=radio]):not([type=range]),html.mob select{min-height:42px}
+  html.mob button,html.mob .btn{min-height:38px}
+  /* 키보드 단축키 안내 · 인쇄 · 크게 띄우기는 휴대폰에서 숨김 */
+  html.mob kbd,html.mob .mobHide{display:none!important}
+  /* 아래 개인정보 안내는 작게 한 줄로 */
+  html.mob body > footer{font-size:12px!important;line-height:1.4;padding:4px 2px!important;margin:4px 0 0!important;gap:6px;flex-wrap:wrap}
+  html.mob .priv{font-size:11.5px!important;padding:3px 8px!important;line-height:1.35}
+  /* 옆으로 넘치지 않게 */
+  html.mob body{overflow-x:hidden}
+  html.mob table{max-width:100%}
+  /* 내 시간표: 휴대폰은 보기만 (붙여 넣어 가져오기는 PC에서, 교체 확인 중일 때만 보임) */
+  html.mob .side:has(#sTitle):not(:has(#pend:not([hidden]))){display:none!important}
+  /* 자료실: 갈래는 한 줄로 옆으로 밀기 */
+  html.mob #nav{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;overflow-y:hidden;align-items:center!important;flex:none!important;height:auto!important;max-height:48px;gap:6px;padding-bottom:4px;scrollbar-width:none}
+  html.mob #nav > *{height:36px!important;max-height:36px}
+  html.mob #nav::-webkit-scrollbar{display:none}
+  html.mob #nav button{flex:none;min-height:36px;white-space:nowrap;border-radius:999px;display:inline-flex;align-items:center;gap:4px}
+  html.mob #nav label{flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;font-size:13px}
+  /* 자주 가는 사이트: 휴대폰은 여는 것이 먼저 — 넣기 칸은 아래로 */
+  html.mob main#m:has(> form#f){display:flex;flex-direction:column}
+  html.mob main#m > form#f{order:9}
+  /* 수업 기록: 제목 줄 작게 */
+  html.mob #htitle{font-size:18px!important}
+}

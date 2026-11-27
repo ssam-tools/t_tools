@@ -139,12 +139,24 @@
     var on = ph(); R.classList.toggle("mob", on);
     if(!on){ if(head) head.hidden = true; return; }
     var t = here(), ttl = document.title.split("·")[0].trim();
-    if(!head){ head = document.createElement("header"); head.id = "mobHead"; document.body.insertBefore(head, document.body.firstChild); }
+    if(!head){ head = document.createElement("div"); head.id = "mobHead"; head.setAttribute("role", "navigation"); head.setAttribute("aria-label", "도구 머리줄"); document.body.insertBefore(head, document.body.firstChild); }
     head.hidden = false;
     var back = BASE + (from() === "find" ? "#find" : from() === "all" ? "#all" : "");
     head.innerHTML = '<a class="bk" href="' + esc(back) + '" aria-label="뒤로">‹</a><b>' + (t ? tIcon(t.id, t.icon, 18) + " " + esc(t.short || t.name) : esc(ttl)) + "</b>"
       + '<a class="fd" href="' + esc(BASE + "#find") + '" aria-label="찾기">' + icon("search", 20) + "</a>";
   }
+
+  /* v2.57 도구 안쪽: PC에서만 쓰는 단추(인쇄 · 크게 띄우기 · 단축키)는 휴대폰에서 숨김 — 화면이 다시 그려져도 */
+  var PCB = /^\W{0,3}\s*(인쇄|인쇄용|크게 보기|크게 띄우기|전체 화면|단축키)/;
+  function tidy(){
+    if(HOME || !ph()) return;
+    Array.prototype.forEach.call(document.querySelectorAll("button:not(.mobHide),a.btn:not(.mobHide)"), function(b){
+      if(b.closest("#mobHead,.mobSh,dialog")) return;
+      var t = (b.textContent || "").trim(); if(t && t.length < 16 && PCB.test(t)) b.classList.add("mobHide");
+    });
+  }
+  var tT = 0;
+  if(!HOME) new MutationObserver(function(){ clearTimeout(tT); tT = setTimeout(tidy, 120); }).observe(document.documentElement, {childList: true, subtree: true});
 
   /* ── 누르기 ── */
   document.addEventListener("click", function(e){
@@ -185,7 +197,7 @@
     clearTimeout(qT); var v = e.target.value.trim();
     qT = setTimeout(function(){ var h = window.TT_SBHOME; if(h && h.search && v.length >= 1) h.search(v); }, 250);
   });
-  function draw(){ if(HOME) drawHome(); else drawTool(); }
+  function draw(){ if(HOME) drawHome(); else { drawTool(); tidy(); } }
   window.addEventListener("hashchange", function(){ if(HOME) drawHome(); });
   window.addEventListener("popstate", function(){ if(HOME) drawHome(); });
   try{ window.matchMedia("(max-width:760px)").addEventListener("change", draw); }catch(e){}
