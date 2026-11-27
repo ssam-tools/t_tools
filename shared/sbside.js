@@ -269,6 +269,6 @@
   window.addEventListener("storage", function(e){ if(!e.key || /^tt_/.test(e.key)) soon(); });
   new MutationObserver(soon).observe(document.body, {attributes: true, attributeFilter: ["class"]});
   (function tick(){ setTimeout(function(){ if(document.visibilityState === "visible") paint(); tick(); }, 60500 - Date.now() % 60000); })();
-  window.TT_SBSIDE = {render: soon, check: neisCheck};
+  window.TT_SBSIDE = {render: soon, paint: paint, check: neisCheck};
   if(location.hash) soon(); else paint();   // v2.58.1 첫 화면은 바로 그림(80ms 늦게 그려 가운데가 옮겨 가던 문제)
 })();

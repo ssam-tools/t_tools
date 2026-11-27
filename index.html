@@ -14,7 +14,7 @@ try{ var snG = /[?&]legacy=(on|off)\b/.exec(location.search);   /* v2.8: 쌤비 
   if(snG){ if(snG[1] === "on") localStorage.setItem("sn_legacy_ui", "1"); else localStorage.removeItem("sn_legacy_ui"); history.replaceState(null, "", location.pathname + location.search.replace(/[?&]legacy=(on|off)\b/, "").replace(/^&/, "?") + location.hash); }
   var snLeg = localStorage.getItem("sn_legacy_ui") === "1", snQ = snLeg && /[?&]ui=(ssambi|board)\b/.exec(location.search), snL = JSON.parse(localStorage.getItem("snlook_v1") || "null");
   if(snQ){ snL = snL || {}; snL.ui = snQ[1]; localStorage.setItem("snlook_v1", JSON.stringify(snL)); history.replaceState(null, "", location.pathname + location.search.replace(/[?&]ui=(ssambi|board)\b/, "").replace(/^&/, "?") + location.hash); }
-  var r = document.documentElement;
+  var r = document.documentElement; window.TT_SBHOLD = 1;   /* v2.58.2 쌤비 홈이 다 그려진 뒤 한 번에 보이기 (sbhome.js) */
   if(localStorage.getItem("ttv_device") === "classroom"){ var rmS = null; try{ rmS = JSON.parse(sessionStorage.getItem("ttv_session")); }catch(e){} r.setAttribute("data-room", rmS && rmS.k && Date.now() - (rmS.last || 0) < 12e5 && !(rmS.until && Date.now() > rmS.until) ? "on" : "lock"); }   /* v2.11.4 교실 기기도 쌤비 홈 (잠긴 동안은 '수업 시작' 화면만 보이게) */
   if(!snLeg || (snL && snL.ui === "ssambi")) r.setAttribute("data-ui", "ssambi"); }catch(e){}</script>
 <style id="sbHold">html[data-room="lock"] body>*:not(.ttv-room):not(.ttv-lock){visibility:hidden!important}html[data-ui="ssambi"]:not(.sbReady) body{visibility:hidden}

@@ -490,7 +490,7 @@
     var sbs = bar.querySelector(".sbSubs"), subH = barSubs();   // v2.24.1 휴대폰: 지금 메뉴의 도구(소메뉴)를 한 줄로 — 옆으로 밀어 다른 도구로
     if(sbs.getAttribute("data-h") !== subH){ sbs.setAttribute("data-h", subH); sbs.innerHTML = subH; sbs.hidden = !subH; var on = sbs.querySelector(".on"); if(on) setTimeout(function(){ try{ sbs.scrollLeft = on.offsetLeft - (sbs.clientWidth - on.offsetWidth) / 2; }catch(e){} }, 30); }
     F.ph(); headIcon(); fitRail(); alignSoon();
-    requestAnimationFrame(function(){ R.classList.add("sbReady"); fitRail(); }); setTimeout(function(){ R.classList.add("sbReady"); }, 120);   // v2.8.1: 창이 뒤에 있어 그림 신호가 늦어도 보이게
+    if(window.TT_SBHOLD){ requestAnimationFrame(fitRail); } else { requestAnimationFrame(function(){ R.classList.add("sbReady"); fitRail(); }); setTimeout(function(){ R.classList.add("sbReady"); }, 120); }   // v2.58.2 첫 화면(쌤비 홈)은 sbhome.js 가 다 그린 뒤 보임   // v2.8.1: 창이 뒤에 있어 그림 신호가 늦어도 보이게
   }
 
   /* ── v2.7 도구 화면 검색창: 오른쪽 화면이 무엇이냐에 따라 찾는 곳이 바뀝니다 ──

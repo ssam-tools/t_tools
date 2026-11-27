@@ -511,5 +511,14 @@
     move: function(d){ var n = picks().length; if(!n) return; Q.sel = (Q.sel + d + n) % n; render(); },
     run: function(){ var p = picks()[Q.sel]; if(!p) return; runRow(Q.rows.indexOf(p), null); }};
   render(); logo(); navIcons();
-  requestAnimationFrame(function(){ R.classList.add("sbReady"); }); setTimeout(function(){ R.classList.add("sbReady"); }, 120);   // v2.8.1: 창이 뒤에 있어 그림 신호가 늦어도 보이게   // 첫 그림이 끝나면 보이기
+  /* v2.58.2 첫 화면은 페이지 준비(talk.js·시작 준비·메뉴)가 다 끝난 뒤 한 번 더 그리고 보임 — 쌤비·말풍선이 잠깐 다른 내용으로 보였다 바뀌지 않게 */
+  var shown = false;
+  function reveal(){
+    if(shown) return; shown = true;
+    try{ fitMax(); render(); }catch(e){ console.warn("쌤비 홈:", e); }
+    try{ if(window.TT_SBSIDE && TT_SBSIDE.paint) TT_SBSIDE.paint(); }catch(e){}
+    requestAnimationFrame(function(){ R.classList.add("sbReady"); }); setTimeout(function(){ R.classList.add("sbReady"); }, 120);   // 창이 뒤에 있어 그림 신호가 늦어도 보이게
+  }
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", reveal); else reveal();
+  setTimeout(reveal, 2000);   // 혹시 준비 신호가 늦어도   // v2.8.1: 창이 뒤에 있어 그림 신호가 늦어도 보이게   // 첫 그림이 끝나면 보이기
 })();
