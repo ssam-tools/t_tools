@@ -149,7 +149,7 @@
     var rhH = meCard();   // v2.47 나의 학교생활 카드 (도구 화면의 쌤비·찾기 칸과 같은 높이)
     var rh = hrail.querySelector(".rh"); if(rh.getAttribute("data-h") !== rhH){ rh.setAttribute("data-h", rhH); rh.innerHTML = rhH; }
     hrail.querySelector(".rn").innerHTML = railHTML();
-    hrail.querySelector(".rb").innerHTML = miniBtn();
+    hrail.querySelector(".rb").innerHTML = rbHTML(); fitNote(hrail);
   }
   /* v2.47 홈·설정 왼쪽 위: 나의 학교생활 카드 — 다른 곳에 없는 것만 (맨 위 줄=날짜·날씨·급식, 오른쪽=시간표)
      ① 누구인지(이름 · 담임 반/교과) ② 가장 가까운 큰 일정 D-day ③ 방학식·종업식까지 남은 수업일 + 막대 ④ 우리 반 나무 · 퇴근 도장 · 아낀 시간
@@ -299,11 +299,99 @@
     if(CRM || !TT.joy || !TT.joy.treeNow || (TT.joy.on && !TT.joy.on())) return "";
     var t = TT.joy.treeNow(); return '<i class="sbTree" data-tree title="우리 반 ' + esc(t.nm) + " · 칭찬·청소 당번 완료 " + t.n + "번" + (t.next ? " · " + t.nnm + "까지 " + t.next + "번" : "") + '">' + t.ic + "</i>";
   }
+  /* ── v2.50 📌 쌤비 쪽지 (왼쪽 메뉴 맨 아래 · 넓은 화면) — 쌤비 말풍선은 "지금 할 일", 쪽지는 "알아두면 좋은 것"
+     ① 시기 업무 팁: 학사일정에서 10일 안 행사 → 챙길 것 / 없으면 이달의 업무 팁
+     ② 알아두면 좋은 것: 백업 7~29일(30일부터는 쌤비가 직접 말함) · 숨은 기능·단축키 한 가지
+     ③ 오늘의 한 줄: 고전·속담·쌤비 한마디 (하루 한 개)
+     규칙: 칸은 한 개(최대 2줄)로 고정 · ‹ › 로 넘기기 · 제목을 누르면 접기 · ⚙ 로 받을 쪽지 고르기 · 급한 일이 있으면 숨음
+     자료는 이 기기 것만 읽고 아무것도 보내지 않습니다. 교실 기기(공용)에서는 보이지 않습니다. */
+  var NK = "sb_note_v1", nIdx = 0, nSet = false;
+  function nCfg(){ try{ var c = JSON.parse(localStorage.getItem(NK) || "{}") || {}; c.off = c.off || {}; return c; }catch(e){ return {off: {}}; } }
+  function nSave(c){ try{ localStorage.setItem(NK, JSON.stringify(c)); }catch(e){} }
+  var NMON = {
+    1: ["학년말 생기부 최종 점검 — 누락·오탈자 확인", "새 학년 업무분장·담임 희망서 제출일 확인", "학생 사진·연락처 파일 정리·파기"],
+    2: ["새 명렬표가 오면 쌤 노트 명렬표에 올리기", "새 시간표는 내 시간표부터 넣어 두기", "학기초 세팅을 먼저 받아 두면 3월이 편해요"],
+    3: ["기초조사서·개인정보 동의서 회수 확인", "학부모 상담 주간 전 상담 일지 준비", "결석계 제출 기한을 학생에게 미리 안내"],
+    4: ["지필 출제 원안·이원목적분류표 점검", "체험학습 신청서와 보고서 기한 안내", "수행평가 채점 기준 공개 여부 확인"],
+    5: ["수행평가 결과 확인·이의 신청 안내", "행사 전 안전교육 기록 남기기", "학생 관찰은 그날그날 한 줄씩"],
+    6: ["1학기 기말 출제·검토 일정 확인", "1학기 생기부 누가기록 미리 정리", "방학 전 살필 학생 한 번 더 보기"],
+    7: ["1학기 성적·생기부 입력 마감 확인", "방학 중 연락 방법·안전교육 안내", "1학기 결석계·증빙 빠진 것 확인"],
+    8: ["2학기 시간표 교체부터 확인", "개학 첫 주 결석·지각 학생 살피기", "2학기 수행평가 기준 공개 준비"],
+    9: ["2학기 지필 출제 일정 확인", "중3 담임: 고입 상담 자료 모으기", "체험학습 보고서 기한 지난 학생 확인"],
+    10: ["중간 성적 확인·이의 신청 안내", "세특·행특용 관찰 기록 모아 두기", "현장체험 전 안전교육 기록 남기기"],
+    11: ["생기부 집중 시기 — 글자 수·금지 표현 점검", "중3 담임: 고입 원서 일정·서류 확인", "2학기 기말 출제·검토 일정 확인"],
+    12: ["학년말 생기부 점검·마감 일정 확인", "한 해 결석계·증빙 빠진 것 확인", "겨울방학 안전교육·연락 방법 안내"]
+  };
+  var NEV = [[/고사|시험|지필/, "출제 원안·답안지 점검, 감독표 확인"], [/방학식/, "방학 중 연락 방법·안전교육 안내"], [/체험|수학여행|수련|소풍/, "참가 동의서·안전교육·비상 연락망"],
+             [/졸업/, "졸업장·상장 명단 최종 확인"], [/상담|학부모|총회/, "상담 일정표·상담 일지 준비"], [/개학|입학/, "시간표 교체·명렬표 변동 확인"], [/생활기록부|생기부|성적/, "입력·점검 마감 시각 확인"]];
+  var NTIP = [["/ 키를 누르면 어디서나 바로 찾기", ""], ["Alt+1~5로 메뉴 이동, Alt+0은 설정", ""], ["Alt+B를 누르면 쌤비가 열려요", ""],
+              ["검색창에 '3번 지각'처럼 적으면 바로 출결에 저장돼요", ""], ["검색창에 '+ 할 일'을 적으면 할 일에 들어가요", ""],
+              ["맨 위 날짜에 마우스를 올리면 오늘 급식이 보여요", ""], ["맨 위 시각에 마우스를 올리면 지금 교시·하교 시간", ""],
+              ["선생님 이름에 마우스를 올리면 내선·지금 수업 중인지", ""], ["반 이름(3-2)에 마우스를 올리면 담임·지금 수업 선생님", ""],
+              ["공용 화면에서는 출결의 '이름 가리기'를 켜 두세요", "apps/tardy/"], ["☆ 자주 가는 사이트는 Alt+S로 열어요", ""]];
+  var NQ = ["배우고 때때로 익히면 또한 기쁘지 아니한가. — 논어", "아는 것을 안다 하고 모르는 것을 모른다 하는 것, 그것이 앎이다. — 논어", "옛것을 익혀 새것을 알면 스승이 될 만하다. — 논어",
+            "세 사람이 길을 가면 그중에 반드시 나의 스승이 있다. — 논어", "가르치고 배우며 함께 자란다. (교학상장) — 예기", "천하의 영재를 얻어 가르치는 것, 군자의 세 번째 즐거움. — 맹자",
+            "천 리 길도 한 걸음부터. — 속담", "낙숫물이 댓돌을 뚫는다. — 속담", "백지장도 맞들면 낫다. — 속담", "말 한마디로 천 냥 빚을 갚는다. — 속담", "구슬이 서 말이라도 꿰어야 보배. — 속담", "급할수록 돌아가라. — 속담", "시작이 반이다. — 속담",
+            "오늘 한 학생의 이름을 다정하게 불러 주는 것으로 충분해요. — 쌤비", "기록은 기억보다 힘이 세요. 오늘도 한 줄! — 쌤비", "느린 학생은 늦은 학생이 아니에요. — 쌤비",
+            "좋은 질문을 한 학생을 오늘 한 번 칭찬해 볼까요? — 쌤비", "선생님이 웃으면 교실 온도가 1도 올라가요. — 쌤비", "오늘 못 끝낸 일은 내일의 할 일일 뿐이에요. — 쌤비",
+            "쉬는 시간 물 한 잔, 잊지 마세요. — 쌤비", "완벽한 수업보다 다시 해 보는 수업이 학생을 키워요. — 쌤비"];
+  function doy(d){ return Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000); }
+  function nItems(){
+    var c = nCfg(), now = new Date(), td = ymdS(now), n = doy(now), out = [];
+    if(!c.off.tip){
+      var C = TT.store.get("tt_calendar_v1", null), E = C && Array.isArray(C.events) ? C.events : [], lim = ymdS(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 10)), ev = null;
+      E.filter(function(e){ return e && e.d > td && e.d <= lim && e.t; }).sort(function(a, b){ return a.d < b.d ? -1 : 1; }).some(function(e){
+        for(var i = 0; i < NEV.length; i++) if(NEV[i][0].test(e.t)){ ev = {e: e, tip: NEV[i][1]}; return true; } return false; });
+      if(ev){ var dn = Math.round((new Date(+ev.e.d.slice(0, 4), +ev.e.d.slice(5, 7) - 1, +ev.e.d.slice(8, 10)) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+        out.push({k: "tip", tag: "D-" + dn + " " + ev.e.t.replace(/^\s*\d학기\s*/, ""), full: ev.e.t, t: ev.tip}); }
+      var M = NMON[now.getMonth() + 1] || []; if(M.length) out.push({k: "tip", tag: (now.getMonth() + 1) + "월 업무 팁", t: M[n % M.length]});
+    }
+    if(!c.off.info){
+      var bd = TT.backup && TT.backup.daysSince ? TT.backup.daysSince() : null;
+      if(TT.backup && TT.backup.hasData && TT.backup.hasData() && bd != null && bd >= 7 && bd < 30) out.push({k: "info", tag: "알아두면", t: "백업한 지 " + bd + "일 · 설정에서 전체 백업 저장", href: BASE + "#settings"});
+      var T = NTIP[n % NTIP.length]; out.push({k: "info", tag: "숨은 기능", t: T[0], href: T[1] ? BASE + T[1] : ""});
+    }
+    if(!c.off.quote) out.push({k: "quote", tag: "오늘의 한 줄", t: NQ[n % NQ.length]});
+    return out;
+  }
+  function noteHTML(){
+    if(CRM) return "";
+    var c = nCfg(), L = nItems();
+    if(nSet){
+      var ck = function(k, t){ return '<label><input type="checkbox" data-ntk="' + k + '"' + (c.off[k] ? "" : " checked") + "> " + t + "</label>"; };
+      return '<div class="sbNote set" aria-label="쌤비 쪽지 고르기"><div class="nh"><b>📌 받을 쪽지</b><button type="button" class="na" data-nt="set" title="닫기" aria-label="닫기">✓</button></div>'
+        + '<div class="nck">' + ck("tip", "업무 팁") + ck("info", "알아두면 좋은 것") + ck("quote", "오늘의 한 줄") + "</div></div>";
+    }
+    if(!L.length) return '<div class="sbNote fold"><div class="nh"><button type="button" class="nt" data-nt="set" title="받을 쪽지 고르기">📌 쌤비 쪽지 꺼 둠</button><button type="button" class="na" data-nt="set" aria-label="쪽지 고르기">⚙</button></div></div>';
+    nIdx = (nIdx % L.length + L.length) % L.length;
+    var it = L[nIdx], body = esc(it.t), fold = !!c.fold;
+    var txt = it.href ? '<a class="nb" href="' + esc(it.href) + '" title="' + body + '">' + body + "</a>" : '<p class="nb" title="' + body + '">' + body + "</p>";
+    return '<div class="sbNote k-' + it.k + (fold ? " fold" : "") + '" aria-label="쌤비 쪽지"><div class="nh">'
+      + '<button type="button" class="nt" data-nt="fold" title="' + esc(it.full || it.tag) + " · " + (fold ? "펼치기" : "접기") + '" aria-expanded="' + !fold + '">📌 <span>' + esc(it.tag) + "</span></button>"
+      + (L.length > 1 ? '<button type="button" class="na" data-nt="prev" aria-label="이전 쪽지" title="이전 (' + (nIdx + 1) + "/" + L.length + ')">‹</button><button type="button" class="na" data-nt="next" aria-label="다음 쪽지" title="다음 (' + (nIdx + 1) + "/" + L.length + ')">›</button>' : "")
+      + '<button type="button" class="na ng" data-nt="set" title="받을 쪽지 고르기" aria-label="받을 쪽지 고르기">⚙</button></div>' + txt + "</div>";
+  }
+  function urgentNow(){ var p = P(); return !!(p && p.item === "alarm"); }   // 급한 일은 쌤비가 말하므로 쪽지는 잠시 숨김
+  function rbHTML(){ return '<div class="nw"' + (urgentNow() ? " hidden" : "") + ">" + noteHTML() + "</div>" + miniBtn(); }
+  function noteRedraw(){ Array.prototype.forEach.call(document.querySelectorAll("#sbRail .nw"), function(w){ w.innerHTML = noteHTML(); }); }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("#sbRail [data-nt]"); if(!b) return;
+    e.preventDefault(); var a = b.getAttribute("data-nt"), c = nCfg();
+    if(a === "next") nIdx++; else if(a === "prev") nIdx--; else if(a === "set") nSet = !nSet; else if(a === "fold"){ c.fold = !c.fold; nSave(c); }
+    noteRedraw();
+  });
+  document.addEventListener("change", function(e){
+    var k = e.target.getAttribute && e.target.getAttribute("data-ntk"); if(!k) return;
+    var c = nCfg(); c.off[k] = !e.target.checked; nSave(c); nIdx = 0;
+  });
+
+  function fitNote(el){ if(!el || !el.offsetHeight) return; el.classList.remove("noNote"); if(el.scrollHeight > el.clientHeight + 2) el.classList.add("noNote"); }
   /* v2.8.1 왼쪽 막대가 화면보다 길면 조금씩 줄여 스크롤 없이: ① 칸 높이·쌤비 크기 ② 쌤비 한마디 숨김 */
   function fitRail(){                                                   // v2.46 위쪽·메뉴 줄은 그대로, 펼친 도구 목록만 줄이고 그래도 길면 목록 안에서 스크롤
     if(!rail || !rail.offsetHeight) return;
-    rail.classList.remove("tight", "tighter");
+    rail.classList.remove("tight", "tighter", "noNote");
     function over(){ var tl = rail.querySelector(".tl"); return (tl && tl.scrollHeight > tl.clientHeight + 2) || rail.scrollHeight > rail.clientHeight + 2; }
+    if(over()) rail.classList.add("noNote");   // v2.50 자리가 모자라면 쪽지부터 숨김 (도구 목록이 먼저)
     if(over()) rail.classList.add("tight");
     if(over()) rail.classList.add("tighter");
     var tl0 = rail.querySelector(".tl"); if(tl0) tl0.classList.toggle("scr", tl0.scrollHeight > tl0.clientHeight + 2);   // 목록이 더 있으면 아래를 흐리게
@@ -388,7 +476,7 @@
       document.body.insertBefore(bar, topEl && topEl.parentNode === document.body ? topEl.nextSibling : document.body.firstChild); document.body.classList.add("sbBarOn");
       F.wire("R"); F.wire("B");
     }
-    rail.querySelector(".rt").innerHTML = railTop(); rail.querySelector(".rn").innerHTML = railHTML(); rail.querySelector(".rb").innerHTML = miniBtn();
+    rail.querySelector(".rt").innerHTML = railTop(); rail.querySelector(".rn").innerHTML = railHTML(); rail.querySelector(".rb").innerHTML = rbHTML();
     bar.querySelector(".bo").innerHTML = '<button type="button" class="owl" id="sbBarOwl2" title="쌤비 (Alt+B)" aria-label="쌤비 열기">' + owlSvg(46) + "</button>";
     bar.querySelector(".sbTabs").innerHTML = barTabs();
     var sbs = bar.querySelector(".sbSubs"), subH = barSubs();   // v2.24.1 휴대폰: 지금 메뉴의 도구(소메뉴)를 한 줄로 — 옆으로 밀어 다른 도구로
