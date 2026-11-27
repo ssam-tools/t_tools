@@ -9,6 +9,7 @@
   if(!window.TT || window.TT_SBAR || (TT.classroom && TT.classroom.locked)) return;   // v2.11.4 교실 기기도 (수업 시작 뒤) 쌤비 메뉴 — 수업용 도구만
   if(window.top !== window){ document.documentElement.classList.add("sbReady"); return; }   // 다른 화면 안(학교 업무판의 문서 칸)에 열렸을 때는 쌤비·메뉴 없이
   var R = document.documentElement, ART = window.TT_SBART, BASE = TT.BASE || "./";
+  if(!window.TT_MOB && !document.querySelector('script[src*="shared/mob.js"]')){ var ms = document.createElement("script"); ms.src = BASE + "shared/mob.js?v=" + (TT.VERSION || ""); document.head.appendChild(ms); }   // v2.56 휴대폰 화면
   var HOME = !/\/apps\//.test(location.pathname);
   if(!HOME && R.getAttribute("data-ui") !== "ssambi") return;          // 도구 화면은 쌤비 홈 디자인일 때만 (첫 화면은 바꾸는 즉시 보이도록 늘 만들어 둠)
   try{ if(localStorage.getItem("sb_rail_mini") === "1") R.classList.add("sbMini"); }catch(e){}   // v2.45 왼쪽 메뉴 접기(아이콘만) — 기억

@@ -684,9 +684,20 @@
     var K = (!m0 && !(TT.classroom || (function(){ try{ return localStorage.getItem("ttv_device") === "classroom"; }catch(e){ return false; } })()) && /비밀번호|비번|아이디|계정|와이파이|wi-?fi|와파|금고|연락처|휴대폰|핸드폰|폰번호|프린터|복합기|출입|도어락|로그인|공유기/i.test(qq))
       ? [{ic: "🔐", tx: "학교 금고에서 찾기 · <b>" + esc(qq) + "</b>", sub: "공용 계정 · 연락처 · 보안 안내 (금고 문구로 열어요)", go: function(){ closeFind(); location.href = (TT.BASE || "./") + "apps/school/?tab=safe&q=" + encodeURIComponent(qq); }}] : [];
     var actFirst = m0 || parseDate(qq).date || (!T.length && !S.length && !E.length && !(docHits || []).length) || /\s/.test(qq);   // 띄어 쓴 한 줄은 입력으로 먼저
+    /* v2.56 📅 학사일정 · 🕘 선생님 시간표도 찾기 (이 기기에 있는 자료만) */
+    var CE = [], TW = [];
+    if(!m0 && qq.length >= 2){
+      try{ var C0 = TT.store.get("tt_calendar_v1", null), td0 = ymd(new Date());
+        CE = ((C0 && C0.events) || []).filter(function(e){ return String(e.t || "").indexOf(qq) >= 0; }).sort(function(a, b){ return (a.d < td0) - (b.d < td0) || (a.d < b.d ? -1 : 1); }).slice(0, 4)
+          .map(function(e){ return {ic: "📅", tx: esc(e.t), sub: dLabel(e.d) || e.d, go: function(){ closeFind(); if(window.TT_MOB) TT_MOB.open("cal"); }}; }); }catch(x){}
+      try{ var A0 = TT.store.get("tt_alltt_v1", null);
+        TW = ((A0 && A0.teachers) || []).filter(function(t){ return t.name && String(t.name).indexOf(qq) >= 0; }).slice(0, 3)
+          .map(function(t){ return {ic: "🕘", tx: esc(t.name) + " 선생님 시간표", sub: "오늘 수업 · 빈 시간", go: function(){ closeFind(); if(window.TT_MOB) TT_MOB.open("tt", t.name); }}; }); }catch(x){}
+    }
+    if((CE.length || TW.length) && !m0 && !parseDate(qq).date) actFirst = false;   // 찾은 정보가 있으면 정보 먼저
     function grp(h, L){ if(L.length){ R.push({h: h}); R = R.concat(L); } }
     if(actFirst) grp("입력", act);
-    grp("📞 내선번호", E); grp("🔐 학교 금고", K); grp("학생", S); grp("도구", T); grp("🗂️ 학교 자료실", D);
+    grp("📞 내선번호", E); grp("🕘 선생님", TW); grp("📅 학사일정", CE); grp("🔐 학교 금고", K); grp("학생", S); grp("도구", T); grp("🗂️ 학교 자료실", D);
     if(!actFirst) grp("입력", act);
     return R;
   }

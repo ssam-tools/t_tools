@@ -154,5 +154,7 @@
     }
     if(w && att.last && T[att.last]){ var r = T[att.last]; if(r.r === w.dataset.why) delete r.r; else r.r = w.dataset.why; saveG(G); drawAtt(); }
   });
-  window.TT_QUICK = {open: open};
+  /* v2.56 휴대폰 적기 → 지각·결석 번호판으로 바로 (판의 6칸을 거치지 않음) */
+  function openAtt(){ if(!isNew()) return; sh.hidden = false; document.body.classList.add("qopen"); att.kind = att.kind || "L"; att.last = null; drawAtt(); }
+  window.TT_QUICK = {open: open, att: openAtt};
 })();
