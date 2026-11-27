@@ -386,6 +386,7 @@
   function render(){
     var ok = on();
     document.body.classList.toggle("sbOn", ok);
+    if(ok && !render.f){ render.f = 1; if(!location.hash && !TT.classroom && window.innerWidth >= 1280) document.body.classList.add("sbSideOn"); }   // v2.58.1 첫 화면: 오른쪽 칸 자리를 처음부터 잡아 둠(가운데가 넓게 보였다 옮겨지지 않게)
     if(ok && !document.getElementById("sbCredit")){                  // 배포판 표기 (맨 아래 작은 회색 한 줄)
       var cr = document.createElement("div"); cr.id = "sbCredit";
       cr.textContent = "쌤 노트 v" + TT.VERSION + " · 제작 jidangmath × Claude · 2026.11"; document.body.appendChild(cr);
