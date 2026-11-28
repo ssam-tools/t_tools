@@ -116,7 +116,7 @@
       var L = S.items.filter(function(x){ return x.m === mo; }).sort(function(a, b){ return (a.d || 0) - (b.d || 0); });
       var left = L.filter(function(x){ return !S.done[dkey(x)]; }).length, isNow = mo === cm && yearOf(mo) === cy;
       return '<section class="mo' + (isNow ? " now" : "") + '"><h3>' + mo + '월<span class="n">' + (L.length ? (left ? "남은 " + left : "✔ 끝") : "") + '</span><span class="sp"></span><button type="button" data-addm="' + mo + '" title="이 달에 더하기">＋</button></h3><ul>'
-        + evs(mo).map(function(e){ return '<li class="ev ' + e.k + '"><span class="pin">📌</span><span class="d">' + mo + "/" + (+e.d.slice(8)) + '</span><span class="t" title="학사일정">' + esc(e.t) + "</span></li>"; }).join("")
+        + evs(mo).map(function(e){ return '<li class="ev ' + e.k + '"><span class="pin">📌</span><span class="d">' + TT.cal.when(e, {dow: false}) + '</span><span class="t" title="학사일정' + (e.d !== e.to ? " · " + TT.cal.when(e) : "") + '">' + esc(e.t) + "</span></li>"; }).join("")
         + L.map(function(x){
             var t = TOOL[x.tool], done = !!S.done[dkey(x)];
             return '<li class="' + (done ? "done" : "") + '"><input type="checkbox" data-done="' + x.id + '" ' + (done ? "checked" : "") + ' aria-label="끝냄"><span class="d">' + (x.d ? mo + "/" + x.d : "") + '</span><span class="cat c-' + esc(x.cat) + '">' + esc(x.cat === "내업무" ? "내 업무" : x.cat) + '</span><span class="t" data-ed="' + x.id + '" title="' + esc(x.title) + (x.note ? " · " + esc(x.note) : "") + '">' + esc(x.title) + "</span>" + (t ? '<a class="go" href="../../' + t.href + '" title="' + esc(t.name) + ' 열기">' + t.icon + "</a>" : "") + "</li>";
@@ -150,7 +150,8 @@
     d.showModal(); f.querySelector("#eT").focus();
   }
   /* 학사일정: 이 학년도(Y년 3월~이듬해 2월) 중 그 달 일정 */
-  function evs(mo){ var y = mo >= 3 ? Y : Y + 1, a = y + "-" + ("0" + mo).slice(-2) + "-01", b = y + "-" + ("0" + mo).slice(-2) + "-31"; var seen = {}; return TTCal.inRange(a, b).filter(function(e){ var k = e.t + (e.k === "evt" ? e.d : ""); if(e.k !== "evt"){ k = e.t; } if(seen[k]) return false; seen[k] = 1; return true; }); }
+  /* v2.61 공통 정리(TT.cal): 같은 날 중복 없이 · 이어지는 일정은 기간 한 줄 (그 달과 겹치면 보임) */
+  function evs(mo){ var y = mo >= 3 ? Y : Y + 1, a = y + "-" + ("0" + mo).slice(-2) + "-01", b = y + "-" + ("0" + mo).slice(-2) + "-31"; return TT.cal.list(a, b); }
   $("imp").onclick = function(){
     var d = document.createElement("dialog"), f = document.createElement("form"); d.appendChild(f); document.body.appendChild(d); d.style.width = "min(760px,96vw)";
     d.addEventListener("close", function(){ d.remove(); });

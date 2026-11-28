@@ -65,7 +65,7 @@
   document.head.appendChild(st);
 
   /* ---------- 학사일정 · 시기 ---------- */
-  function events(){ var C = TT.store.get("tt_calendar_v1", null); return C && Array.isArray(C.events) ? C.events : []; }
+  function events(){ return TT.cal ? TT.cal.list() : []; }   // v2.61 기간으로 묶은 일정 (d: 시작, to: 끝)
   function dday(){
     var t = ymd(), lim = ymd(new Date(Date.now() + 120 * 864e5)), best = null;
     events().forEach(function(e){
@@ -78,7 +78,7 @@
     var n = Math.round((new Date(best.d + "T00:00:00") - new Date(t + "T00:00:00")) / 864e5);
     return {t: String(best.t).replace(/\s+/g, " ").trim().slice(0, 40), n: n, d: best.d};   // v2.51 일정 이름을 자르지 않음 (보여 주는 곳에서 줄 수로 맞춤)
   }
-  function examNear(){ var t = new Date(); t.setHours(0, 0, 0, 0); var a = ymd(new Date(t - 2 * 864e5)), b = ymd(new Date(+t + 5 * 864e5)); return events().some(function(e){ return e.d >= a && e.d <= b && (e.k === "exam" || /고사|시험/.test(e.t || "")); }); }
+  function examNear(){ var t = new Date(); t.setHours(0, 0, 0, 0); var a = ymd(new Date(t - 2 * 864e5)), b = ymd(new Date(+t + 5 * 864e5)); return events().some(function(e){ return e.d <= b && (e.to || e.d) >= a && (e.k === "exam" || /고사|시험/.test(e.t || "")); }); }
   function season(){ var m = new Date().getMonth() + 1; return m >= 3 && m <= 5 ? "spring" : m >= 6 && m <= 8 ? "summer" : m >= 9 && m <= 11 ? "autumn" : "winter"; }
   var ACC = {spring: ["🌸", "봄 꽃 핀"], summer: ["🕶️", "여름 선글라스"], autumn: ["🍂", "가을 낙엽"], winter: ["🧣", "겨울 목도리"]};
 

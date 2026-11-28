@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.60.0";
+  var VERSION = "2.61.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -1053,9 +1053,106 @@ var TT = (function(){
   })();
   var font = {list: look.fonts, get: function(){ return look.get().font; }, set: function(id){ look.set("font", id); }};   // 예전 이름
 
+  /* ================= v2.61 📅 학사일정 정리 (휴대폰 · PC 같은 규칙) =================
+     저장된 자료(tt_calendar_v1)는 그대로 두고, 보여 줄 때만 정리합니다. 휴일·당번 같은 계산은 원자료(raw)를 씁니다.
+     ① 같은 날 같은 내용은 하나로: "1, 2학년 2학기 2차고사" = "2학기 2차고사(1,2학년)", "전교학생회선거" + "학생회 선거(6,7교시)"
+     ② 수업일로 이어지는 같은 일정은 기간으로 (주말·쉬는 날은 건너뜀) → {d: 시작, to: 끝}
+     - list(a, b): 기간으로 묶은 일정 (a~b 와 겹치는 것) — 목록용
+     - days(a, b): 날짜별 일정 (같은 날 중복 없음, 기간 정보 from·to 포함) — 달력 칸용
+     - when(g, {dow}) "12/21(월)~24(목)" · cat(g) 색 종류 · other(t) 다른 학년만의 일정인지 · big(t) D-day 붙일 큰 일정 */
+  var cal = (function(){
+    var KEY = "tt_calendar_v1", DW = "일월화수목금토", memo = null, memoK = "", gMemo = null, gAt = 0;
+    function ymdOf(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+    function dt(s){ var a = String(s).split("-"); return new Date(+a[0], +a[1] - 1, +a[2]); }
+    function addD(s, n){ var d = dt(s); d.setDate(d.getDate() + n); return ymdOf(d); }
+    function raw(){ var C = store.get(KEY, null); return C && Array.isArray(C.events) ? C.events : []; }
+    function cc(s){ return String(s || "").replace(/[\s()\[\],·.]/g, ""); }
+    function split(t){
+      t = String(t || "").replace(/\s*,\s*/g, ",").replace(/\s{2,}/g, " ").trim();
+      var P = [], core = t.replace(/\(([^)]*)\)/g, function(_, p){ if(p.trim()) P.push(p.trim()); return " "; }).replace(/\s{2,}/g, " ").trim();
+      return {core: core, pars: P};
+    }
+    function sig(t){ var s = split(t); return (s.core + " " + s.pars.join(" ")).split(/\s+/).map(cc).filter(Boolean).sort().join("|"); }
+    function same(a, b){
+      if(sig(a) === sig(b)) return true;
+      var x = cc(split(a).core), y = cc(split(b).core), s = x.length <= y.length ? x : y, l = s === x ? y : x;
+      return s.length >= 3 && l.indexOf(s) >= 0 && l.length - s.length <= 2;          // "학생회선거" ⊂ "전교학생회선거" (두 글자까지만 더 붙은 것)
+    }
+    function merge(a, b){
+      var A = split(a), B = split(b);
+      if(sig(a) === sig(b)) return A.pars.length !== B.pars.length ? (A.pars.length > B.pars.length ? a : b) : (a.length >= b.length ? a : b);
+      var base = cc(A.core).length >= cc(B.core).length ? A.core : B.core, seen = {}, P = [];
+      A.pars.concat(B.pars).forEach(function(p){ var k = cc(p); if(k && !seen[k]){ seen[k] = 1; P.push(p); } });
+      return base + P.map(function(p){ return "(" + p + ")"; }).join("");
+    }
+    var KR = {off: 3, exam: 2, evt: 1};
+    /* 아무 일정 목록 → 기간으로 묶은 목록 (업무판 일정 등 다른 자료를 섞어도 됨) */
+    function group(E, OFF){
+      if(!OFF){ OFF = {}; raw().forEach(function(e){ if(e.k === "off") OFF[e.d] = 1; }); }
+      var day = {}, D = [];
+      (E || []).filter(function(e){ return e && e.d && e.t; }).slice().sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; }).forEach(function(e){
+        var L = day[e.d] || (day[e.d] = (D.push(e.d), [])), hit = null;
+        for(var i = 0; i < L.length; i++) if(same(L[i].t, e.t)){ hit = L[i]; break; }
+        if(hit){ hit.t = merge(hit.t, e.t); if((KR[e.k] || 1) > (KR[hit.k] || 1)) hit.k = e.k; }
+        else L.push({d: e.d, t: String(e.t), k: e.k || "evt", src: e.src});
+      });
+      function linked(a, b){
+        if(b <= a) return false;
+        for(var x = addD(a, 1), n = 0; x < b; x = addD(x, 1)){ if(++n > 12) return false; var w = dt(x).getDay(); if(w !== 0 && w !== 6 && !OFF[x]) return false; }
+        return true;
+      }
+      var G = [], open = {};
+      D.forEach(function(d){ day[d].forEach(function(e){
+        var s = sig(e.t), o = open[s];
+        if(o && linked(o.to, d)){ o.to = d; o.days.push(d); if(e.t.length > o.t.length) o.t = e.t; return; }
+        o = {d: d, to: d, t: e.t, k: e.k, days: [d]}; if(e.src) o.src = e.src; open[s] = o; G.push(o);
+      }); });
+      return G;
+    }
+    function all(){
+      var C = store.get(KEY, null), k = C ? (C.at || 0) + "|" + ((C.events || []).length) : "";
+      if(!memo || k !== memoK){ memo = group(raw()); memoK = k; }
+      return memo;
+    }
+    function list(a, b){ return all().filter(function(g){ return (!a || g.to >= a) && (!b || g.d <= b); }); }
+    function days(a, b){
+      var out = [];
+      all().forEach(function(g){ g.days.forEach(function(d){ if((!a || d >= a) && (!b || d <= b)) out.push({d: d, t: g.t, k: g.k, from: g.d, to: g.to}); }); });
+      return out.sort(function(p, q){ return p.d < q.d ? -1 : p.d > q.d ? 1 : 0; });
+    }
+    function md(s, dow){ var d = dt(s); return (d.getMonth() + 1) + "/" + d.getDate() + (dow ? "(" + DW[d.getDay()] + ")" : ""); }
+    function when(g, o){
+      o = o || {}; var dow = o.dow !== false, td = o.today, from = g.from || g.d, to = g.to || from;
+      var A = from === td && o.today ? "오늘" : md(from, dow);
+      if(to === from) return A;
+      var e = dt(to), B = from.slice(0, 7) === to.slice(0, 7) ? e.getDate() + (dow ? "(" + DW[e.getDay()] + ")" : "") : md(to, dow);
+      return A + "~" + B;
+    }
+    function cat(g){ var t = g.t || ""; return g.k === "off" ? "off" : g.k === "exam" ? "exam" : /자치|학생회|동아리|다모임/.test(t) ? "self" : /교육|연수|상담|검사|진단/.test(t) ? "edu" : "evt"; }
+    /* 우리 학년: 담임 반 + 내 시간표에 있는 학년 (모르면 null — 흐리게 하지 않음) */
+    function grades(){
+      if(gMemo !== null && Date.now() - gAt < 60000) return gMemo;
+      var g = {}, n = 0;
+      try{ var h = roster.home(); if(h && h.grade){ g[h.grade] = 1; n++; } }catch(x){}
+      try{ var S = timetable.week() || {}; Object.keys(S).forEach(function(k){ var c = +(S[k] && S[k].cls); if(c > 100){ g[Math.floor(c / 100)] = 1; n++; } }); }catch(x){}
+      gMemo = n ? g : null; gAt = Date.now(); return gMemo;
+    }
+    function other(t, G){
+      G = G === undefined ? grades() : G; if(!G) return false;
+      var m = String(t || "").replace(/\s/g, "").match(/([1-6](?:[,·~∼-][1-6])*)학년/g); if(!m) return false;
+      var hit = false; m.forEach(function(x){ x.replace(/학년/, "").split(/[,·~∼-]/).forEach(function(n){ if(G[+n]) hit = true; }); });
+      return !hit;
+    }
+    var BIG = /방학식|종업식|졸업식|입학식|개학|수학여행|체육대회|축제|수련회|현장체험|고사|시험|모의고사/;
+    function big(t){ return BIG.test(t || ""); }
+    function dday(a, b){ return Math.round((dt(b) - dt(a)) / 864e5); }
+    return {KEY: KEY, raw: raw, group: group, list: list, days: days, when: when, md: md, cat: cat, grades: grades, other: other, big: big, dday: dday, same: same, merge: merge,
+      CATS: [["exam", "시험"], ["off", "쉬는 날"], ["evt", "행사"], ["edu", "교육"], ["self", "자치"]]};
+  })();
+
   (function(){ var s = document.createElement("script"); s.src = BASE + "shared/vaultui.js"; s.defer = true; document.head.appendChild(s); })();
   /* v2.52 🛡️ 관리자 모드인 창이면 어느 화면에서나 맨 위 표시(shared/admin.js) */
   try{ if(sessionStorage.getItem("ttadm_s") && !document.querySelector('script[src*="shared/admin.js"]')){ var as = document.createElement("script"); as.src = BASE + "shared/admin.js?v=" + VERSION; as.defer = true; document.head.appendChild(as); } }catch(e){}
 
-  return { VERSION: VERSION, BASE: BASE, classroom: classroom, store: store, roster: roster, timetable: timetable, school: school, staff: staff, font: font, look: look, notes: notes, photos: photos, file: {toRows: fileToRows, readXlsx: readXlsx, userErr: userErr, zip: makeZip}, util: util, ui: ui, backup: backup };
+  return { VERSION: VERSION, BASE: BASE, classroom: classroom, store: store, cal: cal, roster: roster, timetable: timetable, school: school, staff: staff, font: font, look: look, notes: notes, photos: photos, file: {toRows: fileToRows, readXlsx: readXlsx, userErr: userErr, zip: makeZip}, util: util, ui: ui, backup: backup };
 })();

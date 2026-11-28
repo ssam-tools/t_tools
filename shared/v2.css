@@ -678,6 +678,7 @@ html[data-ui="ssambi"] body.sbTopOn > header h1,html[data-ui="ssambi"] body.sbTo
 #sbSide .sdL .li.k-off::before{background:#D9483B}#sbSide .sdL .li.k-sch::before{background:#E08A1E}#sbSide .sdL .li.k-me::before{background:#2E9D5B}
 #sbSide .sdL .li span{color:var(--t-sub);font-variant-numeric:tabular-nums;margin-right:6px}
 #sbSide .sdL .li.none{color:var(--t-faint);padding-left:0}#sbSide .sdL .li.none::before{display:none}
+#sbSide .sdL .li.dim{opacity:.55}#sbSide .sdL .li em.rg{font-style:normal;font-size:11px;color:var(--t-sub);margin-left:4px}   /* v2.61 다른 학년 · 기간 */
 #sbSide .sdHint{margin-top:auto;font-size:11px;color:var(--t-faint);padding-top:6px}
 body.sbSideOn #sbHero .bub.brief .bl.nx{display:none}              /* 다음 수업은 오른쪽 시간표가 보여 줌 */
 

@@ -72,7 +72,7 @@
     var G = TT.store.get("tt_guide_v1", null);                                       // 생활지도 상담 후속 확인일 (번호만 표시)
     if(G && Array.isArray(G.counsel)) G.counsel.forEach(function(c){ if(c.next && !c.done) out.push({date: c.next, text: c.sid + "번 상담 후속 확인", ic: "🗣️"}); });
     var Cal = TT.store.get("tt_calendar_v1", null);                                   // 학사일정 (연간 업무에서 붙여 넣기)
-    if(Cal && Array.isArray(Cal.events)) Cal.events.forEach(function(e){ out.push({date: e.d, text: e.t, ic: "📌"}); });
+    if(Cal && Array.isArray(Cal.events)) TT.cal.days().forEach(function(e){ out.push({date: e.d, text: e.t + (e.from !== e.to ? " (" + TT.cal.when({d: e.from, to: e.to}, {dow: false}) + ")" : ""), ic: "📌"}); });   // v2.61 같은 날 중복 없이 · 기간 표시
     var Yr = TT.store.get("tt_year_v1", null), t0 = new Date(), ay = t0.getMonth() >= 2 ? t0.getFullYear() : t0.getFullYear() - 1;   // 연간 업무 (학년도 3월~이듬해 2월)
     if(Yr && Array.isArray(Yr.items)) Yr.items.forEach(function(it){
       if(!it.d || (Yr.done || {})[ay + "|" + it.id]) return;

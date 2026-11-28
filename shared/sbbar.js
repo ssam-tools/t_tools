@@ -347,7 +347,7 @@
     try{ var FM = (TT.store.get("tt_fb_mine_v1", null) || {}).list || [], nr = FM.filter(function(x){ return x.reply && !x.seen; }).length;   // v2.54 보낸 의견에 온 답(늘 맨 앞)
       if(nr) out.push({k: "info", tag: "📬 답이 왔어요", t: "보낸 의견에 답이 " + nr + "개 왔어요 · 눌러서 보기", href: BASE + "?fb=1"}); }catch(e){}
     if(!c.off.tip){
-      var C = TT.store.get("tt_calendar_v1", null), E = C && Array.isArray(C.events) ? C.events : [], lim = ymdS(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 10)), ev = null;
+      var E = TT.cal.list(td), lim = ymdS(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 10)), ev = null;
       E.filter(function(e){ return e && e.d > td && e.d <= lim && e.t; }).sort(function(a, b){ return a.d < b.d ? -1 : 1; }).some(function(e){
         for(var i = 0; i < NEV.length; i++) if(NEV[i][0].test(e.t)){ ev = {e: e, tip: NEV[i][1]}; return true; } return false; });
       if(ev){ var dn = Math.round((new Date(+ev.e.d.slice(0, 4), +ev.e.d.slice(5, 7) - 1, +ev.e.d.slice(8, 10)) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);

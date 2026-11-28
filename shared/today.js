@@ -271,7 +271,7 @@
       if(over) out.push({ic: "📦", t: "미제출", n: over + "건", href: "apps/submit/", lv: "hi", tip: "마감이 지났는데 미제출 학생이 있는 제출물"});
 
       /* 학사일정 D-day: 다가오는 시험(진도 부족과 함께), 방학 */
-      var C = TT.store.get("tt_calendar_v1", null), ev = C && Array.isArray(C.events) ? C.events : [];
+      var ev = TT.cal.list(td).filter(function(e){ return e.d >= td; });   // v2.61 기간으로 묶은 일정 (시작일 기준 D-day)
       var Pc = TT.store.get("tt_mpace_v1", null), short = Pc && Pc.short > 0 && Pc.to && Pc.to >= td ? Pc.short : 0;
       var ex = ev.filter(function(e){ return e.k === "exam" && e.d >= td && dayDiff(e.d, td) <= 60; }).sort(function(a, b){ return a.d < b.d ? -1 : 1; })[0];
       if(ex){
@@ -336,7 +336,7 @@
       if(wm) L.push({ic: "✏️", t: (k === "week" ? "이번 주 " : "") + "기록 안 한 수업", n: wm + "개", href: "apps/journal/", lv: "hi", tip: TN("journal", "", "수업 기록") + "에 적어 주세요"});
     }
     if(k === "week"){ var nw = nextWeekEv(); if(nw) L.push({ic: "📅", t: "다음 주 " + nw.t, n: md2(nw.d), href: "", lv: "dd", tip: "다음 주 학사일정"}); }
-    var C0 = TT.store.get("tt_calendar_v1", null), evs = (C0 && C0.events || []).filter(function(e){ return e.d === t; }).map(function(e){ return e.t; });
+    var evs = TT.cal.days(t, t).map(function(e){ return e.t + (e.from !== e.to ? " (" + TT.cal.when({d: e.from, to: e.to}, {dow: false}) + ")" : ""); });   // v2.61 같은 날 중복 없이
     var head = evs.length ? '<div class="tev" title="오늘 학사일정">📌 ' + esc(evs.join(" · ")) + "</div>" : "";
     var A = lastAuto = window.TTAuto ? TTAuto.ready() : [];               // 15단계 "준비됨" (shared/auto.js)
     var rd = A.length ? '<button type="button" class="tdrd" data-auto="' + (A.length === 1 ? 0 : "more") + '" title="쌤 노트가 준비해 둔 일 · 눌러서 확인 → 복사·인쇄·저장"><span class="k">✨ 준비됨 ' + A.length + '</span><span class="t">'
@@ -378,8 +378,8 @@
   }
   function nextWeekEv(){
     var d = new Date(), mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 7); var fr = new Date(mon); fr.setDate(mon.getDate() + 4);
-    var C = TT.store.get("tt_calendar_v1", null), a = ymd(mon), b = ymd(fr);
-    return (C && Array.isArray(C.events) ? C.events : []).filter(function(e){ return e.d >= a && e.d <= b; }).sort(function(p, q){ return p.d < q.d ? -1 : 1; })[0] || null;
+    var a = ymd(mon), b = ymd(fr);
+    return TT.cal.list(a, b).filter(function(e){ return e.d >= a; })[0] || null;   // v2.61 기간으로 묶은 일정 (다음 주에 시작하는 것)
   }
   /* 적는 칸: "종례: …" → 종례 바구니(다음 종례), 그 밖("할 일: …" 포함) → 내 할 일. 날짜 말은 날짜로 */
   box.addEventListener("submit", function(e){
@@ -687,9 +687,9 @@
     /* v2.56 📅 학사일정 · 🕘 선생님 시간표도 찾기 (이 기기에 있는 자료만) */
     var CE = [], TW = [];
     if(!m0 && qq.length >= 2){
-      try{ var C0 = TT.store.get("tt_calendar_v1", null), td0 = ymd(new Date());
-        CE = ((C0 && C0.events) || []).filter(function(e){ return String(e.t || "").indexOf(qq) >= 0; }).sort(function(a, b){ return (a.d < td0) - (b.d < td0) || (a.d < b.d ? -1 : 1); }).slice(0, 4)
-          .map(function(e){ return {ic: "📅", tx: esc(e.t), sub: dLabel(e.d) || e.d, go: function(){ closeFind(); if(window.TT_MOB) TT_MOB.open("cal"); }}; }); }catch(x){}
+      try{ var td0 = ymd(new Date()), q0 = qq.replace(/\s/g, "");   // v2.61 기간으로 묶은 일정 · 띄어쓰기 달라도 찾음
+        CE = TT.cal.list().filter(function(e){ return String(e.t || "").replace(/\s/g, "").indexOf(q0) >= 0; }).sort(function(a, b){ return (a.to < td0) - (b.to < td0) || (a.d < b.d ? -1 : 1); }).slice(0, 4)
+          .map(function(e){ return {ic: "📅", tx: esc(e.t), sub: TT.cal.when(e, {today: td0}), go: function(){ closeFind(); if(window.TT_MOB) TT_MOB.open("cal"); }}; }); }catch(x){}
       try{ var A0 = TT.store.get("tt_alltt_v1", null);
         TW = ((A0 && A0.teachers) || []).filter(function(t){ return t.name && String(t.name).indexOf(qq) >= 0; }).slice(0, 3)
           .map(function(t){ return {ic: "🕘", tx: esc(t.name) + " 선생님 시간표", sub: "오늘 수업 · 빈 시간", go: function(){ closeFind(); if(window.TT_MOB) TT_MOB.open("tt", t.name); }}; }); }catch(x){}
@@ -814,7 +814,7 @@
     }
     if(id === "school"){
       var C = TT.store.get("tt_board_cache_v1", null), its = C && C.data && Array.isArray(C.data.items) ? C.data.items : [], mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-      var MY = (TT.store.get("tt_mytodo_v1", null) || {}).items || [], Cal = (TT.store.get("tt_calendar_v1", null) || {}).events || [];
+      var MY = (TT.store.get("tt_mytodo_v1", null) || {}).items || [], Cal = TT.cal.days();   // v2.61 같은 날 중복 없이
       h += '<div class="mnweek">';
       for(var i = 0; i < 5; i++){
         var x = new Date(mon); x.setDate(mon.getDate() + i); var k = ymd(x);
@@ -938,7 +938,7 @@
     var hi = L.filter(function(x){ return x.lv === "hi"; }), mid = L.filter(function(x){ return x.lv !== "hi" && x.lv !== "dd"; }), dd = L.filter(function(x){ return x.lv === "dd"; });
     /* v2.12.3 내가 적은 일(내 할 일 · 종례 때 전할 말)을 맨 위에, 그 아래 쌤 노트가 저절로 챙긴 일 */
     var tasks = myNow.sort(sortD).map(My).concat(BG.sort(sortD).map(Bg), mySoon.sort(sortD).map(My), myNo.map(My), hi.map(C), A.map(Au), mid.map(C), dd.map(C));
-    var C0 = TT.store.get("tt_calendar_v1", null), evs = (C0 && C0.events || []).filter(function(e){ return e.d === td; }).map(function(e){ return e.t; });
+    var evs = TT.cal.days(td, td).map(function(e){ return e.t + (e.from !== e.to ? " (" + TT.cal.when({d: e.from, to: e.to}, {dow: false}) + ")" : ""); });   // v2.61 같은 날 중복 없이
     return {now: now, tasks: tasks, events: evs, mode: md0 ? md0.id : "", modeLabel: md0 ? md0.label : "", close: weekday ? closeMin(w) : 0, later: MY.length - myNow.length - mySoon.length - myNo.length};
   }
   function homeAct(x, anchor){

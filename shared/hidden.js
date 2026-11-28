@@ -157,7 +157,7 @@
   /* ── ⑤ 쌤비 ── */
   function owlHTML(){
     var t = ymd(new Date()), C = TT.store.get("tt_calendar_v1", null), ev = C && Array.isArray(C.events) ? C.events : [], h = "<h4>🦉 오늘 · 이번 주</h4>";
-    var today = ev.filter(function(e){ return e.d === t; }).map(function(e){ return e.t; });
+    var today = TT.cal.days(t, t).map(function(e){ return e.t; });   // v2.61 같은 날 중복 없이
     h += '<div class="r"><span>오늘 학사일정</span><b>' + (today.length ? esc(today.join(", ")) : "없음") + "</b></div>";
     var B = TT.store.get("tt_board_cache_v1", null), its = [];
     try{ its = ((B && B.data && B.data.items) || []).filter(function(x){ return x.type === "item" && (x.important === "1" || x.time) && x.date >= t; }).sort(function(a, b){ return (a.date + a.time).localeCompare(b.date + b.time); }).slice(0, 3); }catch(e){}

@@ -156,7 +156,8 @@
   function mine(){                                                      // 이 기기 자료 (업무판으로 보내지 않음)
     var out = [];
     var Mt = TT.store.get("tt_mytodo_v1", null); if(Mt && Array.isArray(Mt.items)) Mt.items.forEach(function(x){ if(x.date && !x.done) out.push({d: x.date, t: x.text, k: "me"}); });
-    var Cal = TT.store.get("tt_calendar_v1", null); if(Cal && Array.isArray(Cal.events)) Cal.events.forEach(function(e){ out.push({d: e.d, t: e.t, k: /방학|휴업|공휴|재량|개교기념/.test(e.t) ? "off" : "sch"}); });
+    /* v2.61 학사일정은 공통 정리(TT.cal): 같은 날 중복 없이 · 이어지는 일정은 rg(기간)로 묶어 목록에서 한 줄 */
+    TT.cal.days().forEach(function(e){ out.push({d: e.d, t: e.t, k: e.k === "off" || /방학|휴업|공휴|재량|개교기념/.test(e.t) ? "off" : "sch", rg: e.from !== e.to ? {d: e.from, to: e.to} : null, dim: TT.cal.other(e.t)}); });
     var Yr = TT.store.get("tt_year_v1", null), t0 = new Date(), ay = t0.getMonth() >= 2 ? t0.getFullYear() : t0.getFullYear() - 1;
     if(Yr && Array.isArray(Yr.items)) Yr.items.forEach(function(it){ if(!it.d || (Yr.done || {})[ay + "|" + it.id]) return; var y = it.m <= 2 ? ay + 1 : ay; out.push({d: y + "-" + pad(it.m) + "-" + pad(it.d), t: it.title, k: "me"}); });
     return out;
@@ -205,10 +206,10 @@
       var mk0 = monthKey(D), from = st.mon > 0 ? mk0 + "-01" : td;              // v2.46 보고 있는 달의 남은 일만 (이번 달이면 오늘부터)
       head = st.mon < 0 ? (D.getMonth() + 1) + "월 일정" : (st.mon ? (D.getMonth() + 1) + "월 할 일" : "이번 달 남은 일"); var rank = {me: 0, off: 1, sch: 1, bd: 2};
       lst = L.filter(function(x){ return String(x.d).slice(0, 7) === mk0 && (st.mon < 0 || x.d >= from); }).sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : rank[a.k] - rank[b.k]; });
-      var seen = {}; lst = lst.filter(function(x){ var q = x.d + x.t; if(seen[q]) return false; seen[q] = 1; return true; });
+      var seen = {}; lst = lst.filter(function(x){ var q = x.rg ? x.rg.d + "~" + x.t : x.d + x.t; if(seen[q]) return false; seen[q] = 1; return true; });
     }
     h += '<div class="sdL"><div class="lh"><span>' + esc(head) + (lst.length ? ' <em class="ct">' + lst.length + "</em>" : "") + "</span>" + (st.pick ? '<button type="button" data-day="">✕</button>' : "") + "</div>"
-      + (lst.length ? lst.map(function(x){ var dt = x.d.slice(5).replace(/^0/, "").replace("-", "/").replace("/0", "/"); return '<div class="li k-' + x.k + '" title="' + esc(x.t) + '">' + (st.pick ? "" : "<span>" + dt + "</span>") + esc(x.t) + "</div>"; }).join("") : '<div class="li none">' + (st.pick ? "일정이 없어요" : "남은 일정이 없어요") + "</div>")
+      + (lst.length ? lst.map(function(x){ var dt = x.rg ? TT.cal.when(x.rg, {dow: false}) : x.d.slice(5).replace(/^0/, "").replace("-", "/").replace("/0", "/"); return '<div class="li k-' + x.k + (x.dim ? " dim" : "") + '" title="' + esc(x.t + (x.rg ? " · " + TT.cal.when(x.rg) : "") + (x.dim ? " · 다른 학년" : "")) + '">' + (st.pick ? "" : "<span>" + dt + "</span>") + esc(x.t) + (st.pick && x.rg ? ' <em class="rg">' + TT.cal.when(x.rg, {dow: false}) + "</em>" : "") + "</div>"; }).join("") : '<div class="li none">' + (st.pick ? "일정이 없어요" : "남은 일정이 없어요") + "</div>")
       + "</div>"
       + (boardCfg() ? "" : '<div class="sdHint">학교 업무판을 연결하면 월간 업무도 여기에 보여요 · 설정 → 시작 세팅 → 학교 연결</div>');
     return h;
