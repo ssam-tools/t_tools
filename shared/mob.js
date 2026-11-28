@@ -34,6 +34,91 @@
     return sh.querySelector(".shBd");
   }
   function cal(){ var C = TT.store.get("tt_calendar_v1", null); return C && Array.isArray(C.events) ? C.events : []; }
+
+  /* ── v2.60 학사일정 정리 (보여 줄 때만 · 저장된 자료는 그대로) ──
+     ① 같은 날 같은 내용은 한 줄로: "1, 2학년 2학기 2차고사" = "2학기 2차고사(1,2학년)", "전교학생회선거" + "학생회 선거(6,7교시)"
+     ② 수업일로 이어지는 같은 일정은 기간으로 (주말·쉬는 날은 건너뜀): 12/21(월)~24(목)
+     ③ 종류 색 점 · 다른 학년만의 일정은 흐리게 · 큰 일정 D-day */
+  function cc(s){ return String(s || "").replace(/[\s()\[\],·.]/g, ""); }
+  function split(t){
+    t = String(t || "").replace(/\s*,\s*/g, ",").replace(/\s{2,}/g, " ").trim();
+    var P = [], core = t.replace(/\(([^)]*)\)/g, function(_, p){ if(p.trim()) P.push(p.trim()); return " "; }).replace(/\s{2,}/g, " ").trim();
+    return {core: core, pars: P};
+  }
+  function sig(t){ var s = split(t); return (s.core + " " + s.pars.join(" ")).split(/\s+/).map(cc).filter(Boolean).sort().join("|"); }
+  function sameEv(a, b){
+    if(sig(a) === sig(b)) return true;
+    var x = cc(split(a).core), y = cc(split(b).core), s = x.length <= y.length ? x : y, l = s === x ? y : x;
+    return s.length >= 3 && l.indexOf(s) >= 0 && l.length - s.length <= 2;     // "학생회선거" ⊂ "전교학생회선거" (앞뒤 두 글자까지만)
+  }
+  function mergeT(a, b){
+    var A = split(a), B = split(b);
+    if(sig(a) === sig(b)) return A.pars.length !== B.pars.length ? (A.pars.length > B.pars.length ? a : b) : (a.length >= b.length ? a : b);
+    var base = cc(A.core).length >= cc(B.core).length ? A.core : B.core, seen = {}, P = [];
+    A.pars.concat(B.pars).forEach(function(p){ var k = cc(p); if(k && !seen[k]){ seen[k] = 1; P.push(p); } });
+    return base + P.map(function(p){ return "(" + p + ")"; }).join("");
+  }
+  var KR = {off: 3, exam: 2, evt: 1};
+  function offSet(){ var m = {}; cal().forEach(function(e){ if(e.k === "off") m[e.d] = 1; }); return m; }
+  function addD(s, n){ var a = s.split("-"), d = new Date(+a[0], +a[1] - 1, +a[2] + n); return ymd(d); }
+  function linked(a, b, OFF){      // a 다음 수업일이 b인가 (사이가 주말·쉬는 날뿐)
+    for(var x = addD(a, 1), n = 0; x < b; x = addD(x, 1)){ if(++n > 12) return false; var w = new Date(x.replace(/-/g, "/")).getDay(); if(w !== 0 && w !== 6 && !OFF[x]) return false; }
+    return b > a;
+  }
+  function group(E){
+    var day = {}, D = [];
+    E.slice().sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; }).forEach(function(e){
+      if(!e || !e.d || !e.t) return;
+      var L = day[e.d] || (day[e.d] = (D.push(e.d), [])), hit = null;
+      for(var i = 0; i < L.length; i++) if(sameEv(L[i].t, e.t)){ hit = L[i]; break; }
+      if(hit){ hit.t = mergeT(hit.t, e.t); if((KR[e.k] || 1) > (KR[hit.k] || 1)) hit.k = e.k; }
+      else L.push({d: e.d, t: String(e.t), k: e.k || "evt"});
+    });
+    var OFF = offSet(), G = [], open = {};
+    D.forEach(function(d){ day[d].forEach(function(e){
+      var s = sig(e.t), o = open[s];
+      if(o && linked(o.to, d, OFF)){ o.to = d; if(e.t.length > o.t.length) o.t = e.t; return; }
+      o = {d: d, to: d, t: e.t, k: e.k}; open[s] = o; G.push(o);
+    }); });
+    return G;
+  }
+  /* 우리 학년: 담임 반 + 내 시간표에 있는 학년 */
+  function myGrades(){
+    var g = {}, n = 0;
+    try{ var h = TT.roster.home(); if(h && h.grade){ g[h.grade] = 1; n++; } }catch(x){}
+    try{ var S = TT.timetable.week() || {}; Object.keys(S).forEach(function(k){ var c = +(S[k] && S[k].cls); if(c > 100){ g[Math.floor(c / 100)] = 1; n++; } }); }catch(x){}
+    return n ? g : null;
+  }
+  function otherGrade(t, G){
+    if(!G) return false;
+    var m = String(t).replace(/\s/g, "").match(/([1-6](?:[,·~∼-][1-6])*)학년/g); if(!m) return false;
+    var hit = false; m.forEach(function(x){ x.replace(/학년/, "").split(/[,·~∼-]/).forEach(function(n){ if(G[+n]) hit = true; }); });
+    return !hit;
+  }
+  function catOf(e){ return e.k === "off" ? "off" : e.k === "exam" ? "exam" : /자치|학생회|동아리|다모임/.test(e.t) ? "self" : /교육|연수|상담|검사|진단/.test(e.t) ? "edu" : "evt"; }
+  var CATS = [["exam", "시험"], ["off", "쉬는 날"], ["evt", "행사"], ["edu", "교육"], ["self", "자치"]];
+  var BIG = /방학식|종업식|졸업식|입학식|개학|수학여행|체육대회|축제|수련회|현장체험|고사|시험|모의고사/;
+  function dDiff(a, b){ return Math.round((new Date(b.replace(/-/g, "/")) - new Date(a.replace(/-/g, "/"))) / 864e5); }
+  function when(g, td){
+    if(g.d === g.to) return g.d === td ? "오늘" : md(g.d);
+    var a = g.to.split("-"), w = DOW[new Date(+a[0], +a[1] - 1, +a[2]).getDay()];
+    return (g.d === td ? "오늘" : md(g.d)) + "~" + (g.d.slice(0, 7) === g.to.slice(0, 7) ? (+a[2]) : (+a[1]) + "/" + (+a[2])) + "(" + w + ")";
+  }
+  /* 한 줄: [색 점] 일정 [D-day / 진행 중 / 다른 학년]  날짜 */
+  function evRow(g, td, G, dateFirst){
+    var now = g.d <= td && g.to >= td, oth = otherGrade(g.t, G), n = dDiff(td, g.d), tag = "";
+    if(now && g.d !== g.to) tag = "<em>진행 중</em>";
+    else if(!now && !oth && n > 0 && n <= 60 && BIG.test(g.t)) tag = "<em>D-" + n + "</em>";
+    if(oth) tag += '<em class="og">다른 학년</em>';
+    var c = catOf(g), dt = "<small>" + when(g, td) + "</small>";
+    return '<div class="r ev' + (now ? " on" : "") + (oth ? " dim" : "") + (g.to < td ? " past" : "") + '"' + (g.d !== g.to ? ' title="' + esc(md(g.d) + " ~ " + md(g.to)) + '"' : "") + ">"
+      + (dateFirst ? dt : "") + '<b class="cd c-' + c + '" aria-hidden="true"></b><span>' + esc(g.t) + tag + "</span>" + (dateFirst ? "" : dt) + "</div>";
+  }
+  function evList(L, td, G, months){
+    var h = "", lm = "";
+    L.forEach(function(g){ var m = +g.d.slice(5, 7); if(months && m + "" !== lm){ lm = m + ""; h += '<div class="r mh">' + m + "월</div>"; } h += evRow(g, td, G); });
+    return '<div class="ls">' + h + "</div>";
+  }
   function allTT(){ var A = TT.store.get("tt_alltt_v1", null); return A && Array.isArray(A.teachers) && Array.isArray(A.periods) ? A : null; }
   function cls(s){ var c = +s.cls; return c > 100 ? Math.floor(c / 100) + "-" + (c % 100) : String(s.cls || s.code || ""); }
   function none(t, a){ return '<p class="no">' + t + (a ? " " + a : "") + "</p>"; }
@@ -45,8 +130,8 @@
     h += T.length ? '<div class="ls">' + T.map(function(s){ var on = m >= s.start && m < s.end; return '<div class="r' + (on ? " on" : "") + '"><i>' + s.n + "</i><span>" + esc(cls(s)) + " " + esc(s.subj || "") + (s.chg ? " <em>교체</em>" : "") + "</span><small>" + esc(s.t) + "</small></div>"; }).join("") + "</div>"
       : none(TT.timetable.has() ? "오늘은 수업이 없어요." : "내 시간표가 아직 없어요.");
     h += '<h4>🍚 급식</h4><div class="ml">' + (window.TTMeal ? "불러오는 중…" : "급식은 학교 설정 뒤에 보여요.") + "</div>";
-    var E = cal().filter(function(e){ return e.d >= td; }).slice(0, 5);
-    h += "<h4>📅 다가오는 일정</h4>" + (E.length ? '<div class="ls">' + E.map(function(e){ return '<div class="r' + (e.d === td ? " on" : "") + '"><span>' + esc(e.t) + "</span><small>" + (e.d === td ? "오늘" : md(e.d)) + "</small></div>"; }).join("") + "</div>" : none("학사일정이 아직 없어요."));
+    var E = group(cal().filter(function(e){ return e.d >= addD(td, -40); })).filter(function(g){ return g.to >= td; }).slice(0, 5);
+    h += "<h4>📅 다가오는 일정</h4>" + (E.length ? evList(E, td, myGrades(), false) : none("학사일정이 아직 없어요."));
     return h;
   }
   function openToday(){
@@ -57,10 +142,18 @@
     });
   }
   function openCal(){
-    var td = ymd(new Date()), E = cal(), F = E.filter(function(e){ return e.d >= td; }).slice(0, 30);
-    var h = F.length ? '<div class="ls">' + F.map(function(e){ return '<div class="r' + (e.d === td ? " on" : "") + (e.k === "off" ? " off" : "") + '"><span>' + esc(e.t) + "</span><small>" + md(e.d) + "</small></div>"; }).join("") + "</div>"
-      : none("학사일정이 아직 없어요.", "PC에서 학교 세팅을 받으면 여기에도 보여요.");
-    sheet("🏫 학사일정", h);
+    /* v2.60 오늘부터 · 같은 일정 한 줄 · 기간 묶기 · 달 머리줄 · 지난 일정은 접어 둠 */
+    var td = ymd(new Date()), G = myGrades(), A = group(cal().filter(function(e){ return e.d >= addD(td, -75); }));
+    var F = A.filter(function(g){ return g.to >= td; }).slice(0, 40), P = A.filter(function(g){ return g.to < td && g.to >= addD(td, -45); });
+    var leg = '<div class="evLeg">' + CATS.map(function(c){ return '<span><b class="cd c-' + c[0] + '"></b>' + c[1] + "</span>"; }).join("") + "</div>";
+    function body(past){
+      if(!F.length && !P.length) return none("학사일정이 아직 없어요.", "PC에서 학교 세팅을 받으면 여기에도 보여요.");
+      return leg + (P.length ? '<button type="button" class="other evPast" data-past="' + (past ? 0 : 1) + '">' + (past ? "지난 일정 접기 ▴" : "지난 일정 " + P.length + "개 보기 ▾") + "</button>" : "")
+        + (past && P.length ? '<div class="evPastL">' + evList(P, td, G, true) + "</div>" : "")
+        + (F.length ? evList(F, td, G, true) : none("앞으로 남은 일정이 없어요."));
+    }
+    var bd = sheet("🏫 학사일정", body(false));
+    bd.addEventListener("click", function(e){ var b = e.target.closest && e.target.closest("[data-past]"); if(b) bd.innerHTML = body(b.getAttribute("data-past") === "1"); });
   }
   function openTT(name){
     var A = allTT();
@@ -113,12 +206,11 @@
     /* ② 오늘 급식 */
     h += '<section class="fc"><h4>' + icon("meal", 16) + ' 오늘 급식</h4><div class="ml">' + (window.TTMeal ? "불러오는 중…" : "급식은 학교 설정 뒤에 보여요.") + "</div></section>";
     /* ③ 이번 주 일정 (학사일정 + 학교 업무판, 오늘부터 7일) */
-    var e7 = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 6), end = ymd(e7), seen = {};
-    var E = cal().filter(function(e){ return e.d >= td && e.d <= end; }).map(function(e){ return {d: e.d, t: e.t}; }).concat(boardWeek(td, end))
-      .filter(function(e){ var k = e.d + "|" + e.t; if(seen[k]) return false; seen[k] = 1; return true; })
-      .sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+    var e7 = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 6), end = ymd(e7), G7 = myGrades();
+    /* v2.60 학사일정 + 업무판을 한 번에 정리 (같은 날 같은 내용 한 줄 · 이어지는 날은 기간) */
+    var E = group(cal().filter(function(e){ return e.d >= addD(td, -40) && e.d <= end; }).concat(boardWeek(td, end))).filter(function(g){ return g.to >= td; });
     h += '<section class="fc"><h4>' + icon("calendar", 16) + " 이번 주 일정" + (E.length > 4 ? '<button type="button" data-mf="cal">더 보기 ›</button>' : "") + "</h4>";
-    h += E.length ? '<div class="fev">' + E.slice(0, 4).map(function(e){ return '<div class="r' + (e.d === td ? " on" : "") + '"><small>' + (e.d === td ? "오늘" : md(e.d)) + "</small><span>" + esc(e.t) + "</span></div>"; }).join("") + "</div>"
+    h += E.length ? '<div class="fev">' + E.slice(0, 4).map(function(g){ return evRow(g, td, G7, true); }).join("") + "</div>"
       : none("이번 주 일정이 없어요.");
     h += "</section>";
     /* ④ 바로가기 */

@@ -964,6 +964,21 @@ html.mob[data-ui="ssambi"] body.sbTopOn{padding-top:0!important}
 .mobSh .chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .mobSh .chips button,.mobSh .other{min-height:44px;border:1px solid var(--t-line);border-radius:12px;background:var(--t-card);color:var(--t-ink);font:inherit;font-size:15px;cursor:pointer}
 .mobSh .other{margin:10px 0 0;padding:0 14px;color:var(--t-sub)}
+/* v2.60 📅 학사일정 정리: 색 점 · 기간 · 달 머리줄 · 다른 학년 흐리게 · D-day */
+.cd{display:inline-block;flex:none;width:9px;height:9px;border-radius:50%;background:var(--t-accent)}
+.cd.c-exam{background:#e0574f}.cd.c-off{background:#9aa3b2}.cd.c-edu{background:#8b5cf6}.cd.c-self{background:#2f9e6e}.cd.c-evt{background:var(--t-accent)}
+.mobSh .evLeg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;color:var(--t-sub);margin:2px 2px 8px}
+.mobSh .evLeg span{display:inline-flex;align-items:center;gap:5px}
+.mobSh .evPast{display:block;width:100%;margin:0 0 8px;min-height:38px;font-size:14px}
+.mobSh .evPastL{margin-bottom:8px;opacity:.75}
+.mobSh .r.mh{min-height:28px;background:var(--t-chip);font-size:12.5px;font-weight:700;color:var(--t-sub)}
+.mobSh .r.ev span em,html.mob .mobF .fev .r span em{margin-left:6px;vertical-align:1px}
+.mobSh .r.ev em.og,html.mob .mobF .fev .r em.og{color:var(--t-sub);background:var(--t-chip)}
+.mobSh .r.dim,html.mob .mobF .fev .r.dim{opacity:.55}
+.mobSh .r.ev.on small{color:var(--t-accent);font-weight:700}
+html.mob .mobF .fev .r{align-items:center}
+html.mob .mobF .fev .r small{width:auto;min-width:52px}
+html.mob .mobF .fev .r em{font-style:normal;font-size:11px;color:var(--t-accent);background:var(--t-accent-soft);border-radius:6px;padding:1px 5px}
 
 /* ---------- v2.57 📱 도구 안쪽 화면 휴대폰 다듬기 (모든 도구 공통) ---------- */
 @media (max-width:760px){
