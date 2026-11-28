@@ -915,7 +915,7 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
     function fbN(){ try{ return Number(localStorage.getItem("ttadm_fbnew") || 0); }catch(e){ return 0; } }
     /* v2.55 휴대폰: 시작 세팅·꾸미기·도움말만 (백업·새 학년·관리·학교 세팅 받기·도장판·단축키는 PC에서) */
     function PH(){ return typeof ttIsPhone === "function" && ttIsPhone(); }
-    var PH_SUB = {look: "화면 · 쌤비", help: "쓰는 법 · 앱 설치 · 의견"}, PH_OUT = {data: 1, admin: 1}, PH_ROW = {"학교 세팅 받기": 1, "도장판·배지": 1, "단축키 안내": 1};
+    var PH_SUB = {look: "화면 · 쌤비", help: "의견 보내기 · 쓰는 법 · 앱 설치"}, PH_OUT = {data: 1, admin: 1}, PH_ROW = {"학교 세팅 받기": 1, "도장판·배지": 1, "단축키 안내": 1};
     function items(){
       var adm = window.TT_ADMIN && TT_ADMIN.state && TT_ADMIN.state();
       return items0(adm).filter(function(it){ return !PH() || !PH_OUT[it.k]; });
@@ -937,8 +937,10 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
         dlg.addEventListener("click", function(e){ if(e.target === dlg || (e.target.closest && e.target.closest("[data-hx]"))) dlg.close(); }); }
       var R = d.rows().filter(function(r){ return !PH() || !PH_ROW[r.t]; }), n0 = 0;
       if(PH()) R.forEach(function(r){ if(r.n) r.n = ++n0; });   // 휴대폰: 뺀 단계가 있으면 번호를 다시 1부터
-      dlg.setAttribute("aria-label", d.t);
-      dlg.innerHTML = '<div class="hh"><b>' + d.ic + " " + d.t + '</b><small>' + (PH() && PH_SUB[k] ? PH_SUB[k] : d.sub) + '</small><button type="button" class="hx" data-hx aria-label="닫기">✕</button></div><div class="hl">'
+      var ttl = d.t;
+      if(PH() && k === "help"){ ttl = "도움·의견"; R = R.filter(function(r){ return r.t === "의견 보내기"; }).concat(R.filter(function(r){ return r.t !== "의견 보내기"; })); }   // v2.59 휴대폰: 의견 보내기를 맨 위로
+      dlg.setAttribute("aria-label", ttl);
+      dlg.innerHTML = '<div class="hh"><b>' + d.ic + " " + ttl + '</b><small>' + (PH() && PH_SUB[k] ? PH_SUB[k] : d.sub) + '</small><button type="button" class="hx" data-hx aria-label="닫기">✕</button></div><div class="hl">'
         + R.map(function(r, i){ return '<button type="button" class="hr' + (r.ok ? " ok" : "") + (r.danger ? " danger" : "") + '" data-hi="' + i + '">'
           + (r.n ? '<i class="hn">' + (r.ok ? "✓" : r.n) + "</i>" : '<i class="hi">' + r.ic + "</i>")
           + '<span><b>' + (r.n ? r.ic + " " : "") + r.t + (r.opt ? ' <em>선택</em>' : "") + "</b><small>" + r.s + "</small></span><u>›</u></button>"; }).join("") + "</div>";

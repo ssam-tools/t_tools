@@ -895,6 +895,37 @@ html.mob #mobView .g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
 html.mob #mobView .g a,html.mob #mobView .g button{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 10px;border:1px solid var(--t-line);border-radius:12px;background:var(--t-card);color:var(--t-ink);font:inherit;font-size:13.5px;text-decoration:none;cursor:pointer;text-align:left}
 html.mob #mobView .g b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 html.mob #mobView .g span{flex:none;display:grid;place-items:center}
+/* v2.59 📱 찾기 = 볼 것: 오늘 내 수업 · 급식 · 이번 주 일정 + 바로가기 칩 (스크롤 없이 한 화면) */
+html.mob .mobF{display:flex;flex-direction:column;gap:10px}
+html.mob #mobView .mobF .fc{margin:0;padding:10px 12px 12px;border:1px solid var(--t-line);border-radius:16px;background:var(--t-card)}
+html.mob .mobF h4{display:flex;align-items:center;gap:6px;margin:0 0 8px;font-size:14px;font-weight:700;color:var(--t-ink)}
+html.mob .mobF h4 svg{color:var(--t-accent);flex:none}
+html.mob .mobF h4 small{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--t-accent);background:var(--t-accent-soft);border-radius:999px;padding:2px 9px}
+html.mob .mobF h4 button{margin-left:auto;border:0;background:none;color:var(--t-sub);font:inherit;font-size:12.5px;cursor:pointer;padding:4px 2px}
+html.mob .mobF .ftt{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+html.mob .mobF .ftt .p{position:relative;display:flex;align-items:center;gap:6px;min-height:40px;padding:0 8px;border-radius:12px;background:var(--t-chip);font-size:14px}
+html.mob .mobF .ftt .p i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--t-sub)}
+html.mob .mobF .ftt .p b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.mob .mobF .ftt .p em{position:absolute;top:-6px;right:-2px;font-style:normal;font-size:10px;color:#fff;background:var(--t-accent);border-radius:6px;padding:0 4px}
+html.mob .mobF .ftt .p.on{background:var(--t-accent);color:#fff}
+html.mob .mobF .ftt .p.on i{color:#fff}
+html.mob .mobF .ftt .p.past{opacity:.45}
+html.mob .mobF .ml{font-size:14.5px;line-height:1.5}
+html.mob .mobF .ml small{color:var(--t-sub);font-size:12px}
+html.mob .mobF .fev{display:flex;flex-direction:column}
+html.mob .mobF .fev .r{display:flex;align-items:baseline;gap:10px;padding:6px 0;border-top:1px dashed var(--t-line);font-size:14.5px}
+html.mob .mobF .fev .r:first-child{border-top:0;padding-top:0}
+html.mob .mobF .fev .r small{flex:none;width:52px;color:var(--t-sub);font-size:12.5px}
+html.mob .mobF .fev .r span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.mob .mobF .fev .r.on small{color:var(--t-accent);font-weight:700}
+html.mob .mobF .no{margin:0;font-size:13.5px;color:var(--t-sub)}
+html.mob .mobF .fch{display:flex;flex-wrap:wrap;gap:6px}
+html.mob .mobF .fch button{display:inline-flex;align-items:center;gap:5px;min-height:38px;padding:0 12px;border:1px solid var(--t-line);border-radius:999px;background:var(--t-card);color:var(--t-ink);font:inherit;font-size:13.5px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+html.mob .mobF .fch button svg{color:var(--t-accent)}
+html.mob .mobF .fch button b{font-weight:500}
+html.mob .mobF .fch button:active{transform:scale(.95);border-color:var(--t-accent)}
+html.mob .sbPhQ .pi{position:relative}
+html.mob .sbPhQ .pdot{position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:#e5484d;border:2px solid var(--t-card)}
 /* 도구 화면: 얇은 머리줄 하나 */
 html.mob #mobHead:not([hidden]){display:flex;align-items:center;gap:6px;position:sticky;top:0;z-index:30;height:48px;margin:0 0 6px;padding:0 4px;box-sizing:border-box;width:100%;background:var(--t-card);border-bottom:1px solid var(--t-line);font-family:var(--t-font);flex:none}
 html.mob #mobHead a{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;color:var(--t-ink);text-decoration:none}

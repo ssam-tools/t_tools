@@ -1,8 +1,9 @@
 /* 쌤 노트 v2.56 · 📱 휴대폰 화면 (PLAN_모바일)
    휴대폰의 할 일은 두 가지: ① 언제 어디서나 적기 ② 학교 정보 빠르게 찾기. 휴대성 · 아주 간단하게.
-   - 아래 탭 3칸: ✏️ 적기(홈) · 🔎 찾기(#find) · ☰ 전체(#all) — 첫 화면(index.html)에서만
+   - 아래 탭 3칸: 🏠 홈 · 🔎 찾기(#find) · ☰ 전체(#all) — 첫 화면(index.html)에서만
+   - v2.59 홈 = 할 것(브리핑 · 6칸 · 오늘 할 일) / 찾기 = 볼 것(오늘 내 수업 · 급식 · 이번 주 일정 + 바로가기 칩, 적으면 검색 결과)
    - 도구 화면: 위쪽 쌤비·검색창·메뉴 줄 대신 얇은 한 줄 [‹ 도구 이름 ……… 🔎] — 뒤로 가면 원래 탭으로
-   - 적기 6칸은 shared/sbhome.js(phQuick)가 그리고, 누르면 여기서 처리합니다.
+   - 홈 6칸은 shared/sbhome.js(phQuick)가 그리고, 누르면 여기서 처리합니다.
    - 오늘 · 학사일정 · 선생님 시간표는 아래에서 올라오는 판으로 (이 기기에 있는 자료만 읽음, 어디로도 보내지 않음)
    - PC(폭 761px 이상)·교실 기기·예전 화면에서는 아무것도 하지 않습니다. */
 (function(){
@@ -86,17 +87,52 @@
   }
 
   /* ── 탭 3칸 ── */
-  var TABS = [["write", "notebook", "적기", ""], ["find", "search", "찾기", "#find"], ["all", "list", "전체", "#all"]];
+  var TABS = [["write", "home", "홈", ""], ["find", "search", "찾기", "#find"], ["all", "list", "전체", "#all"]];
   function view(){ var h = (location.hash || "").replace(/^#/, ""); return h === "find" || h === "all" ? h : "write"; }
   function navHTML(){
     var v = view();
     return TABS.map(function(t){ return '<a href="' + esc(BASE + t[3]) + '" data-mt="' + t[0] + '"' + (t[0] === v ? ' class="on" aria-current="page"' : "") + "><span>" + icon(t[1], 22) + "</span><b>" + t[2] + "</b></a>"; }).join("");
   }
-  /* 찾기 8칸 */
-  function findTiles(){
-    var L = [["today", "calendar", "오늘", "수업·급식·일정"], ["ext", "", "내선번호", "", "📞"], ["board", "list", "업무판", "이번 주"], room() ? null : ["safe", "safe", "금고", "공용 계정"],
-             ["cal", "school", "학사일정", ""], ["lib", "lib", "자료실", "학교 문서"], ["card", "idcard", "학생 카드", ""], ["tt", "clock", "선생님", "시간표"]].filter(Boolean);
-    return '<nav class="mobT8" aria-label="학교 정보">' + L.map(function(x){ return '<button type="button" data-mf="' + x[0] + '"><span>' + (x[1] ? icon(x[1], 24) : tIcon(null, x[4], 24)) + "</span><b>" + x[2] + "</b>" + (x[3] ? "<small>" + x[3] + "</small>" : "") + "</button>"; }).join("") + "</nav>";
+  /* v2.59 찾기: 많이 보는 것 먼저 — 오늘 내 수업 · 급식 · 이번 주 일정 + 바로가기 칩 (적기 시작하면 검색 결과가 그 자리에) */
+  function boardWeek(td, end){
+    var S = window.TT_SBSIDE; if(!S || !S.board) return [];
+    var d = new Date(), L = []; try{ L = S.board(d); var e2 = new Date(end); if(e2.getMonth() !== d.getMonth()) L = L.concat(S.board(e2)); }catch(e){}
+    return L.filter(function(x){ return x.d >= td && x.d <= end; });
+  }
+  function findHTML(){
+    var d = new Date(), td = ymd(d), m = d.getHours() * 60 + d.getMinutes(), h = '<div class="mobF">';
+    /* ① 오늘 내 수업 */
+    var T = []; try{ T = TT.timetable.day(); }catch(e){}
+    var cur = T.filter(function(s){ return m >= s.start && m < s.end; })[0], nx = T.filter(function(s){ return s.start > m; })[0];
+    var tag = cur ? "지금 " + cur.n + "교시" : nx ? "다음 " + nx.n + "교시 · " + (nx.start - m >= 60 ? Math.floor((nx.start - m) / 60) + "시간 " : "") + ((nx.start - m) % 60) + "분 뒤" : T.length ? "오늘 수업 끝 👏" : "";
+    h += '<section class="fc"><h4>' + icon("clock", 16) + " 오늘 내 수업" + (tag ? "<small>" + tag + "</small>" : "") + "</h4>";
+    h += T.length ? '<div class="ftt">' + T.map(function(s){ var on = s === cur, past = m >= s.end;
+        return '<div class="p' + (on ? " on" : "") + (past ? " past" : "") + '"><i>' + s.n + "</i><b>" + esc(cls(s)) + "</b>" + (s.chg ? "<em>교체</em>" : "") + "</div>"; }).join("") + "</div>"
+      : none(TT.timetable.has() ? "오늘은 수업이 없어요." : "내 시간표가 아직 없어요.");
+    h += "</section>";
+    /* ② 오늘 급식 */
+    h += '<section class="fc"><h4>' + icon("meal", 16) + ' 오늘 급식</h4><div class="ml">' + (window.TTMeal ? "불러오는 중…" : "급식은 학교 설정 뒤에 보여요.") + "</div></section>";
+    /* ③ 이번 주 일정 (학사일정 + 학교 업무판, 오늘부터 7일) */
+    var e7 = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 6), end = ymd(e7), seen = {};
+    var E = cal().filter(function(e){ return e.d >= td && e.d <= end; }).map(function(e){ return {d: e.d, t: e.t}; }).concat(boardWeek(td, end))
+      .filter(function(e){ var k = e.d + "|" + e.t; if(seen[k]) return false; seen[k] = 1; return true; })
+      .sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+    h += '<section class="fc"><h4>' + icon("calendar", 16) + " 이번 주 일정" + (E.length > 4 ? '<button type="button" data-mf="cal">더 보기 ›</button>' : "") + "</h4>";
+    h += E.length ? '<div class="fev">' + E.slice(0, 4).map(function(e){ return '<div class="r' + (e.d === td ? " on" : "") + '"><small>' + (e.d === td ? "오늘" : md(e.d)) + "</small><span>" + esc(e.t) + "</span></div>"; }).join("") + "</div>"
+      : none("이번 주 일정이 없어요.");
+    h += "</section>";
+    /* ④ 바로가기 */
+    var C = [["ext", "phone", "내선번호"], room() ? null : ["safe", "safe", "금고"], ["board", "list", "업무판"], ["cal", "school", "학사일정"],
+             ["lib", "lib", "자료실"], ["card", "idcard", "학생 카드"], ["tt", "clock", "선생님 시간표"]].filter(Boolean);
+    h += '<nav class="fch" aria-label="학교 정보 바로가기">' + C.map(function(x){ return '<button type="button" data-mf="' + x[0] + '">' + icon(x[1], 16) + "<b>" + x[2] + "</b></button>"; }).join("") + "</nav>";
+    return h + "</div>";
+  }
+  function fillMeal(){
+    if(!box || !window.TTMeal || !TTMeal.day) return;
+    TTMeal.day(new Date(), function(v){
+      var el = box.querySelector(".mobF .ml"); if(!el) return;
+      el.innerHTML = v && v.raw ? esc(TTMeal.dishes(v.raw, false).join(" · ")) + (v.cal ? " <small>" + esc(v.cal) + "</small>" : "") : "오늘은 급식이 없어요.";
+    });
   }
   /* 전체: 휴대폰에서 쓰는 도구 목록 + 설정 */
   function allHTML(){
@@ -107,7 +143,7 @@
       return '<section><h3>' + esc(m.name) + '</h3><div class="g">' + L.map(function(t){ return '<a href="' + esc(BASE + t.href) + '"><span>' + tIcon(t.id, t.icon, 20) + "</span><b>" + esc(t.short || t.name) + "</b></a>"; }).join("") + "</div></section>";
     }).join("");
     h += '<section><h3>설정</h3><div class="g">'
-      + [["start", "🧳", "시작 세팅"], ["look", "🎨", "꾸미기"], ["help", "❓", "도움말"]].map(function(x){ return '<button type="button" data-mh="' + x[0] + '"><span>' + tIcon(null, x[1], 20) + "</span><b>" + x[2] + "</b></button>"; }).join("") + "</div></section>";
+      + [["start", "🧳", "시작 세팅"], ["look", "🎨", "꾸미기"], ["help", "❓", "도움·의견"]].map(function(x){ return '<button type="button" data-mh="' + x[0] + '"><span>' + tIcon(null, x[1], 20) + "</span><b>" + x[2] + "</b></button>"; }).join("") + "</div></section>";
     return h;
   }
   var nav = null, box = null;
@@ -120,7 +156,8 @@
     var v = view(); R.setAttribute("data-mv", v);
     if(!box){ box = document.createElement("div"); box.id = "mobView"; var hero = document.getElementById("sbHero"); (hero && hero.parentNode ? hero.parentNode : document.body).insertBefore(box, hero ? hero.nextSibling : null); }
     box.hidden = v === "write";
-    box.innerHTML = v === "find" ? findTiles() : v === "all" ? allHTML() : "";
+    box.innerHTML = v === "find" ? findHTML() : v === "all" ? allHTML() : "";
+    if(v === "find") fillMeal();
     var q = document.getElementById("sbQ2");
     if(q){ q.placeholder = v === "find" ? "선생님 · 내선 · 일정 · 학생 · 문서 찾기" : "적기 · 찾기 — 예: 3번 지각, + 내일 회의"; }
   }
@@ -181,12 +218,13 @@
     if(go){ location.href = BASE + go; return; }
     if(f === "today") openToday(); else if(f === "cal") openCal(); else if(f === "tt") openTT("");
   });
-  /* 적기 6칸 */
+  /* 홈 6칸 */
   function write(k){
+    if(k === "help"){ if(window.TT_HUB) TT_HUB.open("help"); return; }
     if(k === "att"){ if(window.TT_QUICK && TT_QUICK.att) TT_QUICK.att(); else location.href = BASE + "apps/tardy/"; return; }
     if(k === "memo"){ if(TT.notes && TT.notes.quick) TT.notes.quick({src: "휴대폰 적기"}); return; }
     if(k === "todo"){ if(window.TT_FIND && TT_FIND.open) TT_FIND.open("할 일: "); return; }   // 홈 '오늘 할 일 + 적기'와 같은 창
-    var go = {guide: "apps/sguide/?tab=guide", counsel: "apps/sguide/?tab=counsel", jrn: "apps/journal/", voice: "apps/voice/"}[k];
+    var go = {guide: "apps/sguide/?tab=guide", counsel: "apps/sguide/?tab=counsel", jrn: "apps/journal/", voice: "apps/voice/", remote: "apps/remote/", stuprog: "apps/stuprog/"}[k];
     if(go) location.href = BASE + go;
   }
 
@@ -199,6 +237,8 @@
   });
   function draw(){ if(HOME) drawHome(); else { drawTool(); tidy(); } }
   window.addEventListener("hashchange", function(){ if(HOME) drawHome(); });
+  window.addEventListener("tt-board", function(){ if(HOME && ph() && view() === "find") drawHome(); });   // 업무판 일정이 늦게 오면 다시
+  setInterval(function(){ if(HOME && ph() && view() === "find" && !document.hidden && !(document.activeElement && document.activeElement.id === "sbQ2")) drawHome(); }, 60000);   // 지금 교시 · 남은 분
   window.addEventListener("popstate", function(){ if(HOME) drawHome(); });
   try{ window.matchMedia("(max-width:760px)").addEventListener("change", draw); }catch(e){}
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", draw); else draw();

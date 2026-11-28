@@ -329,13 +329,16 @@
     if(r.go){ var keep = Q.q; r.go(); if(Q.q === keep) doneSearch(); }
   }
 
-  /* ── v2.56 휴대폰 ✏️ 적기 6칸: 누르면 바로 그 입력 (shared/mob.js 가 처리) — 교과만 선생님은 지각·결석 대신 말로 기록 ── */
+  /* ── v2.59 휴대폰 홈 6칸 (shared/mob.js 가 처리) — 위: 지각·결석 · 수업 기록 · 리모컨 / 아래: 말로 기록 · 학생 프로그램 · 도움·의견
+     지도·상담·학생 메모는 '말로 기록' 하나로 (말하면 상담일지·학생 기록·회의록·할 일로 나눠 저장) · 담임이 아니면 지각·결석 대신 할 일 ── */
   function phQuick(){
     if(typeof ttIsPhone !== "function" || !ttIsPhone()) return "";
     var A = window.TT_SBART, hr = typeof ttMenuShown !== "function" || ttMenuShown("homeroom");
-    var L = [hr ? ["att", "clock", "지각·결석"] : ["voice", "mic", "말로 기록"], ["guide", "bolt", "지도"], ["counsel", "chat", "상담"], ["jrn", "notebook", "수업 기록"], ["todo", "list", "할 일"], ["memo", "doc", "학생 메모"]];
-    return '<nav class="sbPhQ" aria-label="적기">' + L.map(function(x){
-      return '<button type="button" class="pq" data-mq="' + x[0] + '"><span class="pi">' + (A && A.icon ? A.icon(x[1], 24) : "") + "</span><b>" + x[2] + "</b></button>";
+    var L = [hr ? ["att", "clock", "지각·결석"] : ["todo", "list", "할 일"], ["jrn", "notebook", "수업 기록"], ["remote", "phone", "리모컨"],
+             ["voice", "mic", "말로 기록"], ["stuprog", "qr", "학생 프로그램"], ["help", "help", "도움·의견"]];
+    var nr = window.TT_FBM && TT_FBM.unseen ? TT_FBM.unseen() : 0;      // 보낸 의견에 답이 오면 점
+    return '<nav class="sbPhQ" aria-label="자주 쓰는 도구">' + L.map(function(x){
+      return '<button type="button" class="pq" data-mq="' + x[0] + '"><span class="pi">' + (A && A.icon ? A.icon(x[1], 24) : "") + (x[0] === "help" && nr ? '<i class="pdot" aria-label="답 ' + nr + '개"></i>' : "") + "</span><b>" + x[2] + "</b></button>";
     }).join("") + "</nav>";
   }
   /* ── 그리기: 쌤비·말풍선·검색창·메뉴는 shared/sbbar.js(머리), 여기는 홈 = 지금 · 오늘 할 일 / 중메뉴 = 도구 ── */

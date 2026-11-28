@@ -176,7 +176,7 @@
           var C2 = TT.store.get(BMK, null) || {}; if(C2.url !== c.url) C2 = {url: c.url, m: {}};
           C2.m = C2.m || {}; C2.m[mk] = {at: Date.now(), items: (j.items || []).filter(function(x){ return x.date; }).map(function(x){ return {d: x.date, t: x.text || "", dept: x.dept || "", type: x.type || "item", imp: x.important === "1"}; })};
           Object.keys(C2.m).sort().slice(0, -3).forEach(function(k){ delete C2.m[k]; });   // 석 달 치만
-          TT.store.set(BMK, C2); paint();
+          TT.store.set(BMK, C2); paint(); try{ window.dispatchEvent(new Event("tt-board")); }catch(e){}   // v2.59 휴대폰 찾기도 다시 그림
         }).catch(function(){}).then(function(){ boardItems.busy[mk] = 0; });
     }
     return hit ? hit.items.map(function(x){ return {d: x.d, t: (x.dept ? "[" + String(x.dept).replace(/(부|실)$/, "") + "] " : "") + x.t, k: x.type === "day" ? (x.imp ? "off" : "sch") : "bd"}; }) : [];
@@ -269,6 +269,6 @@
   window.addEventListener("storage", function(e){ if(!e.key || /^tt_/.test(e.key)) soon(); });
   new MutationObserver(soon).observe(document.body, {attributes: true, attributeFilter: ["class"]});
   (function tick(){ setTimeout(function(){ if(document.visibilityState === "visible") paint(); tick(); }, 60500 - Date.now() % 60000); })();
-  window.TT_SBSIDE = {render: soon, paint: paint, check: neisCheck};
+  window.TT_SBSIDE = {render: soon, paint: paint, check: neisCheck, board: function(D){ return boardItems(D || new Date()); }};   // v2.59 board: 휴대폰 찾기 '이번 주 일정'
   if(location.hash) soon(); else paint();   // v2.58.1 첫 화면은 바로 그림(80ms 늦게 그려 가운데가 옮겨 가던 문제)
 })();
