@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<script src="shared/demo.js"></script><!-- 🎬 견본 모드(?demo=1): 저장소를 읽기 전에 맨 먼저 -->
 <style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
 <!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용).
      예외: 첫 화면의 "이번 주 업무"가 학교 업무판(구글 앱스 스크립트)을 읽어 오는 주소 두 곳. 학생 자료는 보내지 않습니다. -->
@@ -905,6 +906,7 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
         {ic: "📂", t: "백업 불러오기", s: "백업 파일에서 되살리기 (다른 기기로 옮길 때)", fn: clickMenu("mRestore")},
         {ic: "🌱", t: "새 학년 시작", s: "한 해 돌아보기 → 백업 → 정리 · 학년이 바뀔 때 한 번 (조심)", danger: 1, fn: clickMenu("mNewYear")}]; }},
       help: {ic: "❓", t: "도움말", sub: "쓰는 법 · 단축키 · 앱 설치 · 의견", rows: function(){ return [
+        {ic: "📘", t: "쌤 노트 안내서", s: "설명서 · 소개 발표 · 소개 영상 · 견본으로 써 보기", fn: goTo("apps/guide/")},
         {ic: "🦉", t: "처음 사용 안내", s: "쌤 노트 쓰는 법", fn: clickMenu("mHelp")},
         {ic: "⌨️", t: "단축키 안내", s: "/ 찾기 · Alt+1~5 메뉴 · Alt+B 쌤비 · ?", fn: clickMenu("mKeys")},
         {ic: "📲", t: "앱 설치하기", s: "바탕화면·홈 화면에 쌤비 아이콘", fn: clickMenu("mInstall")},

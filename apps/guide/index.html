@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<script src="../../shared/demo.js"></script><!-- 🎬 견본 모드(?demo=1): 저장소를 읽기 전에 맨 먼저 -->
+<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/ssambi3-192.png">
+<script src="../../shared/early.js"></script>
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>쌤 노트 안내 · 쌤 노트</title>
+<!--
+  📘 쌤 노트 안내 모음 (PLAN_배포): 설명서 3종 · 소개 발표 2종 · 소개 영상 2편 · 견본 체험
+  · 목록은 shared/guides.js (자료실 · 설정 → 도움말과 함께 씀)
+  · 저장소 안 파일이라 학교 드라이브·업무판 연결 없이 어느 학교에서나 열립니다. 개인정보 없음.
+-->
+<style>
+  .gw{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(8px,1.6vh,14px)}
+  .col{display:flex;flex-direction:column;gap:clamp(6px,1.2vh,10px);min-height:0}
+  .col h2{font-size:clamp(13px,2vh,15px);color:var(--sub);font-weight:800;display:flex;align-items:center;gap:6px}
+  .col h2 small{font-weight:600;font-size:12px}
+  .gc{display:flex;gap:12px;align-items:center;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:clamp(10px,1.8vh,16px) 14px;transition:transform .12s,box-shadow .12s,border-color .12s}
+  a.gc:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(20,40,70,.10);border-color:var(--accent)}
+  .gc .ic{font-size:clamp(26px,4.4vh,36px);flex:none}
+  .gc b{display:block;font-size:clamp(14px,2.2vh,16.5px);font-weight:800}
+  .gc small{display:block;font-size:12.5px;color:var(--sub);margin-top:2px}
+  .gc .who{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:1px 8px;margin-bottom:4px;background:var(--accent-soft);color:var(--accent)}
+  .gc .who.s{background:#fff4c7;color:#7a5a00}.gc .who.a{background:#fde7e4;color:#a33a2c}
+  .gc.wait{opacity:.55;cursor:default}
+  .gc.wait b::after{content:" · 준비 중";font-size:12px;color:var(--sub);font-weight:700}
+  .try{display:flex;align-items:center;gap:14px;background:linear-gradient(100deg,#fff8d8,#eaf3ff);border:1px solid var(--line);border-radius:16px;padding:clamp(10px,1.8vh,16px) 18px}
+  .try .ow{font-size:34px}.try b{font-size:clamp(14px,2.2vh,17px)}.try small{display:block;color:var(--sub);font-size:12.5px;margin-top:2px}
+  .try .btn{margin-left:auto}
+  @media (max-width:760px){
+    body{overflow:auto;height:auto;min-height:100dvh}
+    .gw{grid-template-columns:1fr}
+    .try{flex-wrap:wrap}.try .btn{margin-left:0;width:100%;text-align:center}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="../../">← 쌤 노트</a>
+    <h1>📘 쌤 노트 안내</h1>
+    <p class="lead">설명서 · 소개 발표 · 소개 영상을 한곳에. 학교 연결 없이 어디서나 열려요.</p>
+  </div>
+</header>
+<div class="try" id="try"></div>
+<main class="gw" id="gw"></main>
+<footer>
+  <span>쌤 노트 안내 · jidangmath × Claude</span>
+  <span class="priv">🔒 안내 자료의 모든 화면은 견본(가짜) 자료로 만들었어요</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script src="../../shared/guides.js"></script>
+<script>
+(function(){
+  "use strict";
+  var B = TT.BASE || "../../";
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function card(g){
+    var w = g.who === "학생" ? " s" : g.who === "관리자" ? " a" : "";
+    var inner = '<span class="ic">' + g.ic + '</span><span><i class="who' + w + '" style="font-style:normal">' + esc(g.who) + "</i><b>" + esc(g.t) + "</b><small>" + esc(g.d) + "</small></span>";
+    if(!g.ready) return '<div class="gc wait" title="PLAN_배포 단계에서 만드는 중이에요">' + inner + "</div>";
+    var nt = /\.mp4$|\?demo=1/.test(g.href) ? ' target="_blank" rel="noopener"' : "";
+    return '<a class="gc" href="' + esc(B + g.href) + '"' + nt + ">" + inner + "</a>";
+  }
+  var COLS = [["설명서", "📖", "보면 바로 쓰게"], ["소개 발표", "🎤", "실제 화면을 띄워 소개"], ["소개 영상", "🎬", "숏츠·릴스처럼 짧게"]];
+  document.getElementById("gw").innerHTML = COLS.map(function(c){
+    return '<section class="col"><h2>' + c[1] + " " + c[0] + " <small>· " + c[2] + "</small></h2>" + TT_GUIDES.filter(function(g){ return g.kind === c[0]; }).map(card).join("") + "</section>";
+  }).join("");
+  var T = TT_GUIDES.filter(function(g){ return g.id === "try"; })[0];
+  document.getElementById("try").innerHTML = '<span class="ow">🎮</span><span><b>' + esc(T.t) + "</b><small>" + esc(T.d) + ' · 새 탭에서 열리고, 탭을 닫으면 사라져요</small></span><a class="btn primary" href="' + esc(B + T.href) + '" target="_blank" rel="noopener">견본 쌤 노트 열기 ↗</a>';
+})();
+</script>
+</body>
+</html>

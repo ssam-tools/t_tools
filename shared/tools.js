@@ -97,6 +97,7 @@ var TT_TOOLS = [
   {id:"schoolhub", icon:"🏫", cat:"work", menu:"school", group:"board", short:"업무판", name:"학교 업무판", desc:"주간·월간 업무판 · 내선번호 · 자주 보는 문서(자료실에서 ★)를 한 화면에.", href:"apps/school/", ready:true},
   {id:"year", pc:true,   icon:"📆", cat:"work", menu:"school", group:"board",  short:"연간 업무", name:"연간 업무", desc:"해마다 돌아오는 일 · 학사일정 붙여 넣기 → 첫 화면 달력.", href:"apps/year/", ready:true},
   {id:"lib",    icon:"🔎", cat:"work", menu:"school", group:"lib",  short:"자료실", name:"자료실", old:"학교 자료실", desc:"규정집·교육계획서·기재요령·서식을 누구나 올리고 내용까지 찾기 (몇 쪽인지).", href:"apps/lib/", ready:true},
+  {id:"guide",  icon:"📘", cat:"work", menu:"school", group:"lib",  short:"쌤 노트 안내", name:"쌤 노트 안내", desc:"설명서(선생님·학생·관리자) · 소개 발표 · 소개 영상 · 견본으로 써 보기.", href:"apps/guide/", ready:true},
   {id:"ai", pc:true,     icon:"🤖", cat:"work", menu:"school", group:"lib",  short:"문서 도우미", name:"문서 도우미", old:"AI·문서 도우미", desc:"개인정보를 가린 AI 요청문 · 🧾 자동 채움(가정통신문·안내 문자·신청서·명단 표·공문 틀에 학교·날짜·담임·명단을 채움) · 보관함.", href:"apps/ai/", ready:true},
   {id:"train", pc:true,  icon:"📜", cat:"work", menu:"school", group:"work",  short:"의무연수", name:"의무연수 취합", desc:"꾸러미 이수증·이수번호를 한 번 내면 연수 담당자들이 한 번에 모아 갑니다.", href:"apps/train/", ready:true},
   {id:"short", pc:true,  icon:"🔗", cat:"work", menu:"school", group:"lib",  short:"짧은 주소", name:"짧은 주소", desc:"긴 주소를 g/?수학1 처럼 짧게 · QR도 함께 · 우리 학교 선생님이 함께 쓰는 목록.", href:"apps/short/", ready:true},

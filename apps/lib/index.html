@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<script src="../../shared/demo.js"></script><!-- 🎬 견본 모드(?demo=1): 저장소를 읽기 전에 맨 먼저 -->
 <style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
 <!-- 외부로 자료를 보내는 통로를 막습니다. 예외: 학교 업무판(구글 앱스 스크립트) — 자료실 파일은 학교 구글 드라이브에 있습니다. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://open.neis.go.kr https://api.open-meteo.com https://air-quality-api.open-meteo.com https://script.google.com https://script.googleusercontent.com; worker-src 'self' blob:; form-action 'none'; base-uri 'none'">
@@ -119,6 +120,7 @@
   html.inframe header{display:none}
   /* v2.51 🌐 공식 자료 */
   .nav .offNav{margin-top:6px;border-top:1px dashed var(--line);border-radius:0 0 9px 9px;padding-top:9px}
+  .nav .gdNav{margin-top:2px;border-top:0;padding-top:6px}
   .offWrap{flex:1;min-height:0;overflow:auto}
   .offSec{margin-top:10px;flex:none}
   .olist{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:5px}
@@ -160,6 +162,7 @@
 <script src="../../shared/tt.js"></script>
 <script src="../../shared/libcache.js"></script>
 <script src="../../shared/official.js"></script>
+<script src="../../shared/guides.js"></script>
 <script>
 (function(){
   "use strict";
@@ -213,6 +216,7 @@
     var c = {"전체": 0}; items.forEach(function(x){ if(onlyNew && !x.latest) return; c["전체"]++; c[x.cat] = (c[x.cat] || 0) + 1; });
     $("nav").innerHTML = ["전체"].concat(CATS).map(function(k){ return '<button type="button" data-c="' + esc(k) + '" aria-current="' + (k === cat) + '">' + esc(k) + "<small>" + (c[k] || 0) + "</small></button>"; }).join("")
       + (window.TT_OFFICIAL ? '<button type="button" data-c="__off" class="offNav" aria-current="' + (cat === "__off") + '" title="교육부·교육청·법령 누리집의 지침 — 올리지 않고 바로 찾아 써요">🌐 공식 자료<small>' + TT_OFFICIAL.items().length + "</small></button>" : "")
+      + (window.TT_GUIDES ? '<button type="button" data-c="__guide" class="offNav gdNav" aria-current="' + (cat === "__guide") + '" title="쌤 노트 설명서·소개 발표·소개 영상 — 어느 학교에서나 바로">📘 쌤 노트 안내<small>' + TT_GUIDES.filter(function(g){ return g.ready; }).length + "</small></button>" : "")
       + '<label><input type="checkbox" id="onlyNew" ' + (onlyNew ? "checked" : "") + "> 최신 판만</label>";
     $("onlyNew").onchange = function(){ onlyNew = this.checked; drawNav(); drawList(); };
   }
@@ -236,8 +240,20 @@
       + G.map(function(g){ return '<div class="offSec"><h3>' + esc(g) + '</h3><div class="olist">' + by[g].map(offRow).join("") + "</div></div>"; }).join("") + "</div>";
     $("info").textContent = "공식 자료 " + L.length + "곳 · 기관 누리집으로 바로 연결 · 찾는 말 말고는 아무것도 보내지 않아요";
   }
+  /* v2.62 📘 쌤 노트 안내 (shared/guides.js): 저장소에 함께 들어 있어 업무판 연결 없이도 열림 */
+  function drawGuide(){
+    var base = TT.BASE || "../../";
+    $("body").innerHTML = '<div class="offWrap"><p class="offTip">쌤 노트 <b>설명서 · 소개 발표 · 소개 영상</b>이에요. 학교 드라이브에 올리지 않아도 어느 학교에서나 열려요. <a href="' + esc(base + "apps/guide/") + '">📘 안내 모음 화면으로 ›</a></p><div class="olist">'
+      + TT_GUIDES.map(function(g){
+        var nt = /\.mp4$|\?demo=1/.test(g.href) ? ' target="_blank" rel="noopener"' : "";
+        return '<div class="it off"><span class="ic">' + g.ic + '</span><div class="mn"><div class="tt">' + esc(g.t) + '</div><div class="mt"><span class="chip">' + esc(g.who + " · " + g.kind) + "</span><span>" + esc(g.d) + "</span></div></div>"
+          + (g.ready ? '<a class="btn" href="' + esc(base + g.href) + '"' + nt + ">열기 ›</a>" : '<span class="muted" style="font-size:12.5px">준비 중</span>') + "</div>";
+      }).join("") + "</div></div>";
+    $("info").textContent = "쌤 노트 안내 " + TT_GUIDES.length + "가지 · 저장소에 함께 들어 있어요";
+  }
   function drawList(){
     if(cat === "__off" && window.TT_OFFICIAL){ drawOff(); return; }
+    if(cat === "__guide" && window.TT_GUIDES){ drawGuide(); return; }
     var my = mine().mine, L = items.filter(function(x){ return (cat === "전체" || x.cat === cat) && (!onlyNew || x.latest); }).sort(function(a, b){ return a.at < b.at ? 1 : -1; });
     $("body").innerHTML = L.length ? '<div class="list">' + L.map(function(x){
       return '<div class="it"><span class="ic">' + icon(x.name) + '</span><div class="mn"><div class="tt" title="' + esc(x.name) + '">' + esc(x.title) + '</div><div class="mt"><span class="chip">' + esc(x.cat) + "</span>" + (x.latest ? '<span class="chip new">최신</span>' : '<span class="chip old">보관</span>') + (x.pages ? '<span class="chip idx">내용 검색' + (/\.pdf$/i.test(x.name) ? " " + x.pages + "쪽" : "") + "</span>" : '<span class="chip">이름으로만 검색</span>') + "<span>" + esc(x.by || "") + "</span><span>" + esc(day(x.at)) + "</span><span>" + kb(x.size) + "</span>" + (x.desc ? "<span>" + esc(x.desc) + "</span>" : "") + '</div></div>' + (star()[x.id] ? '<button type="button" class="btn star on" data-star="' + x.id + '" title="학교 업무판의 자주 보는 문서에서 빼기" aria-pressed="true">★</button>' : '<button type="button" class="btn star" data-star="' + x.id + '" title="학교 업무판의 자주 보는 문서에 넣기 (학교 배치도·교육계획서·규정집 등)" aria-pressed="false">☆</button>') + (isPdf(x.name) ? '<button type="button" class="btn" data-view="' + x.id + '">👁 보기</button>' : "") + '<button type="button" class="btn" data-get="' + x.id + '">⬇ 내려받기</button>' + (my[x.id] || admin ? '<button type="button" class="btn" data-edit="' + x.id + '" title="자료 이름·갈래·설명 고치기">✏️ 고치기</button>' : "") + (my[x.id] || admin ? '<button type="button" class="btn" data-del="' + x.id + '" title="' + (my[x.id] ? "내가 올린 자료" : "관리자") + '">🗑</button>' : "") + "</div>";
