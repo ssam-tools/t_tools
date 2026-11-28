@@ -644,6 +644,9 @@ html[data-ui="ssambi"] body.sbTopOn > header h1,html[data-ui="ssambi"] body.sbTo
 #sbSide .sdF{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding:0 4px}
 #sbSide .sdF button,#sbSide .sdF a{border:0;background:transparent;font:inherit;font-size:12px;color:var(--t-sub);cursor:pointer;text-decoration:none;padding:3px 6px;border-radius:6px}
 #sbSide .sdF button:hover,#sbSide .sdF a:hover{background:var(--t-chip);color:var(--t-accent)}
+#sbSide .sdA{margin-top:6px;padding:4px 8px;font-size:11.5px;color:var(--t-sub);display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+#sbSide .sdA.warn{color:#b45309}
+#sbSide .sdA button{border:0;background:var(--t-chip);color:var(--t-accent);font:inherit;font-size:11.5px;padding:2px 7px;border-radius:999px;cursor:pointer}
 #sbSide .sdN{margin-top:6px;background:var(--t-accent-soft);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--t-ink)}
 #sbSide .sdN.ok{background:#EAF5EA}
 #sbSide .sdN p{margin:0 0 4px;font-weight:700}

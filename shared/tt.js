@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.68.0";
+  var VERSION = "2.69.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -793,16 +793,23 @@ var TT = (function(){
       week: function(mon){ return weekSlots(load(), mon); },
       changed: function(mon){ var t = load(); return !!(t && t.weeks && t.weeks[mon]); },
       /* 그 주에만 바꾸기. 기본과 같아지면 지움. 5주 지난 기록은 정리 */
-      setWeek: function(mon, slots){
+      /* v2.69 직접 고친 칸 (나이스 자동 반영이 덮어쓰지 않음) {"요일-교시":1} */
+      hand: function(mon){ var t = load(); return (t && t.hand && t.hand[mon]) || {}; },
+      setWeek: function(mon, slots, opt){
         var t = load(); if(!t) return false;
+        if(opt && opt.hand){                                            // opt.hand: true = 바뀐 칸 모두 · [키…] = 그 칸만
+          var was = weekSlots(t, mon), H = (t.hand = t.hand || {})[mon] = t.hand[mon] || {};
+          (Array.isArray(opt.hand) ? opt.hand : Object.keys(slots).concat(Object.keys(was)).filter(function(k){ return !same(slots[k], was[k]); })).forEach(function(k){ H[k] = 1; });
+        }
         var diff = Object.keys(slots).concat(Object.keys(t.slots)).some(function(k){ return !same(slots[k], t.slots[k]); });
         t.weeks = t.weeks || {};
         if(diff) t.weeks[mon] = {slots: slots, at: Date.now()}; else delete t.weeks[mon];
         var old = monday(new Date(Date.now() - 35 * 86400000));
         Object.keys(t.weeks).forEach(function(k){ if(k < old) delete t.weeks[k]; });
+        if(t.hand) Object.keys(t.hand).forEach(function(k){ if(k < old) delete t.hand[k]; });
         t.weekAt = Date.now(); return store.set(KEY, t);
       },
-      clearWeek: function(mon){ var t = load(); if(!t || !t.weeks) return; delete t.weeks[mon]; t.weekAt = Date.now(); store.set(KEY, t); }
+      clearWeek: function(mon){ var t = load(); if(!t || !t.weeks) return; delete t.weeks[mon]; if(t.hand) delete t.hand[mon]; t.weekAt = Date.now(); store.set(KEY, t); }
     };
   })();
 
@@ -1151,6 +1158,8 @@ var TT = (function(){
   })();
 
   (function(){ var s = document.createElement("script"); s.src = BASE + "shared/vaultui.js"; s.defer = true; document.head.appendChild(s); })();
+  /* v2.69 나이스 시간표 자동 반영 — 어느 화면에서나 저절로 (교실 기기 제외) */
+  if(!classroom) (function(){ var s = document.createElement("script"); s.src = BASE + "shared/ttneis.js?v=" + VERSION; s.defer = true; document.head.appendChild(s); })();
   /* v2.52 🛡️ 관리자 모드인 창이면 어느 화면에서나 맨 위 표시(shared/admin.js) */
   try{ if(sessionStorage.getItem("ttadm_s") && !document.querySelector('script[src*="shared/admin.js"]')){ var as = document.createElement("script"); as.src = BASE + "shared/admin.js?v=" + VERSION; as.defer = true; document.head.appendChild(as); } }catch(e){}
 

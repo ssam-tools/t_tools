@@ -1,6 +1,6 @@
 /* 쌤 노트 v2.45 · 홈 오른쪽 칸 (넓은 화면 PC만) — 오늘의 흐름을 한눈에
    ① 내 시간표: [오늘 | 이번 주] · 지금 교시 강조 · 기록한 교시 ✓ · 기록 안 한 교시 '기록' · 교체된 칸 표시 · 누르면 그 수업 자료
-      [나이스로 확인]: 나이스(open.neis.go.kr) 학급 시간표에서 내 반·내 교과 칸을 읽어 이번 주 교체를 찾아 줌 → 바뀐 곳만 보여 주고, [반영]을 눌러야 바뀜
+      나이스 교체는 shared/ttneis.js 가 저절로 반영(v2.69) — 여기엔 마지막 확인 시각·[되돌리기]·[지금 확인]만
    ② 작은 달력: 학교 업무판(월간) · 학사일정 · 연간 업무 · 내 할 일 마감을 점으로 — 마우스를 올리면 그날 내용, 누르면 아래에 그날 목록
    - 학생 이름은 쓰지 않습니다. 업무판에는 날짜·공용 비밀번호만, 나이스에는 학교 코드·학년·반·날짜만 보냅니다. */
 (function(){
@@ -109,8 +109,14 @@
   }
 
   /* 나이스 학급 시간표로 이번 주 교체 찾기 (중학교 misTimetable) — 바꾸기 전에 바뀐 곳을 보여 줌 */
+  /* v2.69 이제 나이스 확인·반영은 shared/ttneis.js 가 저절로 합니다. 단추는 '지금 다시 확인'만 */
   function neisCheck(){
     var s = TT.school.load() || {}, t = TT.timetable.load();
+    if(window.TTNeis && t && s.neisA && s.neisS && s.neisKey){
+      st.busy = true; st.neis = {msg: "나이스에서 이번 주·다음 주 시간표를 읽는 중…"}; paint();
+      TTNeis.run({force: true}).then(function(r){ st.neis = {msg: r.ok ? "✓ " + r.msg : r.msg, ok: r.ok && !r.n}; }).then(function(){ st.busy = false; paint(); });
+      return;
+    }
     if(!t){ location.href = "apps/timetable/"; return; }
     if(!s.neisA || !s.neisS){ st.neis = {msg: "먼저 나이스에서 우리 학교를 한 번 찾아 연결해 주세요.", school: 1}; paint(); return; }
     if(!s.neisKey){ st.neis = {msg: "나이스 인증키를 넣으면 시간표를 읽을 수 있어요.", key: 1}; paint(); return; }   // v2.46 인증키를 여기서 바로 넣기
@@ -223,6 +229,15 @@
     TT.ui.toast("나이스 인증키를 저장했어요"); st.neis = null; neisCheck();
   }
 
+  /* v2.69 나이스 자동 반영 한 줄: 언제 확인했는지 · 반영한 주는 [되돌리기] */
+  function autoLine(){
+    if(!window.TTNeis || !TTNeis.ready()) return "";
+    var M = TTNeis.last() || {}, W = (M.weeks || []).filter(function(w){ return w.list && w.list.length; });
+    if(!M.at) return '<div class="sdA">🔄 나이스 시간표 자동 반영 켜짐</div>';
+    return '<div class="sdA' + (M.ok === false ? " warn" : "") + '" title="' + esc(W.map(function(w){ return w.mon.slice(5).replace("-", "/") + " 주: " + w.list.join(", "); }).join("\n")) + '">🔄 ' + esc(M.ok === false ? M.msg : "나이스 자동 반영 · " + ago(M.at))
+      + W.map(function(w){ return ' <button type="button" data-nundo="' + esc(w.mon) + '">' + esc(w.mon.slice(5).replace(/^0/, "").replace("-", "/")) + " 주 " + w.list.length + "곳 되돌리기</button>"; }).join("") + "</div>";
+  }
+
   /* ── 그리기 ── */
   function paint(){
     if(!on()){ if(side){ side.hidden = true; } if(document.body.classList.contains("sbSideOn")) document.body.classList.remove("sbSideOn"); return; }
@@ -230,7 +245,8 @@
       side = document.createElement("aside"); side.id = "sbSide"; side.setAttribute("aria-label", "오늘 한눈에");
       document.body.appendChild(side);
       side.addEventListener("click", function(e){
-        var b = e.target.closest("[data-v],[data-cm],[data-day],[data-neis],[data-napply],[data-nclose],[data-nkey],[data-nsch],[data-act],[data-hist]"); if(!b) return;
+        var b = e.target.closest("[data-nundo],[data-v],[data-cm],[data-day],[data-neis],[data-napply],[data-nclose],[data-nkey],[data-nsch],[data-act],[data-hist]"); if(!b) return;
+        if(b.hasAttribute("data-nundo")){ if(window.TTNeis) TTNeis.undo(b.getAttribute("data-nundo")); paint(); return; }
         if(b.hasAttribute("data-act")){ var mb0 = document.getElementById(b.getAttribute("data-act")); if(mb0) mb0.click(); else TT.ui.toast("잠시 뒤 다시 눌러 주세요"); return; }
         if(b.hasAttribute("data-hist")){ var cr = document.getElementById("sbCredit"); if(cr) cr.click(); return; }
         if(b.hasAttribute("data-nsch")){ st.neis = null; paint(); if(window.TTMeal) TTMeal.open(); return; }
@@ -252,7 +268,8 @@
     side.innerHTML = '<section class="sdC sdT" aria-label="내 시간표"><div class="sdH"><b>내 시간표</b><span class="seg" role="group" aria-label="보기">'
       + '<button type="button" data-v="day" aria-pressed="' + (v === "day") + '">오늘</button><button type="button" data-v="week" aria-pressed="' + (v === "week") + '">이번 주</button></span></div>'
       + '<div class="sdB">' + (v === "week" ? weekHTML() : dayHTML()) + "</div>"
-      + '<div class="sdF"><button type="button" data-neis title="나이스 학급 시간표와 비교해 이번 주 교체를 찾아요"' + (st.busy ? " disabled" : "") + ">↻ 교체 확인</button><a href=\"apps/timetable/\">고치기</a></div>"
+      + autoLine()
+      + '<div class="sdF"><button type="button" data-neis title="나이스가 저절로 확인해요 · 지금 바로 다시 확인"' + (st.busy ? " disabled" : "") + ">↻ " + (window.TTNeis && TTNeis.ready() ? "지금 확인" : "교체 확인") + "</button><a href=\"apps/timetable/\">고치기</a></div>"
       + (N ? '<div class="sdN' + (N.ok ? " ok" : "") + '"><p>' + esc(N.msg) + "</p>" + (N.list ? "<ul>" + N.list.slice(0, 8).map(function(x){ return "<li>" + esc(x) + "</li>"; }).join("") + (N.list.length > 8 ? "<li>… " + (N.list.length - 8) + "개 더</li>" : "") + "</ul>" : "")
         + (N.key ? '<div class="nk"><input id="sdKey" type="text" inputmode="latin" autocomplete="off" spellcheck="false" maxlength="40" placeholder="인증키 붙여넣기" aria-label="나이스 인증키"><button type="button" class="p" data-nkey>저장</button></div>'
           + '<small class="nh">open.neis.go.kr → 마이페이지 → 인증키 (무료) · 설정 → 시작 세팅 → 내 정보에서도 바꿀 수 있어요</small>' : "")
@@ -266,7 +283,7 @@
   document.addEventListener("keydown", function(e){ if(e.key === "Enter" && e.target && e.target.id === "sdKey" && !e.isComposing){ e.preventDefault(); saveKey(); } });
   var rT = 0; function soon(){ clearTimeout(rT); rT = setTimeout(paint, 80); }
   document.addEventListener("close", function(){ if(isSet()) soon(); }, true);   // 설정 창을 닫으면 점검 다시
-  ["resize", "tt-home-change", "tt-mytodo-change", "hashchange", "focus", "load"].forEach(function(ev){ window.addEventListener(ev, soon); });
+  ["resize", "tt-home-change", "tt-timetable-auto", "tt-mytodo-change", "hashchange", "focus", "load"].forEach(function(ev){ window.addEventListener(ev, soon); });
   window.addEventListener("storage", function(e){ if(!e.key || /^tt_/.test(e.key)) soon(); });
   new MutationObserver(soon).observe(document.body, {attributes: true, attributeFilter: ["class"]});
   (function tick(){ setTimeout(function(){ if(document.visibilityState === "visible") paint(); tick(); }, 60500 - Date.now() % 60000); })();

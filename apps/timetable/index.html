@@ -208,7 +208,7 @@
     var hasBase = Object.keys(T.slots).length, mon = guessMon(r.dates);
     /* 기본 시간표 넣기 (처음이거나, 기본 보기에서 날짜 없는 시간표를 넣을 때) */
     if(!hasBase || (!isWeek() && !mon)){
-      var go = function(){ if(r.periods) T.periods = r.periods; T.slots = r.slots; T.weeks = {}; save(); msg("ok", "✔ 기본 시간표 수업 " + r.count + "시간을 가져왔습니다."); };
+      var go = function(){ if(r.periods) T.periods = r.periods; T.slots = r.slots; T.weeks = {}; T.hand = {}; save(); msg("ok", "✔ 기본 시간표 수업 " + r.count + "시간을 가져왔습니다."); };
       return hasBase ? TT.ui.confirm("기본 시간표 바꾸기", "학기 내내 쓰는 기본 시간표를 붙여 넣은 시간표(수업 " + r.count + "시간)로 바꿀까요? 수업 교체 한 주만 바꾸려면 위에서 '이번 주'를 고르세요.", "바꾸기", go) : go();
     }
     /* 그 주에만: 바뀐 교시를 노랗게 보여 주고 [반영] */
@@ -219,13 +219,16 @@
     if(!d.length && !had){ pending = null; render(); return msg("ok", "✔ " + md(mon) + " 주는 기본 시간표와 같습니다. 바뀐 교시가 없어요."); }
     var mine = Object.keys(r.slots).filter(function(k){ return same(r.slots[k], T.slots[k]); }).length;
     pending = {mon: mon, slots: r.slots, keys: d, odd: Object.keys(r.slots).length >= 4 && mine / Object.keys(r.slots).length < 0.3};
+    /* v2.69 한 번 덜 누르기: 내 시간표로 보이면 바로 반영(되돌리기 남김). 다른 선생님 것 같을 때만 확인 */
+    if(!pending.odd){ var before = JSON.parse(JSON.stringify(TTT.week(mon))), hadW = had; $("pOk").onclick();
+      return TT.ui.toast("✔ " + md(mon) + " 주에 반영했어요", function(){ if(hadW) TTT.setWeek(mon, before); else TTT.clearWeek(mon); T = TTT.load(); render(); msg("", "되돌렸습니다."); }, "되돌리기", 8000); }
     render(); msg("", "");
   });
   $("paste").addEventListener("input", function(){ if(this.value.trim()){ msg("err", "Ctrl+V로 붙여 넣어 주세요. (직접 고치려면 왼쪽 칸을 누르세요)"); this.value = ""; } });
   $("pNo").onclick = function(){ pending = null; render(); msg("", "반영하지 않았습니다."); };
   $("pOk").onclick = function(){
     var p = pending; pending = null;
-    TTT.setWeek(p.mon, p.slots); T = TTT.load();
+    TTT.setWeek(p.mon, p.slots, {hand: true}); T = TTT.load();   // v2.69 직접 넣은 칸은 나이스 자동 반영이 덮어쓰지 않음
     render(); msg("ok", "✔ " + md(p.mon) + "~" + md(p.mon, 4) + " 주에만 반영했습니다(" + p.keys.length + "교시). 기본 시간표는 그대로예요.");
   };
 
@@ -249,7 +252,7 @@
     document.body.appendChild(d);
     d.addEventListener("close", function(){ d.remove(); });
     function put(v){
-      if(isWeek() && !pending){ var c = JSON.parse(JSON.stringify(S)); if(v) c[k] = v; else delete c[k]; TTT.setWeek(curMon(), c); T = TTT.load(); render(); }
+      if(isWeek() && !pending){ var c = JSON.parse(JSON.stringify(S)); if(v) c[k] = v; else delete c[k]; TTT.setWeek(curMon(), c, {hand: [k]}); T = TTT.load(); render(); }
       else if(pending){ if(v) pending.slots[k] = v; else delete pending.slots[k]; pending.keys = diffKeys(pending.slots, T.slots); render(); }
       else { if(v) T.slots[k] = v; else delete T.slots[k]; save(); }
       d.close();
@@ -316,7 +319,7 @@
       });
     }
   });
-  $("mReset").onclick = function(){ $("more").open = false; var m = curMon(); TTT.clearWeek(m); T = TTT.load(); pending = null; render(); TT.ui.toast(md(m) + " 주를 기본 시간표로 되돌렸습니다."); };
+  $("mReset").onclick = function(){ $("more").open = false; var m = curMon(); TTT.setWeek(m, JSON.parse(JSON.stringify(T.slots)), {hand: true}); T = TTT.load();   /* v2.69 되돌린 칸은 나이스 자동 반영도 다시 바꾸지 않음 */ pending = null; render(); TT.ui.toast(md(m) + " 주를 기본 시간표로 되돌렸습니다."); };
   $("mClear").onclick = function(){
     $("more").open = false;
     TT.ui.confirm("시간표 지우기", "내 시간표(기본·주마다 바뀐 것)를 모두 지웁니다. 수업 기록장의 시간표는 그대로 남습니다.", "지우기", function(){ T = blank(); pending = null; save(); });
