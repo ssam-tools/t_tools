@@ -17,7 +17,7 @@
 | 2 | 견본 자료 보강(수업 기록·학생 기록·공부 Gym 등 화면이 비지 않게) + 화면 캡처(`apps/guide/shots/`) + **선생님용 설명서** `apps/guide/teacher.html` || ✅ v2.63.0 |
 | 3 | **학생용 안내** `student.html` · **관리자·담당자 설명서** `admin.html` + 쌤비 찾기창에서 설명서 쪽 찾기 | ✅ v2.64.0 |
 | 4 | **소개 발표 2종** `intro-teacher.html`(14장) · `intro-student.html`(7장) — 장마다 [실제로 열기 ▶], 견본 쌤 노트를 슬라이드 안에 띄움, 마지막 장 QR | ✅ v2.65.0 |
-| 5 | **소개 영상 2편** `media/teacher.mp4`(45초) · `media/student.mp4`(25초) — 견본 화면 녹화 + 자막 + 쌤비 + 직접 작곡한 음악 | |
+| 5 | **소개 영상 2편** `media/teacher.mp4`(45초) · `media/student.mp4`(25초) — 견본 화면 + 자막 + 쌤비 + 직접 작곡한 음악 | ✅ v2.66.0 |
 | 6 | 최종 점검(개인정보 · 링크 · QR · 휴대폰 화면) + `guides.js` 모두 ready + 제작 히스토리 | |
 
 ## 각 결과물의 뼈대
@@ -62,3 +62,13 @@
 - live 장의 [▶ 실제로 열기] = 그 도구를 `?demo=1` 로 장 안 iframe에 띄움(도구 화면은 다른 화면 안에서 메뉴 없이 열림). 홈은 화면 전체가 필요해 `tab: true` 로 새 탭.
 - 발표 화면에서는 견본 띠(#snDemo)를 숨김 — [← 안내]로 나가면 `?demo=0` 이 붙어 견본이 끝남.
 - 화면 그림은 2~3단계에서 찍은 `shots/` 를 다시 씀 — 화면이 바뀌면 그림만 바꾸면 됨. 아끼는 시간 숫자는 예시(화면에서 바꿀 수 있음).
+
+## 소개 영상 메모 (5단계, v2.66.0)
+- 결과: `apps/guide/media/teacher.mp4`(45초) · `student.mp4`(25초) — 세로 1080×1920 · 30fps · H.264 + AAC, 각 9~10MB, 소리 크기 약 -15 LUFS(숏츠·릴스 기준).
+- 만드는 곳: `apps/guide/film/` — `film.html`+`film.js`(장면, 시간 t만으로 그림이 정해짐) · `music.py`(배경음악 작곡, 샘플 0개) · `make.py`(1/30초씩 찍어 ffmpeg로 합침).
+  - 다시 만들기: `cd apps/guide/film && python3 make.py teacher` (또는 student). 장면 몇 개만 보기: `python3 make.py teacher 4.1 13 41.5`
+  - 브라우저로 미리 보기(소리 없음): `apps/guide/film/film.html?v=teacher`
+  - 필요한 것: python playwright · 크롬 · ffmpeg · numpy · scipy
+- 화면은 `shots/` 그림(견본 모드)을 확대·이동·누르기 효과로 움직임 → 화면이 바뀌면 그림만 바꾸고 다시 만들면 됨. 장면 글은 `film.js` 의 `F`(선생님) · `S`(학생).
+- 박자 = 장면: 120 BPM, 1마디(2초)마다 장면 하나. 선생님 0~3 질문 → 3~35 기능 16개 → 35~37 모아 보기 → 37 퇴근 도장 쾅 → QR(견본 `index.html?demo=1`). 학생 0~3 질문 → 3~21 장면 9개(LV 오름) → 21 LEVEL UP → QR(`apps/gym/`).
+- 영상 속 QR·주소는 본 사이트(ssam-tools.github.io/t_tools) 고정 — 다른 학교가 자기 사이트로 바꾸려면 `film.js` 의 `SITE` 를 바꿔 다시 만들기.
