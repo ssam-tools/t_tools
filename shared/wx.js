@@ -9,7 +9,7 @@
   function code(c){ c = +c || 0; for(var i = 0; i < CODES.length; i++) if(c <= CODES[i][0]) return {ic: CODES[i][1], tx: CODES[i][2]}; return {ic: "☁", tx: "흐림"}; }
   function lv10(v){ return v == null ? null : v <= 30 ? ["좋음", 0] : v <= 80 ? ["보통", 1] : v <= 150 ? ["나쁨", 2] : ["매우 나쁨", 3]; }
   function lv25(v){ return v == null ? null : v <= 15 ? ["좋음", 0] : v <= 35 ? ["보통", 1] : v <= 75 ? ["나쁨", 2] : ["매우 나쁨", 3]; }
-  function cfg(){ var c = window.TT_SCHOOL_WX; return c && isFinite(c.lat) && isFinite(c.lon) ? c : null; }
+  function cfg(){ var c = window.TT_SCHOOL_WX; if(c && c.home && !(window.TT_SCHOOL_HOME && TT_SCHOOL_HOME(true) === true)) return null; return c && isFinite(c.lat) && isFinite(c.lon) ? c : null; }   // v2.67 본교 위치는 본교(·견본)에서만
   function cache(){ try{ return JSON.parse(localStorage.getItem(KEY)) || null; }catch(e){ return null; } }
   function data(){
     var c = cache(); if(!c || !c.f || Date.now() - c.t > OLD) return null;

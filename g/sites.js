@@ -5,7 +5,7 @@
    · 다른 학교가 쓸 때는 이 목록만 자기 학교 것으로 바꾸면 됩니다. */
 window.TT_SCHOOL_SITES = [
   {id: "d-eduptl",   t: "업무포털",       u: "https://gne.eduptl.kr/",                                  c: "work", pin: true},
-  {id: "d-school",   t: "마산서중학교",   u: "https://masanseo-m.gne.go.kr/masanseo-m/main.do",         c: "work", pin: true},
+  {id: "d-school",   t: "마산서중학교",   u: "https://masanseo-m.gne.go.kr/masanseo-m/main.do",         c: "work", pin: true, home: true},   // home: 본교 업무판에 연결된 기기에만
   {id: "d-bell",     t: "학교종이",       u: "https://schoolbell-e.com/",                               c: "work", pin: true},
   {id: "d-gneti",    t: "경남교육연수포털", u: "https://www.gneti.or.kr/",                              c: "work", pin: true},
   {id: "d-highsch",  t: "경남고입포털",   u: "https://highschool.gne.go.kr/s10/hsa/user/main.do",       c: "work", pin: true},
@@ -20,21 +20,34 @@ window.TT_SCHOOL_SITES = [
   {id: "c-neteacher",t: "능률엔이 중등",   u: "https://www.neteacher.co.kr/",                            c: "class"}
 ];
 /* v2.12 날씨 위치 = 학교 위치 (선생님 기기 위치는 쓰지 않음). 지우면 날씨가 나오지 않습니다. */
-window.TT_SCHOOL_WX = {name: "마산", lat: 35.21, lon: 128.57};
+window.TT_SCHOOL_WX = {name: "마산", lat: 35.21, lon: 128.57, home: true};
+/* v2.67 다른 학교도 같은 사이트를 쓰므로, 본교에만 맞는 줄(home: true)은 본교 업무판에 연결된 기기에서만 씁니다.
+   TT_SCHOOL_HOME(): true 본교 · false 다른 학교 · null 아직 업무판 연결 전 / demo=true 이면 견본 모드도 본교처럼(날씨만) */
+window.TT_SCHOOL_HOME_BOARD = "AKfycbys89yIhtx7OdMvLikI7nBgBRTBqsYjK0qog4MfF5sR7cu_Ist0i3IADzLnPpiBqX0GkQ";
+window.TT_SCHOOL_HOME = function(demo){
+  try{
+    var b = (window.TT && TT.store && TT.store.get("tt_board_v1", null)) || {}, u = String(b.url || "");
+    if(!u) return null;
+    if(demo && u.indexOf("SSAMBI-DEMO") >= 0) return true;
+    return u.indexOf(window.TT_SCHOOL_HOME_BOARD) >= 0;
+  }catch(e){ return null; }
+};
 /* 학교 목록에서 뺀 것: 이미 선생님 목록에 들어간 공통 사이트(🏫)도 지움 (선생님이 직접 넣은 것은 그대로) */
 window.TT_SCHOOL_SITES_GONE = ["c-didimdol"];
 window.TT_SITES_SEED = function(){
   try{
     if(!window.TT || !TT.store || TT.classroom) return false;
-    var D = TT.store.get("tt_sites_v1", null) || {v: 1, items: []}, ch = false;
+    var D = TT.store.get("tt_sites_v1", null) || {v: 1, items: []}, ch = false, home = window.TT_SCHOOL_HOME();
     D.items = D.items || []; D.seeded = D.seeded || [];
+    var homeIds = window.TT_SCHOOL_SITES.filter(function(s){ return s.home; }).map(function(s){ return s.id; });
     window.TT_SCHOOL_SITES.forEach(function(s){
+      if(s.home && home !== true) return;   // 본교 전용 줄은 본교 업무판에 연결된 뒤에만 (기억도 하지 않아 연결 뒤 들어감)
       if(D.seeded.indexOf(s.id) >= 0) return;
       D.seeded.push(s.id); ch = true;
       if(!D.items.some(function(x){ return x.u === s.u; })) D.items.push({id: s.id, t: s.t, u: s.u, c: s.c, pin: !!s.pin, sch: true});
     });
     var n0 = D.items.length;
-    D.items = D.items.filter(function(x){ return !(x.sch && window.TT_SCHOOL_SITES_GONE.indexOf(x.id) >= 0); });
+    D.items = D.items.filter(function(x){ return !(x.sch && (window.TT_SCHOOL_SITES_GONE.indexOf(x.id) >= 0 || (home === false && homeIds.indexOf(x.id) >= 0))); });
     if(D.items.length !== n0) ch = true;
     if(ch) TT.store.set("tt_sites_v1", D);
     return ch;
