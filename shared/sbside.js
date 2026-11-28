@@ -62,7 +62,7 @@
       + (window.TTAutoBk && TTAutoBk.supported ? (function(){ var A = TTAutoBk.status(); return row("🗂️", "자동 백업", A.on ? "매일 · " + A.name + (A.last ? " · " + ago(A.last) : "") : "꺼짐 · 폴더만 고르면 매일 저절로", A.on ? "" : "dim", '<button type="button" class="sm' + (A.on ? "" : " p") + '" data-abk>' + (A.on ? "폴더 바꾸기" : "켜기") + "</button>"); })() : "")
       + row("☁️", "기기 연결", vTxt, vm ? "" : "dim", '<button type="button" class="sm" data-act="mVault">' + (vm ? "관리" : "켜기") + "</button>")
       + row("💽", "이 기기 저장", space && space.u != null ? mb(space.u) + " 사용" + (space.q ? " · 남은 " + mb(Math.max(0, space.q - space.u)) : "") : "재는 중…", "", "")
-      + row("⌨️", "단축키", "Alt+1~5 메뉴 · / 찾기", "", '<button type="button" class="sm" data-act="mKeys">보기</button>')
+      + row("⌨️", "단축키", "Alt+1~6 메뉴 · / 찾기", "", '<button type="button" class="sm" data-act="mKeys">보기</button>')
       + '<button type="button" class="sdVer" data-hist title="제작 히스토리">🦉 쌤 노트 v' + esc(TT.VERSION) + ' <span>· 무엇이 바뀌었나 ›</span></button>'
       + "</section>";
     return h;

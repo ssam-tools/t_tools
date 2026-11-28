@@ -671,15 +671,14 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
   <form method="dialog">
     <h2>🦉 처음 사용 안내</h2>
     <ol>
-      <li><b>처음 한 번</b>: 담당 선생님이 보낸 <b>초대 링크</b>를 열고 → 공용 비밀번호 → 내 이름 고르기. 명렬·시간표·학사일정이 한 번에 들어와요(설정 → <b data-tn="setup">학기초 세팅</b>에서도 할 수 있어요). 학기 중 바뀐 내용은 켤 때 저절로 맞춰져요.</li>
       <li><b>쌤비</b>: 지금 챙길 일을 한 줄로 알려 줘요. 쌤비나 🎤를 누르면 말로 기록·찾기·바로 실행("3반 출결", "기재요령에서 봉사활동 찾아 줘").</li>
-      <li><b>검색창</b>(어디서나 <b>/</b> · 문서·업무판에서는 <b>Ctrl+F</b>): 학생·도구·내선번호·자료실을 찾고, 오른쪽에 문서가 열려 있으면 그 문서 안을 찾아요. <b>+ 할 일</b>처럼 적으면 내 할 일에 들어갑니다.</li>
-      <li><b>메뉴</b>(PC 왼쪽 · 휴대폰 위): 홈 · 수업 · 우리 반 · 학생 · 학교 · 자료실 · 설정. 메뉴를 누르면 대표 도구가 바로 열리고, 왼쪽에 그 메뉴의 도구 목록이 펼쳐져요.</li>
-      <li><b>오늘 할 일</b>: 입력한 자료에서 저절로 생기고, 끝내면 사라져요. 급한 일이 없으면 오후에 <b>퇴근 도장</b> 쾅! (설정 → 꾸미기 → 도장판·배지)</li>
+      <li><b>찾기</b>(<b>/</b> 또는 <b>Ctrl+K</b>): 학생·도구·내선번호·자료실을 찾고, 문서를 보고 있으면 그 문서 안을 찾아요. <b>+ 내일 공문 회신</b>처럼 적으면 내 할 일에 들어가요.</li>
+      <li><b>메뉴</b>(PC 왼쪽 · 휴대폰 아래 탭): 홈 · 수업 · 우리 반 · 학생 · 학교 · 자료실 · 설정. 누르면 대표 도구가 바로 열려요. 순서대로 <b>Alt+1~6</b>, 설정은 <b>Alt+0</b>.</li>
+      <li><b>오늘 할 일</b>: 입력한 자료에서 저절로 생기고, 끝내면 사라져요. 급한 일이 없으면 오후에 <b>퇴근 도장</b> 쾅!</li>
     </ol>
-    <p style="margin-top:10px">🔒 학생 자료는 이 기기의 브라우저에만 저장됩니다. ⋯ → <b>기기 연결·동기화</b>를 켜면 내 비밀 문구로 잠근 뒤에만 학교 업무판 보관함과 맞춰져요. 한 달에 한 번은 ⋯ → <b>전체 백업 저장</b>.</p>
-    <p style="margin-top:6px">📲 ⋯ → <b>앱 설치하기</b>를 누르면 바탕화면·홈 화면에 쌤비 아이콘(쌤 노트)이 생기고, 인터넷이 끊겨도 열립니다.</p>
-    <div class="acts"><span></span><div class="r"><button type="submit" class="btn primary">확인</button></div></div>
+    <p style="margin-top:10px">🔒 학생 자료는 이 기기의 브라우저에만 저장됩니다. 여러 기기에서 쓰려면 설정 → 시작 세팅 → <b>내 기기 연결</b>(내 비밀 문구로 잠근 뒤에만 맞춰져요). 한 달에 한 번은 설정 → 백업·새 학년 → <b>전체 백업 저장</b>.</p>
+    <p style="margin-top:6px">📲 설정 → 도움말 → <b>앱 설치하기</b> · ⌨️ 단축키는 <b>?</b> · 더 자세히는 <a href="apps/guide/">📘 쌤 노트 안내서</a></p>
+    <div class="acts"><span></span><div class="r"><button type="submit" class="btn primary" autofocus>확인</button></div></div>
   </form>
 </dialog>
 
@@ -908,7 +907,7 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
       help: {ic: "❓", t: "도움말", sub: "쓰는 법 · 단축키 · 앱 설치 · 의견", rows: function(){ return [
         {ic: "📘", t: "쌤 노트 안내서", s: "설명서 · 소개 발표 · 소개 영상 · 견본으로 써 보기", fn: goTo("apps/guide/")},
         {ic: "🦉", t: "처음 사용 안내", s: "쌤 노트 쓰는 법", fn: clickMenu("mHelp")},
-        {ic: "⌨️", t: "단축키 안내", s: "/ 찾기 · Alt+1~5 메뉴 · Alt+B 쌤비 · ?", fn: clickMenu("mKeys")},
+        {ic: "⌨️", t: "단축키 안내", s: "/ 찾기 · Alt+1~6 메뉴 · Alt+B 쌤비 · ?", fn: clickMenu("mKeys")},
         {ic: "📲", t: "앱 설치하기", s: "바탕화면·홈 화면에 쌤비 아이콘", fn: clickMenu("mInstall")},
         {ic: "💬", t: "의견 보내기", s: (window.TT_FBM && TT_FBM.unseen() ? "📬 보낸 의견에 답이 " + TT_FBM.unseen() + "개 왔어요 · " : "") + "불편한 점 · 아이디어를 담당 선생님께", fn: clickMenu("mFeedback")}]; }}
     };
@@ -970,7 +969,7 @@ html[data-ui="ssambi"]:not(.sbLate) body:not(.sbOn) > header,html[data-ui="ssamb
         items.push({x: {icon: "📞", name: "내선번호", st: EX.length ? EX.length + "곳 · 찾기(Ctrl+K)로도" : "학교 업무판에서 불러오기", fn: function(){ sessionStorage.setItem("sn_ext", "1"); var v = TT.store.get(UIK, {}) || {}; v.mtab = v.mtab || {}; v.mtab.school = "lib"; TT.store.set(UIK, v); renderMenu("school"); }}});
       }
       if(m.id === "settings" && !TT.classroom){                                   // 설정 메뉴: ⋯ 메뉴에 있던 설정을 카드로 (누르면 같은 창이 열림)
-        ({guide: [["mHelp","❓","처음 사용 안내","쌤 노트 쓰는 법"],["mKeys","⌨️","단축키 안내","/ · Ctrl+F · Alt+B · ?"],["mFeedback","💬","의견 보내기","불편한 점 · 아이디어를 담당 선생님께"],["mJoy","🎈","도장판·배지","퇴근 도장 · 아낀 시간 · 배지 · 쌤비 소품"]],
+        ({guide: [["mHelp","❓","처음 사용 안내","쌤 노트 쓰는 법"],["mKeys","⌨️","단축키 안내","/ 찾기 · Alt+1~6 메뉴 · Alt+B 쌤비 · ?"],["mFeedback","💬","의견 보내기","불편한 점 · 아이디어를 담당 선생님께"],["mJoy","🎈","도장판·배지","퇴근 도장 · 아낀 시간 · 배지 · 쌤비 소품"]],
           set: [["mSchool","🏫","학교·선생님 설정","내 정보 · 담임/교과 · 교과 칸 · 나이스 인증키"],["mAuto","✨","자동 준비 설정","시기에 맞춰 할 일 미리 넣기"],["mFont","🎨","화면 꾸미기","테마 색 · 글꼴 · 글자 크기"],["mBoard","📅","학교 업무판 연결","업무판 주소 · 자료실 · 내선번호"],["mVault","☁️","기기 연결·동기화","내 기기끼리 자료 맞추기"],["mTalk","📣","쌤비 이야기","학교 소식 보내기 · 들을 이야기 고르기"],["mInstall","📲","앱 설치하기","바탕화면·홈 화면에 쌤비 아이콘"]],
           data: [["mBackup","💾","전체 백업 저장","이 기기 자료를 파일 하나로"],["mRestore","📂","백업 불러오기","백업 파일에서 되살리기"]],
           year: [["mNewYear","🌱","새 학년 시작","한 해 돌아보기 → 백업 → 정리 (조심)"]]}[g.id] || []

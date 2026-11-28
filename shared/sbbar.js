@@ -15,7 +15,7 @@
   try{ if(localStorage.getItem("sb_rail_mini") === "1") R.classList.add("sbMini"); }catch(e){}   // v2.45 왼쪽 메뉴 접기(아이콘만) — 기억
   function miniBtn(){ var m = R.classList.contains("sbMini"); return '<button type="button" class="rmin" data-rmini title="' + (m ? "메뉴 펼치기" : "메뉴 접기") + '" aria-label="' + (m ? "메뉴 펼치기" : "메뉴 접기") + '">' + (m ? "»" : "«") + "</button>"; }
   var MENUS = [["home", "홈"], ["class", "수업"], ["homeroom", "우리 반"], ["student", "학생"], ["school", "학교"], ["lib", "자료실"], ["settings", "설정"]];
-  var KEYS = {home: "Alt+1", "class": "Alt+2", homeroom: "Alt+3", student: "Alt+4", school: "Alt+5", settings: "Alt+0"};
+  var KEYS = {home: "Alt+1", "class": "Alt+2", homeroom: "Alt+3", student: "Alt+4", school: "Alt+5", lib: "Alt+6", settings: "Alt+0"};
   var SUBK = "sbSub";                                                  // 자료실 = 학교 메뉴의 자료실 묶음 (이 창에서만 기억)
   var DOW = "일월화수목금토";
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -72,7 +72,7 @@
   var REP_PH = {"class": "apps/journal/"};                             // v2.55 휴대폰: 수업 = 수업 기록 (교과서 띄우기는 PC·전자칠판)
   function rep(id){ return (PH() && !CRM && REP_PH[id]) || REP[id]; }
   function href(id){ return id === "home" ? BASE : rep(id) ? BASE + rep(id) : BASE + "#" + id; }
-  if(HOME){                                                             // 예전 주소(#class …)·단축키(Alt+2~5)로 와도 대표 도구로
+  if(HOME){                                                             // 예전 주소(#class …)·단축키(Alt+2~6)로 와도 대표 도구로
     var toRep = function(){
       if(R.getAttribute("data-ui") !== "ssambi") return false;
       var h = (location.hash || "").replace(/^#/, ""), k = h === "school" && sub() === "lib" ? "lib" : h;
@@ -330,7 +330,7 @@
   };
   var NEV = [[/고사|시험|지필/, "출제 원안·답안지 점검, 감독표 확인"], [/방학식/, "방학 중 연락 방법·안전교육 안내"], [/체험|수학여행|수련|소풍/, "참가 동의서·안전교육·비상 연락망"],
              [/졸업/, "졸업장·상장 명단 최종 확인"], [/상담|학부모|총회/, "상담 일정표·상담 일지 준비"], [/개학|입학/, "시간표 교체·명렬표 변동 확인"], [/생활기록부|생기부|성적/, "입력·점검 마감 시각 확인"]];
-  var NTIP = [["/ 키를 누르면 어디서나 바로 찾기", ""], ["Alt+1~5로 메뉴 이동, Alt+0은 설정", ""], ["Alt+B를 누르면 쌤비가 열려요", ""],
+  var NTIP = [["/ 키를 누르면 어디서나 바로 찾기", ""], ["Alt+1~6으로 메뉴 순서대로 이동, Alt+0은 설정", ""], ["Alt+B를 누르면 쌤비가 열려요", ""],
               ["검색창에 '3번 지각'처럼 적으면 바로 출결에 저장돼요", ""], ["검색창에 '+ 할 일'을 적으면 할 일에 들어가요", ""],
               ["맨 위 날짜에 마우스를 올리면 오늘 급식이 보여요", ""], ["맨 위 시각에 마우스를 올리면 지금 교시·하교 시간", ""],
               ["선생님 이름에 마우스를 올리면 내선·지금 수업 중인지", ""], ["반 이름(3-2)에 마우스를 올리면 담임·지금 수업 선생님", ""],
