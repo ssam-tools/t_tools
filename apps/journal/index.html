@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <script src="../../shared/demo.js"></script><!-- 🎬 견본 모드(?demo=1): 저장소를 읽기 전에 맨 먼저 -->
-<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
+<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}.prebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 10px;padding:8px 12px;border-radius:12px;background:var(--t-chip,#f3f4f6);font-size:14px}.prebar span{flex:1;min-width:180px}.lesson.pre{opacity:.8}.lesson.pre em,.lesson.pre{font-style:normal}
+</style>
 <!-- 외부로 자료를 보내는 통로를 브라우저 차원에서 막습니다(이 사이트 안의 파일만 허용). -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://open.neis.go.kr https://api.open-meteo.com https://air-quality-api.open-meteo.com; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1,viewport-fit=cover">
@@ -438,6 +439,7 @@ function emptyRoster(c){return '<div class="empty"><p>'+cn(c)+' 명단이 아직
 function lessonLine(ls){return ls?'<em>'+esc(ls.unit)+'</em> '+esc(ls.title):'';}
 
 /* ---------- 화면: 오늘 ---------- */
+function prefillOn(){try{return localStorage.getItem('sn_prefill')!=='0';}catch(e){return true;}}   // v2.70 기본 켜짐 (이 기기)
 function slotCard(k,p,c){
   const L=lessons(gradeOf(c)),tg=S.taught[k+'|'+p.n],todayK=dkey(new Date()),m=nowMin();
   const now=k===todayK&&m>=toMin(p.t)&&m<=toMin(p.e);
@@ -456,11 +458,11 @@ function slotCard(k,p,c){
     if(tg.book)line+='<p class="lesson"><span class="lbl">수업 모드</span>📖 p.'+esc(tg.book.p)+(tg.book.u?' '+esc(tg.book.u):'')+(tg.book.ch&&tg.book.ch.length?' · 🔥 도전 '+tg.book.ch.map(id=>esc(String(id).replace('-','년 ').replace(/년 0/,'년 '))+'번').join(', '):'')+'</p>';   // 수업 6단계
     acts='<button class="btn sm ghost" data-act="slotUndo" '+ref+'>되돌리기</button>';
   }else{
-    const ls=L[progN(c)];
-    badge=now?'<span class="pill chalk">수업 중</span>':past?'<span class="pill warn">체크 전</span>':future?'<span class="pill">예정</span>':'';
-    line='<p class="lesson"><span class="lbl">'+(past?'체크할 차시':future?'예정 차시':'오늘 차시')+'</span>'+(ls?lessonLine(ls):'모든 차시를 마쳤어요')+'</p>';
+    const ls=L[progN(c)],pf=past&&prefillOn()&&ls;          /* v2.70 오늘 진도 미리 채우기: 끝난 수업은 다음 차시를 채워 두고 ✓만 */
+    badge=now?'<span class="pill chalk">수업 중</span>':pf?'<span class="pill warn">✓ 확인만</span>':past?'<span class="pill warn">체크 전</span>':future?'<span class="pill">예정</span>':'';
+    line='<p class="lesson'+(pf?' pre':'')+'"><span class="lbl">'+(pf?'미리 채움':past?'체크할 차시':future?'예정 차시':'오늘 차시')+'</span>'+(past&&!prefillOn()?'진행한 차시를 확인해 주세요':ls?lessonLine(ls):'모든 차시를 마쳤어요')+'</p>';
     if(!future){
-      if(ls)acts+='<button class="btn sm primary" data-act="slotDone" '+ref+'>진행 완료</button>';
+      if(ls)acts+='<button class="btn sm primary" data-act="slotDone" '+ref+'>'+(pf?'✓ 맞아요':'진행 완료')+'</button>';
       acts+='<button class="btn sm" data-act="slotSkip" '+ref+'>수업 없음</button>';
     }
   }
@@ -480,7 +482,9 @@ function vToday(){
   const TW=ttWeek(mon);                                   /* 14단계: 수업 교체로 그 주에만 바뀐 시간표 */
   const slots=PERIODS.filter(p=>TW[w+'-'+p.n]);
   const done=slots.filter(p=>S.taught[dk+'|'+p.n]).length;
+  const todo=slots.filter(p=>!S.taught[dk+'|'+p.n]&&(dk<todayK||(dk===todayK&&nowMin()>toMin(p.e)))&&lessons(gradeOf(TW[w+'-'+p.n])).length);
   h+='<div class="sec-h"><h2>'+(dk===todayK?'오늘 · ':fmtMD(dk)+' · ')+DAY[w]+'요일</h2><span class="meta">'+(slots.length?'수업 '+slots.length+' · 체크 '+done:'')+'</span></div>';
+  if(todo.length)h+='<div class="prebar">'+(prefillOn()?'<span>끝난 수업 '+todo.length+'교시 · 진도를 미리 채워 두었어요</span><button class="btn sm primary" data-act="allDone" data-k="'+dk+'">✓ 모두 맞아요</button><button class="btn sm ghost" data-act="prefill" data-v="0">미리 채우기 끄기</button>':'<span>끝난 수업 '+todo.length+'교시 체크 전</span><button class="btn sm ghost" data-act="prefill" data-v="1">진도 미리 채우기 켜기</button>')+'</div>';
   if(!slots.length)h+='<div class="empty"><p>이 날은 수업이 없어요.</p><button class="btn sm" data-act="openTT">시간표 편집</button></div>';
   else{                                                     /* 시간표처럼: 왼쪽 오전(1~4교시) · 오른쪽 오후(5교시~), 위에서 아래로 · 빈 교시는 얇은 줄 */
     const cell=p=>TW[w+'-'+p.n]?slotCard(dk,p,TW[w+'-'+p.n]):'<div class="slot-free"><b>'+p.n+'</b>교시 <span>'+p.t+'</span> · 수업 없음</div>';
@@ -812,6 +816,13 @@ function act(a,t){
       S.taught[key]={kind:'done',lesson:i};S.prog[c].n=i+1;useMemo(c,d.k);save();render();
       toast(cs(c)+' · '+L[i].title+' 진행 완료');break;
     }
+    case 'allDone':{                                       /* v2.70 끝난 수업 모두 '진행 완료' — 같은 반이 두 번이면 차례로 다음 차시 */
+      const k=d.k,w=weekdayOf(k),TW=ttWeek(mondayOf(k)),todayK=dkey(new Date());let n=0;
+      PERIODS.forEach(p=>{const c=TW[w+'-'+p.n],key=k+'|'+p.n;if(!c||S.taught[key])return;if(k===todayK&&nowMin()<=toMin(p.e))return;
+        const L=lessons(gradeOf(c)),i=progN(c);if(i>=L.length)return;S.taught[key]={kind:'done',lesson:i};S.prog[c]=S.prog[c]||{n:0};S.prog[c].n=i+1;useMemo(c,k);n++;});
+      if(n){save();render();toast(n+'교시 진행 완료로 기록했어요');}break;
+    }
+    case 'prefill':{try{localStorage.setItem('sn_prefill',d.v==='0'?'0':'1');}catch(e){}render();toast(d.v==='0'?'진도 미리 채우기를 껐어요':'진도 미리 채우기를 켰어요');break;}
     case 'slotSkip':openSheet({type:'skip',k:d.k,p:+d.p,c:+d.c});break;
     case 'doSkip':{const s=ui.sheet;S.taught[s.k+'|'+s.p]={kind:'skip',reason:d.r};save();closeSheet();render();toast('수업 없음으로 표시했어요');break;}
     case 'slotUndo':{

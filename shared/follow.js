@@ -162,7 +162,9 @@ var TTFollow = (function(){
       read: function(c, o){ return o; },
       make: function(d){
         var me = sign(), AK = {sick: "병결", ok: "인정결", un: "미인정결", etc: "기타결"};
-        return {title: "결석신고서 미작성 " + d.list.length + "건", links: [{href: "apps/tardy/?tab=report", label: "📄 결석신고서 만들기"}],
+        var LK = d.list.slice(0, 4).map(function(e){ return {href: "apps/tardy/?tab=report&open=" + encodeURIComponent(e.key), label: "📄 " + e.s.no + "번 신고서 열기"}; });   // v2.70 바로 그 학생 신고서가 채워진 채 열림
+        if(d.list.length > 4) LK.push({href: "apps/tardy/?tab=report", label: "📄 모두 보기"});
+        return {title: "결석신고서 미작성 " + d.list.length + "건", links: LK,
           text: d.list.map(function(e){
             var span = e.start === e.end ? md(e.start) : md(e.start) + "~" + md(e.end);
             return "■ " + e.s.no + "번 " + e.s.name + " · " + span + " " + (AK[e.kind] || "결석") + (e.reasons.length ? " · 사유: " + e.reasons.join(", ") : "")
@@ -170,6 +172,23 @@ var TTFollow = (function(){
           }).join("\n\n") + "\n\n결석신고서는 " + TN("tardy", "", "출결·결석계") + " 화면에서 학생·기간·사유가 이미 채워져 있습니다."};
       },
       end: ["copy", "done"] },
+
+    /* v2.70 나이스 자동 반영(shared/ttneis.js)으로 바뀐 수업 교체를 한 번 알려 줌 — 시간표는 이미 바뀌어 있음, 확인만 */
+    { id: "tt-change", icon: "🔁", name: "수업 교체 알림", days: null,
+      desc: "나이스에서 이번 주·다음 주 수업 교체를 찾아 내 시간표에 반영하면 한 번 알려 줍니다. 수업 화면·수업 기록도 이미 바뀐 시간표를 따릅니다.",
+      labels: {done: "✔ 확인했어요"},
+      when: function(c){
+        var M = TT.store.get("tt_ttneis_v1", null), d = c.now, w = d.getDay(), mon = ymd(add(d, w === 0 ? 1 : w === 6 ? 2 : 1 - w));
+        return ((M && M.weeks) || []).filter(function(x){ return x.list && x.list.length && x.mon >= mon; })
+          .map(function(x){ return {key: x.mon + "|" + x.at, due: x.mon, n: x.list.length + "곳", w: x}; });
+      },
+      read: function(c, o){ return o; },
+      make: function(d){
+        var w = d.w, a = parse(w.mon), wk = md(w.mon) + " 주";
+        return {title: wk + " 수업 교체 " + w.list.length + "곳", links: [{href: "apps/timetable/", label: TL("timetable", "🕘 내 시간표")}],
+          text: w.list.join("\n") + "\n\n내 시간표·수업 화면에 이미 반영했어요. 틀렸으면 홈 오른쪽 시간표 아래 [되돌리기]를 누르세요."};
+      },
+      end: ["done"] },
 
     { id: "lesson-miss", icon: "✏️", name: "수업 기록 빠짐 → 진도 +1", days: null,
       desc: "오늘 끝난 수업 중 수업 기록장에 기록이 없는 교시를 모아, 한 번에 '진행 완료'(진도 +1)로 기록합니다.",
@@ -201,8 +220,9 @@ var TTFollow = (function(){
       var no = String(st.no), cur = null;
       Object.keys(G.att).filter(function(d){ var r = G.att[d] && G.att[d][no]; return r && r.t === "A"; }).sort().forEach(function(d){
         var r = G.att[d][no], k = r.k || "un";
-        if(cur && cur.kind === k && nextSchool(cur.end) === d){ cur.end = d; if(r.r && cur.reasons.indexOf(r.r) < 0) cur.reasons.push(r.r); }
-        else { cur = {s: st, kind: k, start: d, end: d, reasons: r.r ? [r.r] : []}; out.push(cur); }
+        var nk = k === "ok" || k === "early" ? k : "sick";             // 출결·결석계(kindOf)와 같은 묶음 기준 → 같은 신고서 열쇠
+        if(cur && cur.nk === nk && nk !== "early" && nextSchool(cur.end) === d){ cur.end = d; if(r.r && cur.reasons.indexOf(r.r) < 0) cur.reasons.push(r.r); }
+        else { cur = {s: st, kind: k, nk: nk, start: d, end: d, reasons: r.r ? [r.r] : []}; out.push(cur); }
       });
     });
     out.forEach(function(e){ e.key = e.s.no + "|" + e.start; e.made = !!G.reports[e.key]; });

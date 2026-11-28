@@ -54,11 +54,12 @@
     /* 안전·기기 */
     var bd = TT.backup && TT.backup.daysSince ? TT.backup.daysSince() : null, has = TT.backup && TT.backup.hasData ? TT.backup.hasData() : true;
     var bWarn = has && (bd == null || bd >= 14);
-    var V = window.Vault && Vault.status ? Vault.status() : null, vm = V ? V.mode : "";
+    var V = window.TT_VSTATUS || (window.Vault && Vault.status ? Vault.status() : null), vm = V ? V.mode : "";
     var vTxt = vm === "personal" ? "켜짐" + (V.last ? " · " + ago(V.last) : "") : vm === "classroom" ? "교실 기기(공용)" : "꺼짐";
     readSpace();
     h += '<section class="sdC sdV" aria-label="안전·기기"><div class="sdH"><b>안전·기기</b></div>'
       + row("💾", "백업", bd == null ? "아직 안 했어요" : bd === 0 ? "오늘 ✓" : bd + "일 전", bWarn ? "warn" : "", bWarn ? '<button type="button" class="sm p" data-act="mBackup">지금 백업</button>' : "")
+      + (window.TTAutoBk && TTAutoBk.supported ? (function(){ var A = TTAutoBk.status(); return row("🗂️", "자동 백업", A.on ? "매일 · " + A.name + (A.last ? " · " + ago(A.last) : "") : "꺼짐 · 폴더만 고르면 매일 저절로", A.on ? "" : "dim", '<button type="button" class="sm' + (A.on ? "" : " p") + '" data-abk>' + (A.on ? "폴더 바꾸기" : "켜기") + "</button>"); })() : "")
       + row("☁️", "기기 연결", vTxt, vm ? "" : "dim", '<button type="button" class="sm" data-act="mVault">' + (vm ? "관리" : "켜기") + "</button>")
       + row("💽", "이 기기 저장", space && space.u != null ? mb(space.u) + " 사용" + (space.q ? " · 남은 " + mb(Math.max(0, space.q - space.u)) : "") : "재는 중…", "", "")
       + row("⌨️", "단축키", "Alt+1~5 메뉴 · / 찾기", "", '<button type="button" class="sm" data-act="mKeys">보기</button>')
@@ -245,7 +246,8 @@
       side = document.createElement("aside"); side.id = "sbSide"; side.setAttribute("aria-label", "오늘 한눈에");
       document.body.appendChild(side);
       side.addEventListener("click", function(e){
-        var b = e.target.closest("[data-nundo],[data-v],[data-cm],[data-day],[data-neis],[data-napply],[data-nclose],[data-nkey],[data-nsch],[data-act],[data-hist]"); if(!b) return;
+        var b = e.target.closest("[data-abk],[data-nundo],[data-v],[data-cm],[data-day],[data-neis],[data-napply],[data-nclose],[data-nkey],[data-nsch],[data-act],[data-hist]"); if(!b) return;
+        if(b.hasAttribute("data-abk")){ if(window.TTAutoBk) TTAutoBk.setup().then(paint); return; }
         if(b.hasAttribute("data-nundo")){ if(window.TTNeis) TTNeis.undo(b.getAttribute("data-nundo")); paint(); return; }
         if(b.hasAttribute("data-act")){ var mb0 = document.getElementById(b.getAttribute("data-act")); if(mb0) mb0.click(); else TT.ui.toast("잠시 뒤 다시 눌러 주세요"); return; }
         if(b.hasAttribute("data-hist")){ var cr = document.getElementById("sbCredit"); if(cr) cr.click(); return; }

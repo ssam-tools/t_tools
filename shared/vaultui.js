@@ -87,7 +87,7 @@
   window.TT_VAULT = vault;   // PLAN_수업: 다른 화면(교과서 · 수업 리모컨)이 보관함 기능을 부를 때 (Promise → Vault)
   window.addEventListener("message", function(e){
     if(e.origin !== location.origin || !e.data || e.data.tt !== "vault") return;
-    lastStatus = e.data.status; paintChip();
+    lastStatus = e.data.status; window.TT_VSTATUS = lastStatus; paintChip();   // v2.70 백업 경고(TT.backup.daysSince)가 함께 봄
     if(e.data.type === "changed") onChanged(e.data.keys || []);
   });
   ["pointerdown", "keydown"].forEach(function(ev){ document.addEventListener(ev, function(){ touched = true; }, true); });

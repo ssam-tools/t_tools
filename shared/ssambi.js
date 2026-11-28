@@ -260,6 +260,8 @@
       else{ var cur = T.now(), nx = T.next(), all = T.day(d);
         L.push(["🕘", cur ? "지금 " + cur.n + "교시 " + cls(cur) + " · 끝까지 " + (cur.end - m) + "분" : nx ? "다음 " + nx.n + "교시 " + cls(nx) + " · " + (nx.start - m <= 180 ? (nx.start - m) + "분 뒤" : nx.t) : "오늘 수업 " + all.length + "시간 · 모두 끝", "apps/journal/"]); }
     }catch(e){}
+    try{ var NM = TT.store.get("tt_ttneis_v1", null), nmon = TT.timetable.monday(new Date(d.getTime() + (w === 0 ? 1 : w === 6 ? 2 : 0) * 864e5)), NW = ((NM && NM.weeks) || []).filter(function(x){ return x.list && x.list.length && x.mon >= nmon && Date.now() - (x.at || 0) < 3 * 864e5; });   // v2.70 최근 반영한 수업 교체
+      NW.forEach(function(x){ L.push(["🔁", (x.mon === nmon ? "이번 주" : "다음 주") + " 수업 교체 " + x.list.length + "곳 · 시간표에 반영했어요", "apps/timetable/"]); }); }catch(e){}
     var B = null; try{ B = window.TT_TODAY && TT_TODAY.brief ? TT_TODAY.brief() : null; }catch(e){}
     if(B){
       var hi = B.items.filter(function(x){ return x.lv === "hi"; }).length, n = B.items.length + B.bag.length + B.todoDue.length;

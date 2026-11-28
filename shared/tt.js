@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.69.0";
+  var VERSION = "2.70.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -446,9 +446,13 @@ var TT = (function(){
       download("쌤노트_전체백업_" + today() + ".json", JSON.stringify(b, null, 1), "application/json");
       store.setRaw("tt_last_backup", new Date().toISOString());
       ui.toast("모든 도구의 자료를 백업 파일 하나로 저장했습니다. 다운로드 폴더를 확인하세요.");
+      /* v2.70 한 번만 여쭘: 다음부터는 매일 저절로 (PC 크롬·엣지) */
+      var A = window.TTAutoBk, asked = false; try{ asked = localStorage.getItem("sn_autobk_ask") === "1"; localStorage.setItem("sn_autobk_ask", "1"); }catch(e){}
+      if(A && A.supported && !A.status().on && !asked) setTimeout(function(){ ui.confirm("매일 자동 백업", "백업 폴더를 한 번만 고르면, 다음부터는 쌤 노트를 켤 때 하루 한 번 그 폴더에 저절로 백업해요(최근 " + A.KEEP + "개만 남김). 지금 고를까요?", "폴더 고르기", function(){ A.setup(); }); }, 900);
     },
     /* 마지막으로 백업한 뒤 지난 날 수. 한 번도 안 했으면 null */
     daysSince: function(){
+      var V = window.TT_VSTATUS; if(V && V.mode === "personal" && !V.error && V.last && Date.now() - V.last < 3 * 86400000) return 0;   // v2.70 기기 연결이 켜져 있으면 이미 보관 중
       var s = store.raw("tt_last_backup"), t = s ? Date.parse(s) : NaN;
       return isFinite(t) ? Math.max(0, Math.floor((Date.now() - t) / 86400000)) : null;
     },
@@ -1159,7 +1163,7 @@ var TT = (function(){
 
   (function(){ var s = document.createElement("script"); s.src = BASE + "shared/vaultui.js"; s.defer = true; document.head.appendChild(s); })();
   /* v2.69 나이스 시간표 자동 반영 — 어느 화면에서나 저절로 (교실 기기 제외) */
-  if(!classroom) (function(){ var s = document.createElement("script"); s.src = BASE + "shared/ttneis.js?v=" + VERSION; s.defer = true; document.head.appendChild(s); })();
+  if(!classroom) ["shared/ttneis.js", "shared/autobk.js"].forEach(function(f){ var s = document.createElement("script"); s.src = BASE + f + "?v=" + VERSION; s.defer = true; document.head.appendChild(s); });   // v2.70 매일 자동 백업
   /* v2.52 🛡️ 관리자 모드인 창이면 어느 화면에서나 맨 위 표시(shared/admin.js) */
   try{ if(sessionStorage.getItem("ttadm_s") && !document.querySelector('script[src*="shared/admin.js"]')){ var as = document.createElement("script"); as.src = BASE + "shared/admin.js?v=" + VERSION; as.defer = true; document.head.appendChild(as); } }catch(e){}
 
