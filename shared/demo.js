@@ -102,15 +102,70 @@
       settings: {weekN: 3, runN: 2, mask: false, countApproved: false, school: "쌤비중학교", teacher: ME, confirm: "학부모와의 통화"}});
     /* 학교 업무판 (가짜 주소 · 응답은 아래 fetch에서 만듦) */
     put("tt_board_v1", {url: "https://script.google.com/macros/s/SSAMBI-DEMO/exec", pw: "demo", school: "쌤비중학교"});
+    seed2(put, cls, plan);
+  }
+
+  /* ---------- 2-2. 견본 자료 보강 (PLAN_배포 2단계, v2.63.0): 수업 기록 · 학생 기록 · 생기부 초안 · 공부 Gym ---------- */
+  var CUR3 = ["# 삼각비","삼각비의 뜻","특수한 각의 삼각비","삼각비의 값 구하기","삼각비의 활용 : 길이","삼각비의 활용 : 넓이","# 원의 성질","원과 현","원의 접선","원주각","원주각의 활용","# 통계","대푯값과 산포도","분산과 표준편차","산점도와 상관관계"];
+  function seed2(put, cls, plan){
+    var L = CUR3.filter(function(x){ return x[0] !== "#"; }), now = Date.now();
+    /* 수업 기록장: 지난 3주 수업을 차례로 '수업함'으로, 학생 활동 기록 40여 개 */
+    var students = {}, seats = {}, prog = {}, taught = {}, recs = [], id = 1;
+    cls.forEach(function(c){
+      var cc = c.grade * 100 + c.cls, nos = c.students.map(function(s){ return s.no; }), a = [];
+      for(var i = 0; i < Math.ceil(nos.length / 5) * 5; i++) a.push(nos[i] || 0);
+      students[cc] = c.students.map(function(s){ return {no: s.no, name: s.name}; }); seats[cc] = a; prog[cc] = {n: 0, memo: ""};
+    });
+    var TG = [["적극 참여"],["질문함"],["발표함"],["칠판 풀이"],["다양한 풀이"],["친구 설명"],["모둠 협력"],["심화 질문"],["오개념 수정"],["성실함","과제 성실"],["수행 우수"],["집중 부족"]];
+    var TX = ["특수각 삼각비를 직각삼각형 그림으로 스스로 설명함","높이 구하기 문제를 두 가지 방법으로 풀어 비교함","모둠 친구에게 tan의 뜻을 차근차근 설명해 줌","원주각이 같은 이유를 질문하며 끝까지 탐구함","","","길이 구하기 활용 문제를 칠판에서 풀이함","",""];
+    for(var b = 8; b >= 1; b--){
+      var d = schoolDay(T0, -b), wd = d.getDay(), k = ymd(d);
+      for(var p = 1; p <= 7; p++){
+        var c = plan[wd + "-" + p]; if(!c) continue;
+        if(prog[c].n >= L.length) continue;
+        taught[k + "|" + p] = {kind: "done", lesson: prog[c].n};
+        var les = L[prog[c].n]; prog[c].n++;
+        var many = c === 303 ? 4 : 2;
+        for(var r = 0; r < many; r++){
+          var no = ((b * 7 + p * 5 + r * 11) % 26) + 1, t = TG[(b + p + r) % TG.length];
+          recs.push({id: id++, date: k, period: p, cls: c, no: no, tags: t, text: TX[(b * 3 + r) % TX.length], star: (b + r) % 5 === 0, ts: now - b * 864e5 + p * 6e5 + r, les: les});
+        }
+      }
+    }
+    prog[303].memo = "다음 시간: 활용 문제 모둠 발표 · 활동지 회수"; prog[303].memoAt = ymd(T0);
+    put("tt_journal_v1", {v: 2, hideNames: false, tt: {}, cur: {3: CUR3.join("\n")}, prog: prog, taught: taught, students: students, seats: seats, records: recs, lastCls: 303, nextId: id});
+    /* 학생 기록 창고: 행동특성·진로·자율 기록 + 학생 메모 (수업 기록은 쌤 노트가 알아서 옮겨 옴) */
+    var H = cls[2].students, nr = [], nm2 = function(no){ return H[no - 1].name; };
+    [[1,"beh","학급 회의에서 의견을 조리 있게 정리해 발표함"],[1,"career","진로 체험의 날 소감문에 건축가의 하루를 자세히 적음"],[1,"auto","환경 정리 1인 1역(분리수거)을 한 학기 동안 꾸준히 해냄"],
+     [4,"beh","모둠 활동에서 친구를 잘 도움"],[7,"beh","지각이 이어졌으나 상담 뒤 알람 약속을 지키려 노력함"],[9,"club","수학 탐구반에서 피보나치 수열 포스터를 만듦"],
+     [12,"beh","급식 봉사를 자발적으로 맡아 책임감 있게 함"],[15,"career","관심 직업(간호사) 인터뷰 질문지를 직접 만듦"],[18,"auto","학교 축제 학급 부스 기획을 이끎"],[22,"beh","친구의 고민을 들어 주고 담임에게 알려 도움을 받게 함"]]
+      .forEach(function(x, i){ nr.push({id: "demo_n" + i, k: "3-3-" + x[0], n: nm2(x[0]), date: ymd(schoolDay(T0, -(i + 2))), area: x[1], src: i % 3 ? "학생 기록" : "말로 기록", text: x[2], at: now - (i + 2) * 864e5}); });
+    put("tt_notes_v1", {v: 1, recs: nr, updatedAt: now, memo: {"3-3-1": {t: "학급 회장 · 수학 탐구반", n: nm2(1), u: now}, "3-3-7": {t: "아침 지각 주의 · 알람 약속", n: nm2(7), u: now}, "3-3-18": {t: "몸이 자주 아픔 → 보건실 연계", n: nm2(18), u: now}}});
+    put("tt_saeteuk_v1", {v: 1, few: 2, drafts: {"3-3-1": {subj: {t: "삼각비 단원에서 특수각의 삼각비를 직각삼각형 그림으로 스스로 설명하고, 높이 구하기 문제를 두 가지 방법으로 풀어 비교하는 등 수학적 의사소통 능력이 뛰어남.", u: now}}}});
+    /* 공부 Gym: 3주째 다니는 학생 '수학근육왕' (휴대폰 화면용) */
+    var G = {v: 1, nick: "수학근육왕", start: ymd(addD(MON, -14)), week: {start: ymd(MON), int: "rec"}, days: {}, xp: {warm: 620, kor: 1340, math: 2180, eng: 980, sci: 540, soc: 430}, lv: {warm: 2, kor: 3, math: 4, eng: 3, sci: 2, soc: 2},
+      rx: {}, cards: {}, ptr: {}, conf: [], restUsed: {}, last: null, fib: {}, cur: {}, intake: {}, kp: null, kpDone: {}, kr: [], dsDone: {}, mode: "m3", prog: [], cls: null};
+    for(var g = 13; g >= 0; g--){
+      var gd = addD(T0, -g); if(g % 7 === 3) continue;
+      var sec = g === 0 ? {warm: 600, math: 900, kor: 300} : {warm: 600, kor: 600 + (g % 3) * 300, math: 900 + (g % 2) * 300, eng: 600, sci: g % 2 ? 600 : 0, soc: g % 3 ? 600 : 0};
+      var xs = 0; for(var s in sec) xs += Math.round(sec[s] / 6);
+      G.days[ymd(gd)] = {sec: sec, xp: xs, sets: {}, n: {}, ok: {}, t: {}, rev: {}, cond: g % 4 ? "good" : "ok"};
+      G.last = ymd(gd);
+    }
+    put("gym_v1", G);
   }
   if(!fake.getItem("tt_school_v1")) seed();
 
   /* ---------- 3. 밖으로 가는 요청: 가짜로 답하거나 막기 ---------- */
   var BOARD = [["교무운영부","기말고사 문항 최종 검토","15:30",0],["학년부","3학년 진학 상담 자료 배부","",0],["인성안전부","학교폭력 예방 교육(5교시)","13:30",1],
     ["연구장학부","수업 공개의 날 협의회","16:00",2],["행정실","교복 물려주기 접수 마감","",3],["진로교육부","진로 체험의 날 사전 안내","",4],["교감","교직원 회의","16:30",5],["학년부","졸업 앨범 촬영","",7],["교무운영부","생활기록부 점검 1차","",8]];
+  var LIB = [["규정","쌤비중학교 학교생활 규정","교칙 · 상벌점 기준 · 2026 개정판","pdf","교무운영부"],["교육계획","2026 학교 교육계획서","학년별 운영 계획 · 평가 계획 포함","pdf","교무운영부"],
+    ["서식","결석계·체험학습 신청서 서식 모음","담임 출결 서식 한 번에","hwpx","교무운영부"],["학사·평가","2학기 기말고사 시행 계획","시험 시간표 · 감독 배정","pdf","연구장학부"],
+    ["생활기록부","학교생활기록부 점검 일정 안내","1·2차 점검 기간과 유의점","pdf","교무운영부"],["업무 안내","교복 물려주기 운영 안내","신청 · 접수 · 배부 순서","hwpx","행정실"],
+    ["연수 자료","학교폭력 예방 교육 자료(교사용)","5교시 교육 진행용 슬라이드","pdf","인성안전부"],["서식","학부모 상담 기록지","상담 주간용","hwpx","학년부"]];
   function boardJson(body){
     var b = {}; try{ b = JSON.parse(body || "{}"); }catch(e){}
-    if(b.action === "liblist") return {ok: true, items: []};
+    if(b.action === "liblist") return {ok: true, items: LIB.map(function(x, i){ return {id: "demo_f" + i, name: x[1] + "." + x[3], title: x[1], cat: x[0], desc: x[2], by: x[4], at: ymd(addD(T0, -(i + 1) * 3)), size: 180000 + i * 41000, pages: 0, latest: true}; })};   /* 견본 자료실 목록(파일은 없음) */
     if(b.action === "aiinfo") return {ok: true, enabled: false};
     if(b.action && b.action !== "week" && b.action !== "month") return {ok: false, error: "견본 모드에서는 업무판을 고칠 수 없어요"};
     var items = BOARD.map(function(x, i){ return {type: "item", id: "demo_b" + i, date: ymd(schoolDay(MON, x[3])), dept: x[0], text: x[1], title: x[1], time: x[2]}; });

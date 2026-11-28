@@ -3,7 +3,7 @@
    쓰는 곳: 안내 모음(apps/guide/) · 자료실 왼쪽 '📘 쌤 노트 안내' · 설정 → 도움말.
    ready:false 는 아직 만드는 중(PLAN_배포 단계) — 목록에 '준비 중'으로 보입니다. */
 var TT_GUIDES = [
-  {id: "teacher", ic: "📗", who: "선생님", kind: "설명서", t: "선생님용 사용 설명서", d: "출근부터 퇴근까지, 보면 바로 쓰는 쌤 노트", href: "apps/guide/teacher.html", ready: false, kw: "매뉴얼 사용법 설명서 도움말 쓰는 법"},
+  {id: "teacher", ic: "📗", who: "선생님", kind: "설명서", t: "선생님용 사용 설명서", d: "출근부터 퇴근까지, 보면 바로 쓰는 쌤 노트", href: "apps/guide/teacher.html", ready: true, kw: "매뉴얼 사용법 설명서 도움말 쓰는 법"},
   {id: "student", ic: "📒", who: "학생", kind: "설명서", t: "학생용 안내", d: "공부 Gym · 수학 놀이터 휴대폰으로 시작하기", href: "apps/guide/student.html", ready: false, kw: "학생 공부 gym 짐 안내"},
   {id: "admin", ic: "📕", who: "관리자", kind: "설명서", t: "관리자·담당자 설명서", d: "새 학교 세팅 · 학교 금고 · 교직원 · 의견함", href: "apps/guide/admin.html", ready: false, kw: "관리자 담당자 세팅 설치 배포 금고"},
   {id: "show-t", ic: "🎤", who: "선생님", kind: "소개 발표", t: "쌤 노트 소개 발표", d: "연수·협의회에서 실제 화면과 함께 소개", href: "apps/guide/intro-teacher.html", ready: false, kw: "ppt 발표 소개 연수 슬라이드"},

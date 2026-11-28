@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<script src="../../shared/demo.js"></script>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>견본 학교 업무판 · 쌤 노트</title>
+<!--
+  🎬 견본 모드 전용 '학교 주간 업무판' (PLAN_배포 2단계, v2.63.0)
+  진짜 업무판은 학교마다 만든 구글 앱스 스크립트 화면입니다. 견본 모드에서는 그 화면을 열 수 없어서,
+  shared/demo.js 가 돌려주는 가짜 업무(쌤비중학교)로 비슷한 모양을 그려 설명서·발표 화면이 비지 않게 합니다.
+  견본 모드가 아닐 때 열면 안내만 보입니다.
+-->
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font:14px/1.45 "Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;color:#1d2733;background:#f6f8fb;word-break:keep-all}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px 14px;gap:10px}
+  h1{margin:0;font-size:17px;display:flex;align-items:center;gap:8px}
+  h1 small{font-size:12px;color:#5b6773;font-weight:600}
+  .tabs{margin-left:auto;display:flex;gap:4px}
+  .tabs span{font-size:12.5px;font-weight:800;border-radius:999px;padding:3px 12px;border:1px solid #dde3ea;background:#fff;color:#5b6773}
+  .tabs span.on{background:#1f7a72;border-color:#1f7a72;color:#fff}
+  table{flex:1;width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid #dde3ea;border-radius:12px;overflow:hidden;table-layout:fixed}
+  th,td{border-bottom:1px solid #eef1f4;border-right:1px solid #eef1f4;padding:6px 8px;vertical-align:top;text-align:left}
+  th{background:#eaf5f3;color:#155e57;font-size:13px}
+  th.today{background:#1f7a72;color:#fff}
+  td.dept{width:92px;font-weight:800;color:#5b6773;background:#fafbfc;font-size:12.5px}
+  .it{display:block;background:#f1f7f6;border-left:3px solid #1f7a72;border-radius:6px;padding:3px 6px;margin-bottom:4px;font-size:12.5px}
+  .it b{font-weight:800;color:#155e57;margin-right:4px}
+  .msg{margin:auto;color:#5b6773;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📅 쌤비중학교 주간 업무 <small id="wk"></small><span class="tabs"><span class="on">주간</span><span>월간</span></span></h1>
+  <div id="box" style="flex:1;display:flex;min-height:0"><p class="msg">불러오는 중…</p></div>
+</div>
+<script>
+(function(){
+  "use strict";
+  var box = document.getElementById("box");
+  if(!window.TT_DEMO){ box.innerHTML = '<p class="msg">이 화면은 🎬 견본 모드에서만 보여요.</p>'; return; }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function pad(n){ return (n < 10 ? "0" : "") + n; }
+  function ymd(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  var t = new Date(), mon = new Date(t.getFullYear(), t.getMonth(), t.getDate() - ((t.getDay() + 6) % 7)), days = [];
+  for(var i = 0; i < 5; i++){ var d = new Date(mon); d.setDate(mon.getDate() + i); days.push(d); }
+  document.getElementById("wk").textContent = (days[0].getMonth() + 1) + "/" + days[0].getDate() + " ~ " + (days[4].getMonth() + 1) + "/" + days[4].getDate();
+  fetch("https://script.google.com/macros/s/SSAMBI-DEMO/exec", {method: "POST", body: JSON.stringify({action: "week"})}).then(function(r){ return r.json(); }).then(function(o){
+    var items = (o && o.items) || [], depts = [];
+    items.forEach(function(x){ if(depts.indexOf(x.dept) < 0) depts.push(x.dept); });
+    var W = "월화수목금", today = ymd(t);
+    var h = "<table><thead><tr><th style=\"width:92px\">부서</th>" + days.map(function(d, i){ return '<th class="' + (ymd(d) === today ? "today" : "") + '">' + W[i] + " " + (d.getMonth() + 1) + "/" + d.getDate() + "</th>"; }).join("") + "</tr></thead><tbody>";
+    depts.forEach(function(dp){
+      h += '<tr><td class="dept">' + esc(dp) + "</td>" + days.map(function(d){
+        return "<td>" + items.filter(function(x){ return x.dept === dp && x.date === ymd(d); }).map(function(x){ return '<span class="it">' + (x.time ? "<b>" + esc(x.time) + "</b>" : "") + esc(x.text) + "</span>"; }).join("") + "</td>";
+      }).join("") + "</tr>";
+    });
+    box.innerHTML = h + "</tbody></table>";
+  }).catch(function(){ box.innerHTML = '<p class="msg">견본 업무를 불러오지 못했어요.</p>'; });
+})();
+</script>
+</body>
+</html>
