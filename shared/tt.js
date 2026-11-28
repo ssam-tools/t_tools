@@ -7,7 +7,7 @@
    저장 이름 규칙: 반드시 "tt_"로 시작합니다. 그래야 전체 백업에 함께 들어갑니다. */
 var TT = (function(){
   "use strict";
-  var VERSION = "2.67.0";
+  var VERSION = "2.68.0";
   var BASE = (function(){                       // 도구 모음의 맨 위 주소 (shared 폴더의 한 칸 위)
     var s = document.currentScript && document.currentScript.src;
     try{ return new URL("../", s).href; }catch(e){ return "./"; }
@@ -809,7 +809,7 @@ var TT = (function(){
   /* 보관함 동기화 화면(설정창·교실 모드·상태 표시)은 따로 불러옵니다 */
   /* ---------- 학교·선생님 설정 ("tt_school_v1") ----------
      학교 이름은 여기 한 곳에만 넣으면 첫 화면 제목, 결석신고서, 학부모 문자에 함께 쓰입니다. */
-  var SCH_TXT = {principal: 10, addr: 60, tel: 20, comci: 12, subject: 12, hb: 16, role: 10, pack: 12, neisA: 4, neisS: 10, neisKey: 40};   // 보완 3단계: 급식(나이스 교육청 코드·학교 코드·인증키)   // 개편 3단계: pack = 교과 칸(교과 팩 id · "none")   // 개편 2단계: role "subject" = 교과만(우리 반 메뉴 숨김), "homeroom"·"" = 담임   // 14단계: 교장·주소·전화·컴시간 학교 코드·내 교과
+  var SCH_TXT = {principal: 10, addr: 60, tel: 20, comci: 12, subject: 12, hb: 16, role: 10, pack: 12, neisA: 4, neisS: 10, neisKey: 40, wx: 40};   // 보완 3단계: 급식(나이스 교육청 코드·학교 코드·인증키)   // 개편 3단계: pack = 교과 칸(교과 팩 id · "none")   // 개편 2단계: role "subject" = 교과만(우리 반 메뉴 숨김), "homeroom"·"" = 담임   // 14단계: 교장·주소·전화·컴시간 학교 코드·내 교과
   var school = {
     load: function(){
       var o = store.get("tt_school_v1", null) || {};

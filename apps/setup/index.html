@@ -342,7 +342,7 @@
   function neisShow(){
     var s = TT.school.load(), st = $("mNeisSt");
     if(s.neisA && s.neisS){
-      st.className = "nst ok"; st.innerHTML = "<b>✔ 연결됨</b> · " + esc(s.neisNm || s.name || "") + " <small>(" + esc(s.neisA) + "·" + esc(s.neisS) + ")</small>";
+      st.className = "nst ok"; var wh = window.TT_WX && TT_WX.here && TT_WX.here(); st.innerHTML = "<b>✔ 연결됨</b> · " + esc(s.neisNm || s.name || "") + " <small>(" + esc(s.neisA) + "·" + esc(s.neisS) + ")" + (wh && wh.name ? " · 🌤 날씨 " + esc(wh.name) : "") + "</small>";
       $("mNeisFind").textContent = "🔁 다시 찾기"; neisToday();
     } else { st.className = "nst no"; st.textContent = "아직 연결 안 됨 — 급식이 안 나와요"; $("mNeisFind").textContent = "🔎 학교 찾기"; }
   }
@@ -357,7 +357,8 @@
     }).catch(function(){});
   }
   function neisPick(x){
-    TT.school.save({neisA: x.ATPT_OFCDC_SC_CODE, neisS: x.SD_SCHUL_CODE});
+    var wp = window.TT_WX && TT_WX.place(x.ORG_RDNMA || x.ORG_RDNDA || "");   // v2.68 날씨 위치도 학교 주소로 함께
+    TT.school.save({neisA: x.ATPT_OFCDC_SC_CODE, neisS: x.SD_SCHUL_CODE, wx: wp ? TT_WX.str(wp) : ""});
     try{ var o = JSON.parse(localStorage.getItem("snmeal_v1") || "{}") || {}; o.w = {}; o.sname = x.SCHUL_NM; delete o.hideSetup; localStorage.setItem("snmeal_v1", JSON.stringify(o)); }catch(e){}
     $("mNeisL").hidden = true; neisShow(); TT.ui.toast("🍚 " + x.SCHUL_NM + " 급식을 연결했어요. 세팅 파일에 함께 들어갑니다.");
   }
@@ -534,7 +535,7 @@
     var name = $("mName").value.trim();
     if(!name) return {err: "학교 이름을 넣어 주세요."};
     var sc = {name: name, principal: $("mPrin").value.trim(), addr: $("mAddr").value.trim(), tel: $("mTel").value.trim(), comci: $("mComci").value.trim(), hid: hidVal()};
-    var sc0 = TT.school.load(); ["neisA", "neisS", "neisKey"].forEach(function(k){ if(sc0[k]) sc[k] = sc0[k]; });   // 급식·학사일정 학교 코드도 함께
+    var sc0 = TT.school.load(); ["neisA", "neisS", "neisKey", "wx"].forEach(function(k){ if(sc0[k]) sc[k] = sc0[k]; });   // 급식·학사일정 학교 코드 · 날씨 위치도 함께
     TT.school.save(sc);                                                   // 담당자 기기에도 저장
     var bu = $("mBoardUrl").value.trim();
     if(bu && !BOARD_RE.test(bu)) return {err: "학교 업무판 주소가 올바르지 않아요 (https://script.google.com/…/exec)."};

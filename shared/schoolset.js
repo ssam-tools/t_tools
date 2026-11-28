@@ -100,7 +100,7 @@ var TTSet = (function(){
     if(!up){ sc.teacher = o.me; sc.subject = o.subj || ""; }
     if(what.school && D.school){
       ["name", "principal", "addr", "tel", "comci"].forEach(function(k){ if(D.school[k] != null) sc[k] = D.school[k]; });
-      ["neisA", "neisS", "neisKey"].forEach(function(k){ if(D.school[k]) sc[k] = D.school[k]; });
+      ["neisA", "neisS", "neisKey", "wx"].forEach(function(k){ if(D.school[k]) sc[k] = D.school[k]; });   // v2.68 wx = 날씨 위치
       if(D.school.hid) sc.hid = D.school.hid;                                    // 숨은 정보 (담당자가 정한 대로)
       if(D.school.neisS && !up) done.push("급식");
     }
