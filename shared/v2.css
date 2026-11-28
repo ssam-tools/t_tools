@@ -68,7 +68,7 @@ html[data-ui="ssambi"] body.sbOn #sbHero{display:flex;flex-direction:column;alig
 #sbHero .top .sp{flex:1;min-width:0;font-size:14px;color:var(--t-sub);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #sbHero .top .sp .st{display:none}
 #sbHero .top details.more{position:relative}
-#sbHero .top details.more .menu{right:0;left:auto}
+#sbHero .top details.more .menu{right:0;left:auto;z-index:41;max-height:calc(100dvh - 50px);overflow-y:auto}   /* v2.61.1 오른쪽 내 시간표 칸(z 14)에 가려지지 않게 — 도구 화면 ⋯ 와 같은 높이 */
 #sbHero .hrow{display:grid;grid-template-columns:auto minmax(0,460px);align-items:center;justify-content:center;gap:clamp(16px,2.4vw,28px);width:100%;max-width:780px}
 #sbHero .owl{flex:none;border:0;background:transparent;padding:0;cursor:pointer;border-radius:50%;width:clamp(104px,15vh,140px);height:clamp(104px,15vh,140px);transition:transform .2s}
 #sbHero .owl svg{width:100%;height:100%}
