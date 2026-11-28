@@ -695,13 +695,19 @@
           .map(function(t){ return {ic: "🕘", tx: esc(t.name) + " 선생님 시간표", sub: "오늘 수업 · 빈 시간", go: function(){ closeFind(); if(window.TT_MOB) TT_MOB.open("tt", t.name); }}; }); }catch(x){}
     }
     if((CE.length || TW.length) && !m0 && !parseDate(qq).date) actFirst = false;   // 찾은 정보가 있으면 정보 먼저
+    /* v2.64 📘 설명서 쪽도 찾기 (apps/guide/pages.js · 처음 찾을 때 한 번 불러옴) — 누르면 그 쪽이 바로 열림 */
+    var G = [];
+    if(!m0 && qq.length >= 2){
+      if(window.TT_MAN_FIND) G = TT_MAN_FIND(qq, 3).map(function(x){ return {ic: x.ic, tx: esc(x.t), sub: esc(x.sub), go: function(){ closeFind(); location.href = (TT.BASE || "./") + x.href; }}; });
+      else if(!manTried){ manTried = true; var sc = document.createElement("script"); sc.src = (TT.BASE || "./") + "apps/guide/pages.js?v=" + (TT.VERSION || ""); sc.onload = function(){ if(dlg && dlg.open) draw(); window.dispatchEvent(new Event("tt-find-update")); }; document.head.appendChild(sc); }
+    }
     function grp(h, L){ if(L.length){ R.push({h: h}); R = R.concat(L); } }
     if(actFirst) grp("입력", act);
-    grp("📞 내선번호", E); grp("🕘 선생님", TW); grp("📅 학사일정", CE); grp("🔐 학교 금고", K); grp("학생", S); grp("도구", T); grp("🗂️ 학교 자료실", D);
+    grp("📞 내선번호", E); grp("🕘 선생님", TW); grp("📅 학사일정", CE); grp("🔐 학교 금고", K); grp("학생", S); grp("도구", T); grp("📘 설명서", G); grp("🗂️ 학교 자료실", D);
     if(!actFirst) grp("입력", act);
     return R;
   }
-  var extTried = false, docQ = "", docHits = null, docT = 0;
+  var extTried = false, docQ = "", docHits = null, docT = 0, manTried = false;
   function copyText(t){ try{ navigator.clipboard.writeText(t); }catch(e){} }
   function bagRows(){
     var t = ymd(new Date()), B = bagLoad().items.filter(function(x){ return !x.done; }).sort(function(a, b){ return a.date < b.date ? -1 : 1; });

@@ -1,0 +1,90 @@
+/* 쌤 노트 설명서 공통 모양 (PLAN_배포 3단계 v2.64.0) — teacher.html · student.html · admin.html 이 함께 씀 */
+  header{align-items:center}
+  .tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .chs{display:flex;gap:5px;flex-wrap:wrap}
+  .chs button{font:inherit;font-size:clamp(12px,1.75vh,13.5px);font-weight:800;border:1px solid var(--line);background:var(--card);color:var(--sub);border-radius:999px;padding:4px 11px;cursor:pointer;white-space:nowrap}
+  .chs button[aria-current=true]{background:var(--accent);border-color:var(--accent);color:var(--t-on,#fff)}
+  .chs button:hover{border-color:var(--accent)}
+  main.man{gap:clamp(10px,1.6vh,14px);min-height:0}
+  .fig{flex:1 1 64%;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px;position:relative}
+  .shot{position:relative;max-width:100%;max-height:100%;display:inline-block;line-height:0}
+  .shot img{max-width:100%;width:auto;height:auto;max-height:calc(100dvh - 230px);border-radius:10px;box-shadow:0 4px 18px rgba(20,40,70,.12);display:block}
+  .shot.ph img{max-height:calc(100dvh - 230px)}
+  .pin{position:absolute;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:50%;background:#e8590c;color:#fff;font:800 14px/28px system-ui,sans-serif;text-align:center;box-shadow:0 0 0 3px #fff,0 3px 10px rgba(0,0,0,.3);line-height:28px}
+  .side{flex:0 0 min(400px,34%);min-height:0;display:flex;flex-direction:column;gap:clamp(8px,1.4vh,12px);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:clamp(12px,2vh,18px)}
+  .side .kick{font-size:12px;font-weight:800;color:var(--accent)}
+  .side h2{font-size:clamp(17px,2.8vh,21px);margin:0;line-height:1.3}
+  .side .sum{color:var(--sub);font-size:clamp(13px,1.9vh,14.5px);margin:0}
+  .pts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:clamp(6px,1.1vh,9px);overflow:auto;min-height:0}
+  .pts li{display:flex;gap:9px;align-items:flex-start;font-size:clamp(13px,1.95vh,14.5px);line-height:1.5}
+  .pts li i{flex:none;font-style:normal;width:22px;height:22px;border-radius:50%;background:#e8590c;color:#fff;font:800 12.5px/22px system-ui,sans-serif;text-align:center;margin-top:1px}
+  .pts li i.t{background:var(--accent-soft);color:var(--accent)}
+  .tip{background:#fff8d8;border:1px solid #f1e2a6;border-radius:12px;padding:8px 11px;font-size:13px;color:#6b5500}
+  .open{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+  .open .btn{text-decoration:none}
+  .nav{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+  .side{align-self:stretch}.side .nav{margin-top:auto}.side .open + .nav{margin-top:0}
+  .nav .n{font-size:12.5px;color:var(--sub);font-weight:700}
+  /* 한 장 요약 */
+  .sumw{flex:1;min-height:0;display:grid;grid-template-columns:1.35fr 1fr;gap:clamp(10px,1.6vh,14px)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:clamp(12px,2vh,18px);min-height:0;display:flex;flex-direction:column;gap:8px}
+  .card h3{margin:0;font-size:clamp(14px,2.2vh,16px)}
+  .flow{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:clamp(4px,.8vh,7px);overflow:auto;min-height:0}
+  .flow li{display:grid;grid-template-columns:58px 30px 1fr;align-items:center;gap:6px;font-size:clamp(12.5px,1.85vh,14px);border-bottom:1px dashed var(--line);padding-bottom:clamp(3px,.7vh,6px)}
+  .flow li:last-child{border-bottom:0}
+  .flow b.tm{font-variant-numeric:tabular-nums;color:var(--accent);font-size:13px}
+  .flow .em{font-size:20px;text-align:center}
+  .flow a{color:var(--ink);text-decoration:none}.flow a:hover b{text-decoration:underline}
+  .rules{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:clamp(5px,1vh,8px);font-size:clamp(12.5px,1.85vh,14px)}
+  .rules li{display:flex;gap:8px}.rules li span{flex:none}
+  .keys{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:13px}
+  .keys kbd{font:700 12px system-ui,sans-serif;background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:1px 6px;white-space:nowrap}
+  .noshot{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--sub);text-align:center;padding:20px}
+  .noshot .big{font-size:64px}
+  .noshot .steps{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .noshot .steps div{background:var(--accent-soft);color:var(--ink);border-radius:14px;padding:12px 16px;min-width:150px;font-size:14px}
+  .noshot .steps b{display:block;font-size:22px;color:var(--accent)}
+  .faq{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:clamp(8px,1.4vh,12px);flex:1;min-height:0;overflow:auto;align-content:start}
+  .faq li{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:clamp(9px,1.5vh,13px) 14px;font-size:clamp(12.5px,1.85vh,14px)}
+  .faq li b.q{display:block;margin-bottom:3px;font-size:clamp(13.5px,2vh,15px)}
+  #all{display:none}
+  @media (max-width:760px){
+    body{overflow:auto;height:auto;min-height:100dvh}
+    main.man{flex-direction:column}
+    .side{flex:none}
+    .shot img{max-height:none;width:100%}
+    .shot.ph img{width:auto;max-height:70dvh}
+    .pin{width:22px;height:22px;line-height:22px;font-size:12px}
+    .sumw,.faq{grid-template-columns:1fr}
+    .chs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}
+  }
+  @media print{
+    @page{size:A4 landscape;margin:10mm}
+    body{height:auto!important;overflow:visible!important;background:#fff}
+    #tt-side,#sbSide,.tt-rail,#snDemo,header .tools,.chs,footer,#view{display:none!important}
+    #all{display:block}
+    #all section{page-break-after:always;break-after:page;display:flex;gap:12px;min-height:0;height:180mm}
+    #all section:last-child{page-break-after:auto}
+    .shot img{max-height:170mm;box-shadow:none}
+    .fig,.side,.card,.faq li{border-color:#ccc}
+    .open,.nav{display:none!important}
+    .pin,.pts li i{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+
+/* ── v2.64 공통 추가: 학생용(노랑) · 관리자용(빨강) · 체크리스트 · QR ── */
+html.man-stu{--accent:#d97a00;--accent-soft:#fff1c9;--t-accent:#d97a00;--t-accent-soft:#fff1c9}
+html.man-stu .fig{background:#fff8e1}
+html.man-adm .side .kick{color:#c0392b}
+.noshot .steps div small{display:block;font-size:12px;color:var(--sub);margin-top:3px}
+.noshot .qrb{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;width:min(210px,40vw);aspect-ratio:1}
+.noshot .qrb svg{width:100%;height:100%;display:block}
+.noshot code,.pts code,.tip code,.card code{font:700 12.5px ui-monospace,Consolas,monospace;background:var(--accent-soft);color:var(--ink);border-radius:5px;padding:0 5px}
+.chk{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:clamp(4px,.8vh,7px);overflow:auto;min-height:0}
+.chk li{display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:start;font-size:clamp(12.5px,1.85vh,14px);border-bottom:1px dashed var(--line);padding-bottom:clamp(3px,.7vh,6px)}
+.chk li:last-child{border-bottom:0}
+.chk li i{font-style:normal;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--t-on,#fff);font:800 12.5px/24px system-ui,sans-serif;text-align:center}
+.chk a{color:var(--ink);text-decoration:none}.chk a:hover b{text-decoration:underline}
+.chk small{display:block;color:var(--sub);font-size:12px}
+.role{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:clamp(12.5px,1.85vh,13.5px)}
+.role b{white-space:nowrap}
+@media (max-width:760px){ html.man-stu .shot.ph img{max-height:62dvh} }

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<script src="../../shared/demo.js"></script><!-- 🎬 견본 모드(?demo=1): 저장소를 읽기 전에 맨 먼저 -->
+<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#e08a00">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/ssambi3-192.png">
+<script src="../../shared/early.js"></script>
+<script>document.documentElement.classList.add("man-stu")</script>
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>학생용 안내 · 쌤 노트</title>
+<!--
+  📒 학생용 안내 (PLAN_배포 3단계, v2.64.0) — 학생이 휴대폰으로 한 쪽씩 넘겨 보는 안내
+  · 첫 쪽 QR은 지금 이 사이트 주소로 만든 공부 Gym 주소(shared/qr.js) — 어느 학교 사이트에서 열어도 맞는 주소가 나옵니다.
+  · 쪽 내용은 pages.js(TT_MAN.student), 모양·조작은 man.css · man.js. 화면 그림은 모두 견본 자료(개인정보 없음).
+-->
+<link rel="stylesheet" href="man.css">
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="./">← 쌤 노트 안내</a>
+    <h1>📒 학생용 안내</h1>
+    <p class="lead">공부 Gym · 수학 놀이터를 휴대폰으로 시작하기 · ← → 키로 넘겨요</p>
+  </div>
+  <div class="tools">
+    <a class="btn primary" href="../gym/" target="_blank" rel="noopener">💪 공부 Gym 열기 ↗</a>
+    <button type="button" class="btn" id="prt">🖨 인쇄</button>
+  </div>
+</header>
+<nav class="chs" id="chs" aria-label="장 고르기"></nav>
+<div id="view" style="flex:1;min-height:0;display:flex"></div>
+<div id="all"></div>
+<footer>
+  <span>📒 학생용 안내 · jidangmath × Claude</span>
+  <span class="priv">🔒 화면은 모두 견본(가짜) 자료 · 내 기록은 내 휴대폰 안에만</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script src="../../shared/qr.js"></script>
+<script src="pages.js"></script>
+<script src="man.js"></script>
+<script>TT_MAN_RUN("student");</script>
+</body>
+</html>

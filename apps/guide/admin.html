@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<script src="../../shared/demo.js"></script><!-- 🎬 견본 모드(?demo=1): 저장소를 읽기 전에 맨 먼저 -->
+<style id="ttKeepAll">html{word-break:keep-all;overflow-wrap:break-word;line-break:strict}</style>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6fb5">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/ssambi3-192.png">
+<script src="../../shared/early.js"></script>
+<script>document.documentElement.classList.add("man-adm")</script>
+<link rel="stylesheet" href="../../shared/tt.css">
+<title>관리자·담당자 설명서 · 쌤 노트</title>
+<!--
+  📕 관리자·담당자 설명서 (PLAN_배포 3단계, v2.64.0) — 새 학교 처음 세팅부터 금고·의견함·새 학년까지
+  · 다른 학교 담당자에게도 드리는 설명서라 비밀번호·계정 값은 한 글자도 넣지 않습니다(스크립트 속성 '이름'만).
+  · 쪽 내용은 pages.js(TT_MAN.admin), 모양·조작은 man.css · man.js. 화면 그림은 모두 견본 자료(개인정보 없음).
+-->
+<link rel="stylesheet" href="man.css">
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="./">← 쌤 노트 안내</a>
+    <h1>📕 관리자·담당자 설명서</h1>
+    <p class="lead">새 학교 세팅부터 금고·의견함·새 학년까지 · 다른 학교 담당자께도 드려요</p>
+  </div>
+  <div class="tools">
+    <a class="btn" href="../../index.html?demo=1" target="_blank" rel="noopener" title="가짜 학교 자료로 열려요 · 내 자료는 그대로">🎮 견본으로 써 보기 ↗</a>
+    <button type="button" class="btn" id="prt">🖨 인쇄</button>
+  </div>
+</header>
+<nav class="chs" id="chs" aria-label="장 고르기"></nav>
+<div id="view" style="flex:1;min-height:0;display:flex"></div>
+<div id="all"></div>
+<footer>
+  <span>📕 관리자·담당자 설명서 · jidangmath × Claude</span>
+  <span class="priv">🔒 설명서의 모든 화면은 견본(가짜) 자료예요 — 실제 학생·선생님 정보 없음</span>
+</footer>
+<script src="../../shared/tt.js"></script>
+<script src="pages.js"></script>
+<script src="man.js"></script>
+<script>TT_MAN_RUN("admin");</script>
+</body>
+</html>

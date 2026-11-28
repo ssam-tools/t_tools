@@ -597,7 +597,7 @@
   })();
 
   /* 기본 찾기: 학생 이름 → 학생 카드 · 도구 이름 → 바로 열기 · 내선번호 → 복사 · 자료실에서 찾기 */
-  var libdTried = false;
+  var libdTried = false, manTried = false;
   function students(){ var out = []; try{ TT.roster.classes().forEach(function(c){ (c.students || []).forEach(function(s){ if(s.name) out.push({c: c, s: s}); }); }); }catch(e){} return out; }
   var DEF = {
     key: "all",
@@ -614,7 +614,10 @@
       var E = window.TT_LIBD ? TT_LIBD.extCached().filter(function(x){ return (x.n + " " + x.d + " " + (x.m || "")).toLowerCase().indexOf(low) >= 0 || x.t === qq; }).slice(0, 4).map(function(x){
         return {ic: "📞", tx: "<b>" + esc(x.t) + "</b> " + esc(x.n), sub: esc(x.d) + " · 누르면 번호 복사", go: function(){ try{ navigator.clipboard.writeText(x.t); }catch(e){} TT.ui.toast("📞 " + x.n + " " + x.t + " — 번호를 복사했어요"); }};
       }) : [];
-      var rows = stuFirst ? S.concat(T, E) : T.concat(S, E), n = rows.length;
+      /* v2.64 📘 설명서 쪽 (apps/guide/pages.js · 처음 찾을 때 한 번 불러옴) */
+      if(!window.TT_MAN_FIND && !manTried && qq.length >= 2){ manTried = true; var sc = document.createElement("script"); sc.src = BASE + "apps/guide/pages.js?v=" + (TT.VERSION || ""); sc.onload = function(){ if(F.q()) F.refresh(); }; document.head.appendChild(sc); }
+      var G = window.TT_MAN_FIND ? TT_MAN_FIND(qq, 2).map(function(x){ return {ic: x.ic, tx: esc(x.t), sub: "📘 " + esc(x.sub), go: function(){ location.href = BASE + x.href; }}; }) : [];
+      var rows = (stuFirst ? S.concat(T, E) : T.concat(S, E)).concat(G), n = rows.length;
       if(qq.length >= 2) rows.push({ic: "🗂️", tx: "자료실에서 '" + esc(qq) + "' 찾기", sub: "규정집 · 교육계획서 · 기재요령 등 내용까지", go: function(){ location.href = BASE + "apps/lib/?q=" + encodeURIComponent(qq); }});
       F.show({n: n, rows: rows, note: n ? "" : "맞는 학생·도구가 없어요"});
     },

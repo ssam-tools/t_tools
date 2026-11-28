@@ -15,7 +15,7 @@
 |---|---|---|
 | 1 | 🎬 견본 모드(`?demo=1`) + 📘 쌤 노트 안내 칸(`apps/guide/`, 자료실, 도움말) | ✅ v2.62.0 |
 | 2 | 견본 자료 보강(수업 기록·학생 기록·공부 Gym 등 화면이 비지 않게) + 화면 캡처(`apps/guide/shots/`) + **선생님용 설명서** `apps/guide/teacher.html` || ✅ v2.63.0 |
-| 3 | **학생용 안내** `student.html` · **관리자·담당자 설명서** `admin.html` + 쌤비 찾기창에서 설명서 쪽 찾기 | |
+| 3 | **학생용 안내** `student.html` · **관리자·담당자 설명서** `admin.html` + 쌤비 찾기창에서 설명서 쪽 찾기 | ✅ v2.64.0 |
 | 4 | **소개 발표 2종** `intro-teacher.html`(14장) · `intro-student.html`(7장) — 장마다 [실제로 열기 ▶], 견본 쌤 노트를 슬라이드 안에 띄움, 마지막 장 QR | |
 | 5 | **소개 영상 2편** `media/teacher.mp4`(45초) · `media/student.mp4`(25초) — 견본 화면 녹화 + 자막 + 쌤비 + 직접 작곡한 음악 | |
 | 6 | 최종 점검(개인정보 · 링크 · QR · 휴대폰 화면) + `guides.js` 모두 ready + 제작 히스토리 | |
@@ -44,5 +44,13 @@
 
 ## 화면 그림 메모 (`apps/guide/shots/`)
 - 견본 모드 · 화요일 10:52(3교시 수업 중)으로 시계를 맞춰 찍음. PC 1440×900, 휴대폰 390×844(2배로 찍어 585×1266) → webp(품질 80).
-- 이름: home · timetable · book · journal · tardy · report · stucard · counsel · voice · record · school · lib · settings · m-home · m-find · m-tardy · m-gym(3단계 학생용에 씀)
+- 이름: home · timetable · book · journal · tardy · report · stucard · counsel · voice · record · school · lib · settings · m-home · m-find · m-tardy · m-gym
+- (3단계) 학생용 s-warm · s-room · s-mus · s-map · s-test · s-log · s-fb · s-play · s-jidang · s-kread · s-mstudy(휴대폰) / 관리자용 a-setup · a-get · a-admin · a-safe(PC)
 - 화면이 바뀌어 그림을 다시 찍을 때는 같은 이름으로 바꿔 넣고, 설명서의 번호 위치(PAGES의 pt [가로%, 세로%])만 확인.
+
+## 설명서 구조 메모 (3단계, v2.64.0)
+- 세 설명서는 같은 엔진: `apps/guide/man.js`(그리기·넘기기·인쇄) + `man.css`(모양) — 각 html은 껍데기만.
+- 모든 쪽 내용은 `apps/guide/pages.js` 의 `TT_MAN.teacher / student / admin` 한 곳. 쪽 종류: 그림+번호(img/phone) · phones · steps(그림 대신 단계 상자, qr 가능) · sum · faq.
+- 🔎 쌤비 찾기: `TT_MAN_FIND(q)` — 홈 찾기(shared/today.js)·도구 화면 찾기(shared/sbbar.js)가 처음 찾을 때 pages.js 를 불러와 '📘 설명서' 줄로 보여 줌 → `?p=쪽 id` 로 바로 열림. 이럴 땐(FAQ) 질문도 찾음. 쪽의 `kw` 에 낱말을 더하면 잘 걸림.
+- 학생용 첫 쪽 QR은 지금 사이트 주소로 그때그때 만듦(shared/qr.js) — 다른 학교 사이트에서도 맞는 주소.
+- 관리자 설명서에는 비밀번호·계정 값 없음(스크립트 속성 '이름'만).
